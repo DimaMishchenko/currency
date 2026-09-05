@@ -385,6 +385,30 @@
         }
       }
     },
+    "metals": {
+      "extractionState": "manual",
+      "comment": "Currency picker category for precious metals.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Metals"
+          }
+        }
+      }
+    },
+    "assetCategory": {
+      "extractionState": "manual",
+      "comment": "Accessibility label for the currency picker category control.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asset category"
+          }
+        }
+      }
+    },
     "crypto": {
       "extractionState": "manual",
       "comment": "Converter interface: crypto.",
