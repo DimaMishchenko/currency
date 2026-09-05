@@ -1,0 +1,19 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "CFBundleDisplayName": {
+      "extractionState": "manual",
+      "shouldGenerateSymbol": false,
+      "comment": "System display name for the app or extension.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Currency Widgets"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

@@ -1,42 +1,46 @@
 import AppIntents
-import CurrencyShared
-import RateCore
+import CurrencySupport
+import ExchangeRates
 import SwiftUI
 import WidgetKit
 
 struct CurrencyEntry: TimelineEntry {
   let date: Date
-  let input: InputState
-  let book: RateBook
+  let input: ConverterState
+  let snapshot: RateSnapshot
 }
 struct CurrencyTimeline: TimelineProvider {
   func placeholder(in context: Context) -> CurrencyEntry {
-    CurrencyEntry(date: .now, input: InputState(), book: RateBook())
+    CurrencyEntry(date: .now, input: ConverterState(), snapshot: RateSnapshot())
   }
   func getSnapshot(in context: Context, completion: @escaping (CurrencyEntry) -> Void) {
     completion(
-      CurrencyEntry(date: .now, input: SharedStore.input(), book: SharedStore.rates.load()))
+      CurrencyEntry(
+        date: .now, input: CurrencyStore.shared.input(), snapshot: CurrencyStore.shared.loadRates()
+      ))
   }
   func getTimeline(
     in context: Context, completion: @escaping @Sendable (Timeline<CurrencyEntry>) -> Void
   ) {
     Task {
-      var book = SharedStore.rates.load()
-      let input = SharedStore.input()
+      var snapshot = CurrencyStore.shared.loadRates()
+      let input = CurrencyStore.shared.input()
       let recentlyTyped = Date().timeIntervalSince(input.editedAt ?? .distantPast) < 60
-      if !recentlyTyped && Date().timeIntervalSince(book.checkedAt ?? .distantPast) >= 1800 {
-        let refreshed = await RateService().refresh(previous: book)
-        book = refreshed.book
-        try? SharedStore.rates.save(book)
+      if !recentlyTyped && Date().timeIntervalSince(snapshot.checkedAt ?? .distantPast) >= 1800 {
+        let refreshed = try? await CurrencyStore.shared.refreshRates(using: RateService())
+        snapshot = refreshed?.snapshot ?? CurrencyStore.shared.loadRates()
       }
       completion(
         Timeline(
-          entries: [CurrencyEntry(date: .now, input: SharedStore.input(), book: book)],
+          entries: [
+            CurrencyEntry(date: .now, input: CurrencyStore.shared.input(), snapshot: snapshot)
+          ],
           policy: .after(.now.addingTimeInterval(1800))))
     }
   }
 }
 struct CurrencyWidgetView: View {
+  @Environment(\.locale) private var locale
   let entry: CurrencyEntry
   var board = false
   @Environment(\.widgetFamily) private var family
@@ -50,16 +54,18 @@ struct CurrencyWidgetView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
       HStack {
-        Text("\(Currency.flag(entry.input.from)) \(entry.input.from)")
+        Text(verbatim: "\(CurrencyDisplay.flag(entry.input.source)) \(entry.input.source)")
           .font(.caption.weight(.semibold))
         Spacer()
         if family != .systemSmall {
-          Text(entry.input.amount).font(.system(.title3, design: .rounded, weight: .medium))
+          Text(CurrencyDisplay.inputAmount(entry.input.amount, locale: locale))
+            .font(.system(.title3, design: .rounded, weight: .medium))
             .monospacedDigit().lineLimit(1).minimumScaleFactor(0.5)
         }
       }
       if family == .systemSmall {
-        Text(entry.input.amount).font(.system(.title2, design: .rounded, weight: .light))
+        Text(CurrencyDisplay.inputAmount(entry.input.amount, locale: locale))
+          .font(.system(.title2, design: .rounded, weight: .light))
           .lineLimit(1).minimumScaleFactor(0.4)
       }
       LazyVGrid(
@@ -68,13 +74,13 @@ struct CurrencyWidgetView: View {
       ) {
         ForEach(targets, id: \.self) { code in
           HStack {
-            Text("\(Currency.flag(code)) \(code)")
+            Text(verbatim: "\(CurrencyDisplay.flag(code)) \(code)")
               .font(.system(size: columns == 2 ? 10 : 12, weight: .medium))
             Spacer(minLength: 4)
             Text(
-              Currency.format(
-                entry.book.convert(entry.input.decimal, from: entry.input.from, to: code),
-                code: code)
+              CurrencyDisplay.format(
+                entry.snapshot.convert(entry.input.decimal, from: entry.input.source, to: code),
+                code: code, locale: locale)
             )
             .font(.system(size: columns == 2 ? 14 : 19, weight: .medium, design: .rounded))
             .monospacedDigit().lineLimit(1).minimumScaleFactor(0.4)
@@ -86,15 +92,18 @@ struct CurrencyWidgetView: View {
       Spacer(minLength: 0)
       HStack {
         Text(
-          entry.book.quotes.isEmpty
-            ? "Open app to load rates"
-            : "Rates · "
-              + (entry.book.quotes[targets.first ?? entry.input.from]?.published ?? "Unavailable")
+          entry.snapshot.quotes.isEmpty
+            ? .Widgets.openToLoad
+            : .Widgets.ratesDate(
+              entry.snapshot.quotes[targets.first ?? entry.input.source]
+                .map { CurrencyDisplay.publicationDate($0.published, locale: locale) }
+                ?? String(localized: .Widgets.unavailable))
         )
         .font(.system(size: 9)).foregroundStyle(.secondary)
         Spacer(minLength: 0)
         if entry.input.destinations.count > limit {
-          Text("+\(entry.input.destinations.count - limit)").font(.system(size: 9))
+          Text(.Widgets.additionalCurrencies(entry.input.destinations.count - limit))
+            .font(.system(size: 9))
             .foregroundStyle(.secondary)
         }
       }
@@ -115,17 +124,29 @@ struct CurrencyWidgetView: View {
                         .frame(height: keyHeight)
                         .background(.primary.opacity(0.055), in: .rect(cornerRadius: 10))
                     }
+                    .accessibilityLabel(Text(.Widgets.openApp))
                   }
                 } else {
-                  Button(intent: KeyIntent(key)) {
-                    Text(key == "." ? Locale.current.decimalSeparator ?? "." : key)
-                      .font(.system(size: key == "AC" ? 12 : 19, design: .rounded))
-                      .frame(maxWidth: .infinity).frame(height: keyHeight)
-                      .background(.primary.opacity(0.055), in: .rect(cornerRadius: 10))
-                      .contentShape(Rectangle())
+                  Button(intent: KeypadIntent(key)) {
+                    Text(
+                      key == "AC"
+                        ? String(localized: .Widgets.clearKey)
+                        : CurrencyDisplay.inputAmount(key, locale: locale)
+                    )
+                    .font(.system(size: key == "AC" ? 12 : 19, design: .rounded))
+                    .frame(maxWidth: .infinity).frame(height: keyHeight)
+                    .background(.primary.opacity(0.055), in: .rect(cornerRadius: 10))
+                    .contentShape(Rectangle())
                   }
                   .accessibilityLabel(
-                    key == "⌫" ? "Delete" : key == "AC" ? "Clear" : key == "⇅" ? "Swap" : key)
+                    key == "⌫"
+                      ? Text(.Widgets.delete)
+                      : key == "AC"
+                        ? Text(.Widgets.clear)
+                        : key == "⇅"
+                          ? Text(.Widgets.swap)
+                          : key == "."
+                            ? Text(.Widgets.decimalSeparator) : Text(verbatim: key))
                 }
               }
             }
@@ -142,8 +163,8 @@ struct CurrencyWidget: Widget {
   let kind = "CurrencyConverter"
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: kind, provider: CurrencyTimeline()) { CurrencyWidgetView(entry: $0) }
-      .configurationDisplayName("Converter")
-      .description("One amount, your currencies. Large adds a full keypad and up to eight rates.")
+      .configurationDisplayName(Text(.Widgets.converter))
+      .description(Text(.Widgets.converterDescription))
       .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
   }
 }
@@ -153,30 +174,47 @@ struct CurrencyBoardWidget: Widget {
     StaticConfiguration(kind: "CurrencyBoard", provider: CurrencyTimeline()) {
       CurrencyWidgetView(entry: $0, board: true)
     }
-    .configurationDisplayName("Currency board")
-    .description("Six currencies in medium, twelve in large. Follows your currency order.")
+    .configurationDisplayName(Text(.Widgets.board))
+    .description(Text(.Widgets.boardDescription))
     .supportedFamilies([.systemMedium, .systemLarge])
   }
 }
 struct QuickRateView: View {
+  @Environment(\.locale) private var locale
   let entry: CurrencyEntry
   @Environment(\.widgetFamily) private var family
-  private var target: String { entry.input.destinations.first ?? entry.input.from }
+  private var target: String { entry.input.destinations.first ?? entry.input.source }
   private var amount: String {
-    Currency.format(
-      entry.book.convert(entry.input.decimal, from: entry.input.from, to: target), code: target)
+    CurrencyDisplay.format(
+      entry.snapshot.convert(entry.input.decimal, from: entry.input.source, to: target),
+      code: target, locale: locale)
   }
   var body: some View {
     Group {
       if family == .accessoryInline {
-        Text("\(entry.input.amount) \(entry.input.from) = \(amount) \(target)")
+        Text(
+
+          .Widgets.inlineConversion(
+            CurrencyDisplay.inputAmount(entry.input.amount, locale: locale), entry.input.source,
+            amount, target))
       } else {
         VStack(alignment: .leading, spacing: 3) {
-          Text("\(entry.input.amount) \(entry.input.from) → \(target)").font(.caption)
+          Text(
+            .Widgets.conversionPair(
+              CurrencyDisplay.inputAmount(entry.input.amount, locale: locale), entry.input.source,
+              target)
+          )
+          .font(.caption)
           Text(amount).font(.system(.title2, design: .rounded, weight: .semibold))
             .minimumScaleFactor(0.4)
-          Text("Rates · " + (entry.book.quotes[target]?.published ?? "Open app"))
-            .font(.system(size: 9))
+          Text(
+
+            .Widgets.ratesDate(
+              entry.snapshot.quotes[target]
+                .map { CurrencyDisplay.publicationDate($0.published, locale: locale) }
+                ?? String(localized: .Widgets.openApp))
+          )
+          .font(.system(size: 9))
         }
       }
     }
@@ -189,10 +227,15 @@ struct QuickRateWidget: Widget {
     StaticConfiguration(kind: "CurrencyQuickRate", provider: CurrencyTimeline()) {
       QuickRateView(entry: $0)
     }
-    .configurationDisplayName("Quick rate").description("Your first conversion on the Lock Screen.")
+    .configurationDisplayName(Text(.Widgets.quickRate))
+    .description(Text(.Widgets.quickRateDescription))
     .supportedFamilies([.accessoryInline, .accessoryRectangular])
   }
 }
 @main struct CurrencyWidgets: WidgetBundle {
-  var body: some Widget { CurrencyWidget(); CurrencyBoardWidget(); QuickRateWidget() }
+  var body: some Widget {
+    CurrencyWidget()
+    CurrencyBoardWidget()
+    QuickRateWidget()
+  }
 }

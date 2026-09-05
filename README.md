@@ -10,9 +10,19 @@ Generate the workspace without opening Xcode:
 tuist generate --no-open
 ```
 
-Then open `Currency.xcworkspace`, select the Currency scheme and an iOS 26 simulator, and Run. For a physical device, select your signing team for both targets and register the `group.com.dimasike.currency` App Group. If changing identifiers, update `Project.swift` and `CurrencyShared/Sources/SharedStore.swift` together. Regenerate after changing a Tuist manifest or the dependency graph.
+Then open `Currency.xcworkspace`, select the Currency scheme and an iOS 26 simulator, and Run. For a physical device, select your signing team for both targets and register the `group.com.dimasike.currency` App Group. If changing identifiers, update `Project.swift` and `Modules/CurrencySupport/Sources/CurrencyStore.swift` together. Regenerate after changing a Tuist manifest or the dependency graph.
 
-No dependencies beyond Apple frameworks and the local `RateCore` package at the repository root. Tuist consumes its `RateCore` library product directly from `Package.swift`. Run core tests with `swift test` (Xcode 26 / Swift 6.2+).
+The standalone [`ExchangeRates`](Sources/ExchangeRates/README.md) package has no dependencies beyond Apple frameworks. Tuist consumes it from the repository root.
+
+```sh
+swift test
+```
+
+Run the `CurrencySupport` scheme’s tests in Xcode on an iOS 26 simulator for converter state and shared storage.
+
+## Localization
+
+English source catalogs use Xcode-generated typed accessors throughout the app and widgets. See [localization](Documentation/Localization.md) for adding languages and testing resource integration. The [independent review](Documentation/IndependentReview.md) records two remaining P2 storage recommendations.
 
 ## Provider decision (verified September 5, 2026)
 
@@ -27,7 +37,18 @@ No provider included requires credentials or a subscription. Crypto is periodica
 
 ## Architecture
 
-`RateCore` contains injectable HTTP/provider protocols, validated JSON/XML parsing, EUR-normalized quotes, Decimal conversion, an actor-based refresh service, atomic disk caching, and the shared keypad state machine. The app and widget extension link the same package.
+The app composes two independent feature modules. All app-specific modules are Tuist targets; reusable rate logic lives in its own Swift package.
+
+| Module | Responsibility | Entry point |
+| --- | --- | --- |
+| [ExchangeRates](Sources/ExchangeRates/README.md) | Conversion, providers, refresh, history, offline rates | `RateSnapshot`, `RateService`, `HistoryService`, `RateCache` |
+| [CurrencySupport](Modules/CurrencySupport/README.md) | Shared converter state, formatting, App Group integration | `ConverterState`, `CurrencyStore`, `CurrencyDisplay` |
+| [ConverterFeature](Modules/ConverterFeature/README.md) | Amount entry, currency list, refresh, widget guidance | `ConverterScreen` |
+| [RateDetailsFeature](Modules/RateDetailsFeature/README.md) | Rate provenance and historical charts | `RateDetailsScreen` |
+| [CurrencyWidgets](Widgets/README.md) | Home and Lock Screen widgets | Widget extension |
+| [App](App/README.md) | Service composition and feature navigation | App executable |
+
+Features depend on `CurrencySupport` and `ExchangeRates`, never on each other. The app supplies the converter’s details destination. Widget intents and feature implementation types remain internal. Public declarations have DocC comments; package decoder helpers remain internal and are tested with `@testable` imports. See [the architecture review](Documentation/Architecture.md) for decisions and verification commands.
 
 Frankfurter (with sequential ECB fallback) and Fawaz fetch concurrently. The primary fiat chain wins daily publication-date ties; newer saved daily data is preserved. Daily quotes are cached separately from Coinbase overlays. If Coinbase fails or lacks a pair, that currency immediately reverts to its daily quote, including while offline. Every quote retains its source, publication date and optional trade timestamp. Fiat/crypto conversions may combine daily fiat with intraday crypto; details disclose both sources.
 

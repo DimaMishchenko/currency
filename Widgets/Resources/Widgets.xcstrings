@@ -1,0 +1,246 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "openToLoad": {
+      "extractionState": "manual",
+      "comment": "Widgets interface: openToLoad.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open app to load rates"
+          }
+        }
+      }
+    },
+    "unavailable": {
+      "extractionState": "manual",
+      "comment": "Widgets interface: unavailable.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unavailable"
+          }
+        }
+      }
+    },
+    "openApp": {
+      "extractionState": "manual",
+      "comment": "Widgets interface: openApp.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open app"
+          }
+        }
+      }
+    },
+    "delete": {
+      "extractionState": "manual",
+      "comment": "Widgets interface: delete.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete"
+          }
+        }
+      }
+    },
+    "clear": {
+      "extractionState": "manual",
+      "comment": "Widgets interface: clear.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear"
+          }
+        }
+      }
+    },
+    "swap": {
+      "extractionState": "manual",
+      "comment": "Widgets interface: swap.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Swap"
+          }
+        }
+      }
+    },
+    "converter": {
+      "extractionState": "manual",
+      "comment": "Widgets interface: converter.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Converter"
+          }
+        }
+      }
+    },
+    "converterDescription": {
+      "extractionState": "manual",
+      "comment": "Widgets interface: converterDescription.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One amount, your currencies. Large adds a full keypad and up to eight rates."
+          }
+        }
+      }
+    },
+    "board": {
+      "extractionState": "manual",
+      "comment": "Widgets interface: board.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Currency board"
+          }
+        }
+      }
+    },
+    "boardDescription": {
+      "extractionState": "manual",
+      "comment": "Widgets interface: boardDescription.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Six currencies in medium, twelve in large. Follows your currency order."
+          }
+        }
+      }
+    },
+    "quickRate": {
+      "extractionState": "manual",
+      "comment": "Widgets interface: quickRate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quick rate"
+          }
+        }
+      }
+    },
+    "quickRateDescription": {
+      "extractionState": "manual",
+      "comment": "Widgets interface: quickRateDescription.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your first conversion on the Lock Screen."
+          }
+        }
+      }
+    },
+    "enterAmount": {
+      "extractionState": "manual",
+      "comment": "Widgets interface: enterAmount.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter amount"
+          }
+        }
+      }
+    },
+    "keyParameter": {
+      "extractionState": "manual",
+      "comment": "Widgets interface: keyParameter.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Key"
+          }
+        }
+      }
+    },
+    "ratesDate": {
+      "extractionState": "manual",
+      "comment": "Widgets interface: ratesDate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rates · %@"
+          }
+        }
+      }
+    },
+    "inlineConversion": {
+      "extractionState": "manual",
+      "comment": "Widgets interface: inlineConversion.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@ = %3$@ %4$@"
+          }
+        }
+      }
+    },
+    "conversionPair": {
+      "extractionState": "manual",
+      "comment": "Widgets interface: conversionPair.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@ → %3$@"
+          }
+        }
+      }
+    },
+    "additionalCurrencies": {
+      "extractionState": "manual",
+      "comment": "Widgets interface: additionalCurrencies.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+%lld"
+          }
+        }
+      }
+    },
+    "decimalSeparator": {
+      "extractionState": "manual",
+      "comment": "Widgets interface: decimalSeparator.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decimal separator"
+          }
+        }
+      }
+    },
+    "clearKey": {
+      "extractionState": "manual",
+      "comment": "Widgets interface: clearKey.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AC"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

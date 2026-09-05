@@ -1,0 +1,150 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "dailyUnavailable": {
+      "extractionState": "manual",
+      "comment": "Support interface: dailyUnavailable.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Can’t update daily rates. Showing saved rates."
+          }
+        }
+      }
+    },
+    "cryptoFallback": {
+      "extractionState": "manual",
+      "comment": "Support interface: cryptoFallback.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Some crypto rates use the daily fallback."
+          }
+        }
+      }
+    },
+    "historyUnsupported": {
+      "extractionState": "manual",
+      "comment": "Support interface: historyUnsupported.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "History is unavailable for this pair."
+          }
+        }
+      }
+    },
+    "historyUnavailable": {
+      "extractionState": "manual",
+      "comment": "Support interface: historyUnavailable.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "History is unavailable. Your converter still works with saved rates."
+          }
+        }
+      }
+    },
+    "historyCached": {
+      "extractionState": "manual",
+      "comment": "Support interface: historyCached.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Can’t update history. Showing the saved chart."
+          }
+        }
+      }
+    },
+    "historySaveFailed": {
+      "extractionState": "manual",
+      "comment": "Support interface: historySaveFailed.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "History loaded, but couldn’t be saved offline."
+          }
+        }
+      }
+    },
+    "dailyRates": {
+      "extractionState": "manual",
+      "comment": "Provider provenance template; arguments contain provider or timezone data.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · daily"
+          }
+        }
+      }
+    },
+    "dailyReference": {
+      "extractionState": "manual",
+      "comment": "Provider provenance template; arguments contain provider or timezone data.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · daily reference rates"
+          }
+        }
+      }
+    },
+    "monthlyReference": {
+      "extractionState": "manual",
+      "comment": "Provider provenance template; arguments contain provider or timezone data.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · monthly reference rates"
+          }
+        }
+      }
+    },
+    "dailyCloses": {
+      "extractionState": "manual",
+      "comment": "Provider provenance template; arguments contain provider or timezone data.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · daily closes"
+          }
+        }
+      }
+    },
+    "monthlyLastClose": {
+      "extractionState": "manual",
+      "comment": "Provider provenance template; arguments contain provider or timezone data.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · monthly last available close"
+          }
+        }
+      }
+    },
+    "sourceWithTimeZone": {
+      "extractionState": "manual",
+      "comment": "Provider provenance template; arguments contain provider or timezone data.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$@"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

@@ -1,0 +1,282 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "historyHeading": {
+      "extractionState": "manual",
+      "comment": "Details interface: historyHeading.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HISTORY"
+          }
+        }
+      }
+    },
+    "noHistory": {
+      "extractionState": "manual",
+      "comment": "Details interface: noHistory.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No history available"
+          }
+        }
+      }
+    },
+    "tryAnotherRange": {
+      "extractionState": "manual",
+      "comment": "Details interface: tryAnotherRange.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try another range or return when connected."
+          }
+        }
+      }
+    },
+    "maxExplanation": {
+      "extractionState": "manual",
+      "comment": "Details interface: maxExplanation.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Max shows all history available from this provider for this pair, grouped monthly. It may begin after the currency launched."
+          }
+        }
+      }
+    },
+    "cryptoExplanation": {
+      "extractionState": "manual",
+      "comment": "Details interface: cryptoExplanation.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chart shows completed daily Coinbase trades in USD. Missing trading days have no observations. Current conversion rates may use Fawaz daily fallback."
+          }
+        }
+      }
+    },
+    "fiatExplanation": {
+      "extractionState": "manual",
+      "comment": "Details interface: fiatExplanation.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Daily reference rates. Weekends and publication gaps may have no observations. History uses Frankfurter; the converter keeps its ECB fallback."
+          }
+        }
+      }
+    },
+    "done": {
+      "extractionState": "manual",
+      "comment": "Details interface: done.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        }
+      }
+    },
+    "historyRange": {
+      "extractionState": "manual",
+      "comment": "Details interface: historyRange.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "History range"
+          }
+        }
+      }
+    },
+    "chartAccessibility": {
+      "extractionState": "manual",
+      "comment": "Details interface: chartAccessibility.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@ to %3$@ history"
+          }
+        }
+      }
+    },
+    "unitConversion": {
+      "extractionState": "manual",
+      "comment": "Details interface: unitConversion.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 %1$@ in %2$@"
+          }
+        }
+      }
+    },
+    "lastTrade": {
+      "extractionState": "manual",
+      "comment": "Details interface: lastTrade.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last trade %@"
+          }
+        }
+      }
+    },
+    "savedAt": {
+      "extractionState": "manual",
+      "comment": "Details interface: savedAt.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved %@"
+          }
+        }
+      }
+    },
+    "week": {
+      "extractionState": "manual",
+      "comment": "Details interface: week.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1W"
+          }
+        }
+      }
+    },
+    "month": {
+      "extractionState": "manual",
+      "comment": "Details interface: month.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1M"
+          }
+        }
+      }
+    },
+    "quarter": {
+      "extractionState": "manual",
+      "comment": "Details interface: quarter.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3M"
+          }
+        }
+      }
+    },
+    "year": {
+      "extractionState": "manual",
+      "comment": "Details interface: year.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1Y"
+          }
+        }
+      }
+    },
+    "all": {
+      "extractionState": "manual",
+      "comment": "Details interface: all.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Max"
+          }
+        }
+      }
+    },
+    "weekAccessibility": {
+      "extractionState": "manual",
+      "comment": "Details interface: weekAccessibility.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One week"
+          }
+        }
+      }
+    },
+    "monthAccessibility": {
+      "extractionState": "manual",
+      "comment": "Details interface: monthAccessibility.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One month"
+          }
+        }
+      }
+    },
+    "quarterAccessibility": {
+      "extractionState": "manual",
+      "comment": "Details interface: quarterAccessibility.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Three months"
+          }
+        }
+      }
+    },
+    "yearAccessibility": {
+      "extractionState": "manual",
+      "comment": "Details interface: yearAccessibility.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One year"
+          }
+        }
+      }
+    },
+    "allAccessibility": {
+      "extractionState": "manual",
+      "comment": "Details interface: allAccessibility.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All available"
+          }
+        }
+      }
+    },
+    "chartDate": {
+      "extractionState": "manual",
+      "comment": "Details interface: chartDate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Date"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

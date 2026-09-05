@@ -1,0 +1,714 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "yourCurrenciesHeading": {
+      "extractionState": "manual",
+      "comment": "Converter interface: yourCurrenciesHeading.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YOUR CURRENCIES"
+          }
+        }
+      }
+    },
+    "reorderAccessibility": {
+      "extractionState": "manual",
+      "comment": "Converter interface: reorderAccessibility.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reorder or remove currencies"
+          }
+        }
+      }
+    },
+    "addCurrency": {
+      "extractionState": "manual",
+      "comment": "Converter interface: addCurrency.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add currency"
+          }
+        }
+      }
+    },
+    "connectToDownload": {
+      "extractionState": "manual",
+      "comment": "Converter interface: connectToDownload.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect to download rates"
+          }
+        }
+      }
+    },
+    "savedOffline": {
+      "extractionState": "manual",
+      "comment": "Converter interface: savedOffline.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved rates · available offline"
+          }
+        }
+      }
+    },
+    "appName": {
+      "extractionState": "manual",
+      "comment": "Converter interface: appName.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Currency"
+          }
+        }
+      }
+    },
+    "widgets": {
+      "extractionState": "manual",
+      "comment": "Converter interface: widgets.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Widgets"
+          }
+        }
+      }
+    },
+    "refreshRates": {
+      "extractionState": "manual",
+      "comment": "Converter interface: refreshRates.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refresh rates"
+          }
+        }
+      }
+    },
+    "manageCurrencies": {
+      "extractionState": "manual",
+      "comment": "Converter interface: manageCurrencies.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Manage currencies"
+          }
+        }
+      }
+    },
+    "aboutRates": {
+      "extractionState": "manual",
+      "comment": "Converter interface: aboutRates.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About these rates"
+          }
+        }
+      }
+    },
+    "options": {
+      "extractionState": "manual",
+      "comment": "Converter interface: options.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Options"
+          }
+        }
+      }
+    },
+    "baseAmountHeading": {
+      "extractionState": "manual",
+      "comment": "Converter interface: baseAmountHeading.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BASE AMOUNT"
+          }
+        }
+      }
+    },
+    "editing": {
+      "extractionState": "manual",
+      "comment": "Converter interface: editing.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editing"
+          }
+        }
+      }
+    },
+    "makeBaseHint": {
+      "extractionState": "manual",
+      "comment": "Converter interface: makeBaseHint.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Make this the base currency"
+          }
+        }
+      }
+    },
+    "detailsAndHistory": {
+      "extractionState": "manual",
+      "comment": "Converter interface: detailsAndHistory.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Details & history"
+          }
+        }
+      }
+    },
+    "useAsBase": {
+      "extractionState": "manual",
+      "comment": "Converter interface: useAsBase.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use as base"
+          }
+        }
+      }
+    },
+    "copyAmount": {
+      "extractionState": "manual",
+      "comment": "Converter interface: copyAmount.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy amount"
+          }
+        }
+      }
+    },
+    "remove": {
+      "extractionState": "manual",
+      "comment": "Converter interface: remove.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove"
+          }
+        }
+      }
+    },
+    "clear": {
+      "extractionState": "manual",
+      "comment": "Converter interface: clear.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear"
+          }
+        }
+      }
+    },
+    "doneEntering": {
+      "extractionState": "manual",
+      "comment": "Converter interface: doneEntering.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done entering amount"
+          }
+        }
+      }
+    },
+    "enterAmount": {
+      "extractionState": "manual",
+      "comment": "Converter interface: enterAmount.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter amount"
+          }
+        }
+      }
+    },
+    "deleteDigit": {
+      "extractionState": "manual",
+      "comment": "Converter interface: deleteDigit.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete digit"
+          }
+        }
+      }
+    },
+    "decimalSeparator": {
+      "extractionState": "manual",
+      "comment": "Converter interface: decimalSeparator.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decimal separator"
+          }
+        }
+      }
+    },
+    "dailyRateExplanation": {
+      "extractionState": "manual",
+      "comment": "Converter interface: dailyRateExplanation.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Daily reference rates, saved on your device. Every conversion uses the latest downloaded rates; bank fees aren’t included."
+          }
+        }
+      }
+    },
+    "lastChecked": {
+      "extractionState": "manual",
+      "comment": "Converter interface: lastChecked.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last checked"
+          }
+        }
+      }
+    },
+    "refreshNow": {
+      "extractionState": "manual",
+      "comment": "Converter interface: refreshNow.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refresh now"
+          }
+        }
+      }
+    },
+    "publicationDates": {
+      "extractionState": "manual",
+      "comment": "Converter interface: publicationDates.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Publication dates"
+          }
+        }
+      }
+    },
+    "homeScreen": {
+      "extractionState": "manual",
+      "comment": "Converter interface: homeScreen.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Home screen"
+          }
+        }
+      }
+    },
+    "widgetSharingExplanation": {
+      "extractionState": "manual",
+      "comment": "Converter interface: widgetSharingExplanation.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Widgets share this amount and currency list. The large widget includes a keypad. iOS controls widget input processing and refresh timing."
+          }
+        }
+      }
+    },
+    "sources": {
+      "extractionState": "manual",
+      "comment": "Converter interface: sources.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sources"
+          }
+        }
+      }
+    },
+    "providerExplanation": {
+      "extractionState": "manual",
+      "comment": "Converter interface: providerExplanation.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frankfurter v2 for daily fiat rates, with direct ECB fallback. Fawaz supplies daily crypto and backup rates. Coinbase public market data is checked every 30 minutes while active, falling back to daily crypto rates if unavailable. iOS schedules widget refreshes. No accounts or API keys."
+          }
+        }
+      }
+    },
+    "done": {
+      "extractionState": "manual",
+      "comment": "Converter interface: done.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        }
+      }
+    },
+    "crypto": {
+      "extractionState": "manual",
+      "comment": "Converter interface: crypto.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crypto"
+          }
+        }
+      }
+    },
+    "currencies": {
+      "extractionState": "manual",
+      "comment": "Converter interface: currencies.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Currencies"
+          }
+        }
+      }
+    },
+    "unavailable": {
+      "extractionState": "manual",
+      "comment": "Converter interface: unavailable.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unavailable"
+          }
+        }
+      }
+    },
+    "notDownloaded": {
+      "extractionState": "manual",
+      "comment": "Converter interface: notDownloaded.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not downloaded"
+          }
+        }
+      }
+    },
+    "baseCurrency": {
+      "extractionState": "manual",
+      "comment": "Converter interface: baseCurrency.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Base currency"
+          }
+        }
+      }
+    },
+    "reorderHint": {
+      "extractionState": "manual",
+      "comment": "Converter interface: reorderHint.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag to reorder. Your widgets follow the same order."
+          }
+        }
+      }
+    },
+    "yourCurrencies": {
+      "extractionState": "manual",
+      "comment": "Converter interface: yourCurrencies.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your currencies"
+          }
+        }
+      }
+    },
+    "widgetGuideHeadline": {
+      "extractionState": "manual",
+      "comment": "Converter interface: widgetGuideHeadline.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your currencies, one glance away."
+          }
+        }
+      }
+    },
+    "widgetGuideIntroduction": {
+      "extractionState": "manual",
+      "comment": "Converter interface: widgetGuideIntroduction.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Every widget follows your amount and currency order. Put your most-used currencies first."
+          }
+        }
+      }
+    },
+    "homeScreenGuide": {
+      "extractionState": "manual",
+      "comment": "Converter interface: homeScreenGuide.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Home Screen"
+          }
+        }
+      }
+    },
+    "converter": {
+      "extractionState": "manual",
+      "comment": "Converter interface: converter.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Converter"
+          }
+        }
+      }
+    },
+    "converterWidgetGuide": {
+      "extractionState": "manual",
+      "comment": "Converter interface: converterWidgetGuide.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A quiet pair in small, three rates in medium. Large fits up to eight rates and a complete numeric keypad."
+          }
+        }
+      }
+    },
+    "currencyBoard": {
+      "extractionState": "manual",
+      "comment": "Converter interface: currencyBoard.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Currency board"
+          }
+        }
+      }
+    },
+    "boardWidgetGuide": {
+      "extractionState": "manual",
+      "comment": "Converter interface: boardWidgetGuide.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More currencies, more space. Up to six in medium or twelve in large, with a layout that follows your list."
+          }
+        }
+      }
+    },
+    "lockScreen": {
+      "extractionState": "manual",
+      "comment": "Converter interface: lockScreen.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lock Screen"
+          }
+        }
+      }
+    },
+    "quickRateGuide": {
+      "extractionState": "manual",
+      "comment": "Converter interface: quickRateGuide.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quick rate · inline or rectangular"
+          }
+        }
+      }
+    },
+    "quickRateExplanation": {
+      "extractionState": "manual",
+      "comment": "Converter interface: quickRateExplanation.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your first currency, always easy to find. Tap to open the converter."
+          }
+        }
+      }
+    },
+    "addWidget": {
+      "extractionState": "manual",
+      "comment": "Converter interface: addWidget.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a widget"
+          }
+        }
+      }
+    },
+    "addWidgetInstructions": {
+      "extractionState": "manual",
+      "comment": "Converter interface: addWidgetInstructions.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touch and hold your Home Screen, choose Edit → Add Widget, then search for Currency. Swipe to choose a size."
+          }
+        }
+      }
+    },
+    "lockScreenInstructions": {
+      "extractionState": "manual",
+      "comment": "Converter interface: lockScreenInstructions.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For Lock Screen widgets, touch and hold your Lock Screen and choose Customize."
+          }
+        }
+      }
+    },
+    "widgetRefreshExplanation": {
+      "extractionState": "manual",
+      "comment": "Converter interface: widgetRefreshExplanation.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fiat rates are daily. Crypto checks Coinbase every 30 minutes, with daily fallback. Rates are cached offline. iOS controls widget refresh timing; keypad updates may take a moment."
+          }
+        }
+      }
+    },
+    "selectionSaveFailed": {
+      "extractionState": "manual",
+      "comment": "Converter interface: selectionSaveFailed.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your selection couldn’t be saved."
+          }
+        }
+      }
+    },
+    "rateSaveFailed": {
+      "extractionState": "manual",
+      "comment": "Converter interface: rateSaveFailed.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rates updated, but couldn’t be saved for offline use."
+          }
+        }
+      }
+    },
+    "sourceAccessibility": {
+      "extractionState": "manual",
+      "comment": "Converter interface: sourceAccessibility.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Source currency, %@"
+          }
+        }
+      }
+    },
+    "editAmountAccessibility": {
+      "extractionState": "manual",
+      "comment": "Converter interface: editAmountAccessibility.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit amount in %@"
+          }
+        }
+      }
+    },
+    "conversionAccessibility": {
+      "extractionState": "manual",
+      "comment": "Converter interface: conversionAccessibility.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$@"
+          }
+        }
+      }
+    },
+    "detailsAccessibility": {
+      "extractionState": "manual",
+      "comment": "Converter interface: detailsAccessibility.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ details and history"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

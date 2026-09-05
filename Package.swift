@@ -2,16 +2,17 @@
 import PackageDescription
 
 let package = Package(
-  name: "RateCore",
+  name: "ExchangeRates",
   platforms: [
     .macOS(.v14),
-    .iOS(.v26)
+    .iOS(.v16)
   ],
   products: [
-    .library(name: "RateCore", targets: ["RateCore"])
+    .library(name: "ExchangeRates", targets: ["ExchangeRates"]),
+    .library(name: "ExchangeRatesDynamic", type: .dynamic, targets: ["ExchangeRates"])
   ],
   targets: [
-    .target(name: "RateCore"),
-    .testTarget(name: "RateCoreTests", dependencies: ["RateCore"])
+    .target(name: "ExchangeRates", exclude: ["README.md"]),
+    .testTarget(name: "ExchangeRatesTests", dependencies: ["ExchangeRates"])
   ]
 )
