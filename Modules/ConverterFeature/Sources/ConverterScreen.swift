@@ -198,7 +198,7 @@ public struct ConverterScreen<Details: View>: View {
           picker = .source
         } label: {
           HStack(spacing: 9) {
-            Text(CurrencyDisplay.flag(model.input.source)).font(.system(size: 23))
+            CurrencyIcon(model.input.source, size: 23)
               .matchedGeometryEffect(id: "flag-" + model.input.source, in: currencyMotion)
               .accessibilityHidden(true)
             Text(model.input.source).font(.system(.subheadline, weight: .semibold))
@@ -258,7 +258,7 @@ public struct ConverterScreen<Details: View>: View {
         withAnimation(motion) { model.updateInput { $0.useAsBase(code, snapshot: model.snapshot) } }
       } label: {
         HStack(spacing: 13) {
-          Text(CurrencyDisplay.flag(code)).font(.system(size: 28)).frame(width: 38)
+          CurrencyIcon(code, size: 28).frame(width: 38)
             .matchedGeometryEffect(id: "flag-" + code, in: currencyMotion).accessibilityHidden(true)
           VStack(alignment: .leading, spacing: 4) {
             Text(code).font(.system(.body, weight: .medium))
@@ -321,8 +321,11 @@ public struct ConverterScreen<Details: View>: View {
       if editingAmount {
         VStack(spacing: 4) {
           HStack {
-            Text(verbatim: "\(CurrencyDisplay.flag(model.input.source))  \(model.input.source)")
-              .font(.caption.weight(.semibold))
+            HStack(spacing: 6) {
+              CurrencyIcon(model.input.source, size: 14)
+              Text(verbatim: model.input.source)
+            }
+            .font(.caption.weight(.semibold))
             Spacer()
             Button(.Converter.clear) { key("AC") }.font(.caption)
               .frame(minWidth: 44, minHeight: 44)
@@ -429,7 +432,7 @@ public struct ConverterScreen<Details: View>: View {
         }
         Section(.Converter.publicationDates) {
           ForEach([model.input.source] + model.input.destinations, id: \.self) { code in
-            LabeledContent("\(CurrencyDisplay.flag(code)) \(code)") {
+            LabeledContent {
               VStack(alignment: .trailing, spacing: 3) {
                 Text(
                   model.snapshot.quotes[code]
@@ -443,6 +446,11 @@ public struct ConverterScreen<Details: View>: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
               }
+            } label: {
+              HStack(spacing: 6) {
+                CurrencyIcon(code, size: 20)
+                Text(verbatim: code)
+              }
             }
           }
         }
@@ -455,6 +463,12 @@ public struct ConverterScreen<Details: View>: View {
           Text(
             .Converter.providerExplanation
           )
+          Link(destination: URL(string: "https://github.com/0xa3k5/web3icons")!) {
+            Text(.Converter.cryptoIconAttribution)
+          }
+          Link(destination: URL(string: "https://github.com/spothq/cryptocurrency-icons")!) {
+            Text(.Converter.dogecoinIconAttribution)
+          }
         }
       }
       .navigationTitle(.Converter.aboutRates).navigationBarTitleDisplayMode(.inline)

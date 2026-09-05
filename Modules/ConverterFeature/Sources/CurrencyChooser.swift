@@ -33,7 +33,7 @@ struct CurrencyChooser: View {
                 dismiss()
               } label: {
                 HStack(spacing: 14) {
-                  Text(CurrencyDisplay.flag(code)).font(.title2).accessibilityHidden(true)
+                  CurrencyIcon(code)
                   VStack(alignment: .leading, spacing: 3) {
                     Text(code).font(.headline)
                     Text(CurrencyDisplay.name(code, locale: locale)).font(.caption)

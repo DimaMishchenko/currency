@@ -79,3 +79,9 @@ Before shipping, validate widget rapid taps on a physical device, Dynamic Type, 
 ## Visual gallery
 
 Open `Documentation/Gallery.html` for the three actual WidgetKit sizes and the keypad, currency picker, management, and rate-details screens. Widget screenshots were captured using simulator ad-hoc signing so App Group sharing works. For simulator integration builds, keep code signing enabled (use `CODE_SIGN_IDENTITY=-`); `CODE_SIGNING_ALLOWED=NO` is sufficient for compile checks but strips the entitlements needed for shared storage.
+
+### Crypto icons
+
+The 21 cryptocurrency badges other than DOGE use the colored background variant of [Web3 Icons](https://github.com/0xa3k5/web3icons), © 2024 0xa3k5, under the [MIT license](Modules/CurrencySupport/Resources/Web3Icons-LICENSE.txt). DOGE uses the simpler gold-circle symbol from [Cryptocurrency Icons](https://github.com/spothq/cryptocurrency-icons), under [CC0 1.0](Modules/CurrencySupport/Resources/CryptocurrencyIcons-LICENSE.txt). All 22 SVG assets are bundled locally for offline use in the app and widgets, alongside native fiat flag emoji. Attribution is also available in the info screen’s Sources section. See [asset provenance](Documentation/Web3Icons.md) for the pinned upstream revision.
+
+Metal badges (Au, Ag, Pt, Pd) are original SwiftUI artwork with distinct muted colors, a static diagonal satin highlight, and a subtle rim. They replace medal and white-circle emoji throughout the app and widgets.

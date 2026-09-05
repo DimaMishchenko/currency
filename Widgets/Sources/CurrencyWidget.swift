@@ -54,8 +54,11 @@ struct CurrencyWidgetView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
       HStack {
-        Text(verbatim: "\(CurrencyDisplay.flag(entry.input.source)) \(entry.input.source)")
-          .font(.caption.weight(.semibold))
+        HStack(spacing: 5) {
+          CurrencyIcon(entry.input.source, size: 16)
+          Text(verbatim: entry.input.source)
+        }
+        .font(.caption.weight(.semibold))
         Spacer()
         if family != .systemSmall {
           Text(CurrencyDisplay.inputAmount(entry.input.amount, locale: locale))
@@ -74,8 +77,11 @@ struct CurrencyWidgetView: View {
       ) {
         ForEach(targets, id: \.self) { code in
           HStack {
-            Text(verbatim: "\(CurrencyDisplay.flag(code)) \(code)")
-              .font(.system(size: columns == 2 ? 10 : 12, weight: .medium))
+            HStack(spacing: 5) {
+              CurrencyIcon(code, size: 16)
+              Text(verbatim: code)
+            }
+            .font(.system(size: columns == 2 ? 10 : 12, weight: .medium))
             Spacer(minLength: 4)
             Text(
               CurrencyDisplay.format(

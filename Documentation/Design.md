@@ -1,6 +1,6 @@
 # Currency / the quiet ledger
 
-The screen is a personal currency list. One source amount leads; every row answers the same question in another currency. Warm paper in light mode, near-black olive in dark mode. Color comes primarily from flag emoji. Crypto uses a coin rather than a misleading country flag.
+The screen is a personal currency list. One source amount leads; every row answers the same question in another currency. Warm paper in light mode, near-black olive in dark mode. Color comes primarily from flag emoji. Crypto uses bundled, full-color circular badges (Web3 Icons; DOGE from Cryptocurrency Icons), sized alongside the native fiat flag emoji.
 
 ## Composition
 
@@ -21,3 +21,5 @@ Touch targets in the app are at least 44 points. Currency flags are decorative f
 ## Verification boundaries
 
 The app and widget extension compile with Swift 6. Tests cover migration of previously saved input, ordered destinations, list normalization, and preservation of converted value when promoting a currency. Simulator checks cover light/dark layouts, numeric input, promotion, and list management. Frame rate is not profiled on physical hardware; no 60fps claim is made. Widget input remains subject to iOS scheduling.
+
+Metals use original Au / Ag / Pt / Pd badges with muted gold, silver, green-gray, and lavender-gray backgrounds. A static diagonal highlight and fine rim suggest satin metal without animation or glare over the lettering.

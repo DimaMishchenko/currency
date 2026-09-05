@@ -708,6 +708,30 @@
           }
         }
       }
+    },
+    "cryptoIconAttribution": {
+      "comment": "Credit and source link for bundled cryptocurrency artwork.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crypto icons except DOGE by Web3 Icons · MIT License · © 2024 0xa3k5"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "dogecoinIconAttribution": {
+      "extractionState": "manual",
+      "comment": "Credit and source link for the separately sourced Dogecoin icon.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DOGE icon by Cryptocurrency Icons · CC0 1.0"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

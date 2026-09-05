@@ -14,7 +14,7 @@ struct ManageCurrencies: View {
             Label {
               Text(code).font(.body.weight(.medium))
             } icon: {
-              Text(CurrencyDisplay.flag(code))
+              CurrencyIcon(code)
             }
           }
           .onDelete { offsets in

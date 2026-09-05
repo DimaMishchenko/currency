@@ -55,7 +55,7 @@ public struct RateDetailsScreen: View {
       ScrollView {
         VStack(alignment: .leading, spacing: 24) {
           HStack(spacing: 12) {
-            Text(CurrencyDisplay.flag(code)).font(.system(size: 36))
+            CurrencyIcon(code, size: 36)
             VStack(alignment: .leading, spacing: 4) {
               Text(CurrencyDisplay.name(code, locale: locale)).font(.title2)
               Text(.Details.unitConversion(code, quote)).font(.subheadline)
