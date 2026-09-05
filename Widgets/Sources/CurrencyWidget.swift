@@ -52,43 +52,44 @@ struct CurrencyWidgetView: View {
   private var columns: Int { (board || family == .systemLarge) && targets.count > 3 ? 2 : 1 }
   private var keyHeight: CGFloat { targets.count > 6 ? 36 : 42 }
   var body: some View {
-    VStack(alignment: .leading, spacing: 8) {
+    VStack(alignment: .leading, spacing: AppStyle.Space.small) {
       HStack {
-        HStack(spacing: 5) {
+        HStack(spacing: AppStyle.Space.xs) {
           CurrencyIcon(entry.input.source, size: 16)
           Text(verbatim: entry.input.source)
         }
-        .font(.caption.weight(.semibold))
+        .font(AppStyle.font(.caption).weight(.semibold))
         Spacer()
         if family != .systemSmall {
           Text(CurrencyDisplay.inputAmount(entry.input.amount, locale: locale))
-            .font(.system(.title3, design: .rounded, weight: .medium))
+            .font(AppStyle.font(.title3, weight: .medium))
             .monospacedDigit().lineLimit(1).minimumScaleFactor(0.5)
         }
       }
       if family == .systemSmall {
         Text(CurrencyDisplay.inputAmount(entry.input.amount, locale: locale))
-          .font(.system(.title2, design: .rounded, weight: .light))
+          .font(AppStyle.font(.title2, weight: .light))
           .lineLimit(1).minimumScaleFactor(0.4)
       }
       LazyVGrid(
-        columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: columns),
-        spacing: board ? 10 : 5
+        columns: Array(
+          repeating: GridItem(.flexible(), spacing: AppStyle.Space.large), count: columns),
+        spacing: board ? AppStyle.Space.small : AppStyle.Space.xs
       ) {
         ForEach(targets, id: \.self) { code in
           HStack {
-            HStack(spacing: 5) {
+            HStack(spacing: AppStyle.Space.xs) {
               CurrencyIcon(code, size: 16)
               Text(verbatim: code)
             }
-            .font(.system(size: columns == 2 ? 10 : 12, weight: .medium))
-            Spacer(minLength: 4)
+            .font(AppStyle.font(columns == 2 ? .caption2 : .caption, weight: .medium))
+            Spacer(minLength: AppStyle.Space.xs)
             Text(
               CurrencyDisplay.format(
                 entry.snapshot.convert(entry.input.decimal, from: entry.input.source, to: code),
                 code: code, locale: locale)
             )
-            .font(.system(size: columns == 2 ? 14 : 19, weight: .medium, design: .rounded))
+            .font(AppStyle.font(columns == 2 ? .subheadline : .title3, weight: .medium))
             .monospacedDigit().lineLimit(1).minimumScaleFactor(0.4)
             .contentTransition(.numericText())
           }
@@ -105,16 +106,16 @@ struct CurrencyWidgetView: View {
                 .map { CurrencyDisplay.publicationDate($0.published, locale: locale) }
                 ?? String(localized: .Widgets.unavailable))
         )
-        .font(.system(size: 9)).foregroundStyle(.secondary)
+        .font(AppStyle.font(.caption2)).foregroundStyle(.secondary)
         Spacer(minLength: 0)
         if entry.input.destinations.count > limit {
           Text(.Widgets.additionalCurrencies(entry.input.destinations.count - limit))
-            .font(.system(size: 9))
+            .font(AppStyle.font(.caption2))
             .foregroundStyle(.secondary)
         }
       }
       if family == .systemLarge && !board {
-        Grid(horizontalSpacing: 4, verticalSpacing: 4) {
+        Grid(horizontalSpacing: AppStyle.Space.xs, verticalSpacing: AppStyle.Space.xs) {
           ForEach(
             [
               ["1", "2", "3", "AC"], ["4", "5", "6", "⌫"], ["7", "8", "9", "⇅"],
@@ -139,7 +140,7 @@ struct CurrencyWidgetView: View {
                         ? String(localized: .Widgets.clearKey)
                         : CurrencyDisplay.inputAmount(key, locale: locale)
                     )
-                    .font(.system(size: key == "AC" ? 12 : 19, design: .rounded))
+                    .font(AppStyle.font(key == "AC" ? .caption : .title3))
                     .frame(maxWidth: .infinity).frame(height: keyHeight)
                     .background(.primary.opacity(0.055), in: .rect(cornerRadius: 10))
                     .contentShape(Rectangle())
@@ -161,6 +162,7 @@ struct CurrencyWidgetView: View {
         .buttonStyle(.plain)
       }
     }
+    .tint(Color(uiColor: .label))
     .containerBackground(for: .widget) { Color(.systemBackground) }
     .widgetURL(URL(string: "currency://convert"))
   }
@@ -204,14 +206,14 @@ struct QuickRateView: View {
             CurrencyDisplay.inputAmount(entry.input.amount, locale: locale), entry.input.source,
             amount, target))
       } else {
-        VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
           Text(
             .Widgets.conversionPair(
               CurrencyDisplay.inputAmount(entry.input.amount, locale: locale), entry.input.source,
               target)
           )
-          .font(.caption)
-          Text(amount).font(.system(.title2, design: .rounded, weight: .semibold))
+          .font(AppStyle.font(.caption))
+          Text(amount).font(AppStyle.font(.title2, weight: .semibold))
             .minimumScaleFactor(0.4)
           Text(
 
@@ -220,11 +222,12 @@ struct QuickRateView: View {
                 .map { CurrencyDisplay.publicationDate($0.published, locale: locale) }
                 ?? String(localized: .Widgets.openApp))
           )
-          .font(.system(size: 9))
+          .font(AppStyle.font(.caption2))
         }
       }
     }
-    .lineLimit(1).containerBackground(for: .widget) { Color.clear }
+    .lineLimit(1).tint(Color(uiColor: .label))
+    .containerBackground(for: .widget) { Color.clear }
     .widgetURL(URL(string: "currency://convert"))
   }
 }

@@ -12,7 +12,7 @@ struct ManageCurrencies: View {
         Section {
           ForEach(model.input.destinations, id: \.self) { code in
             Label {
-              Text(code).font(.body.weight(.medium))
+              Text(code).font(AppStyle.font(.body).weight(.medium))
             } icon: {
               CurrencyIcon(code)
             }

@@ -24,22 +24,22 @@ struct CurrencyChooser: View {
             choose(code)
             dismiss()
           } label: {
-            HStack(spacing: 14) {
+            HStack(spacing: AppStyle.Space.large) {
               CurrencyIcon(code)
-              VStack(alignment: .leading, spacing: 3) {
-                Text(code).font(.headline)
-                Text(CurrencyDisplay.name(code, locale: locale)).font(.caption)
+              VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
+                Text(code).font(AppStyle.font(.headline))
+                Text(CurrencyDisplay.name(code, locale: locale)).font(AppStyle.font(.caption))
                   .foregroundStyle(.secondary)
               }
               Spacer()
               if selected.contains(code) {
                 Image(systemName: "checkmark").foregroundStyle(.secondary)
               } else if !available.contains(code) {
-                Text(.Converter.unavailable).font(.caption2)
+                Text(.Converter.unavailable).font(AppStyle.font(.caption2))
                   .foregroundStyle(.secondary)
               }
             }
-            .padding(.vertical, 4)
+            .padding(.vertical, AppStyle.Space.xs)
           }
           .foregroundStyle(.primary).disabled(selected.contains(code))
         }
@@ -55,7 +55,7 @@ struct CurrencyChooser: View {
           }
           .pickerStyle(.segmented)
           .padding(.horizontal)
-          .padding(.vertical, 8)
+          .padding(.vertical, AppStyle.Space.small)
           .background(.bar)
         }
       }

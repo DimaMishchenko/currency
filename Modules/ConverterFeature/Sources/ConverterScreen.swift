@@ -36,16 +36,11 @@ public struct ConverterScreen<Details: View>: View {
   @Namespace private var keypadMotion
   @Environment(\.scenePhase) private var scenePhase
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
-  @Environment(\.colorScheme) private var colorScheme
+  @Environment(AppAppearance.self) private var appearance
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @ScaledMetric(relativeTo: .largeTitle) private var amountSize = 68
-  private var canvas: Color {
-    colorScheme == .dark
-      ? Color(red: 0.065, green: 0.073, blue: 0.063) : Color(red: 0.97, green: 0.965, blue: 0.947)
-  }
-  private var accent: Color {
-    colorScheme == .dark
-      ? Color(red: 0.79, green: 0.91, blue: 0.56) : Color(red: 0.3, green: 0.39, blue: 0.13)
-  }
+  @ScaledMetric(relativeTo: .largeTitle) private var editingAmountSize = 48
+  private var accent: Color { appearance.accent }
   private var motion: Animation? {
     reduceMotion ? nil : .spring(response: 0.42, dampingFraction: 0.86)
   }
@@ -58,20 +53,21 @@ public struct ConverterScreen<Details: View>: View {
       ScrollView {
         VStack(spacing: 0) {
           header
-          source.padding(.top, editingAmount ? 12 : 22).padding(.bottom, editingAmount ? 12 : 20)
-          HStack {
+          source.padding(.top, editingAmount ? AppStyle.Space.medium : AppStyle.Space.large)
+            .padding(.bottom, editingAmount ? AppStyle.Space.medium : AppStyle.Space.large)
+          adaptiveLayout {
             Text(.Converter.yourCurrenciesHeading)
-              .font(.system(size: 10, weight: .semibold)).tracking(1.8)
+              .font(AppStyle.font(.caption2, weight: .semibold)).tracking(2)
             Text(
               CurrencyDisplay.inputAmount(
                 String(format: "%02d", model.input.destinations.count), locale: locale)
             )
-            .font(.system(size: 10, design: .monospaced)).foregroundStyle(accent)
-            Spacer()
+            .font(.system(.caption2, design: .monospaced)).foregroundStyle(accent)
+            if !dynamicTypeSize.isAccessibilitySize { Spacer() }
             Button {
               showManage = true
             } label: {
-              Image(systemName: "slider.horizontal.3").frame(width: 44, height: 44)
+              Image(systemName: "slider.horizontal.3").frame(minWidth: 44, minHeight: 44)
             }
             .accessibilityLabel(.Converter.reorderAccessibility)
           }
@@ -80,15 +76,16 @@ public struct ConverterScreen<Details: View>: View {
           LazyVStack(spacing: 0) {
             ForEach(model.input.destinations, id: \.self) { code in
               destinationRow(code)
-              Divider().padding(.leading, 51)
+              Divider().padding(.leading, AppStyle.Space.spacious)
             }
           }
           Button {
             picker = .add
           } label: {
-            HStack(spacing: 12) {
-              Image(systemName: "plus").font(.system(size: 14, weight: .medium)).frame(width: 38)
-              Text(.Converter.addCurrency).font(.subheadline)
+            HStack(spacing: AppStyle.Space.medium) {
+              Image(systemName: "plus").font(AppStyle.font(.subheadline, weight: .medium))
+                .frame(width: 36)
+              Text(.Converter.addCurrency).font(AppStyle.font(.subheadline))
               Spacer()
             }
             .foregroundStyle(.secondary).frame(minHeight: 62).contentShape(Rectangle())
@@ -97,25 +94,27 @@ public struct ConverterScreen<Details: View>: View {
           Button {
             showInfo = true
           } label: {
-            HStack(spacing: 6) {
+            HStack(spacing: AppStyle.Space.small) {
               Circle().fill(model.warning == nil ? accent : .orange).frame(width: 4, height: 4)
               Text(
                 model.snapshot.quotes.isEmpty
                   ? .Converter.connectToDownload : .Converter.savedOffline)
-              Image(systemName: "arrow.up.right").font(.system(size: 8, weight: .medium))
+              Image(systemName: "arrow.up.right").font(AppStyle.font(.caption2, weight: .medium))
             }
-            .font(.caption2).foregroundStyle(.secondary).frame(minHeight: 44)
+            .font(AppStyle.font(.caption2)).foregroundStyle(.secondary).frame(minHeight: 44)
           }
-          .buttonStyle(.plain).padding(.top, 12)
+          .buttonStyle(.plain).padding(.top, AppStyle.Space.medium)
           if let warning = model.warning {
-            Text(warning).font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center)
-              .padding(.bottom, 10)
+            Text(warning).font(AppStyle.font(.caption)).foregroundStyle(.secondary)
+              .multilineTextAlignment(.center)
+              .padding(.bottom, AppStyle.Space.small)
           }
         }
-        .padding(.horizontal, 26).padding(.top, 8).frame(maxWidth: 580).frame(maxWidth: .infinity)
+        .padding(.horizontal, AppStyle.Space.large).padding(.top, AppStyle.Space.small)
+        .frame(maxWidth: 580).frame(maxWidth: .infinity)
       }
       .scrollBounceBehavior(.basedOnSize)
-      .background(canvas.ignoresSafeArea())
+      .background(Color(uiColor: .systemBackground).ignoresSafeArea())
       .safeAreaInset(edge: .bottom, spacing: 0) { inputDock }
       .toolbar(.hidden, for: .navigationBar)
       .sheet(item: $picker) { purpose in
@@ -159,51 +158,61 @@ public struct ConverterScreen<Details: View>: View {
     }
     .tint(accent)
   }
+  private var adaptiveLayout: AnyLayout {
+    dynamicTypeSize.isAccessibilitySize
+      ? AnyLayout(VStackLayout(alignment: .leading, spacing: AppStyle.Space.small))
+      : AnyLayout(HStackLayout())
+  }
   private var header: some View {
-    HStack {
-      HStack(spacing: 8) {
-        Image(systemName: "arrow.up.right").font(.system(size: 14, weight: .semibold))
-          .foregroundStyle(accent)
+    adaptiveLayout {
+      HStack(spacing: AppStyle.Space.small) {
+        if !dynamicTypeSize.isAccessibilitySize {
+          Image(systemName: "arrow.up.right").font(AppStyle.font(.subheadline, weight: .semibold))
+            .foregroundStyle(accent)
+        }
         Text(.Converter.appName)
-          .font(.system(.title3, design: .rounded, weight: .semibold))
+          .font(AppStyle.font(.title3, weight: .semibold))
       }
-      Spacer()
-      Button {
-        showWidgets = true
-      } label: {
-        Image(systemName: "square.grid.2x2").frame(width: 44, height: 44)
-      }
-      .buttonStyle(.plain).glassEffect(.regular.interactive())
-      .accessibilityLabel(.Converter.widgets)
-      Menu {
-        Button(.Converter.refreshRates, systemImage: "arrow.clockwise") {
-          Task { await model.refresh(force: true) }
+      if !dynamicTypeSize.isAccessibilitySize { Spacer() }
+      HStack {
+        Button {
+          showWidgets = true
+        } label: {
+          Image(systemName: "square.grid.2x2").frame(minWidth: 44, minHeight: 44)
         }
-        .disabled(model.refreshing)
-        Button(.Converter.manageCurrencies, systemImage: "slider.horizontal.3") {
-          showManage = true
+        .buttonStyle(.plain).glassEffect(.regular.interactive())
+        .accessibilityLabel(.Converter.widgets)
+        Menu {
+          Button(.Converter.refreshRates, systemImage: "arrow.clockwise") {
+            Task { await model.refresh(force: true) }
+          }
+          .disabled(model.refreshing)
+          Button(.Converter.manageCurrencies, systemImage: "slider.horizontal.3") {
+            showManage = true
+          }
+          Button(.Converter.aboutRates, systemImage: "info.circle") { showInfo = true }
+        } label: {
+          Image(systemName: "ellipsis").font(AppStyle.font(.headline))
+            .frame(minWidth: 44, minHeight: 44)
         }
-        Button(.Converter.aboutRates, systemImage: "info.circle") { showInfo = true }
-      } label: {
-        Image(systemName: "ellipsis").font(.headline).frame(width: 44, height: 44)
+        .buttonStyle(.plain).glassEffect(.regular.interactive())
+        .accessibilityLabel(.Converter.options)
       }
-      .buttonStyle(.plain).glassEffect(.regular.interactive())
-      .accessibilityLabel(.Converter.options)
     }
   }
   private var source: some View {
-    VStack(alignment: .leading, spacing: 15) {
-      HStack {
+    VStack(alignment: .leading, spacing: AppStyle.Space.large) {
+      adaptiveLayout {
         Button {
           picker = .source
         } label: {
-          HStack(spacing: 9) {
+          HStack(spacing: AppStyle.Space.small) {
             CurrencyIcon(model.input.source, size: 23)
               .matchedGeometryEffect(id: "flag-" + model.input.source, in: currencyMotion)
               .accessibilityHidden(true)
-            Text(model.input.source).font(.system(.subheadline, weight: .semibold))
+            Text(model.input.source).font(AppStyle.font(.subheadline, weight: .semibold))
               .matchedGeometryEffect(id: model.input.source, in: currencyMotion)
-            Image(systemName: "chevron.down").font(.system(size: 9, weight: .bold))
+            Image(systemName: "chevron.down").font(AppStyle.font(.caption2, weight: .bold))
               .foregroundStyle(.secondary)
           }
           .frame(minHeight: 44).contentShape(Rectangle())
@@ -211,20 +220,21 @@ public struct ConverterScreen<Details: View>: View {
         .buttonStyle(.plain)
         .accessibilityLabel(
           .Converter.sourceAccessibility(CurrencyDisplay.name(model.input.source, locale: locale)))
-        Spacer()
-        Text(.Converter.baseAmountHeading).font(.system(size: 9, weight: .medium))
-          .tracking(1.5)
+        if !dynamicTypeSize.isAccessibilitySize { Spacer() }
+        Text(.Converter.baseAmountHeading).font(AppStyle.font(.caption2, weight: .medium))
+          .tracking(2)
           .foregroundStyle(.secondary)
       }
       Button {
         replaceOnNextDigit = true
         withAnimation(motion) { editingAmount = true }
       } label: {
-        HStack(alignment: .firstTextBaseline, spacing: 6) {
+        HStack(alignment: .firstTextBaseline, spacing: AppStyle.Space.small) {
           Text(amountLabel)
             .font(
               .system(
-                size: min(amountSize, editingAmount ? 56 : 110), weight: .light, design: .rounded)
+                size: editingAmount ? editingAmountSize : amountSize, weight: .light,
+                design: .rounded)
             )
             .tracking(-3).lineLimit(1).minimumScaleFactor(0.25).contentTransition(.numericText())
           if editingAmount {
@@ -239,11 +249,12 @@ public struct ConverterScreen<Details: View>: View {
       .accessibilityLabel(.Converter.editAmountAccessibility(model.input.source))
       .accessibilityValue(amountLabel)
       HStack {
-        Text(CurrencyDisplay.name(model.input.source, locale: locale)).font(.subheadline)
+        Text(CurrencyDisplay.name(model.input.source, locale: locale))
+          .font(AppStyle.font(.subheadline))
           .foregroundStyle(.secondary)
         Spacer()
         if editingAmount {
-          Text(.Converter.editing).font(.caption2).foregroundStyle(accent)
+          Text(.Converter.editing).font(AppStyle.font(.caption2)).foregroundStyle(accent)
             .transition(.opacity)
         }
       }
@@ -257,20 +268,27 @@ public struct ConverterScreen<Details: View>: View {
         feedback += 1
         withAnimation(motion) { model.updateInput { $0.useAsBase(code, snapshot: model.snapshot) } }
       } label: {
-        HStack(spacing: 13) {
-          CurrencyIcon(code, size: 28).frame(width: 38)
+        HStack(spacing: AppStyle.Space.medium) {
+          CurrencyIcon(code, size: 28).frame(width: 36)
             .matchedGeometryEffect(id: "flag-" + code, in: currencyMotion).accessibilityHidden(true)
-          VStack(alignment: .leading, spacing: 4) {
-            Text(code).font(.system(.body, weight: .medium))
-              .matchedGeometryEffect(id: code, in: currencyMotion)
-            Text(CurrencyDisplay.name(code, locale: locale)).font(.caption)
-              .foregroundStyle(.secondary).lineLimit(1)
+          let rowLayout =
+            dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: AppStyle.Space.small))
+            : AnyLayout(HStackLayout(spacing: AppStyle.Space.medium))
+          rowLayout {
+            VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
+              Text(code).font(AppStyle.font(.body, weight: .medium))
+                .matchedGeometryEffect(id: code, in: currencyMotion)
+              Text(CurrencyDisplay.name(code, locale: locale)).font(AppStyle.font(.caption))
+                .foregroundStyle(.secondary)
+                .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
+            }
+            if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: AppStyle.Space.medium) }
+            Text(CurrencyDisplay.format(value, code: code, locale: locale))
+              .font(AppStyle.font(.title2, weight: .regular)).monospacedDigit()
+              .lineLimit(1).minimumScaleFactor(0.45).contentTransition(.numericText())
+              .layoutPriority(1)
           }
-          Spacer(minLength: 12)
-          Text(CurrencyDisplay.format(value, code: code, locale: locale))
-            .font(.system(.title2, design: .rounded, weight: .regular)).monospacedDigit()
-            .lineLimit(1).minimumScaleFactor(0.45).contentTransition(.numericText())
-            .layoutPriority(1)
         }
         .frame(minHeight: 70).contentShape(Rectangle())
       }
@@ -308,7 +326,8 @@ public struct ConverterScreen<Details: View>: View {
       Button {
         detail = CurrencyDetailSelection(id: code)
       } label: {
-        Image(systemName: "chart.xyaxis.line").font(.system(size: 13)).foregroundStyle(.secondary)
+        Image(systemName: "chart.xyaxis.line").font(AppStyle.font(.caption))
+          .foregroundStyle(.secondary)
           .frame(width: 44, height: 60)
       }
       .buttonStyle(.plain)
@@ -317,27 +336,28 @@ public struct ConverterScreen<Details: View>: View {
     }
   }
   private var inputDock: some View {
-    GlassEffectContainer(spacing: 30) {
+    GlassEffectContainer(spacing: AppStyle.Space.section) {
       if editingAmount {
-        VStack(spacing: 4) {
+        VStack(spacing: AppStyle.Space.xs) {
           HStack {
-            HStack(spacing: 6) {
+            HStack(spacing: AppStyle.Space.small) {
               CurrencyIcon(model.input.source, size: 14)
               Text(verbatim: model.input.source)
             }
-            .font(.caption.weight(.semibold))
+            .font(AppStyle.font(.caption).weight(.semibold))
             Spacer()
-            Button(.Converter.clear) { key("AC") }.font(.caption)
+            Button(.Converter.clear) { key("AC") }.font(AppStyle.font(.caption))
               .frame(minWidth: 44, minHeight: 44)
             Button {
               withAnimation(motion) { editingAmount = false }
             } label: {
-              Image(systemName: "checkmark").font(.headline).frame(width: 44, height: 44)
+              Image(systemName: "checkmark").font(AppStyle.font(.headline))
+                .frame(minWidth: 44, minHeight: 44)
             }
             .accessibilityLabel(.Converter.doneEntering)
           }
-          .padding(.horizontal, 24)
-          Grid(horizontalSpacing: 4, verticalSpacing: 2) {
+          .padding(.horizontal, AppStyle.Space.section)
+          Grid(horizontalSpacing: AppStyle.Space.xs, verticalSpacing: AppStyle.Space.xxs) {
             ForEach(
               [["1", "2", "3"], ["4", "5", "6"], ["7", "8", "9"], [".", "0", "⌫"]], id: \.self
             ) { row in
@@ -348,13 +368,14 @@ public struct ConverterScreen<Details: View>: View {
                   } label: {
                     Group {
                       if item == "⌫" {
-                        Image(systemName: "delete.left").font(.system(size: 22, weight: .light))
+                        Image(systemName: "delete.left")
+                          .font(AppStyle.font(.title2, weight: .light))
                       } else {
                         Text(CurrencyDisplay.inputAmount(item, locale: locale))
-                          .font(.system(size: 26, weight: .regular, design: .rounded))
+                          .font(AppStyle.font(.title2))
                       }
                     }
-                    .frame(maxWidth: .infinity).frame(height: 50).contentShape(Rectangle())
+                    .frame(maxWidth: .infinity).frame(minHeight: 48).contentShape(Rectangle())
                   }
                   .buttonStyle(KeyPressStyle())
                   .accessibilityLabel(
@@ -366,7 +387,7 @@ public struct ConverterScreen<Details: View>: View {
               }
             }
           }
-          .padding(.horizontal, 14).padding(.bottom, 22)
+          .padding(.horizontal, AppStyle.Space.large).padding(.bottom, AppStyle.Space.large)
         }
         .glassEffect(
           .regular, in: .rect(corners: .concentric(minimum: .fixed(32)), isUniform: true)
@@ -379,28 +400,38 @@ public struct ConverterScreen<Details: View>: View {
             replaceOnNextDigit = true
             withAnimation(motion) { editingAmount = true }
           } label: {
-            Label(.Converter.enterAmount, systemImage: "keyboard")
-              .font(.subheadline.weight(.medium))
-              .frame(maxWidth: .infinity).frame(height: 52)
+            Group {
+              if dynamicTypeSize.isAccessibilitySize {
+                Image(systemName: "keyboard")
+              } else {
+                Label(.Converter.enterAmount, systemImage: "keyboard")
+              }
+            }
+            .font(AppStyle.font(.subheadline).weight(.medium))
+            .frame(maxWidth: .infinity).frame(minHeight: 48)
           }
           .buttonStyle(.plain)
+          .accessibilityLabel(.Converter.enterAmount)
           Rectangle().fill(.primary.opacity(0.1)).frame(width: 1, height: 20)
           Button {
             picker = .add
           } label: {
-            Image(systemName: "plus").font(.system(size: 17, weight: .medium))
-              .frame(width: 60, height: 52)
+            Image(systemName: "plus").font(AppStyle.font(.body, weight: .medium))
+              .frame(minWidth: 48, minHeight: 48)
+              .padding(.horizontal, AppStyle.Space.small)
           }
           .buttonStyle(.plain).accessibilityLabel(.Converter.addCurrency)
         }
-        .frame(maxWidth: 260).glassEffect(.regular.interactive())
+        .frame(maxWidth: dynamicTypeSize.isAccessibilitySize ? .infinity : 260)
+        .glassEffect(.regular.interactive())
         .glassEffectID("amount-dock", in: keypadMotion)
         .glassEffectTransition(.matchedGeometry)
       }
     }
-    .padding(.horizontal, 8).padding(.top, 8).padding(.bottom, editingAmount ? 0 : 10)
+    .padding(.horizontal, AppStyle.Space.small).padding(.top, AppStyle.Space.small)
+    .padding(.bottom, editingAmount ? 0 : AppStyle.Space.small)
     .frame(maxWidth: 540).frame(maxWidth: .infinity)
-    .padding(.bottom, editingAmount ? -22 : 0)
+    .padding(.bottom, editingAmount ? -AppStyle.Space.large : 0)
   }
   private func key(_ key: String) {
     feedback += 1
@@ -433,7 +464,7 @@ public struct ConverterScreen<Details: View>: View {
         Section(.Converter.publicationDates) {
           ForEach([model.input.source] + model.input.destinations, id: \.self) { code in
             LabeledContent {
-              VStack(alignment: .trailing, spacing: 3) {
+              VStack(alignment: .trailing, spacing: AppStyle.Space.xs) {
                 Text(
                   model.snapshot.quotes[code]
                     .map { CurrencyDisplay.publicationDate($0.published, locale: locale) }
@@ -443,11 +474,11 @@ public struct ConverterScreen<Details: View>: View {
                     .map { RateMessages.providerDescription($0.source, locale: locale) }
                     ?? String(localized: .Converter.unavailable)
                 )
-                .font(.caption)
+                .font(AppStyle.font(.caption))
                 .foregroundStyle(.secondary)
               }
             } label: {
-              HStack(spacing: 6) {
+              HStack(spacing: AppStyle.Space.small) {
                 CurrencyIcon(code, size: 20)
                 Text(verbatim: code)
               }

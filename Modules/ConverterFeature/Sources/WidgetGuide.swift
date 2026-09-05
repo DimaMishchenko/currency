@@ -1,3 +1,4 @@
+import CurrencySupport
 import SwiftUI
 
 struct WidgetGuide: View {
@@ -7,31 +8,31 @@ struct WidgetGuide: View {
       List {
         Section {
           Text(.Converter.widgetGuideHeadline)
-            .font(.system(.largeTitle, design: .rounded, weight: .light))
-            .padding(.vertical, 16)
+            .font(AppStyle.font(.largeTitle, weight: .light))
+            .padding(.vertical, AppStyle.Space.large)
           Text(
             .Converter.widgetGuideIntroduction
           )
         }
         Section(.Converter.homeScreenGuide) {
           Label {
-            VStack(alignment: .leading, spacing: 6) {
-              Text(.Converter.converter).font(.headline)
+            VStack(alignment: .leading, spacing: AppStyle.Space.small) {
+              Text(.Converter.converter).font(AppStyle.font(.headline))
               Text(
                 .Converter.converterWidgetGuide
               )
-              .font(.subheadline).foregroundStyle(.secondary)
+              .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
             }
           } icon: {
             Image(systemName: "keyboard")
           }
           Label {
-            VStack(alignment: .leading, spacing: 6) {
-              Text(.Converter.currencyBoard).font(.headline)
+            VStack(alignment: .leading, spacing: AppStyle.Space.small) {
+              Text(.Converter.currencyBoard).font(AppStyle.font(.headline))
               Text(
                 .Converter.boardWidgetGuide
               )
-              .font(.subheadline).foregroundStyle(.secondary)
+              .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
             }
           } icon: {
             Image(systemName: "square.grid.2x2")
@@ -40,7 +41,7 @@ struct WidgetGuide: View {
         Section(.Converter.lockScreen) {
           Label(.Converter.quickRateGuide, systemImage: "lock")
           Text(.Converter.quickRateExplanation)
-            .font(.subheadline).foregroundStyle(.secondary)
+            .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
         }
         Section(.Converter.addWidget) {
           Text(
@@ -52,7 +53,7 @@ struct WidgetGuide: View {
           Text(
             .Converter.widgetRefreshExplanation
           )
-          .font(.caption).foregroundStyle(.secondary)
+          .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
         }
       }
       .navigationTitle(.Converter.widgets).navigationBarTitleDisplayMode(.inline)

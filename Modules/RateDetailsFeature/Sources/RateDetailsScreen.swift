@@ -6,6 +6,8 @@ import SwiftUI
 /// Current rate provenance and on-demand historical charts for a currency.
 public struct RateDetailsScreen: View {
   @Environment(\.locale) private var locale
+  @Environment(AppAppearance.self) private var appearance
+  @ScaledMetric(relativeTo: .largeTitle) private var amountSize = 48
   private let history: HistoryService
 
   /// Creates details using a snapshot and an independently configured history service.
@@ -53,28 +55,28 @@ public struct RateDetailsScreen: View {
   public var body: some View {
     NavigationStack {
       ScrollView {
-        VStack(alignment: .leading, spacing: 24) {
-          HStack(spacing: 12) {
+        VStack(alignment: .leading, spacing: AppStyle.Space.section) {
+          HStack(spacing: AppStyle.Space.medium) {
             CurrencyIcon(code, size: 36)
-            VStack(alignment: .leading, spacing: 4) {
-              Text(CurrencyDisplay.name(code, locale: locale)).font(.title2)
-              Text(.Details.unitConversion(code, quote)).font(.subheadline)
+            VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
+              Text(CurrencyDisplay.name(code, locale: locale)).font(AppStyle.font(.title2))
+              Text(.Details.unitConversion(code, quote)).font(AppStyle.font(.subheadline))
                 .foregroundStyle(.secondary)
             }
           }
-          VStack(alignment: .leading, spacing: 6) {
+          VStack(alignment: .leading, spacing: AppStyle.Space.small) {
             Text(rateLabel(snapshot.convert(1, from: code, to: quote)))
-              .font(.system(size: 46, weight: .light, design: .rounded)).monospacedDigit()
+              .font(.system(size: amountSize, weight: .light, design: .rounded)).monospacedDigit()
               .lineLimit(1).minimumScaleFactor(0.4)
             Text(CurrencyDisplay.details(snapshot, from: code, to: quote, locale: locale))
-              .font(.caption).foregroundStyle(.secondary)
+              .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
             if let observed = snapshot.quotes[code]?.observedAt {
               Text(
 
                 .Details.lastTrade(
                   observed.formatted(.dateTime.day().month().year().hour().minute().locale(locale)))
               )
-              .font(.caption).foregroundStyle(.secondary)
+              .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
             }
             if let retrieved = snapshot.quotes[code]?.retrievedAt {
               Text(
@@ -82,12 +84,13 @@ public struct RateDetailsScreen: View {
                   retrieved.formatted(.dateTime.day().month().year().hour().minute().locale(locale))
                 )
               )
-              .font(.caption).foregroundStyle(.secondary)
+              .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
             }
           }
           Divider()
           HStack {
-            Text(.Details.historyHeading).font(.caption2.weight(.semibold)).tracking(2)
+            Text(.Details.historyHeading).font(AppStyle.font(.caption2).weight(.semibold))
+              .tracking(2)
             Spacer()
             if loading { ProgressView().controlSize(.small) }
           }
@@ -98,21 +101,21 @@ public struct RateDetailsScreen: View {
           }
           .pickerStyle(.segmented)
           if let series, !series.points.isEmpty {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
               if let selected {
                 Text(verbatim: "\(rateLabel(Decimal(selected.value))) \(quote)")
-                  .font(.title3.monospacedDigit())
+                  .font(AppStyle.font(.title3).monospacedDigit())
                 Text(dayLabel(selected.date))
-                  .font(.caption).foregroundStyle(.secondary)
+                  .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
               }
             }
-            .frame(height: 48, alignment: .leading)
+            .frame(minHeight: 48, alignment: .leading)
             Chart(series.points) { point in
               LineMark(
                 x: .value(String(localized: .Details.chartDate), point.date),
                 y: .value(quote, point.value)
               )
-              .foregroundStyle(Color.accentColor).lineStyle(StrokeStyle(lineWidth: 2))
+              .foregroundStyle(appearance.accent).lineStyle(StrokeStyle(lineWidth: 2))
               if selectedDate != nil, selected?.id == point.id {
                 RuleMark(x: .value(String(localized: .Details.chartDate), point.date))
                   .foregroundStyle(.secondary.opacity(0.3))
@@ -120,7 +123,7 @@ public struct RateDetailsScreen: View {
                   x: .value(String(localized: .Details.chartDate), point.date),
                   y: .value(quote, point.value)
                 )
-                .foregroundStyle(Color.accentColor)
+                .foregroundStyle(appearance.accent)
               }
             }
             .chartYScale(domain: domain).chartXSelection(value: $selectedDate)
@@ -132,10 +135,12 @@ public struct RateDetailsScreen: View {
               .Details.chartAccessibility(
                 String(localized: range.accessibilityTitle), code, quote)
             )
-            Text(RateMessages.providerDescription(series.source, locale: locale)).font(.caption)
+            Text(RateMessages.providerDescription(series.source, locale: locale))
+              .font(AppStyle.font(.caption))
               .foregroundStyle(.secondary)
             if let first = series.points.first, let last = series.points.last {
-              Text(verbatim: "\(dayLabel(first.date)) – \(dayLabel(last.date))").font(.caption2)
+              Text(verbatim: "\(dayLabel(first.date)) – \(dayLabel(last.date))")
+                .font(AppStyle.font(.caption2))
                 .foregroundStyle(.secondary)
             }
             Text(
@@ -144,27 +149,27 @@ public struct RateDetailsScreen: View {
                 series.fetchedAt.formatted(
                   .dateTime.day().month().year().hour().minute().locale(locale)))
             )
-            .font(.caption2).foregroundStyle(.secondary)
+            .font(AppStyle.font(.caption2)).foregroundStyle(.secondary)
           } else if !loading {
             ContentUnavailableView(
               .Details.noHistory, systemImage: "chart.xyaxis.line",
               description: Text(.Details.tryAnotherRange))
           }
-          if let message { Text(message).font(.caption).foregroundStyle(.secondary) }
+          if let message { Text(message).font(AppStyle.font(.caption)).foregroundStyle(.secondary) }
           if range == .all {
             Text(
               .Details.maxExplanation
             )
-            .font(.caption).foregroundStyle(.secondary)
+            .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
           }
           Text(
             CurrencyCatalog.crypto.contains(code)
               ? .Details.cryptoExplanation
               : .Details.fiatExplanation
           )
-          .font(.caption).foregroundStyle(.secondary)
+          .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
         }
-        .padding(26)
+        .padding(AppStyle.Space.large)
       }
       .navigationTitle(code).navigationBarTitleDisplayMode(.inline)
       .toolbar {
