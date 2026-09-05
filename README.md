@@ -4,9 +4,15 @@ A minimal one-to-many SwiftUI converter for iOS 26: one amount, a personal list 
 
 ## Run
 
-Open `Currency.xcodeproj`, select the Currency scheme and an iOS 26 simulator, and Run. For a physical device, select your signing team for both targets and register the `group.com.dima.currency` App Group. If changing identifiers, update `project.yml` and `Shared/SharedStore.swift` together. Regenerate with `xcodegen generate`.
+Generate the workspace without opening Xcode:
 
-No dependencies beyond Apple frameworks and the local RateCore package. Run core tests with `swift test` (Xcode 26 / Swift 6.2+).
+```sh
+tuist generate --no-open
+```
+
+Then open `Currency.xcworkspace`, select the Currency scheme and an iOS 26 simulator, and Run. For a physical device, select your signing team for both targets and register the `group.com.dimasike.currency` App Group. If changing identifiers, update `Project.swift` and `CurrencyShared/Sources/SharedStore.swift` together. Regenerate after changing a Tuist manifest or the dependency graph.
+
+No dependencies beyond Apple frameworks and the local `RateCore` package at the repository root. Tuist consumes its `RateCore` library product directly from `Package.swift`. Run core tests with `swift test` (Xcode 26 / Swift 6.2+).
 
 ## Provider decision (verified September 5, 2026)
 

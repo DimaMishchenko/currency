@@ -1,0 +1,24 @@
+{
+  "version" : 1,
+  "indentation" : {
+    "spaces" : 2
+  },
+  "lineBreakAroundMultilineExpressionChainComponents" : true,
+  "lineLength" : 100,
+  "multiElementCollectionTrailingCommas" : false,
+  "prioritizeKeepingFunctionOutputTogether" : true,
+  "rules" : {
+    "AllPublicDeclarationsHaveDocumentation" : true,
+    "AlwaysUseLiteralForEmptyCollectionInit" : true,
+    "NeverForceUnwrap" : true,
+    "NeverUseForceTry" : true,
+    "NeverUseImplicitlyUnwrappedOptionals" : true,
+    "NoLeadingUnderscores" : true,
+    "OmitExplicitReturns" : true,
+    "OrderedImports" : true,
+    "ReplaceForEachWithForLoop" : false,
+    "UseEarlyExits" : true,
+    "UseWhereClausesInForLoops" : true,
+    "ValidateDocumentationComments" : true
+  }
+}
