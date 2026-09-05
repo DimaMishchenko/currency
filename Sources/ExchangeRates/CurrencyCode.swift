@@ -348,10 +348,43 @@ public enum CurrencyCode: String, Codable, CaseIterable, Sendable {
   /// The USDT currency or asset code.
   case usdt = "USDT"
 
+  /// The XRP asset code.
+  case xrp = "XRP"
+  /// The Cardano asset code.
+  case ada = "ADA"
+  /// The Avalanche asset code.
+  case avax = "AVAX"
+  /// The Chainlink asset code.
+  case link = "LINK"
+  /// The Polkadot asset code.
+  case dot = "DOT"
+  /// The Bitcoin Cash asset code.
+  case bch = "BCH"
+  /// The Stellar asset code.
+  case xlm = "XLM"
+  /// The Cosmos asset code.
+  case atom = "ATOM"
+  /// The Uniswap asset code.
+  case uni = "UNI"
+  /// The Ethereum Classic asset code.
+  case etc = "ETC"
+  /// The Filecoin asset code.
+  case fil = "FIL"
+  /// The Aave asset code.
+  case aave = "AAVE"
+  /// The Algorand asset code.
+  case algo = "ALGO"
+  /// The Shiba Inu asset code.
+  case shib = "SHIB"
+  /// The Internet Computer asset code.
+  case icp = "ICP"
+
   /// Whether this asset uses the cryptocurrency rate and history providers.
   public var isCryptocurrency: Bool {
     switch self {
-    case .btc, .eth, .sol, .doge, .ltc, .usdc, .usdt: true
+    case .btc, .eth, .sol, .doge, .ltc, .usdc, .usdt,
+      .xrp, .ada, .avax, .link, .dot, .bch, .xlm, .atom,
+      .uni, .etc, .fil, .aave, .algo, .shib, .icp: true
     default: false
     }
   }

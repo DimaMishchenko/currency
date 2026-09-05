@@ -276,6 +276,18 @@
           }
         }
       }
+    },
+    "rateRetrieved": {
+      "extractionState": "manual",
+      "comment": "Retrieval timestamp for a rate with no provider trade timestamp.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retrieved %@ · market timestamp unavailable"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

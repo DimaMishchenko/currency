@@ -37,6 +37,7 @@ public enum RateMessages {
     var resource: LocalizedStringResource
     switch source.observation {
     case .unspecified, .trade: return provider
+    case .exchangeRate: resource = .Support.retrievedRates(provider)
     case .dailyRate: resource = .Support.dailyRates(provider)
     case .dailyReference: resource = .Support.dailyReference(provider)
     case .monthlyReference: resource = .Support.monthlyReference(provider)

@@ -20,6 +20,8 @@ public enum RateObservation: String, Codable, Sendable {
   case unspecified
   /// A daily current-rate publication.
   case dailyRate
+  /// A current exchange rate without a provider observation timestamp.
+  case exchangeRate
   /// An individual market trade.
   case trade
   /// A historical daily reference rate.

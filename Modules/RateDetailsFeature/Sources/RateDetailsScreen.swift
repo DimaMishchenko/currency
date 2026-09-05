@@ -76,6 +76,14 @@ public struct RateDetailsScreen: View {
               )
               .font(.caption).foregroundStyle(.secondary)
             }
+            if let retrieved = snapshot.quotes[code]?.retrievedAt {
+              Text(
+                .Details.rateRetrieved(
+                  retrieved.formatted(.dateTime.day().month().year().hour().minute().locale(locale))
+                )
+              )
+              .font(.caption).foregroundStyle(.secondary)
+            }
           }
           Divider()
           HStack {

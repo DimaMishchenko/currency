@@ -69,6 +69,21 @@ private extension CurrencyCode {
     case .ltc: "Litecoin"
     case .usdc: "USD Coin"
     case .usdt: "Tether"
+    case .xrp: "XRP"
+    case .ada: "Cardano"
+    case .avax: "Avalanche"
+    case .link: "Chainlink"
+    case .dot: "Polkadot"
+    case .bch: "Bitcoin Cash"
+    case .xlm: "Stellar"
+    case .atom: "Cosmos"
+    case .uni: "Uniswap"
+    case .etc: "Ethereum Classic"
+    case .fil: "Filecoin"
+    case .aave: "Aave"
+    case .algo: "Algorand"
+    case .shib: "Shiba Inu"
+    case .icp: "Internet Computer"
     default: nil
     }
   }

@@ -32,7 +32,9 @@ public actor HistoryService {
     let file = directory.appendingPathComponent("history-\(base)-\(quote)-\(days).json")
     let cached = (try? Data(contentsOf: file))
       .flatMap { try? JSONDecoder().decode(HistorySeries.self, from: $0) }
-    if let cached, now.timeIntervalSince(cached.fetchedAt) < (range == .all ? 86400 : 21600) {
+    if let cached, now >= cached.fetchedAt,
+      now.timeIntervalSince(cached.fetchedAt) < (range == .all ? 86400 : 21600)
+    {
       return HistoryResult(series: cached, issue: nil)
     }
     do {
@@ -64,22 +66,10 @@ public actor HistoryService {
       let points: [HistoryPoint]
       if isCrypto {
         guard quote == "USD" else { throw RateError.unavailable }
-        var combined: [Date: Double] = [:]
-        for window in Self.candleWindows(start: start, end: now) {
-          try Task.checkCancellation()
-          components.queryItems = [
-            URLQueryItem(name: "granularity", value: "86400"),
-            URLQueryItem(name: "start", value: window.start.ISO8601Format()),
-            URLQueryItem(name: "end", value: window.end.ISO8601Format())
-          ]
-          guard let url = components.url else { throw RateError.invalidData }
-          let data = try await client.get(url)
-          for point in try Self.decodeCandles(data, start: window.start, end: now)
-          where point.date <= window.end {
-            combined[point.date] = point.value
-          }
-          if window.end < now { try await Task.sleep(for: .milliseconds(150)) }
-        }
+        let end = calendar.startOfDay(for: now)
+        let combined = try await Self.fetchCandles(
+          client: client, components: components,
+          start: calendar.startOfDay(for: start), end: end)
         let daily = combined.map { HistoryPoint(date: $0.key, value: $0.value) }
           .sorted { $0.date < $1.date }
         points = range == .all ? Self.monthlyCloses(daily) : daily
@@ -96,6 +86,7 @@ public actor HistoryService {
         let data = try await client.get(url)
         points = try Self.decodeFiat(data, base: base, quote: quote)
       }
+      try Task.checkCancellation()
       guard points.count >= 2 else { throw RateError.unavailable }
       let source = RateSource(
         provider: isCrypto ? .coinbase : .frankfurter,

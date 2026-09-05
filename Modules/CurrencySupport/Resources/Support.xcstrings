@@ -144,6 +144,18 @@
           }
         }
       }
+    },
+    "retrievedRates": {
+      "extractionState": "manual",
+      "comment": "Provider name followed by an indication that the accompanying date is the retrieval date, not a trade timestamp.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · retrieved"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -26,6 +26,12 @@ import Testing
     #expect(
       RateMessages.providerDescription(source, locale: Locale(identifier: "en"))
         == "Example feed · monthly reference rates")
+    #expect(
+      RateMessages.providerDescription(.init(provider: .coinbase, observation: .exchangeRate))
+        == "Coinbase · retrieved")
+    #expect(
+      String(localized: .Details.rateRetrieved("today"))
+        == "Retrieved today · market timestamp unavailable")
     let daily = RateSource(provider: .coinbase, observation: .dailyClose, timeZone: .gmt)
     #expect(RateMessages.providerDescription(daily).hasPrefix("Coinbase · daily closes · "))
   }

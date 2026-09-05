@@ -40,13 +40,16 @@ public actor RateService {
   public func refresh(
     previous: RateSnapshot, force: Bool = false, now: Date = .now
   ) async -> RefreshResult {
+    guard !Task.isCancelled else { return RefreshResult(snapshot: previous, warning: nil) }
     let refreshDaily =
-      force || now.timeIntervalSince(previous.dailyFetchedAt ?? .distantPast) >= 21600
+      force || previous.dailyQuotes == nil
+      || now < (previous.dailyFetchedAt ?? .distantPast)
+      || now.timeIntervalSince(previous.dailyFetchedAt ?? .distantPast) >= 21600
     async let fiatResult = refreshDaily ? fetch(fiat) : nil
     async let dailyResult = refreshDaily ? fetch(daily) : nil
     async let cryptoResult = fetch(crypto)
     let (fiatQuotes, supplementalQuotes) = await (fiatResult, dailyResult)
-    var quotes = previous.dailyQuotes ?? previous.quotes.filter { $0.value.observedAt == nil }
+    var quotes = previous.dailyQuotes ?? previous.quotes.filter { $0.value.overlayTimestamp == nil }
     // Each quote retains its own publication date; never replace newer cache data with older data.
     for incoming in [supplementalQuotes, fiatQuotes] {
       for (code, quote) in incoming ?? [:]
@@ -56,6 +59,7 @@ public actor RateService {
     }
     let dailyQuotes = quotes
     let live = await cryptoResult
+    guard !Task.isCancelled else { return RefreshResult(snapshot: previous, warning: nil) }
     for (code, quote) in live ?? [:] where CurrencyCatalog.crypto.contains(code) {
       quotes[code] = quote
     }
@@ -64,7 +68,7 @@ public actor RateService {
     let warning: RefreshWarning? =
       refreshDaily && fiatQuotes == nil && supplementalQuotes == nil
       ? .dailyRatesUnavailable
-      : crypto != nil && live?.count != CurrencyCatalog.crypto.count
+      : crypto != nil && !CurrencyCatalog.crypto.isSubset(of: Set(live?.keys.map { $0 } ?? []))
         ? .partialCryptoFallback : nil
     return RefreshResult(
       snapshot: RateSnapshot(

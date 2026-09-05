@@ -37,19 +37,27 @@ private actor FallbackHTTP: HTTPClient {
     .fetch()
     #expect(rates["EUR"]?.source.provider == .custom("ECB"))
   }
-  @Test func coinbaseInversionAndStaleness() throws {
+  @Test func coinbaseBatchUsesEURRatesAndHonestRetrievalMetadata() throws {
     let now = try #require(ISO8601DateFormatter().date(from: "2026-01-02T12:00:00Z"))
-    let data = Data(#"{"price":"50000","time":"2026-01-02T11:59:30.000Z"}"#.utf8)
-    let quote = try CoinbaseProvider.decode(data, now: now)
-    #expect(quote.value == Decimal(string: "0.00002"))
-    #expect(quote.observedAt != nil)
-    #expect(throws: (any Error).self) {
-      try CoinbaseProvider.decode(data, now: now.addingTimeInterval(7200))
-    }
-    #expect(throws: (any Error).self) {
-      try CoinbaseProvider.decode(
-        Data(#"{"price":"0","time":"2026-01-02T12:00:00Z"}"#.utf8), now: now)
-    }
+    let data = Data(
+      #"{"data":{"currency":"EUR","rates":{"EUR":"1.0","BTC":"0.00002","ADA":"2.5","SHIB":"123456.12345678","USD":"1.2","ETH":"0","XRP":"-1","DOT":"2junk"}}}"#
+        .utf8)
+    let quotes = try CoinbaseProvider.decode(data, now: now)
+    #expect(quotes.count == 3)
+    #expect(quotes["BTC"]?.value == Decimal(string: "0.00002"))
+    #expect(quotes["SHIB"]?.value == Decimal(string: "123456.12345678"))
+    #expect(quotes["BTC"]?.observedAt == nil)
+    #expect(quotes["BTC"]?.retrievedAt == now)
+    #expect(quotes["BTC"]?.source.observation == .exchangeRate)
+    #expect(quotes["BTC"]?.published == "2026-01-02")
+  }
+  @Test(arguments: [
+    #"{"data":{"currency":"USD","rates":{"EUR":"1","BTC":"1"}}}"#,
+    #"{"data":{"currency":"EUR","rates":{"EUR":"2","BTC":"1"}}}"#,
+    #"{"data":{"currency":"EUR","rates":{"EUR":"1","BTC":"NaN"}}}"#,
+    #"{"data":{"currency":"EUR","rates":{}}}"#
+  ]) func coinbaseRejectsInvalidBatch(_ json: String) {
+    #expect(throws: (any Error).self) { try CoinbaseProvider.decode(Data(json.utf8)) }
   }
   @Test func xmlParsing() throws {
     let xml = Data(
@@ -78,5 +86,24 @@ private actor FallbackHTTP: HTTPClient {
     let quotes = try await FawazProvider(client: client).fetch()
     #expect(quotes["BTC"] != nil)
     #expect(await client.calls == 2)
+  }
+  @Test func expandedCryptoQuotesSurviveCatalogFiltering() throws {
+    let codes = [
+      "XRP", "ADA", "AVAX", "LINK", "DOT", "BCH", "XLM", "ATOM",
+      "UNI", "ETC", "FIL", "AAVE", "ALGO", "SHIB", "ICP"
+    ]
+    var rates = Dictionary(uniqueKeysWithValues: codes.map { ($0.lowercased(), 2) })
+    rates["usd"] = 1
+    rates["btc"] = 1
+    rates["unknown"] = 2
+    let data = try JSONSerialization.data(withJSONObject: ["date": day, "eur": rates])
+    let quotes = try FawazProvider.decode(data)
+    let snapshot = RateSnapshot(quotes: quotes)
+    for code in codes {
+      #expect(CurrencyCatalog.crypto.contains(code))
+      #expect(quotes[code]?.value == 2)
+      #expect(snapshot.convert(3, from: "EUR", to: code) == 6)
+    }
+    #expect(quotes["UNKNOWN"] == nil)
   }
 }

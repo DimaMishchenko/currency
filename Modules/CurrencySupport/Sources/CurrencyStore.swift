@@ -58,7 +58,10 @@ public struct CurrencyStore: Sendable {
     using service: RateService, force: Bool = false, now: Date = .now
   ) async throws -> RefreshResult {
     let previous = loadRates()
-    guard force || now.timeIntervalSince(previous.checkedAt ?? .distantPast) >= 1800 else {
+    guard
+      force || now < (previous.checkedAt ?? .distantPast)
+        || now.timeIntervalSince(previous.checkedAt ?? .distantPast) >= 1800
+    else {
       return RefreshResult(snapshot: previous, warning: nil)
     }
     let result = await service.refresh(previous: previous, force: force, now: now)

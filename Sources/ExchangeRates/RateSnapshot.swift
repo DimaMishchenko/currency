@@ -4,20 +4,27 @@ import Foundation
 public struct ExchangeRate: Codable, Sendable, Equatable {
   /// Currency units per one euro; must be positive and finite.
   public let value: Decimal
-  /// The provider publication date.
+  /// The provider publication date, or retrieval day for untimestamped exchange rates.
   public let published: String
   /// Structured provider and observation metadata.
   public let source: RateSource
   /// The observation time for an intraday quote.
   public let observedAt: Date?
+  /// Retrieval time when the provider supplies no market observation timestamp.
+  public let retrievedAt: Date?
   /// Creates a normalized quote.
-  public init(_ value: Decimal, published: String, source: RateSource, observedAt: Date? = nil) {
+  public init(
+    _ value: Decimal, published: String, source: RateSource, observedAt: Date? = nil,
+    retrievedAt: Date? = nil
+  ) {
     self.value = value
     self.published = published
     self.source = source
 
     self.observedAt = observedAt
+    self.retrievedAt = retrievedAt
   }
+  var overlayTimestamp: Date? { observedAt ?? retrievedAt }
 }
 
 /// A persisted snapshot of current and daily currency quotes.
@@ -65,16 +72,17 @@ extension RateSnapshot {
   public func merging(_ other: RateSnapshot) -> RateSnapshot {
     let latest = (checkedAt ?? fetchedAt) >= (other.checkedAt ?? other.fetchedAt) ? self : other
     let older = (checkedAt ?? fetchedAt) >= (other.checkedAt ?? other.fetchedAt) ? other : self
-    var daily = older.dailyQuotes ?? older.quotes.filter { $0.value.observedAt == nil }
-    for (code, quote) in latest.dailyQuotes ?? latest.quotes.filter({ $0.value.observedAt == nil })
+    var daily = older.dailyQuotes ?? older.quotes.filter { $0.value.overlayTimestamp == nil }
+    for (code, quote) in latest.dailyQuotes
+      ?? latest.quotes.filter({ $0.value.overlayTimestamp == nil })
     where quote.published >= (daily[code]?.published ?? "") {
       daily[code] = quote
     }
     var effective = daily
-    for (code, quote) in latest.quotes where quote.observedAt != nil {
+    for (code, quote) in latest.quotes where quote.overlayTimestamp != nil {
       var live = quote
-      if let previous = older.quotes[code], let time = previous.observedAt,
-        time > (live.observedAt ?? .distantPast)
+      if let previous = older.quotes[code], let time = previous.overlayTimestamp,
+        time > (live.overlayTimestamp ?? .distantPast)
       {
         live = previous
       }
