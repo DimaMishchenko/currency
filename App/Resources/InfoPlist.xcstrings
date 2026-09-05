@@ -13,6 +13,18 @@
           }
         }
       }
+    },
+    "NSLocationWhenInUseUsageDescription": {
+      "extractionState": "manual",
+      "comment": "Explains the explicitly requested widget location update.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find your country’s currency for widgets when you choose Update local currency. Only the country and currency are saved."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

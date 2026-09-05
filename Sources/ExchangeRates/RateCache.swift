@@ -15,6 +15,7 @@ public struct RateCache: Sendable {
     else { return RateSnapshot() }
     return snapshot
   }
+
   /// Saves a rate snapshot atomically.
   public func save(_ snapshot: RateSnapshot) throws {
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)

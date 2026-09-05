@@ -12,6 +12,7 @@ import Testing
       CurrencyDisplay.format(Decimal(string: "1234.5"), code: "EUR", locale: german) == "1.234,5")
     #expect(CurrencyDisplay.format(nil, code: "EUR", locale: german) == "—")
   }
+
   @Test func flagDerivationHandlesRegionsSharedCurrenciesAndUnknownCodes() {
     #expect(CurrencyDisplay.flag("UAH") == "🇺🇦")
     #expect(CurrencyDisplay.flag("XAF") == "🌍")

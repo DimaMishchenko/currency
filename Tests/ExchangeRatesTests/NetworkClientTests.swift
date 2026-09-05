@@ -16,15 +16,18 @@ private final class ControlledProtocol: URLProtocol, @unchecked Sendable {
         active.append(loader)
       }
     }
+
     func stop(_ loader: ControlledProtocol) {
       lock.withLock {
         active.removeAll { $0 === loader }
         stopped += 1
       }
     }
+
     func count(_ url: URL) -> Int {
       lock.withLock { requests.filter { $0.url == url }.count }
     }
+
     func reply(_ url: URL, status: Int = 200) {
       let loaders = lock.withLock {
         let result = active.filter { $0.request.url == url }
@@ -45,6 +48,7 @@ private final class ControlledProtocol: URLProtocol, @unchecked Sendable {
       }
     }
   }
+
   static let state = State()
   override class func canInit(with request: URLRequest) -> Bool { true }
   override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }

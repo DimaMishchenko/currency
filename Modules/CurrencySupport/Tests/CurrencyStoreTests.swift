@@ -26,10 +26,12 @@ private actor SuspendedProvider: RateProvider {
       started = nil
     }
   }
+
   func waitUntilStarted() async {
     if pending != nil { return }
     await withCheckedContinuation { started = $0 }
   }
+
   func fail() {
     pending?.resume(throwing: CocoaError(.fileReadUnknown))
     pending = nil

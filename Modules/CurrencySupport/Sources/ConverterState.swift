@@ -25,6 +25,7 @@ public struct ConverterState: Codable, Sendable, Equatable {
   public var decimal: Decimal {
     Decimal(string: amount, locale: Locale(identifier: "en_US_POSIX")) ?? 0
   }
+
   /// Applies a keypad command to the input.
   public mutating func press(_ key: String) {
     let previousAmount = amount
@@ -57,12 +58,14 @@ extension ConverterState {
         $0 != source && CurrencyCatalog.codes.contains($0) && seen.insert($0).inserted
       }
   }
+
   /// Replaces and normalizes the destination currencies.
   public mutating func setDestinations(_ codes: [String]) {
     savedTargets = codes
     savedTargets = destinations
     primaryDestination = destinations.first ?? source
   }
+
   /// Promotes a destination to the source while preserving its converted value.
   public mutating func useAsBase(_ code: String, snapshot: RateSnapshot) {
     guard code != source, CurrencyCatalog.codes.contains(code),
@@ -78,6 +81,7 @@ extension ConverterState {
     setDestinations(updated)
     editedAt = Date()
   }
+
   /// Changes the source currency and preserves destination ordering.
   public mutating func changeSource(_ code: String) {
     guard CurrencyCatalog.codes.contains(code), code != source else { return }

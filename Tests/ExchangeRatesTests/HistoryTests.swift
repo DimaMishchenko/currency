@@ -18,6 +18,7 @@ private actor LongHistoryHTTP: HTTPClient {
       .encode([[start + 86400, 1, 5, 2, 3, 1], [start + 172800, 1, 5, 2, 4, 1]])
   }
 }
+
 private actor MaxFiatHTTP: HTTPClient {
   var urls: [URL] = []
   func get(_ url: URL) async throws -> Data {
@@ -27,6 +28,7 @@ private actor MaxFiatHTTP: HTTPClient {
         .utf8)
   }
 }
+
 private actor HistoryHTTP: HTTPClient {
   var calls = 0
   func get(_ url: URL) async throws -> Data {
@@ -55,6 +57,7 @@ private actor HistoryHTTP: HTTPClient {
     ]
     #expect(HistoryService.monthlyCloses(points.reversed()).map(\.value) == [2, 3])
   }
+
   @Test func yearlyCryptoFetchesEveryPageAndCaches() async throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }
@@ -67,6 +70,7 @@ private actor HistoryHTTP: HTTPClient {
     _ = await service.load(base: "BTC", quote: "USD", range: .year, now: now)
     #expect(await client.urls.count == 2)
   }
+
   @Test func maxFiatRequestsMonthlyHistoryAndCachesForOneDay() async throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }
@@ -83,6 +87,7 @@ private actor HistoryHTTP: HTTPClient {
       base: "EUR", quote: "USD", range: .all, now: now.addingTimeInterval(43200))
     #expect(await client.urls.count == 1)
   }
+
   @Test func historySortsAndUsesCompletedClose() throws {
     let rows = Data("[[172800,1,9,3,5,20],[86400,1,9,3,4,20],[259200,1,9,3,8,20]]".utf8)
     let points = try HistoryService.decodeCandles(
@@ -97,6 +102,7 @@ private actor HistoryHTTP: HTTPClient {
     #expect(
       try HistoryService.decodeFiat(fiat, base: "USD", quote: "EUR").map(\.value) == [0.8, 0.9])
   }
+
   @Test func historyCachesAndFallsBackOffline() async throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }

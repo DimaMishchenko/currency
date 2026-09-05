@@ -44,9 +44,11 @@ public struct ConverterScreen<Details: View>: View {
   private var motion: Animation? {
     reduceMotion ? nil : .spring(response: 0.42, dampingFraction: 0.86)
   }
+
   private var amountLabel: String {
     CurrencyDisplay.inputAmount(model.input.amount, locale: locale)
   }
+
   /// The converter screen content.
   public var body: some View {
     NavigationStack {
@@ -158,11 +160,13 @@ public struct ConverterScreen<Details: View>: View {
     }
     .tint(accent)
   }
+
   private var adaptiveLayout: AnyLayout {
     dynamicTypeSize.isAccessibilitySize
       ? AnyLayout(VStackLayout(alignment: .leading, spacing: AppStyle.Space.small))
       : AnyLayout(HStackLayout())
   }
+
   private var header: some View {
     adaptiveLayout {
       HStack(spacing: AppStyle.Space.small) {
@@ -200,6 +204,7 @@ public struct ConverterScreen<Details: View>: View {
       }
     }
   }
+
   private var source: some View {
     VStack(alignment: .leading, spacing: AppStyle.Space.large) {
       adaptiveLayout {
@@ -260,6 +265,7 @@ public struct ConverterScreen<Details: View>: View {
       }
     }
   }
+
   private func destinationRow(_ code: String) -> some View {
     let value = model.snapshot.convert(model.input.decimal, from: model.input.source, to: code)
     return HStack(spacing: 0) {
@@ -335,6 +341,7 @@ public struct ConverterScreen<Details: View>: View {
         .Converter.detailsAccessibility(CurrencyDisplay.name(code, locale: locale)))
     }
   }
+
   private var inputDock: some View {
     GlassEffectContainer(spacing: AppStyle.Space.section) {
       if editingAmount {
@@ -433,6 +440,7 @@ public struct ConverterScreen<Details: View>: View {
     .frame(maxWidth: 540).frame(maxWidth: .infinity)
     .padding(.bottom, editingAmount ? -AppStyle.Space.large : 0)
   }
+
   private func key(_ key: String) {
     feedback += 1
     withAnimation(reduceMotion ? nil : .snappy(duration: 0.22)) {
@@ -443,6 +451,7 @@ public struct ConverterScreen<Details: View>: View {
       replaceOnNextDigit = false
     }
   }
+
   private var rateInformation: some View {
     NavigationStack {
       List {

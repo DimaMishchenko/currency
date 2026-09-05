@@ -20,6 +20,7 @@ import Testing
       RateMessages.providerDescription(.init(provider: .fawaz, observation: .dailyRate))
         == "Fawaz · daily")
   }
+
   @Test func customProviderUsesLocalizedObservationTemplate() {
     let source = RateSource(
       provider: .custom("Example feed"), observation: .monthlyReference)
@@ -35,6 +36,7 @@ import Testing
     let daily = RateSource(provider: .coinbase, observation: .dailyClose, timeZone: .gmt)
     #expect(RateMessages.providerDescription(daily).hasPrefix("Coinbase · daily closes · "))
   }
+
   @Test func unsupportedLanguageFallsBackToEnglishCatalog() {
     var resource = LocalizedStringResource.Details.unitConversion("EUR", "USD")
     resource.locale = Locale(identifier: "uk_UA")

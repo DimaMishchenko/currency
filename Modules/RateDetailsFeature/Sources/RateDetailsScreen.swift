@@ -44,6 +44,7 @@ public struct RateDetailsScreen: View {
         abs($0.date.timeIntervalSince(selectedDate)) < abs($1.date.timeIntervalSince(selectedDate))
       }
   }
+
   private var domain: ClosedRange<Double> {
     let values = series?.points.map(\.value) ?? [0, 1]
     let low = values.min() ?? 0
@@ -51,6 +52,7 @@ public struct RateDetailsScreen: View {
     let padding = max((high - low) * 0.15, max(high * 0.001, 0.00000001))
     return max(0, low - padding)...(high + padding)
   }
+
   /// The rate details and history chart.
   public var body: some View {
     NavigationStack {
@@ -192,6 +194,7 @@ public struct RateDetailsScreen: View {
       }
     }
   }
+
   private func rateLabel(_ value: Decimal?) -> String {
     guard let value else { return "—" }
     let formatter = NumberFormatter()
@@ -200,6 +203,7 @@ public struct RateDetailsScreen: View {
     formatter.maximumFractionDigits = CurrencyCatalog.crypto.contains(code) ? 2 : 6
     return formatter.string(from: NSDecimalNumber(decimal: value)) ?? "—"
   }
+
   private func dayLabel(_ date: Date) -> String {
     let formatter = DateFormatter()
     formatter.locale = locale

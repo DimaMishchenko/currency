@@ -11,6 +11,7 @@ public struct FallbackRateProvider: RateProvider {
     self.primary = primary
     self.fallback = fallback
   }
+
   /// Fetches from the primary provider or its fallback.
   public func fetch() async throws -> [String: ExchangeRate] {
     do { return try await primary.fetch() } catch {

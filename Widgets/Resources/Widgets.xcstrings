@@ -240,6 +240,625 @@
           }
         }
       }
+    },
+    "multiTitle": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Multi-currency"
+          }
+        }
+      }
+    },
+    "multiDescription": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap any currency and enter an amount. Medium shows up to four; large up to eight."
+          }
+        }
+      }
+    },
+    "pairTitle": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pair Calculator"
+          }
+        }
+      }
+    },
+    "pairDescription": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Two currencies, a keypad, and a tap to switch direction."
+          }
+        }
+      }
+    },
+    "cashTitle": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Know Your Cash"
+          }
+        }
+      }
+    },
+    "cashDescription": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap everyday banknotes or metal weights to see their reference value."
+          }
+        }
+      }
+    },
+    "pocketTitle": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pocket Rate"
+          }
+        }
+      }
+    },
+    "pocketDescription": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One useful, automatically chosen reference amount for your currency pair."
+          }
+        }
+      }
+    },
+    "mentalTitle": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mental Math"
+          }
+        }
+      }
+    },
+    "mentalDescription": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A rounded multiply or divide rule for quick estimates."
+          }
+        }
+      }
+    },
+    "newBoardDescription": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your ordered currency list and a reference amount set in widget settings."
+          }
+        }
+      }
+    },
+    "fallback": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fallback"
+          }
+        }
+      }
+    },
+    "entering": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entering %@"
+          }
+        }
+      }
+    },
+    "calculatorHeading": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calculator"
+          }
+        }
+      }
+    },
+    "currencyHeading": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Currency"
+          }
+        }
+      }
+    },
+    "switchDirection": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch direction"
+          }
+        }
+      }
+    },
+    "selectCurrencyHint": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap to enter an amount in this currency"
+          }
+        }
+      }
+    },
+    "metalEstimate": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Metal weight · reference estimate"
+          }
+        }
+      }
+    },
+    "banknoteEstimate": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One banknote · reference estimate"
+          }
+        }
+      }
+    },
+    "genericEstimate": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reference amounts · not banknotes"
+          }
+        }
+      }
+    },
+    "divideBy": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Divide by"
+          }
+        }
+      }
+    },
+    "multiplyBy": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Multiply by"
+          }
+        }
+      }
+    },
+    "checkAmount": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check amount"
+          }
+        }
+      }
+    },
+    "invalidAmountHelp": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit this widget and enter a number without grouping separators."
+          }
+        }
+      }
+    },
+    "boardOverflow": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+%lld more · edit widget to reorder"
+          }
+        }
+      }
+    },
+    "currencyEntity": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Currency"
+          }
+        }
+      }
+    },
+    "cashEntity": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Currency or metal"
+          }
+        }
+      }
+    },
+    "multiSettings": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Multi-currency settings"
+          }
+        }
+      }
+    },
+    "pairSettings": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Currency pair"
+          }
+        }
+      }
+    },
+    "cashSettings": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Know Your Cash settings"
+          }
+        }
+      }
+    },
+    "boardSettings": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Currency Board settings"
+          }
+        }
+      }
+    },
+    "currenciesParameter": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Currencies"
+          }
+        }
+      }
+    },
+    "baseParameter": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Base"
+          }
+        }
+      }
+    },
+    "comparisonParameter": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comparison"
+          }
+        }
+      }
+    },
+    "localParameter": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use local comparison"
+          }
+        }
+      }
+    },
+    "localHelp": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Update your local currency in the app’s widget guide. Comparison is the fallback."
+          }
+        }
+      }
+    },
+    "amountParameter": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Amount"
+          }
+        }
+      }
+    },
+    "amountHelp": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A positive number, using a dot or comma for decimals, without grouping separators."
+          }
+        }
+      }
+    },
+    "actionTitle": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Update currency widget"
+          }
+        }
+      }
+    },
+    "stateParameter": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "State"
+          }
+        }
+      }
+    },
+    "commandParameter": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Command"
+          }
+        }
+      }
+    },
+    "initialParameter": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Initial amount"
+          }
+        }
+      }
+    },
+    "localCurrencyChoice": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local currency"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Местная валюта"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Місцева валюта"
+          }
+        }
+      }
+    },
+    "localCurrencyChoiceHelp": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set your location in the app"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Укажите местоположение в приложении"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Укажіть розташування в застосунку"
+          }
+        }
+      }
+    },
+    "listModeParameter": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Currency list"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Список валют"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Список валют"
+          }
+        }
+      }
+    },
+    "selectedList": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selected currencies"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выбранные валюты"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вибрані валюти"
+          }
+        }
+      }
+    },
+    "standardList": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default currencies"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Валюты по умолчанию"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Типові валюти"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

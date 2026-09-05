@@ -20,6 +20,7 @@ public struct CurrencyStore: Sendable {
       ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
       .appendingPathComponent("Currency")
   }
+
   private var rates: RateCache { RateCache(directory: directory) }
 
   /// Loads the latest shared rate snapshot.
@@ -76,7 +77,7 @@ public struct CurrencyStore: Sendable {
     }
   }
 
-  private func coordinate<Value>(_ filename: String, action: () throws -> Value) throws -> Value {
+  func coordinate<Value>(_ filename: String, action: () throws -> Value) throws -> Value {
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     var coordinationError: NSError?
     var result: Result<Value, Error>?

@@ -25,6 +25,7 @@ private let day = "2026-01-02"
     for _ in 0..<30 { input.press("9") }
     #expect(input.amount.count == 14)
   }
+
   @Test func legacyInputMigrationAndListNormalization() throws {
     let old = Data(#"{"amount":"12","from":"EUR","to":"USD"}"#.utf8)
     var input = try JSONDecoder().decode(ConverterState.self, from: old)
@@ -35,6 +36,7 @@ private let day = "2026-01-02"
     let restored = try JSONDecoder().decode(ConverterState.self, from: JSONEncoder().encode(input))
     #expect(restored.destinations == ["GBP", "USD"])
   }
+
   @Test func promoteCurrencyPreservesValueAndOrder() throws {
     var input = ConverterState()
     input.press("0")
@@ -58,6 +60,7 @@ private let day = "2026-01-02"
     #expect(input.source == "EUR")
     #expect(input.destinations == ["USD", "GBP", "JPY"])
   }
+
   @Test(arguments: [
     ("JPY", "1.5", "2"), ("KWD", "1.2345", "1.235"), ("BTC", "0.123456789", "0.12345679")
   ])
@@ -77,6 +80,7 @@ private let day = "2026-01-02"
     #expect(input.source == code)
     #expect(input.destinations == ["EUR", "USD"])
   }
+
   @Test func isolatedStorePersistsCoordinatedKeypadChangesAndRecoversCorruption() throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }
@@ -89,6 +93,7 @@ private let day = "2026-01-02"
     try Data("broken".utf8).write(to: directory.appendingPathComponent("input.json"))
     #expect(store.input().amount == "1")
   }
+
   @Test func renamedStateKeepsLegacyPersistenceKeys() throws {
     var state = ConverterState()
     state.changeSource("GBP")
@@ -98,6 +103,7 @@ private let day = "2026-01-02"
     #expect(json["source"] == nil)
     #expect(try JSONDecoder().decode(ConverterState.self, from: data) == state)
   }
+
   @Test func ignoredKeypadInputDoesNotPostponeWidgetRefresh() {
     var input = ConverterState()
     let original = input

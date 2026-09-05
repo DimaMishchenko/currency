@@ -32,6 +32,7 @@ final class ConverterModel {
       }
     } catch { warning = .Converter.selectionSaveFailed }
   }
+
   func refresh(force: Bool = false) async {
     guard !refreshing else { return }
     refreshing = true

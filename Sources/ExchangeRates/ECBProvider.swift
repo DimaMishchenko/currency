@@ -16,6 +16,7 @@ public struct ECBProvider: RateProvider {
     else { throw RateError.invalidData }
     return try Self.decode(await client.get(url))
   }
+
   /// Decodes ECB XML into normalized quotes.
   static func decode(_ data: Data) throws -> [String: ExchangeRate] {
     let delegate = ECBParser()
@@ -33,6 +34,7 @@ public struct ECBProvider: RateProvider {
     return result
   }
 }
+
 private final class ECBParser: NSObject, XMLParserDelegate {
   var date = ""
   var rates: [String: Decimal] = [:]

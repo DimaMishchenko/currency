@@ -7,6 +7,7 @@ enum PickerPurpose: String, Identifiable {
   case source, add
   var id: String { rawValue }
 }
+
 struct CurrencyChooser: View {
   @Environment(\.locale) private var locale
   let purpose: PickerPurpose

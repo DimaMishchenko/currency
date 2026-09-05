@@ -9,6 +9,7 @@ public actor HistoryService {
     self.directory = directory
     self.client = client
   }
+
   /// Loads a series, reusing a fresh cache or returning saved history when a request fails.
   ///
   /// Fiat pairs use Frankfurter reference rates; crypto bases require a USD quote and use

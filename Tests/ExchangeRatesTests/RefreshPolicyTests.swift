@@ -36,6 +36,7 @@ private actor CountingProvider: RateProvider {
     _ = await service.refresh(previous: previous, force: true, now: now)
     #expect(await provider.calls == 4)
   }
+
   @Test func primaryFiatWinsEqualPublicationDates() async {
     let date = "2026-01-02"
     let primary = CountingProvider([
@@ -49,6 +50,7 @@ private actor CountingProvider: RateProvider {
     #expect(result.snapshot.quotes["USD"]?.value == 2)
     #expect(result.snapshot.quotes["USD"]?.source.provider == .custom("primary"))
   }
+
   @Test func conversionRejectsInvalidAmountsAndRates() {
     let snapshot = RateSnapshot(quotes: [
       "EUR": ExchangeRate(1, published: "2026-01-02", source: .init(provider: .custom("test"))),
@@ -59,6 +61,7 @@ private actor CountingProvider: RateProvider {
     #expect(snapshot.convert(10, from: "USD", to: "EUR") == nil)
     #expect(snapshot.convert(10, from: "EUR", to: "GBP") == nil)
   }
+
   @Test func invalidDailyCacheCannotBecomeAnOfflineFallback() throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }

@@ -6,6 +6,7 @@ struct FrankfurterRow: Decodable {
   let quote: String
   let rate: Decimal
 }
+
 /// A provider backed by the Frankfurter reference-rate API.
 public struct FrankfurterProvider: RateProvider {
   let client: any HTTPClient
@@ -18,6 +19,7 @@ public struct FrankfurterProvider: RateProvider {
     }
     return try Self.decode(await client.get(url))
   }
+
   /// Decodes Frankfurter rows into normalized quotes.
   static func decode(_ data: Data) throws -> [String: ExchangeRate] {
     let rows = try JSONDecoder().decode([FrankfurterRow].self, from: data)

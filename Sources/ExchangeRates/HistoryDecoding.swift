@@ -12,6 +12,7 @@ extension HistoryService {
     }
     return windows
   }
+
   static func monthlyCloses(_ points: [HistoryPoint]) -> [HistoryPoint] {
     var calendar = Calendar(identifier: .gregorian)
 
@@ -24,6 +25,7 @@ extension HistoryService {
     }
     return months.values.sorted { $0.date < $1.date }
   }
+
   /// Decodes Frankfurter history rows into chronological points.
   static func decodeFiat(_ data: Data, base: String, quote: String) throws -> [HistoryPoint] {
     let rows = try JSONDecoder().decode([FrankfurterRow].self, from: data)
@@ -39,6 +41,7 @@ extension HistoryService {
     }
     return values.map { HistoryPoint(date: $0.key, value: $0.value) }.sorted { $0.date < $1.date }
   }
+
   /// Decodes completed Coinbase candles within a date range.
   static func decodeCandles(_ data: Data, start: Date, end: Date) throws -> [HistoryPoint] {
     let rows = try JSONDecoder().decode([[Double]].self, from: data)

@@ -12,6 +12,7 @@ public struct RefreshResult: Sendable {
     self.warning = warning
   }
 }
+
 /// Coordinates rate providers and preserves usable cached quotes.
 public actor RateService {
   private let fiat: any RateProvider
@@ -27,6 +28,7 @@ public actor RateService {
     self.daily = daily
     self.crypto = crypto
   }
+
   /// Refreshes providers and merges their EUR-normalized quotes with saved daily fallbacks.
   ///
   /// Newer publication dates win; primary fiat wins equal-date ties. Intraday crypto overlays
@@ -77,6 +79,7 @@ public actor RateService {
           ? now : previous.dailyFetchedAt,
         checkedAt: now), warning: warning)
   }
+
   private func fetch(_ provider: (any RateProvider)?) async -> [String: ExchangeRate]? {
     guard let provider else { return nil }
     return try? await provider.fetch()

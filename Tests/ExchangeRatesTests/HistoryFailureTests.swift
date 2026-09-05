@@ -32,6 +32,7 @@ private actor FailingPageClient: HTTPClient {
       !FileManager.default.fileExists(
         atPath: directory.appendingPathComponent("history-BTC-USD-365.json").path))
   }
+
   @Test func failedPaginationPreservesExistingChart() async throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }

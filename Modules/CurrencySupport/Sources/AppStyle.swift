@@ -24,6 +24,16 @@ public enum AppStyle {
     public static let spacious: CGFloat = 48
   }
 
+  public enum Widget {
+    public static let keyRadius: CGFloat = 10
+    public static let tileRadius: CGFloat = 14
+    public static let keyFill: Double = 0.09
+    public static let tileFill: Double = 0.045
+    public static let selectedFill: Double = 0.13
+    public static let keyBorder: Double = 0.035
+    public static let selectedBorder: Double = 0.45
+  }
+
   /// Semantic system fonts retain Dynamic Type and accessibility weight adjustments.
   public static func font(_ style: Font.TextStyle, weight: Font.Weight? = nil) -> Font {
     .system(style, design: .rounded, weight: weight)

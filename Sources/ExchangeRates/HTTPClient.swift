@@ -9,11 +9,13 @@ public enum RateError: Error {
   /// No configured source could provide usable data.
   case unavailable
 }
+
 /// An asynchronous HTTP data loader.
 public protocol HTTPClient: Sendable {
   /// Returns response data, throwing on transport failures or unsuccessful HTTP status codes.
   func get(_ url: URL) async throws -> Data
 }
+
 /// A pooled URLSession client with shared in-flight GETs and cancellation per caller.
 /// Application snapshots own freshness; HTTP responses never silently reuse local cached data.
 public struct NetworkClient: HTTPClient {
@@ -36,6 +38,7 @@ public struct NetworkClient: HTTPClient {
     self.timeout = timeout
     transport = session.map { HTTPTransport(session: $0) } ?? Self.shared
   }
+
   /// Loads and validates a response, sharing identical active requests within this process.
   public func get(_ url: URL) async throws -> Data {
     let data = try await transport.get(url, timeout: timeout)
@@ -49,11 +52,13 @@ private actor HTTPTransport {
     let url: URL
     let timeout: TimeInterval
   }
+
   struct Pending {
     let id: UUID
     let task: Task<Void, Never>
     var waiters: [UUID: CheckedContinuation<Data, any Error>]
   }
+
   let session: URLSession
   var pending: [Key: Pending] = [:]
 

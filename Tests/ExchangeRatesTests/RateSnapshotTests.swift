@@ -19,6 +19,7 @@ private let day = "2026-01-02"
     #expect(snapshot.convert(10, from: "USD", to: "JPY") == nil)
     #expect(snapshot.convert(10, from: "USD", to: "USD") == 10)
   }
+
   @Test func cacheRoundTripAndCorruption() throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }

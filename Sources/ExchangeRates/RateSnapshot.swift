@@ -24,6 +24,7 @@ public struct ExchangeRate: Codable, Sendable, Equatable {
     self.observedAt = observedAt
     self.retrievedAt = retrievedAt
   }
+
   var overlayTimestamp: Date? { observedAt ?? retrievedAt }
 }
 
@@ -51,6 +52,7 @@ public struct RateSnapshot: Codable, Sendable {
     self.dailyFetchedAt = dailyFetchedAt
     self.checkedAt = checkedAt
   }
+
   /// Converts an amount using the ratio of two EUR-normalized quotes.
   /// - Returns: The unrounded amount, or `nil` for missing/invalid rates or decimal overflow.
   ///   A same-currency conversion requires no quote. Rounding belongs to the consumer.

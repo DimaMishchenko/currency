@@ -31,6 +31,7 @@ private let day = "2026-01-02"
     #expect(failed.snapshot.quotes["BTC"]?.observedAt == nil)
     #expect(failed.warning != nil)
   }
+
   @Test func fallbackAndOffline() async {
     let old = RateSnapshot(
       quotes: ["USD": ExchangeRate(2, published: day, source: .init(provider: .custom("saved")))],
@@ -53,6 +54,7 @@ private let day = "2026-01-02"
     .refresh(previous: old)
     #expect(result.snapshot.quotes["USD"]?.value == 3)
   }
+
   @Test func newerCacheWinsAndECBPreferred() async {
     let old = RateSnapshot(quotes: [
       "USD": ExchangeRate(2, published: day, source: .init(provider: .custom("saved")))

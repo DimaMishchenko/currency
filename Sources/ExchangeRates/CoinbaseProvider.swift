@@ -14,6 +14,7 @@ public struct CoinbaseProvider: RateProvider {
     try Task.checkCancellation()
     return try Self.decode(data)
   }
+
   /// Validates EUR normalization and skips individual missing or malformed quotes.
   /// Coinbase supplies no market observation timestamp; `now` records retrieval only.
   static func decode(_ data: Data, now: Date = .now) throws -> [String: ExchangeRate] {
@@ -22,6 +23,7 @@ public struct CoinbaseProvider: RateProvider {
         let currency: String
         let rates: [String: String]
       }
+
       let data: Rates
     }
     let payload = try JSONDecoder().decode(Payload.self, from: data).data

@@ -512,7 +512,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Every widget follows your amount and currency order. Put your most-used currencies first."
+            "value": "Choose a widget for typing, everyday cash, quick estimates, or a currency list. Configure each Home Screen widget independently."
           }
         }
       }
@@ -753,6 +753,433 @@
           "stringUnit": {
             "state": "translated",
             "value": "DOGE icon by Cryptocurrency Icons · CC0 1.0"
+          }
+        }
+      }
+    },
+    "multiWidgetTitle": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Multi-currency"
+          }
+        }
+      }
+    },
+    "multiWidgetGuide": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap any fixed-position currency tile, then type. Medium holds up to four currencies; large holds up to eight."
+          }
+        }
+      }
+    },
+    "pairWidgetTitle": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pair Calculator"
+          }
+        }
+      }
+    },
+    "pairWidgetGuide": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose two currencies and enter amounts in either direction. Available in medium and large."
+          }
+        }
+      }
+    },
+    "cashWidgetTitle": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Know Your Cash"
+          }
+        }
+      }
+    },
+    "cashWidgetGuide": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap common banknotes or 1 g, 10 g, and 1 kg metal weights. Other fiat currencies use labeled reference amounts. No crypto."
+          }
+        }
+      }
+    },
+    "pocketWidgetTitle": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pocket Rate"
+          }
+        }
+      }
+    },
+    "pocketWidgetGuide": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One automatic reference amount for your chosen pair."
+          }
+        }
+      }
+    },
+    "mentalWidgetTitle": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mental Math"
+          }
+        }
+      }
+    },
+    "mentalWidgetGuide": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A rounded multiply or divide rule for quick estimates."
+          }
+        }
+      }
+    },
+    "newBoardWidgetGuide": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set an amount and an ordered list in widget settings. Choose Default currencies to return to the standard list. Available in every Home Screen size."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Укажите сумму и порядок валют в настройках виджета. Выберите «Валюты по умолчанию», чтобы вернуть стандартный список. Доступны все размеры для экрана «Домой»."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Укажіть суму й порядок валют у налаштуваннях віджета. Виберіть «Типові валюти», щоб повернути стандартний список. Доступні всі розміри для початкового екрана."
+          }
+        }
+      }
+    },
+    "widgetSettingsTitle": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Widget settings"
+          }
+        }
+      }
+    },
+    "editWidgetGuide": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touch and hold a widget, then choose Edit Widget to select currencies and amounts."
+          }
+        }
+      }
+    },
+    "widgetIndependenceGuide": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Each new calculator automatically keeps its own amount, even when its currencies match another widget. Amounts are separate from the app."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Каждый новый калькулятор автоматически сохраняет свою сумму, даже если валюты совпадают с другим виджетом. Суммы независимы от приложения."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Кожен новий калькулятор автоматично зберігає власну суму, навіть якщо валюти збігаються з іншим віджетом. Суми незалежні від застосунку."
+          }
+        }
+      }
+    },
+    "widgetEntryGuide": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On a currency tile, the next digit replaces the displayed value. Decimal, clear, delete, and zero shortcuts work without opening the keyboard."
+          }
+        }
+      }
+    },
+    "localComparisonTitle": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local comparison"
+          }
+        }
+      }
+    },
+    "localComparisonGuide": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Update your local currency here, then choose Local currency at the top of the Comparison picker. If your saved location expires or is unavailable, widgets use USD (EUR for Know Your Cash)."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Обновите местную валюту здесь, затем выберите «Местная валюта» в начале списка сравнения. Если местоположение устарело или недоступно, используется USD (EUR для Know Your Cash)."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Оновіть місцеву валюту тут, потім виберіть «Місцева валюта» на початку списку порівняння. Якщо розташування застаріло або недоступне, використовується USD (EUR для Know Your Cash)."
+          }
+        }
+      }
+    },
+    "localUpdating": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Updating…"
+          }
+        }
+      }
+    },
+    "localUpdate": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Update local currency"
+          }
+        }
+      }
+    },
+    "localRemove": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove saved local currency"
+          }
+        }
+      }
+    },
+    "localPrivacy": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only country, currency, and update time are saved. Location is requested only when you tap Update; reverse geocoding uses Apple Maps."
+          }
+        }
+      }
+    },
+    "localInitial": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local comparison uses your saved country for up to 24 hours."
+          }
+        }
+      }
+    },
+    "localSaved": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved local currency: %1$@ (%2$@)"
+          }
+        }
+      }
+    },
+    "localUpdateFailed": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not update the saved currency. Try again."
+          }
+        }
+      }
+    },
+    "localFinding": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finding local currency…"
+          }
+        }
+      }
+    },
+    "localUnavailable": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Location unavailable. Widgets use your selected comparison."
+          }
+        }
+      }
+    },
+    "localRemoved": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local currency removed. Widgets use your selected comparison."
+          }
+        }
+      }
+    },
+    "localRemoveFailed": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not remove the saved currency. Try again."
+          }
+        }
+      }
+    },
+    "localUnsupported": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No supported local currency found. Your selected comparison is used."
+          }
+        }
+      }
+    },
+    "localPermissionDenied": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Location access is off. Allow location for Currency in Settings to update your local currency."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Доступ к геопозиции отключён. Разрешите доступ для Currency в Настройках, чтобы обновить местную валюту."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Доступ до геопозиції вимкнено. Дозвольте доступ для Currency в Параметрах, щоб оновити місцеву валюту."
+          }
+        }
+      }
+    },
+    "localPermissionRestricted": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Location access is restricted on this device. Your local currency could not be updated."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Доступ к геопозиции ограничен на этом устройстве. Не удалось обновить местную валюту."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Доступ до геопозиції обмежено на цьому пристрої. Не вдалося оновити місцеву валюту."
           }
         }
       }

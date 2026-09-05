@@ -27,6 +27,7 @@ private actor FallbackHTTP: HTTPClient {
         Data(#"[{"date":"2026-01-02","base":"USD","quote":"EUR","rate":1}]"#.utf8))
     }
   }
+
   @Test func frankfurterFailsToDirectECB() async throws {
     let fallback = StubRateProvider(quotes: [
       "EUR": ExchangeRate(1, published: day, source: .init(provider: .custom("ECB")))
@@ -37,6 +38,7 @@ private actor FallbackHTTP: HTTPClient {
     .fetch()
     #expect(rates["EUR"]?.source.provider == .custom("ECB"))
   }
+
   @Test func coinbaseBatchUsesEURRatesAndHonestRetrievalMetadata() throws {
     let now = try #require(ISO8601DateFormatter().date(from: "2026-01-02T12:00:00Z"))
     let data = Data(
@@ -51,6 +53,7 @@ private actor FallbackHTTP: HTTPClient {
     #expect(quotes["BTC"]?.source.observation == .exchangeRate)
     #expect(quotes["BTC"]?.published == "2026-01-02")
   }
+
   @Test(arguments: [
     #"{"data":{"currency":"USD","rates":{"EUR":"1","BTC":"1"}}}"#,
     #"{"data":{"currency":"EUR","rates":{"EUR":"2","BTC":"1"}}}"#,
@@ -59,6 +62,7 @@ private actor FallbackHTTP: HTTPClient {
   ]) func coinbaseRejectsInvalidBatch(_ json: String) {
     #expect(throws: (any Error).self) { try CoinbaseProvider.decode(Data(json.utf8)) }
   }
+
   @Test func xmlParsing() throws {
     let xml = Data(
       "<gesmes:Envelope xmlns:gesmes='urn:test'><Cube><Cube time='2026-01-02'><Cube currency='USD' rate='1.25'/></Cube></Cube></gesmes:Envelope>"
@@ -73,6 +77,7 @@ private actor FallbackHTTP: HTTPClient {
         Data("<Cube time='2026-01-02'><Cube currency='USD' rate='0'/></Cube>".utf8))
     }
   }
+
   @Test func dailyParsing() throws {
     let data = Data(#"{"date":"2026-01-02","eur":{"usd":1.2,"btc":0.00002,"eth":0.0003}}"#.utf8)
     let quotes = try FawazProvider.decode(data)
@@ -81,12 +86,14 @@ private actor FallbackHTTP: HTTPClient {
       try FawazProvider.decode(Data(#"{"date":"bad","eur":{"usd":1,"btc":1}}"#.utf8))
     }
   }
+
   @Test func alternateCDN() async throws {
     let client = FallbackHTTP()
     let quotes = try await FawazProvider(client: client).fetch()
     #expect(quotes["BTC"] != nil)
     #expect(await client.calls == 2)
   }
+
   @Test func expandedCryptoQuotesSurviveCatalogFiltering() throws {
     let codes = [
       "XRP", "ADA", "AVAX", "LINK", "DOT", "BCH", "XLM", "ATOM",

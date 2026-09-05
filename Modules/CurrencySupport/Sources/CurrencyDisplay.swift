@@ -8,6 +8,7 @@ public enum CurrencyDisplay {
     guard let currency = CurrencyCode(rawValue: code) else { return code }
     return currency.assetName ?? locale.localizedString(forCurrencyCode: code) ?? code
   }
+
   /// Formats a currency value using the currency's supported precision.
   public static func format(_ value: Decimal?, code: String, locale: Locale = .current) -> String {
     guard let value, !value.isNaN else { return "—" }
@@ -32,6 +33,7 @@ extension CurrencyDisplay {
     default: return 2
     }
   }
+
   /// Returns the flag or symbol associated with a currency code.
   public static func flag(_ code: String) -> String {
     guard let currency = CurrencyCode(rawValue: code) else { return "🪙" }
