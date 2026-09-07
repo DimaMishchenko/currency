@@ -268,6 +268,14 @@ public struct ConverterScreen<Details: View>: View {
           Capsule().fill(accent).frame(width: 2, height: 48).transition(.opacity)
             .accessibilityHidden(true)
         }
+        Text(verbatim: model.input.source)
+          .font(
+            AppStyle.font(
+              verticalSizeClass == .compact ? .caption : .title3, weight: .medium)
+          )
+          .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+          .fixedSize()
+          .accessibilityHidden(true)
         Spacer(minLength: 0)
       }
       .frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
