@@ -20,7 +20,42 @@ private func currencyRepresentation(_ code: String) -> DisplayRepresentation {
       image: .init(data: data, isTemplate: false))
   }
   return DisplayRepresentation(
-    title: "\(CurrencyDisplay.flag(code)) \(code)", subtitle: "\(CurrencyDisplay.name(code))")
+    title: "\(code)", subtitle: "\(CurrencyDisplay.name(code))",
+    image: .init(systemName: "globe"))
+}
+
+private func currencySections<Entity: AppEntity>(
+  allowsLocal: Bool = false, cashOnly: Bool = false, excluding: Set<String> = [],
+  make: (String) -> Entity
+) -> IntentItemCollection<Entity> {
+  let allowed = CurrencyCatalog.codes.filter {
+    !excluding.contains($0) && (!cashOnly || WidgetPresets.allows($0))
+  }
+  let selected = WidgetSelection.appCurrencies(CurrencyStore.shared.input())
+    .filter(allowed.contains)
+  let remaining = allowed.filter { !selected.contains($0) }.sorted()
+  var sections: [IntentItemSection<Entity>] = []
+  func append(_ title: LocalizedStringResource, _ codes: [String]) {
+    if !codes.isEmpty { sections.append(IntentItemSection(title, items: codes.map(make))) }
+  }
+  append(
+    LocalizedStringResource("appSelectedSection", defaultValue: "App selected", table: "Widgets"),
+    selected)
+  if allowsLocal && !excluding.contains(localCurrencyID) {
+    append(
+      LocalizedStringResource("locationSection", defaultValue: "Location", table: "Widgets"),
+      [localCurrencyID])
+  }
+  append(
+    LocalizedStringResource("fiatSection", defaultValue: "Currencies", table: "Widgets"),
+    remaining.filter { !WidgetPresets.metals.contains($0) && !CurrencyCatalog.crypto.contains($0) })
+  append(
+    LocalizedStringResource("metalsSection", defaultValue: "Metals", table: "Widgets"),
+    remaining.filter(WidgetPresets.metals.contains))
+  append(
+    LocalizedStringResource("cryptoSection", defaultValue: "Crypto", table: "Widgets"),
+    remaining.filter(CurrencyCatalog.crypto.contains))
+  return IntentItemCollection(sections: sections)
 }
 
 struct WidgetCurrency: AppEntity {
@@ -44,17 +79,18 @@ struct CurrencyQuery: EntityStringQuery {
     identifiers.filter { CurrencyCatalog.codes.contains($0) }.map(WidgetCurrency.init)
   }
 
-  func suggestedEntities() async throws -> [WidgetCurrency] {
-    CurrencyCatalog.codes.map(WidgetCurrency.init)
+  func suggestedEntities() async throws -> IntentItemCollection<WidgetCurrency> {
+    currencySections(make: WidgetCurrency.init)
   }
 
-  func entities(matching string: String) async throws -> [WidgetCurrency] {
-    CurrencyCatalog.codes
-      .filter {
-        $0.localizedCaseInsensitiveContains(string)
-          || CurrencyDisplay.name($0).localizedCaseInsensitiveContains(string)
-      }
-      .map(WidgetCurrency.init)
+  func entities(matching string: String) async throws -> IntentItemCollection<WidgetCurrency> {
+    IntentItemCollection(
+      items: CurrencyCatalog.codes
+        .filter {
+          $0.localizedCaseInsensitiveContains(string)
+            || CurrencyDisplay.name($0).localizedCaseInsensitiveContains(string)
+        }
+        .map(WidgetCurrency.init))
   }
 }
 
@@ -79,18 +115,19 @@ struct CashQuery: EntityStringQuery {
     identifiers.filter(WidgetPresets.allows).map(CashCurrency.init)
   }
 
-  func suggestedEntities() async throws -> [CashCurrency] {
-    CurrencyCatalog.codes.filter(WidgetPresets.allows).map(CashCurrency.init)
+  func suggestedEntities() async throws -> IntentItemCollection<CashCurrency> {
+    currencySections(cashOnly: true, make: CashCurrency.init)
   }
 
-  func entities(matching string: String) async throws -> [CashCurrency] {
-    CurrencyCatalog.codes
-      .filter {
-        WidgetPresets.allows($0)
-          && ($0.localizedCaseInsensitiveContains(string)
-            || CurrencyDisplay.name($0).localizedCaseInsensitiveContains(string))
-      }
-      .map(CashCurrency.init)
+  func entities(matching string: String) async throws -> IntentItemCollection<CashCurrency> {
+    IntentItemCollection(
+      items: CurrencyCatalog.codes
+        .filter {
+          WidgetPresets.allows($0)
+            && ($0.localizedCaseInsensitiveContains(string)
+              || CurrencyDisplay.name($0).localizedCaseInsensitiveContains(string))
+        }
+        .map(CashCurrency.init))
   }
 }
 
@@ -101,10 +138,10 @@ struct BaseCurrencyQuery: EntityStringQuery {
   func entities(for identifiers: [String]) async throws -> [WidgetCurrency] {
     try await CurrencyQuery().entities(for: identifiers)
   }
-  func suggestedEntities() async throws -> [WidgetCurrency] {
+  func suggestedEntities() async throws -> IntentItemCollection<WidgetCurrency> {
     try await CurrencyQuery().suggestedEntities()
   }
-  func entities(matching string: String) async throws -> [WidgetCurrency] {
+  func entities(matching string: String) async throws -> IntentItemCollection<WidgetCurrency> {
     try await CurrencyQuery().entities(matching: string)
   }
 }
@@ -114,10 +151,10 @@ struct CashBaseQuery: EntityStringQuery {
   func entities(for identifiers: [String]) async throws -> [CashCurrency] {
     try await CashQuery().entities(for: identifiers)
   }
-  func suggestedEntities() async throws -> [CashCurrency] {
+  func suggestedEntities() async throws -> IntentItemCollection<CashCurrency> {
     try await CashQuery().suggestedEntities()
   }
-  func entities(matching string: String) async throws -> [CashCurrency] {
+  func entities(matching string: String) async throws -> IntentItemCollection<CashCurrency> {
     try await CashQuery().entities(matching: string)
   }
 }
@@ -131,15 +168,16 @@ struct ComparisonCurrencyQuery: EntityStringQuery {
     identifiers.filter { $0 == localCurrencyID || CurrencyCatalog.codes.contains($0) }
       .map(WidgetCurrency.init)
   }
-  func suggestedEntities() async throws -> [WidgetCurrency] {
-    [WidgetCurrency(localCurrencyID)] + (try await CurrencyQuery().suggestedEntities())
+  func suggestedEntities() async throws -> IntentItemCollection<WidgetCurrency> {
+    currencySections(allowsLocal: true, make: WidgetCurrency.init)
   }
-  func entities(matching string: String) async throws -> [WidgetCurrency] {
+  func entities(matching string: String) async throws -> IntentItemCollection<WidgetCurrency> {
     let localName = String(
       localized: "localCurrencyChoice", defaultValue: "Local currency", table: "Widgets")
     let local =
       localName.localizedCaseInsensitiveContains(string) ? [WidgetCurrency(localCurrencyID)] : []
-    return local + (try await CurrencyQuery().entities(matching: string))
+    return IntentItemCollection(
+      items: local + (try await CurrencyQuery().entities(matching: string)).items)
   }
 }
 
@@ -149,71 +187,91 @@ struct CashComparisonQuery: EntityStringQuery {
   func entities(for identifiers: [String]) async throws -> [CashCurrency] {
     identifiers.filter { $0 == localCurrencyID || WidgetPresets.allows($0) }.map(CashCurrency.init)
   }
-  func suggestedEntities() async throws -> [CashCurrency] {
-    [CashCurrency(localCurrencyID)] + (try await CashQuery().suggestedEntities())
+  func suggestedEntities() async throws -> IntentItemCollection<CashCurrency> {
+    currencySections(allowsLocal: true, cashOnly: true, make: CashCurrency.init)
   }
-  func entities(matching string: String) async throws -> [CashCurrency] {
+  func entities(matching string: String) async throws -> IntentItemCollection<CashCurrency> {
     let localName = String(
       localized: "localCurrencyChoice", defaultValue: "Local currency", table: "Widgets")
     let local =
       localName.localizedCaseInsensitiveContains(string) ? [CashCurrency(localCurrencyID)] : []
-    return local + (try await CashQuery().entities(matching: string))
+    return IntentItemCollection(
+      items: local + (try await CashQuery().entities(matching: string)).items)
   }
 }
 
 /// WidgetKit asks queries for defaults when presenting its native editor.
 struct MultiCurrencyQuery: EntityStringQuery {
+  @IntentParameterDependency<MultiSettings> var settings: IntentProjection<MultiSettings>?
+
+  init() { _settings = IntentParameterDependency(\.$list, \.$currencies) }
+
+  private var selected: Set<String> { Set(settings?.currencies.map(\.id) ?? []) }
+
   func defaultResult() async -> [WidgetCurrency]? {
-    ["EUR", "USD", "GBP", "CZK", "CHF", "JPY"].map(WidgetCurrency.init)
+    guard settings?.list == .selected else { return nil }
+    return WidgetSelection.appCurrencies(CurrencyStore.shared.input()).map(WidgetCurrency.init)
   }
   func entities(for identifiers: [String]) async throws -> [WidgetCurrency] {
-    try await CurrencyQuery().entities(for: identifiers)
+    try await ComparisonCurrencyQuery()
+      .entities(for: WidgetSelection.normalize(identifiers, allowsLocal: true))
   }
-  func suggestedEntities() async throws -> [WidgetCurrency] {
-    try await CurrencyQuery().suggestedEntities()
+  func suggestedEntities() async throws -> IntentItemCollection<WidgetCurrency> {
+    currencySections(allowsLocal: true, excluding: selected, make: WidgetCurrency.init)
   }
-  func entities(matching string: String) async throws -> [WidgetCurrency] {
-    try await CurrencyQuery().entities(matching: string)
+  func entities(matching string: String) async throws -> IntentItemCollection<WidgetCurrency> {
+    IntentItemCollection(
+      items: (try await ComparisonCurrencyQuery().entities(matching: string)).items
+        .filter { !selected.contains($0.id) })
   }
 }
 
 struct BoardCurrencyQuery: EntityStringQuery {
+  @IntentParameterDependency<BoardSettings> var settings: IntentProjection<BoardSettings>?
+
+  init() { _settings = IntentParameterDependency(\.$list, \.$currencies) }
+
+  private var selected: Set<String> { Set(settings?.currencies.map(\.id) ?? []) }
+
   func defaultResult() async -> [WidgetCurrency]? {
-    ["USD", "GBP", "CZK", "CHF", "JPY", "BTC"].map(WidgetCurrency.init)
+    guard settings?.list == .selected else { return nil }
+    return WidgetSelection.appCurrencies(CurrencyStore.shared.input()).map(WidgetCurrency.init)
   }
   func entities(for identifiers: [String]) async throws -> [WidgetCurrency] {
-    try await CurrencyQuery().entities(for: identifiers)
+    try await CurrencyQuery()
+      .entities(for: WidgetSelection.normalize(identifiers, allowsLocal: false))
   }
-  func suggestedEntities() async throws -> [WidgetCurrency] {
-    try await CurrencyQuery().suggestedEntities()
+  func suggestedEntities() async throws -> IntentItemCollection<WidgetCurrency> {
+    currencySections(excluding: selected, make: WidgetCurrency.init)
   }
-  func entities(matching string: String) async throws -> [WidgetCurrency] {
-    try await CurrencyQuery().entities(matching: string)
+  func entities(matching string: String) async throws -> IntentItemCollection<WidgetCurrency> {
+    IntentItemCollection(
+      items: (try await CurrencyQuery().entities(matching: string)).items
+        .filter { !selected.contains($0.id) })
   }
 }
 
-enum BoardCurrencyList: String, AppEnum {
-  case selected, standard
+enum CalculatorCurrencyList: String, AppEnum {
+  case selected, synchronized
   static let typeDisplayRepresentation = TypeDisplayRepresentation(
     name: LocalizedStringResource(
       "listModeParameter", defaultValue: "Currency list", table: "Widgets"))
-  static let caseDisplayRepresentations: [BoardCurrencyList: DisplayRepresentation] = [
+  static let caseDisplayRepresentations: [CalculatorCurrencyList: DisplayRepresentation] = [
     .selected: DisplayRepresentation(
-      title: LocalizedStringResource(
-        "selectedList", defaultValue: "Selected currencies", table: "Widgets")),
-    .standard: DisplayRepresentation(
-      title: LocalizedStringResource(
-        "standardList", defaultValue: "Default currencies", table: "Widgets"))
+      title: LocalizedStringResource("selectedList", defaultValue: "Custom list", table: "Widgets")),
+    .synchronized: DisplayRepresentation(
+      title: LocalizedStringResource("syncedList", defaultValue: "Default", table: "Widgets"))
   ]
 }
 
-/// A persisted configuration value, generated by WidgetKit when a widget is added.
+/// A persisted configuration identity. Native default provisioning must be validated independently.
 /// Never generate this ID in a timeline or view: that would reset the saved input on refresh.
 struct CalculatorInstance: AppEntity {
   static let typeDisplayRepresentation: TypeDisplayRepresentation = "Calculator"
   static let defaultQuery = CalculatorInstanceQuery()
   let id: String
-  var displayRepresentation: DisplayRepresentation { "Calculator" }
+  var displayRepresentation: DisplayRepresentation { DisplayRepresentation(title: "Input") }
+
 }
 
 struct CalculatorInstanceQuery: EntityQuery {
@@ -223,7 +281,9 @@ struct CalculatorInstanceQuery: EntityQuery {
   func entities(for identifiers: [String]) async throws -> [CalculatorInstance] {
     identifiers.filter { UUID(uuidString: $0) != nil }.map { CalculatorInstance(id: $0) }
   }
-  func suggestedEntities() async throws -> [CalculatorInstance] { [] }
+  func suggestedEntities() async throws -> [CalculatorInstance] {
+    []
+  }
 }
 
 protocol SuiteConfiguration: WidgetConfigurationIntent {
@@ -234,12 +294,19 @@ struct WidgetSpec: Sendable {
   var kind: String
   var codes: [String]
   var amount = "1"
-  var usesLocation = false
-  var locationAvailable = false
+  var locationStatus: WidgetLocationStatus = .notDetermined
+  var localCode: String?
+  var localIsStale = false
+  var canonicalCodes: [String]
+  var usesLocation: Bool { canonicalCodes.contains(localCurrencyID) }
   var instanceID: String?
+  var synchronized = false
+  var requiresCurrencySelection = false
   var key: String {
-    if let instanceID { return "\(kind)|instance|\(instanceID)" }
-    return ([kind] + codes).joined(separator: "|")
+    if let instanceID {
+      return "\(kind)|instance|\(instanceID)|\(synchronized ? "default" : "custom")"
+    }
+    return ([kind] + canonicalCodes).joined(separator: "|")
   }
 
   init(
@@ -247,28 +314,24 @@ struct WidgetSpec: Sendable {
     local: Bool = false, location: WidgetLocation? = nil, instanceID: String? = nil
   ) {
     self.kind = kind
-    var seen = Set<String>()
-    let valid = codes.filter { CurrencyCatalog.codes.contains($0) }
-    if kind == "CurrencyBoard", let base = valid.first {
-      // Base and comparisons have distinct roles: selecting the base as a target is valid.
-      self.codes = [base] + valid.dropFirst().filter { seen.insert($0).inserted }
-    } else if kind == "CurrencyConverter" {
-      self.codes = valid.filter { seen.insert($0).inserted }
-    } else {
-      self.codes = valid
-    }
-    if self.codes.isEmpty { self.codes = ["EUR", "USD"] }
-    if local, let location, location.isFresh() {
-      if self.codes.count > 1 {
-        self.codes[1] = location.currency
+    var configured = codes
+    if local, !configured.contains(localCurrencyID) {
+      if configured.count > 1 {
+        configured[1] = localCurrencyID
       } else {
-        self.codes.append(location.currency)
+        configured.append(localCurrencyID)
       }
-      locationAvailable = true
     }
+    locationStatus = CurrencyStore.shared.widgetLocationStatus()
+    let resolved = WidgetResolvedSelection(
+      codes: configured, location: location, status: locationStatus)
+    canonicalCodes = resolved.canonical
+    self.codes = resolved.codes
+    localCode = resolved.localCode
+    localIsStale = resolved.localIsStale
     self.instanceID = instanceID
     self.amount = amount
-    usesLocation = local
+
   }
 }
 
@@ -278,55 +341,70 @@ struct MultiSettings: SuiteConfiguration {
   @Parameter(
     title: LocalizedStringResource(
       "currenciesParameter", defaultValue: "Currencies", table: "Widgets"),
-    default: ["EUR", "USD", "GBP", "CZK", "CHF", "JPY"].map(WidgetCurrency.init),
-    size: .init(min: 2, max: 8), query: MultiCurrencyQuery()) var currencies: [WidgetCurrency]?
-  @Parameter(title: "Calculator", query: CalculatorInstanceQuery())
-  var instance: CalculatorInstance?
-
-  static var parameterSummary: some ParameterSummary {
-    Summary {
-      \.$currencies
-    }
-  }
-
-  func specification(kind: String, location: WidgetLocation?) -> WidgetSpec {
-    WidgetSpec(
-      kind: kind,
-      codes: (currencies ?? ["EUR", "USD", "GBP", "CZK", "CHF", "JPY"].map(WidgetCurrency.init))
-        .map(\.id),
-      instanceID: instance?.id)
-  }
-}
-
-struct PairSettings: SuiteConfiguration {
-  static let title: LocalizedStringResource = LocalizedStringResource(
-    "pairSettings", defaultValue: "Currency pair", table: "Widgets")
-  @Parameter(
-    title: LocalizedStringResource("baseParameter", defaultValue: "Base", table: "Widgets"),
-    default: WidgetCurrency("EUR"), query: BaseCurrencyQuery())
-  var base: WidgetCurrency
+    size: .init(min: 1, max: 200), query: MultiCurrencyQuery()) var currencies: [WidgetCurrency]?
   @Parameter(
     title: LocalizedStringResource(
-      "comparisonParameter", defaultValue: "Comparison", table: "Widgets"),
-    default: WidgetCurrency("USD"), query: ComparisonCurrencyQuery()) var comparison: WidgetCurrency
+      "listModeParameter", defaultValue: "Currency list", table: "Widgets"),
+    description: LocalizedStringResource(
+      "calculatorListHelp",
+      defaultValue:
+        "Default follows your app currencies. Choose Custom list to edit a separate selection.",
+      table: "Widgets"), default: .synchronized)
+  var list: CalculatorCurrencyList
+  @Parameter(
+    title: LocalizedStringResource(
+      "includeLocal", defaultValue: "Add local currency to Default", table: "Widgets"),
+    default: false)
+  var includeLocal: Bool
   @Parameter(title: "Calculator", query: CalculatorInstanceQuery())
   var instance: CalculatorInstance?
 
   static var parameterSummary: some ParameterSummary {
-    Summary {
-      \.$base
-      \.$comparison
+    Switch(.widgetFamily) {
+      Case(.systemMedium) {
+        When(\.$list, .equalTo, CalculatorCurrencyList.selected) {
+          Summary(
+            "Medium shows the first 4 currencies. Additional currencies appear on Large.",
+            table: "Widgets"
+          ) {
+            \.$list; \.$currencies
+          }
+        } otherwise: {
+          Summary(
+            "Medium follows the first 4 app currencies. Local uses the last slot when enabled.",
+            table: "Widgets"
+          ) {
+            \.$list; \.$includeLocal
+          }
+        }
+      }
+      DefaultCase {
+        When(\.$list, .equalTo, CalculatorCurrencyList.selected) {
+          Summary("Large shows the first 8 currencies. Medium shows the first 4.", table: "Widgets")
+          {
+            \.$list; \.$currencies
+          }
+        } otherwise: {
+          Summary(
+            "Large follows the first 8 app currencies. Local uses the last slot when enabled.",
+            table: "Widgets"
+          ) {
+            \.$list; \.$includeLocal
+          }
+        }
+      }
     }
   }
 
   func specification(kind: String, location: WidgetLocation?) -> WidgetSpec {
-    WidgetSpec(
-      kind: kind,
-      codes: [
-        (base.id), (comparison.id == localCurrencyID ? "USD" : comparison.id)
-      ],
-      local: comparison.id == localCurrencyID,
-      location: location, instanceID: instance?.id)
+    let custom = list == .selected
+    let codes = WidgetSelection.calculator(
+      app: CurrencyStore.shared.input(),
+      custom: currencies?.map(\.id), usesCustom: custom, includeLocal: includeLocal)
+    var spec = WidgetSpec(kind: kind, codes: codes, location: location, instanceID: instance?.id)
+    spec.synchronized = !custom
+    spec.requiresCurrencySelection = custom && codes.isEmpty
+    return spec
   }
 }
 
@@ -402,33 +480,36 @@ struct BoardSettings: SuiteConfiguration {
     default: "1") var amount: String
   @Parameter(
     title: LocalizedStringResource(
-      "listModeParameter", defaultValue: "Currency list", table: "Widgets"), default: .selected)
-  var list: BoardCurrencyList
+      "listModeParameter", defaultValue: "Currency list", table: "Widgets"), default: .synchronized)
+  var list: CalculatorCurrencyList
   @Parameter(
     title: LocalizedStringResource(
       "currenciesParameter", defaultValue: "Currencies", table: "Widgets"),
-    default: ["USD", "GBP", "CZK", "CHF", "JPY", "BTC"].map(WidgetCurrency.init),
-    size: .init(min: 1, max: 12), query: BoardCurrencyQuery()) var currencies: [WidgetCurrency]?
+    size: .init(min: 1, max: 200), query: BoardCurrencyQuery()) var currencies: [WidgetCurrency]?
 
   static var parameterSummary: some ParameterSummary {
-    When(\.$list, .equalTo, BoardCurrencyList.selected) {
+    When(\.$list, .equalTo, CalculatorCurrencyList.selected) {
       Summary {
         \.$base; \.$amount; \.$list; \.$currencies
       }
     } otherwise: {
       Summary {
-        \.$base; \.$amount; \.$list
+        \.$list
       }
     }
   }
 
   func specification(kind: String, location: WidgetLocation?) -> WidgetSpec {
-    WidgetSpec(
+    var spec = WidgetSpec(
       kind: kind,
-      codes: [(base.id)]
-        + (list == .standard
-          ? ["USD", "GBP", "CZK", "CHF", "JPY", "BTC"]
-          : (currencies?.map(\.id) ?? ["USD", "GBP", "CZK", "CHF", "JPY", "BTC"])),
-      amount: amount)
+      codes: WidgetSelection.board(
+        base: list == .synchronized ? CurrencyStore.shared.input().source : base.id,
+        targets: (list == .synchronized
+          ? WidgetSelection.appCurrencies(CurrencyStore.shared.input())
+          : (currencies?.map(\.id) ?? []))
+      ),
+      amount: list == .synchronized ? CurrencyStore.shared.input().amount : amount)
+    spec.requiresCurrencySelection = list == .selected && (currencies?.isEmpty ?? true)
+    return spec
   }
 }

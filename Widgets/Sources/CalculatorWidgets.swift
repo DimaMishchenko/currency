@@ -5,23 +5,33 @@ import WidgetKit
 struct CalculatorView: View {
   @Environment(\.widgetFamily) private var family
   let entry: SuiteEntry
-  var pair = false
 
-  var body: some View { CalculatorLayout(entry: entry, pair: pair, family: family) }
+  var body: some View { CalculatorLayout(entry: entry, family: family) }
 }
 
 struct CalculatorLayout: View {
   let entry: SuiteEntry
-  var pair = false
   let family: WidgetFamily
 
   private var codes: [String] {
-    pair ? entry.spec.codes : entry.input.visibleCodes(limit: family == .systemMedium ? 4 : 8)
+    entry.input.visibleCodes(
+      limit: family == .systemMedium ? 4 : 8, reservesLocal: entry.spec.synchronized)
+  }
+
+  private var displayEntry: SuiteEntry {
+    var display = entry
+    display.input = entry.input.displayedInput(
+      limit: family == .systemMedium ? 4 : 8,
+      reservesLocal: entry.spec.synchronized, snapshot: entry.snapshot)
+    return display
   }
 
   var body: some View {
     GeometryReader { geometry in
-      if family == .systemMedium {
+      if entry.spec.codes.isEmpty {
+        Text(.Widgets.chooseCustomCurrencies)
+          .font(AppStyle.font(.callout)).frame(maxWidth: .infinity, maxHeight: .infinity)
+      } else if family == .systemMedium {
         HStack(spacing: AppStyle.Space.small) {
           VStack(spacing: AppStyle.Space.xs) {
             if codes.count > 2 {
@@ -32,23 +42,33 @@ struct CalculatorLayout: View {
                       Array(codes.dropFirst(row * 2).prefix(2).enumerated()),
                       id: \.offset
                     ) { _, code in
-                      CurrencyTile(entry: entry, code: code, compact: true, stacked: true)
+                      CurrencyTile(entry: displayEntry, code: code, compact: true, stacked: true)
                     }
                     if row == 1 && codes.count == 3 {
-                      Color.clear.frame(maxWidth: .infinity)
+                      Color.clear.frame(maxWidth: .infinity).accessibilityHidden(true)
+                        .allowsHitTesting(false)
                     }
                   }
                 }
               }
             } else {
               ForEach(Array(codes.enumerated()), id: \.offset) { _, code in
-                CurrencyTile(entry: entry, code: code, stacked: true)
+                CurrencyTile(entry: displayEntry, code: code, stacked: true)
               }
             }
             WidgetFooter(entry: entry)
           }
           .frame(width: geometry.size.width * 0.46)
-          WidgetKeypad(spec: entry.spec)
+          WidgetKeypad(
+            spec: entry.spec,
+            activeCurrency: displayEntry.input.active != entry.input.active
+              ? displayEntry.input.active : nil,
+            hiddenCurrency: displayEntry.input.active != entry.input.active
+              ? entry.input.active : nil
+          )
+          .disabled(
+            !codes.contains(displayEntry.input.active)
+              || displayEntry.input.active == WidgetSelection.localID)
         }
       } else {
         VStack(spacing: AppStyle.Space.small) {
@@ -60,18 +80,32 @@ struct CalculatorLayout: View {
                   Array(codes.dropFirst(row * 2).prefix(2).enumerated()), id: \.offset
                 ) { _, code in
                   CurrencyTile(
-                    entry: entry, code: code, compact: rows == 4, stacked: rows == 1,
+                    entry: displayEntry, code: code, compact: rows == 4, stacked: rows == 1,
                     showsCode: rows != 4)
+                }
+                if row * 2 + 1 >= codes.count {
+                  Color.clear.frame(maxWidth: .infinity)
+                    .accessibilityHidden(true).allowsHitTesting(false)
                 }
               }
             }
           }
-          .frame(height: max(56, geometry.size.height * (pair || rows == 1 ? 0.26 : 0.43)))
-          WidgetKeypad(spec: entry.spec)
+          .frame(height: max(56, geometry.size.height * (rows == 1 ? 0.26 : 0.43)))
+          WidgetKeypad(
+            spec: entry.spec,
+            activeCurrency: displayEntry.input.active != entry.input.active
+              ? displayEntry.input.active : nil,
+            hiddenCurrency: displayEntry.input.active != entry.input.active
+              ? entry.input.active : nil
+          )
+          .disabled(
+            !codes.contains(displayEntry.input.active)
+              || displayEntry.input.active == WidgetSelection.localID)
           WidgetFooter(entry: entry)
         }
       }
     }
+    .animation(nil, value: entry.input)
     .modifier(WidgetSurface())
   }
 
@@ -87,18 +121,6 @@ struct MultiCurrencyWidget: Widget {
     .description(
       .Widgets.multiDescription
     )
-    .supportedFamilies([.systemMedium, .systemLarge])
-  }
-}
-
-struct PairCalculatorWidget: Widget {
-  var body: some WidgetConfiguration {
-    AppIntentConfiguration(
-      kind: "CurrencyPairCalculator", intent: PairSettings.self,
-      provider: SuiteTimeline<PairSettings>(kind: "CurrencyPairCalculator")
-    ) { CalculatorView(entry: $0, pair: true) }
-    .configurationDisplayName(Text(.Widgets.pairTitle))
-    .description(Text(.Widgets.pairDescription))
     .supportedFamilies([.systemMedium, .systemLarge])
   }
 }

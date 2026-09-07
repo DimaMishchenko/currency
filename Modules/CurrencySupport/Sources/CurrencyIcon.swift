@@ -1,5 +1,8 @@
+import CoreText
 import ExchangeRates
+import ImageIO
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// A bundled crypto badge, original metal badge, or native fiat flag emoji.
 /// DOGE: https://github.com/spothq/cryptocurrency-icons (CC0; CryptocurrencyIcons-LICENSE.txt).
@@ -17,8 +20,43 @@ public struct CurrencyIcon: View {
     for code in ["XAU", "XAG", "XPT", "XPD"] {
       images[code] = UIImage(named: "Metal" + code, in: bundle, compatibleWith: nil)?.pngData()
     }
+    for code in CurrencyCatalog.codes where images[code] == nil {
+      images[code] = flagImage(CurrencyDisplay.flag(code))
+    }
     return images
   }()
+
+  /// Core Text and a private bitmap context avoid UI/main-actor rendering in entity queries.
+  nonisolated private static func flagImage(_ flag: String) -> Data? {
+    let side = 72
+    guard
+      let context = CGContext(
+        data: nil, width: side, height: side, bitsPerComponent: 8,
+        bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
+        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+    else { return nil }
+    let font = CTFontCreateWithName("AppleColorEmoji" as CFString, 52, nil)
+    let string = NSAttributedString(
+      string: flag,
+      attributes: [
+        NSAttributedString.Key(kCTFontAttributeName as String): font
+      ])
+    let line = CTLineCreateWithAttributedString(string)
+    let bounds = CTLineGetBoundsWithOptions(line, .useGlyphPathBounds)
+    context.textPosition = CGPoint(
+      x: (72 - bounds.width) / 2 - bounds.minX,
+      y: (72 - bounds.height) / 2 - bounds.minY)
+    CTLineDraw(line, context)
+    guard let image = context.makeImage() else { return nil }
+    let data = NSMutableData()
+    guard
+      let destination = CGImageDestinationCreateWithData(
+        data, UTType.png.identifier as CFString, 1, nil)
+    else { return nil }
+    CGImageDestinationAddImage(destination, image, nil)
+    guard CGImageDestinationFinalize(destination) else { return nil }
+    return data as Data
+  }
 
   private let code: String
   private let size: CGFloat

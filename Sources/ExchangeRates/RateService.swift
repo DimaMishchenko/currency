@@ -38,18 +38,20 @@ public actor RateService {
   ///   - previous: Last saved snapshot, including separate daily fallbacks when available.
   ///   - force: Bypasses the daily-feed freshness check.
   ///   - now: Evaluation time for freshness and returned timestamps.
+  ///   - providerTimeout: Optional per-provider deadline for latency-sensitive widget timelines.
   /// - Returns: A usable snapshot with an optional recoverable warning.
   public func refresh(
-    previous: RateSnapshot, force: Bool = false, now: Date = .now
+    previous: RateSnapshot, force: Bool = false, now: Date = .now,
+    providerTimeout: Duration? = nil
   ) async -> RefreshResult {
     guard !Task.isCancelled else { return RefreshResult(snapshot: previous, warning: nil) }
     let refreshDaily =
       force || previous.dailyQuotes == nil
       || now < (previous.dailyFetchedAt ?? .distantPast)
       || now.timeIntervalSince(previous.dailyFetchedAt ?? .distantPast) >= 21600
-    async let fiatResult = refreshDaily ? fetch(fiat) : nil
-    async let dailyResult = refreshDaily ? fetch(daily) : nil
-    async let cryptoResult = fetch(crypto)
+    async let fiatResult = refreshDaily ? fetch(fiat, timeout: providerTimeout) : nil
+    async let dailyResult = refreshDaily ? fetch(daily, timeout: providerTimeout) : nil
+    async let cryptoResult = fetch(crypto, timeout: providerTimeout)
     let (fiatQuotes, supplementalQuotes) = await (fiatResult, dailyResult)
     var quotes = previous.dailyQuotes ?? previous.quotes.filter { $0.value.overlayTimestamp == nil }
     // Each quote retains its own publication date; never replace newer cache data with older data.
@@ -80,8 +82,20 @@ public actor RateService {
         checkedAt: now), warning: warning)
   }
 
-  private func fetch(_ provider: (any RateProvider)?) async -> [String: ExchangeRate]? {
+  private func fetch(
+    _ provider: (any RateProvider)?, timeout: Duration?
+  ) async -> [String: ExchangeRate]? {
     guard let provider else { return nil }
-    return try? await provider.fetch()
+    guard let timeout else { return try? await provider.fetch() }
+    return await withTaskGroup(of: [String: ExchangeRate]?.self) { group in
+      group.addTask { try? await provider.fetch() }
+      group.addTask {
+        try? await Task.sleep(for: timeout)
+        return nil
+      }
+      let quotes = await group.next() ?? nil
+      group.cancelAll()
+      return quotes
+    }
   }
 }

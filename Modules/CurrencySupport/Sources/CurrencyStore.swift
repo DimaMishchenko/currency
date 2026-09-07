@@ -36,10 +36,12 @@ public struct CurrencyStore: Sendable {
 
   /// Applies an edit to freshly loaded input under a cross-process file coordination lock.
   @discardableResult
-  public func updateInput(_ mutation: (inout ConverterState) -> Void) throws -> ConverterState {
+  public func updateInput(
+    _ mutation: (inout ConverterState) throws -> Void
+  ) throws -> ConverterState {
     try coordinate("input.json") {
       var state = input()
-      mutation(&state)
+      try mutation(&state)
       try JSONEncoder().encode(state)
         .write(to: directory.appendingPathComponent("input.json"), options: .atomic)
       return state
@@ -56,7 +58,8 @@ public struct CurrencyStore: Sendable {
   /// Network requests run outside file coordination. Unless forced, attempts are spaced
   /// thirty minutes apart. The final commit merges publication and observation metadata.
   public func refreshRates(
-    using service: RateService, force: Bool = false, now: Date = .now
+    using service: RateService, force: Bool = false, now: Date = .now,
+    providerTimeout: Duration? = nil
   ) async throws -> RefreshResult {
     let previous = loadRates()
     guard
@@ -65,7 +68,8 @@ public struct CurrencyStore: Sendable {
     else {
       return RefreshResult(snapshot: previous, warning: nil)
     }
-    let result = await service.refresh(previous: previous, force: force, now: now)
+    let result = await service.refresh(
+      previous: previous, force: force, now: now, providerTimeout: providerTimeout)
     try Task.checkCancellation()
     return try coordinate("rates.json") {
       let current = loadRates()

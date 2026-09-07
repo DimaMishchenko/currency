@@ -53,6 +53,11 @@ public struct WidgetLocation: Codable, Equatable, Sendable {
     self.updatedAt = updatedAt
   }
 
+  /// A stale supported observation remains usable after an authorized transient failure.
+  public var isUsable: Bool {
+    WidgetPresets.allows(currency) && !WidgetPresets.metals.contains(currency)
+  }
+
   /// Whether this supported fiat observation is less than one day old.
   public func isFresh(now: Date = .now) -> Bool {
     now >= updatedAt && now.timeIntervalSince(updatedAt) < 86400

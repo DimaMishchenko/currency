@@ -764,7 +764,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Multi-currency"
+            "value": "Currency Calculator"
           }
         }
       }
@@ -776,7 +776,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tap any fixed-position currency tile, then type. Medium holds up to four currencies; large holds up to eight."
+            "value": "Choose Default to follow the app currency list or Custom list for a separate selection. Two currencies give you a pair calculator. Medium shows up to four entries and large up to eight."
           }
         }
       }
@@ -788,7 +788,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pair Calculator"
+            "value": "Existing pair calculators"
           }
         }
       }
@@ -800,7 +800,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choose two currencies and enter amounts in either direction. Available in medium and large."
+            "value": "Existing pair widgets continue to work. Choose Currency Calculator when adding a new widget."
           }
         }
       }
@@ -883,7 +883,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Set an amount and an ordered list in widget settings. Choose Default currencies to return to the standard list. Available in every Home Screen size."
+            "value": "Choose a base and amount. Default follows your app currencies; Custom list keeps its own selection. The base is always first and bold. Available in every Home Screen size."
           }
         },
         "ru": {
@@ -977,19 +977,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Update your local currency here, then choose Local currency at the top of the Comparison picker. If your saved location expires or is unavailable, widgets use USD (EUR for Know Your Cash)."
+            "value": "Choose Local currency in a calculator or supported reference widget. Tap its setup link, then Update here to request location permission. Only your country, currency, and update time are saved. Authorized lookup failures retain your last-known currency. Location updates only when you tap Update here. Allow Once expires after the session; reopen this screen to grant access again. After one day widgets label the saved currency as last-known."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Обновите местную валюту здесь, затем выберите «Местная валюта» в начале списка сравнения. Если местоположение устарело или недоступно, используется USD (EUR для Know Your Cash)."
+            "value": "Выберите «Местная валюта» в калькуляторе или поддерживаемом справочном виджете. Нажмите ссылку настройки, затем «Обновить» здесь, чтобы запросить доступ к геопозиции. Сохраняются только страна, валюта и время обновления. При ошибке поиска с разрешённым доступом сохраняется последняя известная валюта. Местоположение обновляется только по нажатию «Обновить» здесь. Разовое разрешение истекает после сеанса; откройте этот экран, чтобы снова предоставить доступ. Через день виджеты помечают сохранённую валюту как последнюю известную."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Оновіть місцеву валюту тут, потім виберіть «Місцева валюта» на початку списку порівняння. Якщо розташування застаріло або недоступне, використовується USD (EUR для Know Your Cash)."
+            "value": "Виберіть «Місцева валюта» в калькуляторі або підтримуваному довідковому віджеті. Натисніть посилання налаштування, потім «Оновити» тут, щоб запросити доступ до геопозиції. Зберігаються лише країна, валюта й час оновлення. У разі помилки пошуку з дозволеним доступом зберігається остання відома валюта. Розташування оновлюється лише після натискання «Оновити» тут. Одноразовий дозвіл спливає після сеансу; відкрийте цей екран, щоб знову надати доступ. Через день віджети позначають збережену валюту як останню відому."
           }
         }
       }
@@ -1049,7 +1049,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Local comparison uses your saved country for up to 24 hours."
+            "value": "Tap Update to set up local currency. Last-known currency remains available after authorized lookup failures."
           }
         }
       }
@@ -1180,6 +1180,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Доступ до геопозиції обмежено на цьому пристрої. Не вдалося оновити місцеву валюту."
+          }
+        }
+      }
+    },
+    "openLocationSettings": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Settings"
           }
         }
       }

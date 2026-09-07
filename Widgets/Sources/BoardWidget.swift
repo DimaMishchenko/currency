@@ -16,26 +16,13 @@ struct BoardLayout: View {
 
   private var base: String { entry.spec.codes.first ?? "EUR" }
 
-  private var limit: Int { family == .systemSmall ? 3 : family == .systemMedium ? 6 : 12 }
+  private var limit: Int { family == .systemSmall ? 4 : family == .systemMedium ? 6 : 12 }
 
-  private var targets: [String] { Array(entry.spec.codes.dropFirst().prefix(limit)) }
+  private var targets: [String] { Array(entry.spec.codes.prefix(limit)) }
 
   var body: some View {
     VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
       if let amount = WidgetMath.parseAmount(entry.spec.amount) {
-        if family == .systemSmall {
-          row(
-            code: base, amount: CurrencyDisplay.format(amount, code: base, locale: locale),
-            primary: true)
-        } else {
-          HStack {
-            CurrencyIcon(base, size: 18)
-            Text("\(CurrencyDisplay.format(amount, code: base, locale: locale)) \(base)")
-              .font(AppStyle.font(.headline)).lineLimit(1).minimumScaleFactor(0.4)
-            Spacer(minLength: 0)
-          }
-        }
-        Divider()
         LazyVGrid(
           columns: Array(
             repeating: GridItem(.flexible(), spacing: AppStyle.Space.medium),
@@ -46,12 +33,17 @@ struct BoardLayout: View {
             row(
               code: code,
               amount: CurrencyDisplay.format(
-                entry.snapshot.convert(amount, from: base, to: code), code: code, locale: locale))
+                entry.snapshot.convert(amount, from: base, to: code), code: code, locale: locale),
+              primary: code == base)
           }
         }
         Spacer(minLength: 0)
-        if entry.spec.codes.count - 1 > limit {
-          Text(.Widgets.boardOverflow(entry.spec.codes.count - 1 - limit))
+        if entry.spec.requiresCurrencySelection {
+          Text(.Widgets.chooseCustomCurrencies).font(AppStyle.font(.caption2))
+            .foregroundStyle(.secondary)
+        }
+        if entry.spec.codes.count > limit {
+          Text(.Widgets.boardOverflow(entry.spec.codes.count - limit))
             .font(AppStyle.font(.caption2)).foregroundStyle(.secondary).lineLimit(1)
             .minimumScaleFactor(0.6)
         }
@@ -62,6 +54,7 @@ struct BoardLayout: View {
           .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
       }
     }
+    .animation(nil, value: entry.spec.amount)
     .modifier(WidgetSurface())
   }
 

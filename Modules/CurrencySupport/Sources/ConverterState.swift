@@ -26,6 +26,20 @@ public struct ConverterState: Codable, Sendable, Equatable {
     Decimal(string: amount, locale: Locale(identifier: "en_US_POSIX")) ?? 0
   }
 
+  /// Updates the shared value without changing the app's currency selection.
+  public mutating func setAmount(_ text: String) {
+    guard WidgetMath.parseAmount(text) != nil else { return }
+    amount = text
+    editedAt = .now
+  }
+
+  /// Stores an internally converted Decimal without applying the configuration text limit.
+  public mutating func setConvertedAmount(_ value: Decimal) {
+    guard !value.isNaN, value >= 0 else { return }
+    amount = NSDecimalNumber(decimal: value).stringValue
+    editedAt = .now
+  }
+
   /// Applies a keypad command to the input.
   public mutating func press(_ key: String) {
     let previousAmount = amount

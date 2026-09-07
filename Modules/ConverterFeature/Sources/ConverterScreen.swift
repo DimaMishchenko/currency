@@ -130,10 +130,14 @@ public struct ConverterScreen<Details: View>: View {
       .onChange(of: scenePhase) { _, phase in
         if phase == .active {
           model.reloadInput()
+          WidgetLocationController().reconcileAuthorization()
           Task { await model.refresh() }
         }
       }
-      .onOpenURL { _ in model.reloadInput() }
+      .onOpenURL { url in
+        model.reloadInput()
+        if url.host == "local-currency" { showWidgets = true }
+      }
       .sensoryFeedback(.selection, trigger: feedback)
     }
     .accessibilityAction(.escape) { dismissAmount() }

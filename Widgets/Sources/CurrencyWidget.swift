@@ -27,18 +27,26 @@ struct CurrencyTimeline: TimelineProvider {
   ) {
     Task {
       var snapshot = CurrencyStore.shared.loadRates()
+      var refreshCompleted = true
       let input = CurrencyStore.shared.input()
       let recentlyTyped = Date().timeIntervalSince(input.editedAt ?? .distantPast) < 60
-      if !recentlyTyped && Date().timeIntervalSince(snapshot.checkedAt ?? .distantPast) >= 1800 {
-        let refreshed = try? await CurrencyStore.shared.refreshRates(using: RateService())
-        snapshot = refreshed?.snapshot ?? CurrencyStore.shared.loadRates()
+      if !recentlyTyped
+        && (snapshot.quotes.isEmpty
+          || Date().timeIntervalSince(snapshot.checkedAt ?? .distantPast) >= 1800)
+      {
+        let result = try? await CurrencyStore.shared.refreshRates(
+          using: RateService(), force: snapshot.quotes.isEmpty, providerTimeout: .seconds(2))
+        refreshCompleted = result != nil
+        snapshot = CurrencyStore.shared.loadRates()
       }
       completion(
         Timeline(
           entries: [
             CurrencyEntry(date: .now, input: CurrencyStore.shared.input(), snapshot: snapshot)
           ],
-          policy: .after(.now.addingTimeInterval(1800))))
+          policy: .after(
+            .now.addingTimeInterval(
+              !refreshCompleted || snapshot.quotes.isEmpty ? 300 : 1800))))
     }
   }
 }
@@ -101,7 +109,6 @@ struct QuickRateWidget: Widget {
 @main struct CurrencyWidgets: WidgetBundle {
   var body: some Widget {
     MultiCurrencyWidget()
-    PairCalculatorWidget()
     CashWidget()
     PocketRateWidget()
     MentalMathWidget()

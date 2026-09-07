@@ -248,7 +248,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Multi-currency"
+            "value": "Currency Calculator"
           }
         }
       }
@@ -260,31 +260,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tap any currency and enter an amount. Medium shows up to four; large up to eight."
-          }
-        }
-      }
-    },
-    "pairTitle": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pair Calculator"
-          }
-        }
-      }
-    },
-    "pairDescription": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Two currencies, a keypad, and a tap to switch direction."
+            "value": "Use Default to follow your app currencies or choose a Custom list. Medium shows up to four currencies; large shows up to eight. Two currencies work as a pair calculator."
           }
         }
       }
@@ -368,7 +344,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your ordered currency list and a reference amount set in widget settings."
+            "value": "A base-first currency board. Default follows your app currencies; Custom list keeps its own selection."
           }
         }
       }
@@ -572,7 +548,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Multi-currency settings"
+            "value": "Calculator settings"
           }
         }
       }
@@ -820,7 +796,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Selected currencies"
+            "value": "Custom list"
           }
         },
         "ru": {
@@ -837,25 +813,207 @@
         }
       }
     },
-    "standardList": {
+    "appSelectedSection": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Default currencies"
+            "value": "App selected"
           }
-        },
-        "ru": {
+        }
+      }
+    },
+    "locationSection": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Валюты по умолчанию"
+            "value": "Location"
           }
-        },
-        "uk": {
+        }
+      }
+    },
+    "fiatSection": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Типові валюти"
+            "value": "Currencies"
+          }
+        }
+      }
+    },
+    "metalsSection": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Metals"
+          }
+        }
+      }
+    },
+    "cryptoSection": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crypto"
+          }
+        }
+      }
+    },
+    "syncedList": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default"
+          }
+        }
+      }
+    },
+    "includeLocal": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add local currency to Default"
+          }
+        }
+      }
+    },
+    "lastKnownLocal": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last-known local currency"
+          }
+        }
+      }
+    },
+    "localDenied": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Location permission is off"
+          }
+        }
+      }
+    },
+    "localRestricted": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Location is restricted"
+          }
+        }
+      }
+    },
+    "localFailed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unable to load local currency"
+          }
+        }
+      }
+    },
+    "localSetup": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set up local currency"
+          }
+        }
+      }
+    },
+    "localOpenApp": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open app"
+          }
+        }
+      }
+    },
+    "calculatorListHelp": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default follows your app currencies. Choose Custom list to edit a separate selection."
+          }
+        }
+      }
+    },
+    "chooseCustomCurrencies": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit this widget to choose a Custom list."
+          }
+        }
+      }
+    },
+    "Medium shows the first 4 currencies. Additional currencies appear on Large.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Medium shows the first 4 currencies. Additional currencies appear on Large."
+          }
+        }
+      }
+    },
+    "Medium follows the first 4 app currencies. Local uses the last slot when enabled.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Medium follows the first 4 app currencies. Local uses the last slot when enabled."
+          }
+        }
+      }
+    },
+    "Large shows the first 8 currencies. Medium shows the first 4.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Large shows the first 8 currencies. Medium shows the first 4."
+          }
+        }
+      }
+    },
+    "Large follows the first 8 app currencies. Local uses the last slot when enabled.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Large follows the first 8 app currencies. Local uses the last slot when enabled."
           }
         }
       }

@@ -86,4 +86,4 @@ The 21 cryptocurrency badges other than DOGE use the colored background variant 
 
 Metal badges (Au, Ag, Pt, Pd) are original SwiftUI artwork with distinct muted colors, a static diagonal satin highlight, and a subtle rim. They replace medal and white-circle emoji throughout the app and widgets.
 
-The configurable widget collection includes Multi-currency, Pair Calculator, Know Your Cash, Pocket Rate, Mental Math, and Currency Board, with independent settings, widget copy numbers, and an optional Local currency comparison.
+The configurable widget collection includes Currency Calculator, Know Your Cash, Pocket Rate, Mental Math, and Currency Board. Calculator and Board support app-synchronized Default and independent Custom lists. Pair Calculator and compatibility lists have been removed. See [widget behavior and verification limits](Widgets/README.md).

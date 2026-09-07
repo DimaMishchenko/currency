@@ -8,18 +8,23 @@ extension CurrencyStore {
   }
 
   /// Loads a configuration-specific input, recovering safely from missing or incompatible data.
-  public func widgetInput(key: String, codes: [String], amount: String = "1") -> WidgetInput {
-    guard let data = try? Data(contentsOf: directory.appendingPathComponent(widgetFilename(key))),
-      let input = try? JSONDecoder().decode(WidgetInput.self, from: data),
-      input.codes == WidgetInput(codes: codes).codes
+  public func widgetInput(
+    key: String, codes: [String], amount: String = "1"
+  ) -> WidgetInput {
+    guard
+      let data = try? Data(
+        contentsOf: directory.appendingPathComponent(widgetFilename(key))),
+      var input = try? JSONDecoder().decode(WidgetInput.self, from: data)
     else { return WidgetInput(codes: codes, amount: amount) }
+    input.reconcile(codes: codes)
     return input
   }
 
   /// Coordinates a widget mutation against the latest persisted state across processes.
   @discardableResult
   public func updateWidgetInput(
-    key: String, codes: [String], amount: String = "1", mutation: (inout WidgetInput) -> Void
+    key: String, codes: [String], amount: String = "1",
+    mutation: (inout WidgetInput) -> Void
   ) throws -> WidgetInput {
     let filename = widgetFilename(key)
     return try coordinate(filename) {

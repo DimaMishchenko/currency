@@ -38,6 +38,19 @@ private actor SuspendedProvider: RateProvider {
   }
 }
 
+private actor SlowWidgetProvider: RateProvider {
+  private(set) var cancelled = false
+  func fetch() async throws -> [String: ExchangeRate] {
+    do {
+      try await Task.sleep(for: .seconds(30))
+      return [:]
+    } catch {
+      cancelled = true
+      throw error
+    }
+  }
+}
+
 @Suite struct CurrencyStoreTests {
   @Test func interleavedHostsPreserveAmountAndSelectionEdits() throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
@@ -79,4 +92,50 @@ private actor SuspendedProvider: RateProvider {
     #expect(store.loadRates().quotes["USD"]?.value == 2)
     #expect(store.loadRates().checkedAt == Date(timeIntervalSince1970: 200))
   }
+  @Test func widgetRefreshDeadlineCancelsSlowProviderAndPreservesCache() async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = CurrencyStore(directory: directory)
+    let cached = RateSnapshot(quotes: [
+      "USD": ExchangeRate(2, published: "2026-01-02", source: .init(provider: .ecb))
+    ])
+    try RateCache(directory: directory).save(cached)
+    let slow = SlowWidgetProvider()
+    let started = ContinuousClock.now
+    let result = try await store.refreshRates(
+      using: RateService(fiat: slow, daily: FailingProvider(), crypto: nil),
+      providerTimeout: .milliseconds(30))
+    #expect(result.warning == .dailyRatesUnavailable)
+    #expect(started.duration(to: .now) < .seconds(2))
+    #expect(await slow.cancelled)
+    #expect(store.loadRates().quotes["USD"]?.value == 2)
+    #expect(store.loadRates().checkedAt != nil)
+  }
+
+  @Test func widgetRefreshReturnsFastResultWithoutWaitingForDeadline() async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = CurrencyStore(directory: directory)
+    let started = ContinuousClock.now
+    let result = try await store.refreshRates(
+      using: RateService(fiat: ImmediateProvider(value: 3), daily: FailingProvider(), crypto: nil),
+      providerTimeout: .seconds(30))
+    #expect(result.snapshot.quotes["USD"]?.value == 3)
+    #expect(started.duration(to: .now) < .seconds(2))
+    #expect(store.loadRates().quotes["USD"]?.value == 3)
+  }
+
+  @Test func widgetRefreshKeepsFastFiatWhenCryptoTimesOut() async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = CurrencyStore(directory: directory)
+    let slow = SlowWidgetProvider()
+    let result = try await store.refreshRates(
+      using: RateService(fiat: ImmediateProvider(value: 3), daily: FailingProvider(), crypto: slow),
+      providerTimeout: .milliseconds(30))
+    #expect(result.warning == .partialCryptoFallback)
+    #expect(await slow.cancelled)
+    #expect(store.loadRates().quotes["USD"]?.value == 3)
+  }
+
 }
