@@ -225,7 +225,7 @@ struct CurrencyTile: View {
       )
       .accessibilityValue(
         selected
-          ? entry.input.amount
+          ? CurrencyDisplay.inputAmount(entry.input.amount, locale: locale)
           : CurrencyDisplay.format(
             entry.snapshot.convert(
               entry.input.decimal, from: WidgetSelection.currency(entry.input.active),

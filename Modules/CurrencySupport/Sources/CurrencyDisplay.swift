@@ -93,13 +93,16 @@ private extension CurrencyCode {
 
 extension CurrencyDisplay {
   /// Localizes editable digits and the decimal separator without losing trailing zeros.
+  /// A separator without a following digit stays hidden until the fraction begins.
   public static func inputAmount(_ amount: String, locale: Locale = .current) -> String {
-    amount.map { character in
-      if character == "." { return locale.decimalSeparator ?? "." }
-      guard let digit = character.wholeNumberValue else { return String(character) }
-      return digit.formatted(.number.locale(locale))
-    }
-    .joined()
+    let visibleAmount = amount.hasSuffix(".") ? String(amount.dropLast()) : amount
+    return (visibleAmount.isEmpty ? "0" : visibleAmount)
+      .map { character in
+        if character == "." { return locale.decimalSeparator ?? "." }
+        guard let digit = character.wholeNumberValue else { return String(character) }
+        return digit.formatted(.number.locale(locale))
+      }
+      .joined()
   }
 
   /// Formats an ISO publication day using the requested locale; unknown values remain verbatim.

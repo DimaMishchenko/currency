@@ -33,10 +33,13 @@ public struct ConverterState: Codable, Sendable, Equatable {
     editedAt = .now
   }
 
-  /// Stores an internally converted Decimal without applying the configuration text limit.
-  public mutating func setConvertedAmount(_ value: Decimal) {
+  /// Stores a widget-provided value with the app's editable precision.
+  mutating func setWidgetAmount(_ value: Decimal) {
     guard !value.isNaN, value >= 0 else { return }
-    amount = NSDecimalNumber(decimal: value).stringValue
+    var value = value
+    var rounded = Decimal()
+    NSDecimalRound(&rounded, &value, 2, .plain)
+    amount = NSDecimalNumber(decimal: rounded).stringValue
     editedAt = .now
   }
 

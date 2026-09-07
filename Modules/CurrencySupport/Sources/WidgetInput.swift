@@ -73,9 +73,9 @@ public struct WidgetInput: Codable, Equatable, Sendable {
   public mutating func publish(to app: inout ConverterState, snapshot: RateSnapshot) {
     let source = WidgetSelection.currency(active)
     if source == app.source {
-      app.setAmount(amount)
+      app.setWidgetAmount(decimal)
     } else if let value = snapshot.convert(decimal, from: source, to: app.source) {
-      app.setConvertedAmount(value)
+      app.setWidgetAmount(value)
     }
     sharedValue = sharedValue(for: app, snapshot: snapshot)
   }

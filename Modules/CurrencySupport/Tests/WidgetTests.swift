@@ -306,6 +306,17 @@ struct WidgetTests {
     #expect(app.amount == "7")
   }
 
+  @Test func defaultWidgetPublishesAtMostTwoFractionDigitsToApp() throws {
+    var app = ConverterState()
+    var input = WidgetInput(codes: ["EUR", "USD"], amount: "1.239")
+    input.publish(to: &app, snapshot: rates)
+    #expect(app.amount == "1.24")
+
+    input = WidgetInput(codes: ["USD", "EUR"], amount: "14.399")
+    input.publish(to: &app, snapshot: rates)
+    #expect(app.amount == "7.2")
+  }
+
   @Test func banknotesAndMetalsHaveDifferentUnits() throws {
     #expect(WidgetPresets.amounts("CZK") == [100, 500, 1000])
     #expect(WidgetPresets.amounts("JPY") == [1000, 5000, 10000])
