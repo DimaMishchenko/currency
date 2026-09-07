@@ -284,7 +284,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Daily reference rates, saved on your device. Every conversion uses the latest downloaded rates; bank fees aren’t included."
+            "value": "Reference rates are saved on your device. Every conversion uses the latest downloaded rates; bank fees aren’t included."
           }
         }
       }
@@ -1180,6 +1180,172 @@
           "stringUnit": {
             "state": "translated",
             "value": "Доступ до геопозиції обмежено на цьому пристрої. Не вдалося оновити місцеву валюту."
+          }
+        }
+      }
+    },
+    "rates": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rates"
+          }
+        }
+      }
+    },
+    "ratesRetrieved": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rates retrieved"
+          }
+        }
+      }
+    },
+    "observedAt": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last trade %@"
+          }
+        }
+      }
+    },
+    "quoteRetrieved": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retrieved %@ · market timestamp unavailable"
+          }
+        }
+      }
+    },
+    "quoteInformation": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quote information"
+          }
+        }
+      }
+    },
+    "publishedAt": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Published %@"
+          }
+        }
+      }
+    },
+    "close": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
+          }
+        }
+      }
+    },
+    "artwork": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Artwork"
+          }
+        }
+      }
+    },
+    "frankfurterCredit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Daily fiat reference rates and historical exchange rates."
+          }
+        }
+      }
+    },
+    "ecbCredit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Direct daily fiat reference rates when the primary source is unavailable."
+          }
+        }
+      }
+    },
+    "fawazCredit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Daily cryptocurrency rates and backup exchange rates."
+          }
+        }
+      }
+    },
+    "coinbaseCredit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Current cryptocurrency exchange rates and completed historical candles in USD."
+          }
+        }
+      }
+    },
+    "web3Credit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cryptocurrency artwork by 0xa3k5. © 2024 0xa3k5. Used without artwork changes."
+          }
+        }
+      }
+    },
+    "dogeCredit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dogecoin artwork from Cryptocurrency Icons. Used without artwork changes."
+          }
+        }
+      }
+    },
+    "selectedCurrencies": {
+      "extractionState": "manual",
+      "comment": "First category in the base currency picker, containing currencies already on the home screen.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selected"
           }
         }
       }

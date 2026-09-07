@@ -1,31 +1,42 @@
 {
-  "sourceLanguage": "en",
-  "strings": {
-    "CFBundleDisplayName": {
-      "extractionState": "manual",
-      "shouldGenerateSymbol": false,
-      "comment": "System display name for the app or extension.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Currency"
+  "sourceLanguage" : "en",
+  "strings" : {
+    "CFBundleDisplayName" : {
+      "comment" : "System display name for the app or extension.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Currency"
           }
         }
       }
     },
-    "NSLocationWhenInUseUsageDescription": {
-      "extractionState": "manual",
-      "comment": "Explains the explicitly requested widget location update.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Find your country’s currency for widgets when you choose Update local currency. Only the country and currency are saved."
+    "CFBundleName" : {
+      "comment" : "Bundle name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Currency"
+          }
+        }
+      }
+    },
+    "NSLocationWhenInUseUsageDescription" : {
+      "comment" : "Explains the explicitly requested widget location update.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Find your country’s currency for widgets when you choose Update local currency. Only the country and currency are saved."
           }
         }
       }
     }
   },
-  "version": "1.0"
+  "version" : "1.0"
 }

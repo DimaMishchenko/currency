@@ -51,24 +51,22 @@
     },
     "cryptoExplanation": {
       "extractionState": "manual",
-      "comment": "Details interface: cryptoExplanation.",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Chart shows completed daily Coinbase trades in USD. Missing trading days have no observations. Current conversion rates may use Fawaz daily fallback."
+            "value": "History uses completed Coinbase candles in USD; missing trading days have no observations. Historical and current conversion sources may differ."
           }
         }
       }
     },
     "fiatExplanation": {
       "extractionState": "manual",
-      "comment": "Details interface: fiatExplanation.",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Daily reference rates. Weekends and publication gaps may have no observations. History uses Frankfurter; the converter keeps its ECB fallback."
+            "value": "Reference-rate history can have weekend and publication gaps. Historical and current conversion sources may differ."
           }
         }
       }
@@ -285,6 +283,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Retrieved %@ · market timestamp unavailable"
+          }
+        }
+      }
+    },
+    "loadingHistory": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading history…"
+          }
+        }
+      }
+    },
+    "close": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
           }
         }
       }

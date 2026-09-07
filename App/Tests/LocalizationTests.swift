@@ -21,6 +21,15 @@ import Testing
         == "Fawaz · daily")
   }
 
+  @Test func ratesAndLoadingCopyPreserveTimestampMeaning() {
+    #expect(String(localized: .Converter.ratesRetrieved) == "Rates retrieved")
+    #expect(String(localized: .Converter.lastChecked) == "Last checked")
+    #expect(
+      String(localized: .Converter.quoteRetrieved("today"))
+        == "Retrieved today · market timestamp unavailable")
+    #expect(String(localized: .Details.loadingHistory) == "Loading history…")
+  }
+
   @Test func customProviderUsesLocalizedObservationTemplate() {
     let source = RateSource(
       provider: .custom("Example feed"), observation: .monthlyReference)

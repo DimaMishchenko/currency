@@ -7,6 +7,7 @@ struct CurrencyDetailSelection: Identifiable { let id: String }
 
 /// The converter feature, with rate-details navigation supplied by the host app.
 public struct ConverterScreen<Details: View>: View {
+  @Environment(\.verticalSizeClass) private var verticalSizeClass
   @Environment(\.locale) private var locale
   private let details: (String, String, RateSnapshot) -> Details
 
@@ -33,6 +34,8 @@ public struct ConverterScreen<Details: View>: View {
   @State private var replaceOnNextDigit = true
   @State private var feedback = 0
   @Namespace private var currencyMotion
+  @Namespace private var detailsMotion
+  @Namespace private var pickerMotion
   @Namespace private var keypadMotion
   @Environment(\.scenePhase) private var scenePhase
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -52,78 +55,47 @@ public struct ConverterScreen<Details: View>: View {
   /// The converter screen content.
   public var body: some View {
     NavigationStack {
-      ScrollView {
-        VStack(spacing: 0) {
-          header
-          source.padding(.top, editingAmount ? AppStyle.Space.medium : AppStyle.Space.large)
-            .padding(.bottom, editingAmount ? AppStyle.Space.medium : AppStyle.Space.large)
-          adaptiveLayout {
-            Text(.Converter.yourCurrenciesHeading)
-              .font(AppStyle.font(.caption2, weight: .semibold)).tracking(2)
-            Text(
-              CurrencyDisplay.inputAmount(
-                String(format: "%02d", model.input.destinations.count), locale: locale)
-            )
-            .font(.system(.caption2, design: .monospaced)).foregroundStyle(accent)
-            if !dynamicTypeSize.isAccessibilitySize { Spacer() }
-            Button {
-              showManage = true
-            } label: {
-              Image(systemName: "slider.horizontal.3").frame(minWidth: 44, minHeight: 44)
+      GeometryReader { geometry in
+        if verticalSizeClass == .compact {
+          HStack(spacing: AppStyle.Space.large) {
+            VStack(spacing: AppStyle.Space.small) {
+              source.padding(.horizontal, AppStyle.Space.large)
+                .overlay { outsideDismissal }
+              Spacer(minLength: 0)
+              inputDock
             }
-            .accessibilityLabel(.Converter.reorderAccessibility)
+            .frame(width: geometry.size.width * 0.48)
+            currencyList.overlay { outsideDismissal }
           }
-          .foregroundStyle(.secondary)
-          Divider()
-          LazyVStack(spacing: 0) {
-            ForEach(model.input.destinations, id: \.self) { code in
-              destinationRow(code)
-              Divider().padding(.leading, AppStyle.Space.spacious)
-            }
+          .padding(.top, AppStyle.Space.small)
+        } else {
+          VStack(spacing: 0) {
+            source
+              .padding(.horizontal, AppStyle.Space.large)
+              .padding(.vertical, AppStyle.Space.large)
+              .frame(maxWidth: 580)
+              .allowsHitTesting(!editingAmount)
+              .accessibilityHidden(editingAmount)
+            currencyList
           }
-          Button {
-            picker = .add
-          } label: {
-            HStack(spacing: AppStyle.Space.medium) {
-              Image(systemName: "plus").font(AppStyle.font(.subheadline, weight: .medium))
-                .frame(width: 36)
-              Text(.Converter.addCurrency).font(AppStyle.font(.subheadline))
-              Spacer()
-            }
-            .foregroundStyle(.secondary).frame(minHeight: 62).contentShape(Rectangle())
-          }
-          .buttonStyle(.plain)
-          Button {
-            showInfo = true
-          } label: {
-            HStack(spacing: AppStyle.Space.small) {
-              Circle().fill(model.warning == nil ? accent : .orange).frame(width: 4, height: 4)
-              Text(
-                model.snapshot.quotes.isEmpty
-                  ? .Converter.connectToDownload : .Converter.savedOffline)
-              Image(systemName: "arrow.up.right").font(AppStyle.font(.caption2, weight: .medium))
-            }
-            .font(AppStyle.font(.caption2)).foregroundStyle(.secondary).frame(minHeight: 44)
-          }
-          .buttonStyle(.plain).padding(.top, AppStyle.Space.medium)
-          if let warning = model.warning {
-            Text(warning).font(AppStyle.font(.caption)).foregroundStyle(.secondary)
-              .multilineTextAlignment(.center)
-              .padding(.bottom, AppStyle.Space.small)
-          }
+          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+          .overlay { outsideDismissal }
+          .safeAreaInset(edge: .bottom, spacing: 0) { inputDock }
         }
-        .padding(.horizontal, AppStyle.Space.large).padding(.top, AppStyle.Space.small)
-        .frame(maxWidth: 580).frame(maxWidth: .infinity)
       }
-      .scrollBounceBehavior(.basedOnSize)
+      .background { outsideDismissal.accessibilityHidden(true) }
       .background(Color(uiColor: .systemBackground).ignoresSafeArea())
-      .safeAreaInset(edge: .bottom, spacing: 0) { inputDock }
-      .toolbar(.hidden, for: .navigationBar)
+      .toolbarTitleDisplayMode(.inline)
+      .toolbar {
+        ToolbarItem(placement: .topBarLeading) { sourcePicker }
+        ToolbarItemGroup(placement: .topBarTrailing) { headerActions }
+      }
       .sheet(item: $picker) { purpose in
-        CurrencyChooser(
+        let chooser = CurrencyChooser(
           purpose: purpose,
           selected: purpose == .source
             ? [model.input.source] : model.input.destinations + [model.input.source],
+          homeCurrencies: [model.input.source] + model.input.destinations,
           available: Set(model.snapshot.quotes.keys)
         ) { code in
           withAnimation(motion) {
@@ -134,6 +106,7 @@ public struct ConverterScreen<Details: View>: View {
             }
           }
         }
+        chooser.navigationTransition(.zoom(sourceID: purpose.id, in: pickerMotion))
       }
       .sheet(isPresented: $showManage) {
         ManageCurrencies(model: model)
@@ -141,7 +114,12 @@ public struct ConverterScreen<Details: View>: View {
       .sheet(isPresented: $showInfo) { rateInformation }
       .sheet(isPresented: $showWidgets) { WidgetGuide() }
       .sheet(item: $detail) { selection in
-        details(selection.id, model.input.source, model.snapshot)
+        if reduceMotion {
+          details(selection.id, model.input.source, model.snapshot)
+        } else {
+          details(selection.id, model.input.source, model.snapshot)
+            .navigationTransition(.zoom(sourceID: selection.id, in: detailsMotion))
+        }
       }
       .task {
         while !Task.isCancelled {
@@ -158,7 +136,43 @@ public struct ConverterScreen<Details: View>: View {
       .onOpenURL { _ in model.reloadInput() }
       .sensoryFeedback(.selection, trigger: feedback)
     }
+    .accessibilityAction(.escape) { dismissAmount() }
     .tint(accent)
+  }
+
+  @ViewBuilder
+  private var outsideDismissal: some View {
+    if editingAmount {
+      Color.clear.contentShape(Rectangle())
+        .onTapGesture { dismissAmount() }
+        .accessibilityElement()
+        .accessibilityLabel(.Converter.doneEntering)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction { dismissAmount() }
+    }
+  }
+
+  private var currencyList: some View {
+    VStack(spacing: 0) {
+      ScrollView {
+        LazyVStack(spacing: 0) {
+          ForEach(model.input.destinations, id: \.self) { code in
+            destinationRow(code)
+            Divider().padding(.leading, AppStyle.Space.spacious)
+          }
+        }
+        .padding(.horizontal, AppStyle.Space.large)
+        .frame(maxWidth: 580).frame(maxWidth: .infinity)
+        .allowsHitTesting(!editingAmount)
+        .accessibilityHidden(editingAmount)
+      }
+      .refreshable { await model.refresh(force: true) }
+      .scrollBounceBehavior(.always)
+      if let warning = model.warning {
+        Text(warning).font(AppStyle.font(.caption)).foregroundStyle(.secondary)
+          .multilineTextAlignment(.center).padding(.horizontal, AppStyle.Space.large)
+      }
+    }
   }
 
   private var adaptiveLayout: AnyLayout {
@@ -167,103 +181,96 @@ public struct ConverterScreen<Details: View>: View {
       : AnyLayout(HStackLayout())
   }
 
-  private var header: some View {
-    adaptiveLayout {
-      HStack(spacing: AppStyle.Space.small) {
-        if !dynamicTypeSize.isAccessibilitySize {
-          Image(systemName: "arrow.up.right").font(AppStyle.font(.subheadline, weight: .semibold))
-            .foregroundStyle(accent)
-        }
-        Text(.Converter.appName)
-          .font(AppStyle.font(.title3, weight: .semibold))
+  @ViewBuilder
+  private var headerActions: some View {
+    Button {
+      if editingAmount { dismissAmount() } else { showWidgets = true }
+    } label: {
+      Image(systemName: "square.grid.2x2")
+    }
+    .accessibilityLabel(.Converter.widgets)
+    Menu {
+      Button(.Converter.refreshRates, systemImage: "arrow.clockwise") {
+        Task { await model.refresh(force: true) }
       }
-      if !dynamicTypeSize.isAccessibilitySize { Spacer() }
-      HStack {
-        Button {
-          showWidgets = true
-        } label: {
-          Image(systemName: "square.grid.2x2").frame(minWidth: 44, minHeight: 44)
-        }
-        .buttonStyle(.plain).glassEffect(.regular.interactive())
-        .accessibilityLabel(.Converter.widgets)
-        Menu {
-          Button(.Converter.refreshRates, systemImage: "arrow.clockwise") {
-            Task { await model.refresh(force: true) }
+      .disabled(model.refreshing)
+      Button(.Converter.manageCurrencies, systemImage: "slider.horizontal.3") {
+        showManage = true
+      }
+      Button(.Converter.aboutRates, systemImage: "info.circle") { showInfo = true }
+    } label: {
+      Image(systemName: "ellipsis")
+    }
+    .accessibilityLabel(.Converter.options)
+    .disabled(editingAmount)
+  }
+
+  @ViewBuilder
+  private var source: some View {
+    if verticalSizeClass == .compact {
+      amountEntry.accessibilityHidden(editingAmount)
+    } else {
+      VStack(alignment: .leading, spacing: AppStyle.Space.large) {
+        amountEntry
+        HStack {
+          Text(CurrencyDisplay.name(model.input.source, locale: locale))
+            .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
+          Spacer()
+          if editingAmount {
+            Text(.Converter.editing).font(AppStyle.font(.caption2)).foregroundStyle(accent)
           }
-          .disabled(model.refreshing)
-          Button(.Converter.manageCurrencies, systemImage: "slider.horizontal.3") {
-            showManage = true
-          }
-          Button(.Converter.aboutRates, systemImage: "info.circle") { showInfo = true }
-        } label: {
-          Image(systemName: "ellipsis").font(AppStyle.font(.headline))
-            .frame(minWidth: 44, minHeight: 44)
         }
-        .buttonStyle(.plain).glassEffect(.regular.interactive())
-        .accessibilityLabel(.Converter.options)
       }
     }
   }
 
-  private var source: some View {
-    VStack(alignment: .leading, spacing: AppStyle.Space.large) {
-      adaptiveLayout {
-        Button {
-          picker = .source
-        } label: {
-          HStack(spacing: AppStyle.Space.small) {
-            CurrencyIcon(model.input.source, size: 23)
-              .matchedGeometryEffect(id: "flag-" + model.input.source, in: currencyMotion)
-              .accessibilityHidden(true)
-            Text(model.input.source).font(AppStyle.font(.subheadline, weight: .semibold))
-              .matchedGeometryEffect(id: model.input.source, in: currencyMotion)
-            Image(systemName: "chevron.down").font(AppStyle.font(.caption2, weight: .bold))
-              .foregroundStyle(.secondary)
-          }
-          .frame(minHeight: 44).contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(
-          .Converter.sourceAccessibility(CurrencyDisplay.name(model.input.source, locale: locale)))
-        if !dynamicTypeSize.isAccessibilitySize { Spacer() }
-        Text(.Converter.baseAmountHeading).font(AppStyle.font(.caption2, weight: .medium))
-          .tracking(2)
+  private var sourcePicker: some View {
+    Button {
+      if editingAmount { dismissAmount() } else { picker = .source }
+    } label: {
+      HStack(spacing: AppStyle.Space.small) {
+        CurrencyIcon(model.input.source, size: 23)
+          .accessibilityHidden(true)
+        Text(model.input.source).font(AppStyle.font(.subheadline, weight: .semibold))
+          .lineLimit(1)
+        Image(systemName: "chevron.down").font(AppStyle.font(.caption2, weight: .bold))
           .foregroundStyle(.secondary)
       }
-      Button {
-        replaceOnNextDigit = true
-        withAnimation(motion) { editingAmount = true }
-      } label: {
-        HStack(alignment: .firstTextBaseline, spacing: AppStyle.Space.small) {
-          Text(amountLabel)
-            .font(
-              .system(
-                size: editingAmount ? editingAmountSize : amountSize, weight: .light,
-                design: .rounded)
-            )
-            .tracking(-3).lineLimit(1).minimumScaleFactor(0.25).contentTransition(.numericText())
-          if editingAmount {
-            Capsule().fill(accent).frame(width: 2, height: 48).transition(.opacity)
-              .accessibilityHidden(true)
-          }
-          Spacer(minLength: 0)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
-      }
-      .buttonStyle(.plain)
-      .accessibilityLabel(.Converter.editAmountAccessibility(model.input.source))
-      .accessibilityValue(amountLabel)
-      HStack {
-        Text(CurrencyDisplay.name(model.input.source, locale: locale))
-          .font(AppStyle.font(.subheadline))
-          .foregroundStyle(.secondary)
-        Spacer()
-        if editingAmount {
-          Text(.Converter.editing).font(AppStyle.font(.caption2)).foregroundStyle(accent)
-            .transition(.opacity)
-        }
-      }
+      .frame(minWidth: 100, minHeight: 44).contentShape(Rectangle())
+      .fixedSize(horizontal: true, vertical: false)
     }
+    .buttonStyle(.plain)
+    .matchedTransitionSource(id: PickerPurpose.source.id, in: pickerMotion)
+    .accessibilityLabel(
+      .Converter.sourceAccessibility(CurrencyDisplay.name(model.input.source, locale: locale)))
+  }
+
+  private var amountEntry: some View {
+    Button {
+      replaceOnNextDigit = true
+      withAnimation(motion) { editingAmount = true }
+    } label: {
+      HStack(alignment: .firstTextBaseline, spacing: AppStyle.Space.small) {
+        Text(amountLabel)
+          .font(
+            verticalSizeClass == .compact
+            ? AppStyle.font(.title2, weight: .regular)
+              : .system(
+                size: editingAmount ? editingAmountSize : amountSize,
+                weight: .regular, design: .rounded)
+          )
+          .tracking(-3).lineLimit(1).minimumScaleFactor(0.25).contentTransition(.numericText())
+        if editingAmount {
+          Capsule().fill(accent).frame(width: 2, height: 48).transition(.opacity)
+            .accessibilityHidden(true)
+        }
+        Spacer(minLength: 0)
+      }
+      .frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
+    }
+    .buttonStyle(.plain)
+    .accessibilityLabel(.Converter.editAmountAccessibility(model.input.source))
+    .accessibilityValue(amountLabel)
   }
 
   private func destinationRow(_ code: String) -> some View {
@@ -296,7 +303,8 @@ public struct ConverterScreen<Details: View>: View {
               .layoutPriority(1)
           }
         }
-        .frame(minHeight: 70).contentShape(Rectangle())
+        .frame(maxWidth: .infinity, minHeight: 70, alignment: .leading).contentShape(Rectangle())
+        .matchedTransitionSource(id: code, in: detailsMotion)
       }
       .buttonStyle(.plain)
       .accessibilityLabel(
@@ -333,6 +341,7 @@ public struct ConverterScreen<Details: View>: View {
         detail = CurrencyDetailSelection(id: code)
       } label: {
         Image(systemName: "chart.xyaxis.line").font(AppStyle.font(.caption))
+          .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
           .foregroundStyle(.secondary)
           .frame(width: 44, height: 60)
       }
@@ -342,31 +351,30 @@ public struct ConverterScreen<Details: View>: View {
     }
   }
 
+  private var keyRows: [[String]] {
+    verticalSizeClass == .compact
+      ? [["1", "2", "3", "⌫"], ["4", "5", "6", "."], ["7", "8", "9", "0"]]
+      : [["1", "2", "3"], ["4", "5", "6"], ["7", "8", "9"], [".", "0", "⌫"]]
+  }
+
   private var inputDock: some View {
     GlassEffectContainer(spacing: AppStyle.Space.section) {
       if editingAmount {
         VStack(spacing: AppStyle.Space.xs) {
-          HStack {
+          if verticalSizeClass != .compact {
             HStack(spacing: AppStyle.Space.small) {
-              CurrencyIcon(model.input.source, size: 14)
+              CurrencyIcon(model.input.source, size: 14).accessibilityHidden(true)
               Text(verbatim: model.input.source)
             }
-            .font(AppStyle.font(.caption).weight(.semibold))
-            Spacer()
-            Button(.Converter.clear) { key("AC") }.font(AppStyle.font(.caption))
-              .frame(minWidth: 44, minHeight: 44)
-            Button {
-              withAnimation(motion) { editingAmount = false }
-            } label: {
-              Image(systemName: "checkmark").font(AppStyle.font(.headline))
-                .frame(minWidth: 44, minHeight: 44)
-            }
-            .accessibilityLabel(.Converter.doneEntering)
+            .font(AppStyle.font(.caption, weight: .semibold))
+            .accessibilityElement(children: .combine)
+            .accessibilityValue(amountLabel)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, AppStyle.Space.small)
           }
-          .padding(.horizontal, AppStyle.Space.section)
           Grid(horizontalSpacing: AppStyle.Space.xs, verticalSpacing: AppStyle.Space.xxs) {
             ForEach(
-              [["1", "2", "3"], ["4", "5", "6"], ["7", "8", "9"], [".", "0", "⌫"]], id: \.self
+              keyRows, id: \.self
             ) { row in
               GridRow {
                 ForEach(row, id: \.self) { item in
@@ -395,12 +403,16 @@ public struct ConverterScreen<Details: View>: View {
             }
           }
           .padding(.horizontal, AppStyle.Space.large).padding(.bottom, AppStyle.Space.large)
+          .padding(.top, verticalSizeClass == .compact ? AppStyle.Space.small : 0)
         }
+        .contentShape(Rectangle())
+        .onTapGesture { /* Keep taps in the keypad's header and gaps inside the pad. */  }
         .glassEffect(
           .regular, in: .rect(corners: .concentric(minimum: .fixed(32)), isUniform: true)
         )
         .glassEffectID("amount-dock", in: keypadMotion)
         .glassEffectTransition(.matchedGeometry)
+
       } else {
         HStack(spacing: 0) {
           Button {
@@ -416,6 +428,7 @@ public struct ConverterScreen<Details: View>: View {
             }
             .font(AppStyle.font(.subheadline).weight(.medium))
             .frame(maxWidth: .infinity).frame(minHeight: 48)
+            .contentShape(Rectangle())
           }
           .buttonStyle(.plain)
           .accessibilityLabel(.Converter.enterAmount)
@@ -426,6 +439,8 @@ public struct ConverterScreen<Details: View>: View {
             Image(systemName: "plus").font(AppStyle.font(.body, weight: .medium))
               .frame(minWidth: 48, minHeight: 48)
               .padding(.horizontal, AppStyle.Space.small)
+              .contentShape(Rectangle())
+              .matchedTransitionSource(id: PickerPurpose.add.id, in: pickerMotion)
           }
           .buttonStyle(.plain).accessibilityLabel(.Converter.addCurrency)
         }
@@ -438,7 +453,17 @@ public struct ConverterScreen<Details: View>: View {
     .padding(.horizontal, AppStyle.Space.small).padding(.top, AppStyle.Space.small)
     .padding(.bottom, editingAmount ? 0 : AppStyle.Space.small)
     .frame(maxWidth: 540).frame(maxWidth: .infinity)
-    .padding(.bottom, editingAmount ? -AppStyle.Space.large : 0)
+    .background {
+      if editingAmount {
+        Color.clear.contentShape(Rectangle()).onTapGesture { dismissAmount() }
+      }
+    }
+    .padding(.bottom, editingAmount && verticalSizeClass != .compact ? -AppStyle.Space.large : 0)
+
+  }
+
+  private func dismissAmount() {
+    withAnimation(motion) { editingAmount = false }
   }
 
   private func key(_ key: String) {
@@ -452,69 +477,134 @@ public struct ConverterScreen<Details: View>: View {
     }
   }
 
+  private func timestamp(_ date: Date) -> String {
+    date.formatted(.dateTime.day().month().year().hour().minute().locale(locale))
+  }
+
+  private func timestampRow(_ title: LocalizedStringResource, date: Date?) -> some View {
+    adaptiveLayout {
+      Text(title)
+      if !dynamicTypeSize.isAccessibilitySize { Spacer() }
+      Text(date.map(timestamp) ?? String(localized: .Converter.unavailable))
+        .foregroundStyle(.secondary)
+    }
+  }
+
+  private func sourceCredit(
+    _ name: String, description: LocalizedStringResource, website: String,
+    license: String? = nil, licenseURL: String? = nil
+  ) -> some View {
+    VStack(alignment: .leading, spacing: AppStyle.Space.small) {
+      Link(destination: URL(string: website)!) {
+        HStack {
+          Text(verbatim: name).font(AppStyle.font(.headline))
+          Spacer()
+          Image(systemName: "arrow.up.right").font(AppStyle.font(.caption))
+        }
+      }
+      Text(description).font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
+      if let license, let licenseURL {
+        Link(destination: URL(string: licenseURL)!) {
+          Label(license, systemImage: "doc.text")
+            .font(AppStyle.font(.caption, weight: .medium))
+        }
+      }
+    }
+    .padding(.vertical, AppStyle.Space.small)
+  }
+
   private var rateInformation: some View {
     NavigationStack {
       List {
         Section {
-          Text(
-            .Converter.dailyRateExplanation
-          )
-          if model.snapshot.fetchedAt != .distantPast {
-            LabeledContent(
-              .Converter.lastChecked,
-              value: model.snapshot.fetchedAt.formatted(
-                .dateTime.day().month().year().hour().minute().locale(locale)))
-          }
+          timestampRow(
+            .Converter.ratesRetrieved,
+            date: model.snapshot.fetchedAt == .distantPast ? nil : model.snapshot.fetchedAt)
+          timestampRow(.Converter.lastChecked, date: model.snapshot.checkedAt)
           Button(.Converter.refreshNow, systemImage: "arrow.clockwise") {
             Task { await model.refresh(force: true) }
           }
           .disabled(model.refreshing)
+          if let warning = model.warning {
+            Text(warning).font(AppStyle.font(.caption)).foregroundStyle(.secondary)
+          }
+        } header: {
+          Text(.Converter.rates)
+        } footer: {
+          Text(.Converter.dailyRateExplanation)
         }
-        Section(.Converter.publicationDates) {
+        Section(.Converter.quoteInformation) {
           ForEach([model.input.source] + model.input.destinations, id: \.self) { code in
-            LabeledContent {
-              VStack(alignment: .trailing, spacing: AppStyle.Space.xs) {
-                Text(
-                  model.snapshot.quotes[code]
-                    .map { CurrencyDisplay.publicationDate($0.published, locale: locale) }
-                    ?? String(localized: .Converter.notDownloaded))
-                Text(
-                  model.snapshot.quotes[code]
-                    .map { RateMessages.providerDescription($0.source, locale: locale) }
-                    ?? String(localized: .Converter.unavailable)
-                )
-                .font(AppStyle.font(.caption))
-                .foregroundStyle(.secondary)
-              }
-            } label: {
+            adaptiveLayout {
               HStack(spacing: AppStyle.Space.small) {
-                CurrencyIcon(code, size: 20)
+                CurrencyIcon(code, size: 20).accessibilityHidden(true)
                 Text(verbatim: code)
               }
+              if !dynamicTypeSize.isAccessibilitySize { Spacer() }
+              VStack(
+                alignment: dynamicTypeSize.isAccessibilitySize ? .leading : .trailing,
+                spacing: AppStyle.Space.xs
+              ) {
+                if let rate = model.snapshot.quotes[code] {
+                  if let observed = rate.observedAt {
+                    Text(.Converter.observedAt(timestamp(observed)))
+                  } else if let retrieved = rate.retrievedAt {
+                    Text(.Converter.quoteRetrieved(timestamp(retrieved)))
+                  } else {
+                    Text(
+                      .Converter.publishedAt(
+                        CurrencyDisplay.publicationDate(rate.published, locale: locale)))
+                  }
+                  Text(RateMessages.providerDescription(rate.source, locale: locale))
+                    .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
+                } else {
+                  Text(.Converter.notDownloaded)
+                  Text(.Converter.unavailable)
+                    .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
+                }
+              }
             }
+
           }
-        }
-        Section(.Converter.homeScreen) {
-          Text(
-            .Converter.widgetSharingExplanation
-          )
         }
         Section(.Converter.sources) {
-          Text(
-            .Converter.providerExplanation
+          sourceCredit(
+            "Frankfurter", description: .Converter.frankfurterCredit,
+            website: "https://frankfurter.dev/")
+          sourceCredit(
+            "European Central Bank", description: .Converter.ecbCredit,
+            website:
+              "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html"
           )
-          Link(destination: URL(string: "https://github.com/0xa3k5/web3icons")!) {
-            Text(.Converter.cryptoIconAttribution)
-          }
-          Link(destination: URL(string: "https://github.com/spothq/cryptocurrency-icons")!) {
-            Text(.Converter.dogecoinIconAttribution)
-          }
+          sourceCredit(
+            "Fawaz Exchange API", description: .Converter.fawazCredit,
+            website: "https://github.com/fawazahmed0/exchange-api")
+          sourceCredit(
+            "Coinbase", description: .Converter.coinbaseCredit,
+            website: "https://docs.cdp.coinbase.com/coinbase-app/track-apis/exchange-rates")
+        }
+        Section(.Converter.artwork) {
+          sourceCredit(
+            "Web3 Icons", description: .Converter.web3Credit,
+            website: "https://github.com/0xa3k5/web3icons",
+            license: "MIT",
+            licenseURL:
+              "https://github.com/0xa3k5/web3icons/blob/64e21e68cc6eaa36ff9d0a135ca2c809a759ccd6/LICENCE"
+          )
+          sourceCredit(
+            "Cryptocurrency Icons", description: .Converter.dogeCredit,
+            website: "https://github.com/spothq/cryptocurrency-icons",
+            license: "CC0 1.0",
+            licenseURL:
+              "https://github.com/spothq/cryptocurrency-icons/blob/1a63530be6e374711a8554f31b17e4cb92c25fa5/LICENSE.md"
+          )
         }
       }
       .navigationTitle(.Converter.aboutRates).navigationBarTitleDisplayMode(.inline)
       .toolbar {
-        ToolbarItem(placement: .confirmationAction) {
-          Button(.Converter.done) { showInfo = false }
+        ToolbarItem(placement: .topBarTrailing) {
+          Button(.Converter.close, systemImage: "xmark") { showInfo = false }
+            .labelStyle(.iconOnly)
         }
       }
     }

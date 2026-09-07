@@ -81,8 +81,9 @@ struct WidgetGuide: View {
       }
       .navigationTitle(.Converter.widgets).navigationBarTitleDisplayMode(.inline)
       .toolbar {
-        ToolbarItem(placement: .confirmationAction) {
-          Button(.Converter.done) { dismiss() }
+        ToolbarItem(placement: .topBarTrailing) {
+          Button(.Converter.close, systemImage: "xmark") { dismiss() }
+            .labelStyle(.iconOnly)
         }
       }
     }
