@@ -373,66 +373,6 @@
         }
       }
     },
-    "done": {
-      "extractionState": "manual",
-      "comment": "Converter interface: done.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Done"
-          }
-        }
-      }
-    },
-    "metals": {
-      "extractionState": "manual",
-      "comment": "Currency picker category for precious metals.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Metals"
-          }
-        }
-      }
-    },
-    "assetCategory": {
-      "extractionState": "manual",
-      "comment": "Accessibility label for the currency picker category control.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Asset category"
-          }
-        }
-      }
-    },
-    "crypto": {
-      "extractionState": "manual",
-      "comment": "Converter interface: crypto.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Crypto"
-          }
-        }
-      }
-    },
-    "currencies": {
-      "extractionState": "manual",
-      "comment": "Converter interface: currencies.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Currencies"
-          }
-        }
-      }
-    },
     "unavailable": {
       "extractionState": "manual",
       "comment": "Converter interface: unavailable.",
@@ -453,18 +393,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Not downloaded"
-          }
-        }
-      }
-    },
-    "baseCurrency": {
-      "extractionState": "manual",
-      "comment": "Converter interface: baseCurrency.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Base currency"
           }
         }
       }
@@ -1042,159 +970,6 @@
         }
       }
     },
-    "localInitial": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tap Update to set up local currency. Last-known currency remains available after authorized lookup failures."
-          }
-        }
-      }
-    },
-    "localSaved": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Saved local currency: %1$@ (%2$@)"
-          }
-        }
-      }
-    },
-    "localUpdateFailed": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Could not update the saved currency. Try again."
-          }
-        }
-      }
-    },
-    "localFinding": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Finding local currency…"
-          }
-        }
-      }
-    },
-    "localUnavailable": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Location unavailable. Widgets use your selected comparison."
-          }
-        }
-      }
-    },
-    "localRemoved": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Local currency removed. Widgets use your selected comparison."
-          }
-        }
-      }
-    },
-    "localRemoveFailed": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Could not remove the saved currency. Try again."
-          }
-        }
-      }
-    },
-    "localUnsupported": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No supported local currency found. Your selected comparison is used."
-          }
-        }
-      }
-    },
-    "localPermissionDenied": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Location access is off. Allow location for Currency in Settings to update your local currency."
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Доступ к геопозиции отключён. Разрешите доступ для Currency в Настройках, чтобы обновить местную валюту."
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Доступ до геопозиції вимкнено. Дозвольте доступ для Currency в Параметрах, щоб оновити місцеву валюту."
-          }
-        }
-      }
-    },
-    "localPermissionRestricted": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Location access is restricted on this device. Your local currency could not be updated."
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Доступ к геопозиции ограничен на этом устройстве. Не удалось обновить местную валюту."
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Доступ до геопозиції обмежено на цьому пристрої. Не вдалося оновити місцеву валюту."
-          }
-        }
-      }
-    },
-    "openLocationSettings": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Open Settings"
-          }
-        }
-      }
-    },
     "rates": {
       "extractionState": "manual",
       "localizations": {
@@ -1345,18 +1120,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Dogecoin artwork from Cryptocurrency Icons. Used without artwork changes."
-          }
-        }
-      }
-    },
-    "selectedCurrencies": {
-      "extractionState": "manual",
-      "comment": "First category in the base currency picker, containing currencies already on the home screen.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Selected"
           }
         }
       }

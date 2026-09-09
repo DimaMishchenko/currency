@@ -29,6 +29,74 @@ let project = Project(
       metadata: .metadata(tags: ["tag:layer:shared"])
     ),
     .target(
+      name: "WidgetPresentation",
+      destinations: .iOS,
+      product: .framework,
+      bundleId: "com.dimasike.currency.widgetpresentation",
+      deploymentTargets: .iOS("26.0"),
+      infoPlist: .default,
+      buildableFolders: [
+        "Modules/WidgetPresentation/Sources", "Modules/WidgetPresentation/Resources"
+      ],
+      dependencies: [
+        .package(product: "ExchangeRatesDynamic", type: .runtimeEmbedded),
+        .target(name: "CurrencySupport")
+      ],
+      metadata: .metadata(tags: ["tag:layer:ui", "tag:feature:widgets"])
+    ),
+    .target(
+      name: "CurrencySelectionUI",
+      destinations: .iOS,
+      product: .framework,
+      bundleId: "com.dimasike.currency.selection",
+      deploymentTargets: .iOS("26.0"),
+      infoPlist: .default,
+      buildableFolders: [
+        "Modules/CurrencySelectionUI/Sources", "Modules/CurrencySelectionUI/Resources"
+      ],
+      dependencies: [
+        .package(product: "ExchangeRatesDynamic", type: .runtimeEmbedded),
+        .target(name: "CurrencySupport")
+      ],
+      metadata: .metadata(tags: ["tag:layer:ui"])
+    ),
+    .target(
+      name: "WidgetOnboardingFeature",
+      destinations: .iOS,
+      product: .framework,
+      bundleId: "com.dimasike.currency.widgetonboarding",
+      deploymentTargets: .iOS("26.0"),
+      infoPlist: .default,
+      buildableFolders: [
+        "Modules/WidgetOnboardingFeature/Sources", "Modules/WidgetOnboardingFeature/Resources"
+      ],
+      dependencies: [
+        .package(product: "ExchangeRatesDynamic", type: .runtimeEmbedded),
+        .target(name: "CurrencySupport"),
+        .target(name: "CurrencySelectionUI"),
+        .target(name: "WidgetPresentation")
+      ],
+      metadata: .metadata(tags: ["tag:feature:widget-onboarding"])
+    ),
+    .target(
+      name: "LocalCurrencyOnboardingFeature",
+      destinations: .iOS,
+      product: .framework,
+      bundleId: "com.dimasike.currency.localonboarding",
+      deploymentTargets: .iOS("26.0"),
+      infoPlist: .default,
+      buildableFolders: [
+        "Modules/LocalCurrencyOnboardingFeature/Sources",
+        "Modules/LocalCurrencyOnboardingFeature/Resources"
+      ],
+      dependencies: [
+        .package(product: "ExchangeRatesDynamic", type: .runtimeEmbedded),
+        .target(name: "CurrencySupport"),
+        .target(name: "CurrencySelectionUI")
+      ],
+      metadata: .metadata(tags: ["tag:feature:local-currency-onboarding"])
+    ),
+    .target(
       name: "ConverterFeature",
       destinations: .iOS,
       product: .framework,
@@ -38,7 +106,8 @@ let project = Project(
       buildableFolders: ["Modules/ConverterFeature/Sources", "Modules/ConverterFeature/Resources"],
       dependencies: [
         .package(product: "ExchangeRatesDynamic", type: .runtimeEmbedded),
-        .target(name: "CurrencySupport")
+        .target(name: "CurrencySupport"),
+        .target(name: "CurrencySelectionUI")
       ],
       metadata: .metadata(tags: ["tag:feature:converter"])
     ),
@@ -81,7 +150,11 @@ let project = Project(
       buildableFolders: ["App/Tests"],
       dependencies: [
         .target(name: "CurrencySupport"),
+        .target(name: "WidgetPresentation"),
         .target(name: "ConverterFeature"),
+        .target(name: "WidgetOnboardingFeature"),
+        .target(name: "LocalCurrencyOnboardingFeature"),
+        .target(name: "CurrencySelectionUI"),
         .target(name: "RateDetailsFeature"),
         .package(product: "ExchangeRatesDynamic", type: .runtimeEmbedded)
       ]
@@ -97,7 +170,8 @@ let project = Project(
       entitlements: .file(path: "Widgets/Currency.entitlements"),
       dependencies: [
         .package(product: "ExchangeRatesDynamic", type: .runtimeEmbedded),
-        .target(name: "CurrencySupport")
+        .target(name: "CurrencySupport"),
+        .target(name: "WidgetPresentation")
       ],
       metadata: .metadata(tags: [
         "tag:feature:widgets",
@@ -118,6 +192,9 @@ let project = Project(
         .target(name: "CurrencySupport"),
         .target(name: "CurrencyWidgets"),
         .target(name: "ConverterFeature"),
+        .target(name: "WidgetOnboardingFeature"),
+        .target(name: "LocalCurrencyOnboardingFeature"),
+        .target(name: "CurrencySelectionUI"),
         .target(name: "RateDetailsFeature")
       ],
       metadata: .metadata(tags: [

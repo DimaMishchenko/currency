@@ -8,18 +8,31 @@ The review covered all Swift production/test sources, SwiftPM and Tuist manifest
 flowchart TD
   App[Currency app] --> Converter[ConverterFeature]
   App --> Details[RateDetailsFeature]
+  App --> WidgetGuide[WidgetOnboardingFeature]
+  App --> LocalGuide[LocalCurrencyOnboardingFeature]
+  WidgetGuide --> Presentation[WidgetPresentation]
+  WidgetGuide --> Selection[CurrencySelectionUI]
+  WidgetGuide --> Support
+  LocalGuide --> Selection
+  LocalGuide --> Support
+  Selection --> Support
+  Selection --> Rates
+  Presentation --> Support
+  Presentation --> Rates
+  Converter --> Selection
   App --> Support[CurrencySupport]
   App --> Rates[ExchangeRates package]
   Converter --> Support
   Converter --> Rates
   Details --> Support
   Details --> Rates
-  Widgets[CurrencyWidgets] --> Support
+  Widgets[CurrencyWidgets] --> Presentation
+  Widgets --> Support
   Widgets --> Rates
   Support --> Rates
 ```
 
-The app supplies the converter's details destination and creates the shared history service. Neither feature imports the other. Feature models, supporting views, widget intents, feed decoders, and storage identifiers are internal or private. Public service outputs are immutable; converter state changes use operations that preserve currency-list invariants.
+The app supplies the converter's details, widget-onboarding, and local-currency destinations and creates the shared history service. Widget onboarding receives its local-currency destination from the app. Features do not import other feature implementations; reusable picker and widget layouts live in shared UI modules. Feature models, supporting views, widget intents, feed decoders, and storage identifiers are internal or private. Public service outputs are immutable; converter state changes use operations that preserve currency-list invariants.
 
 `ExchangeRates` is one independently usable package, with automatic and dynamic linking products exposing the same module. It contains conversion, providers, current refresh policy, rate persistence, and historical series. Hosts inject providers, HTTP clients, cache directories, and evaluation times. App-specific state, formatting, error copy, App Group integration, and refresh scheduling remain in Tuist targets. The reusable package supports iOS 16+ and macOS 14+; the SwiftUI app still requires iOS 26.
 

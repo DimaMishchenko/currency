@@ -9,7 +9,7 @@ struct WidgetSurface: ViewModifier {
       .dynamicTypeSize(...DynamicTypeSize.large)
       .font(AppStyle.font(.caption))
       .tint(Color(uiColor: .label))
-      .containerBackground(for: .widget) { Color(uiColor: .systemBackground) }
+      .modifier(WidgetContainerBackground())
       .widgetURL(URL(string: "currency://convert"))
   }
 }
@@ -18,12 +18,14 @@ struct WidgetFooter: View {
   let entry: SuiteEntry
 
   var body: some View {
-    if entry.spec.usesLocation, entry.spec.localIsStale, let code = entry.spec.localCode {
-      Link(destination: URL(string: "currency://local-currency")!) {
+    if entry.spec.usesLocation, entry.spec.localIsStale, let code = entry.spec.localCode,
+      let destination = URL(string: "currency://local-currency")
+    {
+      Link(destination: destination) {
         Label {
           HStack(spacing: 0) {
             Text(verbatim: code + " · ")
-            Text(.Widgets.lastKnownLocal)
+            Text(.WidgetPresentation.lastKnownLocal)
           }
         } icon: {
           Image(systemName: "location")
@@ -31,7 +33,7 @@ struct WidgetFooter: View {
         .font(AppStyle.font(.caption2)).foregroundStyle(.secondary)
         .lineLimit(1).minimumScaleFactor(0.7)
       }
-      .accessibilityHint(.Widgets.localOpenApp)
+      .accessibilityHint(.WidgetPresentation.localOpenApp)
     }
 
   }
@@ -43,32 +45,43 @@ struct LocalCurrencySetup: View {
     switch status {
     case .denied:
       LocalizedStringResource(
-        "localDenied", defaultValue: "Location permission is off", table: "Widgets")
+        "localDenied", defaultValue: "Location permission is off", table: "WidgetPresentation",
+        bundle: .atURL(Bundle.module.bundleURL))
     case .restricted:
       LocalizedStringResource(
-        "localRestricted", defaultValue: "Location is restricted", table: "Widgets")
+        "localRestricted", defaultValue: "Location is restricted", table: "WidgetPresentation",
+        bundle: .atURL(Bundle.module.bundleURL))
     case .failed, .available:
       LocalizedStringResource(
-        "localFailed", defaultValue: "Unable to load local currency", table: "Widgets")
+        "localFailed", defaultValue: "Unable to load local currency", table: "WidgetPresentation",
+        bundle: .atURL(Bundle.module.bundleURL))
     case .notDetermined, .removed:
-      LocalizedStringResource("localSetup", defaultValue: "Set up local currency", table: "Widgets")
+      LocalizedStringResource(
+        "localSetup", defaultValue: "Set up local currency", table: "WidgetPresentation",
+        bundle: .atURL(Bundle.module.bundleURL))
     }
   }
   var body: some View {
-    Link(destination: URL(string: "currency://local-currency")!) {
-      VStack(alignment: .leading, spacing: AppStyle.Space.xxs) {
-        Image(systemName: "location")
-        Text(message).font(AppStyle.font(.caption2))
-        Text(LocalizedStringResource("localOpenApp", defaultValue: "Open app", table: "Widgets"))
+    if let destination = URL(string: "currency://local-currency") {
+      Link(destination: destination) {
+        VStack(alignment: .leading, spacing: AppStyle.Space.xxs) {
+          Image(systemName: "location")
+          Text(message).font(AppStyle.font(.caption2))
+          Text(
+            LocalizedStringResource(
+              "localOpenApp", defaultValue: "Open app", table: "WidgetPresentation",
+              bundle: .atURL(Bundle.module.bundleURL))
+          )
           .font(AppStyle.font(.caption2)).foregroundStyle(.secondary)
-      }
-      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-      .padding(AppStyle.Space.xs)
-      .multilineTextAlignment(.leading)
-      .foregroundStyle(.primary)
-      .background {
-        OpaquePermissionBackground()
-          .clipShape(.rect(cornerRadius: AppStyle.Widget.keyRadius))
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .padding(AppStyle.Space.xs)
+        .multilineTextAlignment(.leading)
+        .foregroundStyle(.primary)
+        .background {
+          OpaquePermissionBackground()
+            .clipShape(.rect(cornerRadius: AppStyle.Widget.keyRadius))
+        }
       }
     }
   }
@@ -98,8 +111,13 @@ private struct OpaquePermissionBackground: View {
 
 /// Interactive widgets show the committed selection; pressing must not fade the whole label.
 struct WidgetButtonStyle: ButtonStyle {
+  @Environment(\.isWidgetPreview) private var preview
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
   func makeBody(configuration: Configuration) -> some View {
     configuration.label
+      .scaleEffect(preview && configuration.isPressed && !reduceMotion ? 0.96 : 1)
+      .animation(
+        preview && !reduceMotion ? .snappy(duration: 0.16) : nil, value: configuration.isPressed)
   }
 }
 
@@ -119,15 +137,20 @@ struct WidgetKeypad: View {
         ) { row in
           HStack(spacing: AppStyle.Space.xs) {
             ForEach(row, id: \.self) { key in
-              Button(
-                intent: WidgetAction(
+              WidgetPresentationButton(
+                command: WidgetCommand(
                   key, spec: spec, activeCurrency: activeCurrency, hiddenCurrency: hiddenCurrency)
               ) {
                 Group {
                   if key == "⌫" {
                     Image(systemName: "delete.left")
                   } else {
-                    Text(key == "AC" ? "C" : CurrencyDisplay.inputAmount(key, locale: locale))
+                    Text(
+                      key == "AC"
+                        ? "C"
+                        : key == "."
+                          ? (locale.decimalSeparator ?? ".")
+                          : CurrencyDisplay.inputAmount(key, locale: locale))
                   }
                 }
                 .font(
@@ -149,10 +172,10 @@ struct WidgetKeypad: View {
               }
               .accessibilityLabel(
                 key == "AC"
-                  ? Text(.Widgets.clear)
+                  ? Text(.WidgetPresentation.clear)
                   : key == "⌫"
-                    ? Text(.Widgets.delete)
-                    : key == "." ? Text(.Widgets.decimalSeparator) : Text(verbatim: key))
+                    ? Text(.WidgetPresentation.delete)
+                    : key == "." ? Text(.WidgetPresentation.decimalSeparator) : Text(verbatim: key))
             }
           }
         }
@@ -169,6 +192,7 @@ struct CurrencyTile: View {
   var compact = false
   var stacked = false
   var showsCode = true
+  var previewSpread: CGFloat? = nil
 
   private var displayCode: String { WidgetSelection.currency(code) }
   private var selected: Bool { code == entry.input.active }
@@ -177,31 +201,19 @@ struct CurrencyTile: View {
     if code == WidgetSelection.localID {
       LocalCurrencySetup(status: entry.spec.locationStatus)
     } else {
-      Button(intent: WidgetAction("select:" + code, spec: entry.spec)) {
-        Group {
-          if stacked {
-            VStack(alignment: .trailing, spacing: AppStyle.Space.xs) {
-              HStack(spacing: AppStyle.Space.xxs) {
-                CurrencyIcon(displayCode, size: compact ? 16 : 22)
-                Spacer(minLength: 0)
-                currencyCode
-              }
-              amount.font(AppStyle.font(compact ? .title2 : .title, weight: .medium))
-                .frame(maxWidth: .infinity, alignment: .trailing)
-            }
-            .padding(.vertical, AppStyle.Space.xs)
-          } else {
-            HStack(spacing: AppStyle.Space.xs) {
-              CurrencyIcon(displayCode, size: compact ? 16 : 22)
-              Spacer(minLength: 0)
-              VStack(alignment: .trailing, spacing: 0) {
-                if showsCode || WidgetSelection.isLocal(code) { currencyCode }
-                amount.font(AppStyle.font(.title2, weight: .medium))
-              }
-            }
-          }
+      WidgetPresentationButton(command: WidgetCommand("select:" + code, spec: entry.spec)) {
+        CurrencyTileArrangement(
+          stacked: previewSpread.map { 1 - $0 } ?? (stacked ? 1 : 0),
+          showsCode: showsCode || WidgetSelection.isLocal(code)
+        ) {
+          CurrencyIcon(displayCode, size: previewSpread.map { 16 + 6 * $0 } ?? (compact ? 16 : 22))
+          currencyCode.opacity(showsCode || WidgetSelection.isLocal(code) ? 1 : 0)
+          amount.font(AppStyle.font(stacked && !compact ? .title : .title2, weight: .medium))
         }
-        .padding(.horizontal, compact ? AppStyle.Space.xs : AppStyle.Space.small)
+        .padding(
+          .horizontal,
+          previewSpread.map { 4 + 4 * $0 } ?? (compact ? AppStyle.Space.xs : AppStyle.Space.small)
+        )
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
           .primary.opacity(selected ? AppStyle.Widget.selectedFill : AppStyle.Widget.tileFill),
@@ -221,7 +233,7 @@ struct CurrencyTile: View {
         Text(
           verbatim: "\(CurrencyDisplay.name(displayCode)), \(displayCode)"
             + (WidgetSelection.isLocal(code)
-              ? " · " + String(localized: .Widgets.localCurrencyChoice) : ""))
+              ? " · " + String(localized: .WidgetPresentation.localCurrencyChoice) : ""))
       )
       .accessibilityValue(
         selected
@@ -232,7 +244,7 @@ struct CurrencyTile: View {
               to: displayCode),
             code: displayCode, locale: locale)
       )
-      .accessibilityHint(.Widgets.selectCurrencyHint)
+      .accessibilityHint(.WidgetPresentation.selectCurrencyHint)
       .accessibilityAddTraits(selected ? .isSelected : [])
     }
   }
@@ -241,7 +253,8 @@ struct CurrencyTile: View {
     HStack(spacing: AppStyle.Space.xxs) {
       Text(verbatim: displayCode)
       if WidgetSelection.isLocal(code) {
-        Image(systemName: "location.fill").accessibilityLabel(.Widgets.localCurrencyChoice)
+        Image(systemName: "location.fill")
+          .accessibilityLabel(.WidgetPresentation.localCurrencyChoice)
       }
     }
     .font(AppStyle.font(.caption2, weight: .medium))
@@ -261,5 +274,46 @@ struct CurrencyTile: View {
     )
     .monospacedDigit().lineLimit(1).minimumScaleFactor(0.35)
     .contentTransition(.identity)
+  }
+}
+
+/// A flag, code, and value keep one identity while a tile changes its arrangement.
+private struct CurrencyTileArrangement: Layout {
+  var stacked: CGFloat
+  let showsCode: Bool
+  var animatableData: CGFloat {
+    get { stacked }
+    set { stacked = newValue }
+  }
+  func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+    proposal.replacingUnspecifiedDimensions()
+  }
+  func placeSubviews(
+    in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()
+  ) {
+    guard subviews.count == 3 else { return }
+    let p = min(1, max(0, stacked))
+    let icon = subviews[0].sizeThatFits(.unspecified)
+    let code = subviews[1].sizeThatFits(.unspecified)
+    let amountWidth = max(0, bounds.width - (icon.width + AppStyle.Space.xs) * (1 - p))
+    let value = subviews[2].sizeThatFits(ProposedViewSize(width: amountWidth, height: nil))
+    let codeHeight = showsCode ? code.height : 0
+    let headerHeight = max(icon.height, codeHeight)
+    let stackedTop = (bounds.height - headerHeight - AppStyle.Space.xs - value.height) / 2
+    let rowTop = (bounds.height - codeHeight - value.height) / 2
+    let iconY = bounds.midY * (1 - p) + (bounds.minY + stackedTop + headerHeight / 2) * p
+    let codeY = rowTop * (1 - p) + (stackedTop + (headerHeight - codeHeight) / 2) * p
+    let valueY =
+      (rowTop + codeHeight) * (1 - p) + (stackedTop + headerHeight + AppStyle.Space.xs) * p
+    subviews[0]
+      .place(at: CGPoint(x: bounds.minX, y: iconY), anchor: .leading, proposal: .unspecified)
+    subviews[1]
+      .place(
+        at: CGPoint(x: bounds.maxX, y: bounds.minY + codeY), anchor: .topTrailing,
+        proposal: .unspecified)
+    subviews[2]
+      .place(
+        at: CGPoint(x: bounds.maxX, y: bounds.minY + valueY), anchor: .topTrailing,
+        proposal: ProposedViewSize(width: amountWidth, height: value.height))
   }
 }

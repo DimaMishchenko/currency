@@ -7,3 +7,5 @@ xcuserdata/
 *.xcodeproj/
 *.xcworkspace/
 .tuist-cache/
+
+.validation/

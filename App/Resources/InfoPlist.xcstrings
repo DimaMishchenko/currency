@@ -32,7 +32,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Find your country’s currency for widgets when you choose Update local currency. Only the country and currency are saved."
+            "value" : "Find your country’s currency for widgets when you choose Use my location. Only the country and currency are saved."
           }
         }
       }

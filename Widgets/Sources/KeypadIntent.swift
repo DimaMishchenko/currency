@@ -3,6 +3,7 @@ import CurrencySupport
 import Foundation
 import OSLog
 import WidgetKit
+import WidgetPresentation
 
 /// Default uses app input; Custom mutations stay in configured widget storage.
 struct WidgetAction: AppIntent {
@@ -29,6 +30,11 @@ struct WidgetAction: AppIntent {
   @Parameter(title: "Active currency") var activeCurrency: String?
   @Parameter(title: "Hidden currency") var hiddenCurrency: String?
   init() {}
+  init(_ command: WidgetCommand) {
+    self.init(
+      command.command, spec: command.spec,
+      activeCurrency: command.activeCurrency, hiddenCurrency: command.hiddenCurrency)
+  }
   init(
     _ command: String, spec: WidgetSpec, activeCurrency: String? = nil,
     hiddenCurrency: String? = nil

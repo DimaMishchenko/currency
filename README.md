@@ -43,12 +43,16 @@ The app composes two independent feature modules. All app-specific modules are T
 | --- | --- | --- |
 | [ExchangeRates](Sources/ExchangeRates/README.md) | Conversion, providers, refresh, history, offline rates | `RateSnapshot`, `RateService`, `HistoryService`, `RateCache` |
 | [CurrencySupport](Modules/CurrencySupport/README.md) | Shared converter state, formatting, App Group integration | `ConverterState`, `CurrencyStore`, `CurrencyDisplay` |
-| [ConverterFeature](Modules/ConverterFeature/README.md) | Amount entry, currency list, refresh, widget guidance | `ConverterScreen` |
+| [ConverterFeature](Modules/ConverterFeature/README.md) | Amount entry, currency list, refresh, destination routing | `ConverterScreen` |
+| [WidgetOnboardingFeature](Modules/WidgetOnboardingFeature/README.md) | Widget showcase, temporary previews, add/edit tutorials | `WidgetOnboardingScreen` |
+| [LocalCurrencyOnboardingFeature](Modules/LocalCurrencyOnboardingFeature/README.md) | Foreground location setup and recovery | `LocalCurrencyOnboardingScreen` |
+| [CurrencySelectionUI](Modules/CurrencySelectionUI/README.md) | Reusable searchable currency picker | `CurrencyChooser` |
+| [WidgetPresentation](Modules/WidgetPresentation/README.md) | Real shared widget layouts and command rendering | `CalculatorLayout`, `WidgetButtonRenderer` |
 | [RateDetailsFeature](Modules/RateDetailsFeature/README.md) | Rate provenance and historical charts | `RateDetailsScreen` |
 | [CurrencyWidgets](Widgets/README.md) | Home and Lock Screen widgets | Widget extension |
 | [App](App/README.md) | Service composition and feature navigation | App executable |
 
-Features depend on `CurrencySupport` and `ExchangeRates`, never on each other. The app supplies the converter’s details destination. Widget intents and feature implementation types remain internal. Public declarations have DocC comments; package decoder helpers remain internal and are tested with `@testable` imports. See [the architecture review](Documentation/Architecture.md) for decisions and verification commands.
+Features depend on shared support, rates, and reusable presentation modules, never on each other. The app supplies the converter’s details and onboarding destinations, and supplies the local-currency destination to widget onboarding. Widget intents and feature implementation types remain internal. Public declarations have DocC comments; package decoder helpers remain internal and are tested with `@testable` imports. See [the architecture review](Documentation/Architecture.md) for decisions and verification commands.
 
 Frankfurter (with sequential ECB fallback) and Fawaz fetch concurrently. The primary fiat chain wins daily publication-date ties; newer saved daily data is preserved. Daily quotes are cached separately from Coinbase overlays. If Coinbase fails or lacks a pair, that currency immediately reverts to its daily quote, including while offline. Every quote retains its source, publication date and optional trade or retrieval timestamp. Fiat/crypto conversions may combine daily fiat with intraday crypto; details disclose both sources.
 

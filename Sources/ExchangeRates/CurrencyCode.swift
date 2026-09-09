@@ -384,7 +384,8 @@ public enum CurrencyCode: String, Codable, CaseIterable, Sendable {
     switch self {
     case .btc, .eth, .sol, .doge, .ltc, .usdc, .usdt,
       .xrp, .ada, .avax, .link, .dot, .bch, .xlm, .atom,
-      .uni, .etc, .fil, .aave, .algo, .shib, .icp: true
+      .uni, .etc, .fil, .aave, .algo, .shib, .icp:
+      true
     default: false
     }
   }

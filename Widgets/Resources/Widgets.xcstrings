@@ -1,18 +1,6 @@
 {
   "sourceLanguage": "en",
   "strings": {
-    "openToLoad": {
-      "extractionState": "manual",
-      "comment": "Widgets interface: openToLoad.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Open app to load rates"
-          }
-        }
-      }
-    },
     "unavailable": {
       "extractionState": "manual",
       "comment": "Widgets interface: unavailable.",
@@ -33,30 +21,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Open app"
-          }
-        }
-      }
-    },
-    "delete": {
-      "extractionState": "manual",
-      "comment": "Widgets interface: delete.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Delete"
-          }
-        }
-      }
-    },
-    "clear": {
-      "extractionState": "manual",
-      "comment": "Widgets interface: clear.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Clear"
           }
         }
       }
@@ -140,7 +104,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your first conversion on the Lock Screen."
+            "value": "Your latest app conversion on the Lock Screen."
           }
         }
       }
@@ -181,18 +145,6 @@
         }
       }
     },
-    "inlineConversion": {
-      "extractionState": "manual",
-      "comment": "Widgets interface: inlineConversion.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ %2$@ = %3$@ %4$@"
-          }
-        }
-      }
-    },
     "conversionPair": {
       "extractionState": "manual",
       "comment": "Widgets interface: conversionPair.",
@@ -213,18 +165,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "+%lld"
-          }
-        }
-      }
-    },
-    "decimalSeparator": {
-      "extractionState": "manual",
-      "comment": "Widgets interface: decimalSeparator.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Decimal separator"
           }
         }
       }
@@ -405,114 +345,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Switch direction"
-          }
-        }
-      }
-    },
-    "selectCurrencyHint": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tap to enter an amount in this currency"
-          }
-        }
-      }
-    },
-    "metalEstimate": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Metal weight · reference estimate"
-          }
-        }
-      }
-    },
-    "banknoteEstimate": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "One banknote · reference estimate"
-          }
-        }
-      }
-    },
-    "genericEstimate": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reference amounts · not banknotes"
-          }
-        }
-      }
-    },
-    "divideBy": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Divide by"
-          }
-        }
-      }
-    },
-    "multiplyBy": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Multiply by"
-          }
-        }
-      }
-    },
-    "checkAmount": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Check amount"
-          }
-        }
-      }
-    },
-    "invalidAmountHelp": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Edit this widget and enter a number without grouping separators."
-          }
-        }
-      }
-    },
-    "boardOverflow": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "+%lld more · edit widget to reorder"
           }
         }
       }
@@ -890,72 +722,6 @@
         }
       }
     },
-    "lastKnownLocal": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Last-known local currency"
-          }
-        }
-      }
-    },
-    "localDenied": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Location permission is off"
-          }
-        }
-      }
-    },
-    "localRestricted": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Location is restricted"
-          }
-        }
-      }
-    },
-    "localFailed": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Unable to load local currency"
-          }
-        }
-      }
-    },
-    "localSetup": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Set up local currency"
-          }
-        }
-      }
-    },
-    "localOpenApp": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Open app"
-          }
-        }
-      }
-    },
     "calculatorListHelp": {
       "extractionState": "manual",
       "localizations": {
@@ -963,17 +729,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Default follows your app currencies. Choose Custom list to edit a separate selection."
-          }
-        }
-      }
-    },
-    "chooseCustomCurrencies": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Edit this widget to choose a Custom list."
           }
         }
       }

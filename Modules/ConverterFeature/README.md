@@ -1,12 +1,18 @@
 # ConverterFeature
 
-The one-to-many converter experience: amount entry, currency selection and ordering, refresh status, and widget guidance. Only `ConverterScreen` is public; its model and supporting views stay internal.
+The one-to-many converter experience: amount entry, currency selection and ordering, refresh status, and destination routing. Only `ConverterScreen` is public; its model and supporting views stay internal.
 
-The host supplies the details destination, allowing the feature to work independently of the history screen:
+The host supplies details and onboarding destinations, keeping feature implementations independent:
 
 ```swift
 ConverterScreen(store: .shared) { code, reference, snapshot in
   RateDetailsScreen(code: code, reference: reference, snapshot: snapshot, history: history)
+} widgets: {
+  WidgetOnboardingScreen { LocalCurrencyOnboardingScreen() }
+} localCurrency: {
+  LocalCurrencyOnboardingScreen()
+} reconcileLocalCurrency: {
+  LocalCurrencyAuthorization.reconcile()
 }
 ```
 

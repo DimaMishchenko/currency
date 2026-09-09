@@ -1,0 +1,1361 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "addCurrency": {
+      "extractionState": "manual",
+      "comment": "Converter interface: addCurrency.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add currency"
+          }
+        }
+      }
+    },
+    "close": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
+          }
+        }
+      }
+    },
+    "collectionHeadline": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: collectionHeadline.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Small things.\nEveryday superpowers."
+          }
+        }
+      }
+    },
+    "collectionSummary": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: collectionSummary.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose one. Make it yours."
+          }
+        }
+      }
+    },
+    "collectionTitle": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: collectionTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The collection"
+          }
+        }
+      }
+    },
+    "currencies": {
+      "extractionState": "manual",
+      "comment": "Converter interface: currencies.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Currencies"
+          }
+        }
+      }
+    },
+    "done": {
+      "extractionState": "manual",
+      "comment": "Converter interface: done.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        }
+      }
+    },
+    "guideAddHomeScreen": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideAddHomeScreen.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add to Home Screen"
+          }
+        }
+      }
+    },
+    "guideAddLocal": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideAddLocal.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add Local currency"
+          }
+        }
+      }
+    },
+    "guideAddLocalDefault": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideAddLocalDefault.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add local currency to Default"
+          }
+        }
+      }
+    },
+    "guideAddLockScreen": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideAddLockScreen.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add to Lock Screen"
+          }
+        }
+      }
+    },
+    "guideAddWidget": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideAddWidget.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a widget"
+          }
+        }
+      }
+    },
+    "guideAmount": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideAmount.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Amount"
+          }
+        }
+      }
+    },
+    "guideAutomaticLocal": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideAutomaticLocal.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatic · set up local currency"
+          }
+        }
+      }
+    },
+    "guideBack": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideBack.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back"
+          }
+        }
+      }
+    },
+    "guideBase": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideBase.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Base"
+          }
+        }
+      }
+    },
+    "guideBoardLocalDetail": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideBoardLocalDetail.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Currency Board uses your selected currencies. Choose your local currency manually in its list."
+          }
+        }
+      }
+    },
+    "guideChooseAddDetail": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideChooseAddDetail.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap Add Widget in the Edit menu to open the widget gallery."
+          }
+        }
+      }
+    },
+    "guideChooseAddTitle": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideChooseAddTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose Add Widget"
+          }
+        }
+      }
+    },
+    "guideChooseFamily": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideChooseFamily. Arguments stay together so translations can reorder them.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Swipe to %1$@, choose %2$@, and tap Add Widget."
+          }
+        }
+      }
+    },
+    "guideChooseWidgetTitle": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideChooseWidgetTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose your widget"
+          }
+        }
+      }
+    },
+    "guideComparison": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideComparison.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comparison"
+          }
+        }
+      }
+    },
+    "guideCurrenciesTitle": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideCurrenciesTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose your currencies"
+          }
+        }
+      }
+    },
+    "guideCurrencyList": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideCurrencyList.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Currency list"
+          }
+        }
+      }
+    },
+    "guideCustom": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideCustom.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Custom"
+          }
+        }
+      }
+    },
+    "guideCustomListHint": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideCustomListHint.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This widget keeps its own list. Your app stays the same."
+          }
+        }
+      }
+    },
+    "guideCustomLocalDetail": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideCustomLocalDetail.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose Local currency in the widget’s Currencies or Comparison setting. Then open its setup link to look up your currency once."
+          }
+        }
+      }
+    },
+    "guideCustomizeDetail": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideCustomizeDetail.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap Customize below your wallpaper, then choose Lock Screen."
+          }
+        }
+      }
+    },
+    "guideCustomizeTitle": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideCustomizeTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose Customize"
+          }
+        }
+      }
+    },
+    "guideDefault": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideDefault.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default"
+          }
+        }
+      }
+    },
+    "guideDefaultListHint": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideDefaultListHint.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This widget follows the currencies selected in your app."
+          }
+        }
+      }
+    },
+    "guideDefaultLocalDetail": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideDefaultLocalDetail.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn on Add local currency to Default in the widget’s settings. Then open the widget’s setup link to look up your currency once."
+          }
+        }
+      }
+    },
+    "guideEditDetail": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideEditDetail.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap Edit Widget in the menu to open its settings."
+          }
+        }
+      }
+    },
+    "guideEditNavigation": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideEditNavigation.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit a widget"
+          }
+        }
+      }
+    },
+    "guideEditTitle": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideEditTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose Edit Widget"
+          }
+        }
+      }
+    },
+    "guideEditWidget": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideEditWidget.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How to edit this widget"
+          }
+        }
+      }
+    },
+    "guideExploreCollection": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideExploreCollection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Explore the collection"
+          }
+        }
+      }
+    },
+    "guideExploreWidget": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideExploreWidget. Arguments stay together so translations can reorder them.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Explore %1$@, %2$@"
+          }
+        }
+      }
+    },
+    "guideFindCurrencyTitle": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideFindCurrencyTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find Currency"
+          }
+        }
+      }
+    },
+    "guideFinishEditDetail": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideFinishEditDetail.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap outside the settings to finish editing on your Home Screen. Changes made in this tutorial are only a preview."
+          }
+        }
+      }
+    },
+    "guideFinishEditTitle": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideFinishEditTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep it close"
+          }
+        }
+      }
+    },
+    "guideFinishHomeDetail": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideFinishHomeDetail.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag your widget into place and tap Done. You’re ready to try it on your Home Screen."
+          }
+        }
+      }
+    },
+    "guideFinishHomeTitle": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideFinishHomeTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Make yourself at home"
+          }
+        }
+      }
+    },
+    "guideFinishLockDetail": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideFinishLockDetail.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close the widget picker and tap Done. These steps are a demonstration; add the widget on your Lock Screen."
+          }
+        }
+      }
+    },
+    "guideFinishLockTitle": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideFinishLockTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finish on your Lock Screen"
+          }
+        }
+      }
+    },
+    "guideGotIt": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideGotIt.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Got it"
+          }
+        }
+      }
+    },
+    "guideHeadline": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideHeadline.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your currencies.\nAlways within reach."
+          }
+        }
+      }
+    },
+    "guideHoldHomeDetail": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideHoldHomeDetail.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touch and hold an empty area of your Home Screen until the apps jiggle."
+          }
+        }
+      }
+    },
+    "guideHoldHomeTitle": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideHoldHomeTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hold your Home Screen"
+          }
+        }
+      }
+    },
+    "guideHoldInstalled": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideHoldInstalled. Arguments stay together so translations can reorder them.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On your Home Screen, touch and hold the installed %1$@ widget."
+          }
+        }
+      }
+    },
+    "guideHoldLockDetail": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideHoldLockDetail.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unlock your iPhone, then touch and hold the Lock Screen to show your wallpapers."
+          }
+        }
+      }
+    },
+    "guideHoldLockTitle": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideHoldLockTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hold your Lock Screen"
+          }
+        }
+      }
+    },
+    "guideHoldWidgetTitle": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideHoldWidgetTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hold your widget"
+          }
+        }
+      }
+    },
+    "guideInlineAreaDetail": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideInlineAreaDetail.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap the date above the time to add an inline widget."
+          }
+        }
+      }
+    },
+    "guideListsDetail": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideListsDetail.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default follows your app currencies. Custom uses a separate list. Try the controls below."
+          }
+        }
+      }
+    },
+    "guideLocalCurrency": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideLocalCurrency.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local currency"
+          }
+        }
+      }
+    },
+    "guideLocalPrivacy": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideLocalPrivacy.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You choose when to update. No background location tracking."
+          }
+        }
+      }
+    },
+    "guideLocalTitle": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideLocalTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A currency for where you are"
+          }
+        }
+      }
+    },
+    "guideLockCurrencyDetail": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideLockCurrencyDetail.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose Currency, then tap Quick Rate. It follows your latest app conversion."
+          }
+        }
+      }
+    },
+    "guideLockTitle": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideLockTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lock Screen guide"
+          }
+        }
+      }
+    },
+    "guideNativeAddWidget": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideNativeAddWidget.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add Widget"
+          }
+        }
+      }
+    },
+    "guideNativeAddWidgets": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideNativeAddWidgets.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add Widgets"
+          }
+        }
+      }
+    },
+    "guideNativeCustomize": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideNativeCustomize.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Customize"
+          }
+        }
+      }
+    },
+    "guideNativeEdit": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideNativeEdit.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit"
+          }
+        }
+      }
+    },
+    "guideNativeEditHome": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideNativeEditHome.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit Home Screen"
+          }
+        }
+      }
+    },
+    "guideNativeEditWidget": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideNativeEditWidget.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit Widget"
+          }
+        }
+      }
+    },
+    "guideNativeLists": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideNativeLists.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default / Custom"
+          }
+        }
+      }
+    },
+    "guideNativeSearch": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideNativeSearch.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search Widgets"
+          }
+        }
+      }
+    },
+    "guideNext": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideNext.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next"
+          }
+        }
+      }
+    },
+    "guidePairDetail": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guidePairDetail.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a base currency and a comparison currency in the widget’s settings."
+          }
+        }
+      }
+    },
+    "guidePauseMotion": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guidePauseMotion.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pause motion"
+          }
+        }
+      }
+    },
+    "guidePersonalizeTitle": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guidePersonalizeTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Make it yours"
+          }
+        }
+      }
+    },
+    "guidePlayMotion": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guidePlayMotion.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play motion"
+          }
+        }
+      }
+    },
+    "guidePracticeOnly": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guidePracticeOnly.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Practice only. Edit the installed widget to save its settings."
+          }
+        }
+      }
+    },
+    "guideRectangleAreaDetail": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideRectangleAreaDetail.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap Add Widgets below the time."
+          }
+        }
+      }
+    },
+    "guideRemoveCurrency": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideRemoveCurrency. Arguments stay together so translations can reorder them.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove %1$@"
+          }
+        }
+      }
+    },
+    "guideReplay": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideReplay.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replay"
+          }
+        }
+      }
+    },
+    "guideSearchDetail": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideSearchDetail.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap Search Widgets, type Currency, then choose the app."
+          }
+        }
+      }
+    },
+    "guideStep": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideStep. Arguments stay together so translations can reorder them.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Step %1$lld of %2$lld"
+          }
+        }
+      }
+    },
+    "guideSummary": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideSummary.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Convert, calculate, and check prices\nfrom your Home Screen."
+          }
+        }
+      }
+    },
+    "guideTapEditDetail": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideTapEditDetail.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap Edit at the top of your Home Screen."
+          }
+        }
+      }
+    },
+    "guideTapEditTitle": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideTapEditTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap Edit"
+          }
+        }
+      }
+    },
+    "guideTrySettings": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideTrySettings.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try the settings"
+          }
+        }
+      }
+    },
+    "guideWidgetAreaTitle": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideWidgetAreaTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap the widget area"
+          }
+        }
+      }
+    },
+    "localCollectionTitle": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: localCollectionTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Feel at home, anywhere."
+          }
+        }
+      }
+    },
+    "localSetupAction": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: localSetupAction.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set up local currency"
+          }
+        }
+      }
+    },
+    "previewCalculatorHint": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: previewCalculatorHint.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap a currency, then try the keys."
+          }
+        }
+      }
+    },
+    "previewCashHint": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: previewCashHint.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap a banknote to compare its value."
+          }
+        }
+      }
+    },
+    "previewReset": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: previewReset.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset preview"
+          }
+        }
+      }
+    },
+    "previewSampleRates": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: previewSampleRates.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sample rates"
+          }
+        }
+      }
+    },
+    "previewSize": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: previewSize.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Widget size"
+          }
+        }
+      }
+    },
+    "quickFollowsApp": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: quickFollowsApp.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Follows your latest app conversion."
+          }
+        }
+      }
+    },
+    "quickSampleScreenAccessibility": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: quickSampleScreenAccessibility.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quick Rate on a sample Lock Screen"
+          }
+        }
+      }
+    },
+    "widgetBoardDetail": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: widgetBoardDetail.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your currencies, together at a glance."
+          }
+        }
+      }
+    },
+    "widgetBoardTitle": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: widgetBoardTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Currency Board"
+          }
+        }
+      }
+    },
+    "widgetCalculatorDetail": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: widgetCalculatorDetail.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A little calculator. A world of currencies."
+          }
+        }
+      }
+    },
+    "widgetCalculatorTitle": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: widgetCalculatorTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Currency Calculator"
+          }
+        }
+      }
+    },
+    "widgetCashDetail": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: widgetCashDetail.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap a banknote. Know what it’s worth."
+          }
+        }
+      }
+    },
+    "widgetCashTitle": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: widgetCashTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Know Your Cash"
+          }
+        }
+      }
+    },
+    "widgetMentalDetail": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: widgetMentalDetail.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A simple rule for the prices around you."
+          }
+        }
+      }
+    },
+    "widgetMentalTitle": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: widgetMentalTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mental Math"
+          }
+        }
+      }
+    },
+    "widgetPocketDetail": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: widgetPocketDetail.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A useful conversion, always in your pocket."
+          }
+        }
+      }
+    },
+    "widgetPocketTitle": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: widgetPocketTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pocket Rate"
+          }
+        }
+      }
+    },
+    "widgetQuickDetail": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: widgetQuickDetail.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your latest conversion, on your Lock Screen."
+          }
+        }
+      }
+    },
+    "widgetQuickTitle": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: widgetQuickTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quick Rate"
+          }
+        }
+      }
+    },
+    "widgetSizeInline": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: widgetSizeInline.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inline"
+          }
+        }
+      }
+    },
+    "widgetSizeLarge": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: widgetSizeLarge.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Large"
+          }
+        }
+      }
+    },
+    "widgetSizeMedium": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: widgetSizeMedium.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Medium"
+          }
+        }
+      }
+    },
+    "widgetSizeRectangular": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: widgetSizeRectangular.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rectangular"
+          }
+        }
+      }
+    },
+    "widgetSizeSmall": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: widgetSizeSmall.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Small"
+          }
+        }
+      }
+    },
+    "widgets": {
+      "extractionState": "manual",
+      "comment": "Converter interface: widgets.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Widgets"
+          }
+        }
+      }
+    },
+    "guideNativeChooseWidget": {
+      "extractionState": "manual",
+      "comment": "Native Lock Screen widget picker heading.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose Widget"
+          }
+        }
+      }
+    },
+    "guideNativeTapToAdd": {
+      "extractionState": "manual",
+      "comment": "Native rectangular Lock Screen widget picker instruction.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap or drag to add widget."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

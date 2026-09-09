@@ -2,13 +2,7 @@ import CurrencySupport
 import ExchangeRates
 import OSLog
 import WidgetKit
-
-struct SuiteEntry: TimelineEntry {
-  var date: Date
-  var spec: WidgetSpec
-  var input: WidgetInput
-  var snapshot: RateSnapshot
-}
+import WidgetPresentation
 
 struct SuiteTimeline<Configuration: SuiteConfiguration>: AppIntentTimelineProvider {
   let kind: String

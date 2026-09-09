@@ -3,14 +3,25 @@ import Foundation
 import Testing
 
 @testable import ConverterFeature
+@testable import CurrencySelectionUI
 @testable import CurrencySupport
+@testable import LocalCurrencyOnboardingFeature
 @testable import RateDetailsFeature
+@testable import WidgetOnboardingFeature
+@testable import WidgetPresentation
 
 // These are resource-integration checks: generated getter defaults deliberately lack the
 // surrounding sentence, so a wrong/missing framework bundle would fail these expectations.
 
 @Suite struct LocalizationTests {
   @Test func generatedAccessorsResolveOwningFrameworkAndSubstitutions() {
+    #expect(String(localized: .WidgetOnboarding.guideStep(2, 6)) == "Step 2 of 6")
+    #expect(
+      String(localized: .WidgetOnboarding.guideExploreWidget("Calculator", "Large"))
+        == "Explore Calculator, Large")
+    #expect(String(localized: .LocalCurrency.localUseLocation) == "Use my location")
+    #expect(String(localized: .CurrencySelection.baseCurrency) == "Base currency")
+    #expect(String(localized: .WidgetPresentation.clear) == "Clear")
     #expect(String(localized: .Converter.sourceAccessibility("Euro")) == "Source currency, Euro")
     #expect(String(localized: .Details.unitConversion("BTC", "USD")) == "1 BTC in USD")
     #expect(

@@ -61,11 +61,13 @@ public struct CurrencyIcon: View {
   private let code: String
   private let size: CGFloat
 
+  /// Creates a currency badge with the requested point size.
   public init(_ code: String, size: CGFloat = 22) {
     self.code = code
     self.size = size
   }
 
+  /// Decorative currency artwork; the owning control supplies its accessible name.
   public var body: some View {
     Group {
       if CurrencyCatalog.crypto.contains(code) {

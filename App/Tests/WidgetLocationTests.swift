@@ -3,7 +3,8 @@ import CurrencySupport
 import Foundation
 import Testing
 
-@testable import ConverterFeature
+@testable import LocalCurrencyOnboardingFeature
+@testable import WidgetOnboardingFeature
 
 @MainActor
 struct WidgetLocationTests {
@@ -24,12 +25,13 @@ struct WidgetLocationTests {
     try store.saveWidgetLocation(WidgetLocation(country: "CZ", currency: "CZK"))
     let manager = LocationManager()
     manager.permission = .denied
-    let controller = WidgetLocationController(manager: manager, store: store)
+    let controller = WidgetLocationController(
+      manager: manager, store: store, servicesEnabled: { true })
     controller.update()
     #expect(!controller.isUpdating)
     #expect(store.widgetLocation() == nil)
     #expect(
-      String(localized: controller.status) == String(localized: .Converter.localPermissionDenied))
+      String(localized: controller.status) == String(localized: .LocalCurrency.localPermissionDenied))
     #expect(manager.locationRequests == 0)
     #expect(manager.authorizationRequests == 0)
   }
@@ -42,7 +44,8 @@ struct WidgetLocationTests {
     try store.saveWidgetLocation(cached)
     let manager = LocationManager()
     manager.permission = .authorizedWhenInUse
-    let controller = WidgetLocationController(manager: manager, store: store)
+    let controller = WidgetLocationController(
+      manager: manager, store: store, servicesEnabled: { true })
     controller.update()
     #expect(store.widgetLocation() == cached)
     controller.locationManager(manager, didFailWithError: CLError(.locationUnknown))
@@ -64,7 +67,7 @@ struct WidgetLocationTests {
     let manager = LocationManager()
     manager.permission = .authorizedWhenInUse
     let controller = WidgetLocationController(
-      manager: manager, store: store, timeoutDuration: .milliseconds(10))
+      manager: manager, store: store, timeoutDuration: .milliseconds(10), servicesEnabled: { true })
     controller.update()
     try await Task.sleep(for: .milliseconds(100))
     #expect(!controller.isUpdating)
@@ -91,7 +94,8 @@ struct WidgetLocationTests {
     try store.saveWidgetLocationStatus(.available)
     let manager = LocationManager()
     manager.permission = .authorizedWhenInUse
-    let controller = WidgetLocationController(manager: manager, store: store)
+    let controller = WidgetLocationController(
+      manager: manager, store: store, servicesEnabled: { true })
     controller.update()
     #expect(controller.isUpdating)
     manager.permission = .notDetermined
@@ -110,7 +114,7 @@ struct WidgetLocationTests {
     defer { try? FileManager.default.removeItem(at: directory) }
     let manager = LocationManager()
     let controller = WidgetLocationController(
-      manager: manager, store: CurrencyStore(directory: directory))
+      manager: manager, store: CurrencyStore(directory: directory), servicesEnabled: { true })
     controller.update()
     #expect(controller.isUpdating)
     #expect(manager.authorizationRequests == 1)
@@ -118,7 +122,7 @@ struct WidgetLocationTests {
     controller.locationManagerDidChangeAuthorization(manager)
     #expect(!controller.isUpdating)
     #expect(
-      String(localized: controller.status) == String(localized: .Converter.localPermissionDenied))
+      String(localized: controller.status) == String(localized: .LocalCurrency.localPermissionDenied))
   }
 
   @Test func restrictedPermissionAndLateCallbacksDoNotReportSuccessfulRemoval() {
@@ -127,15 +131,15 @@ struct WidgetLocationTests {
     let manager = LocationManager()
     manager.permission = .restricted
     let controller = WidgetLocationController(
-      manager: manager, store: CurrencyStore(directory: directory))
+      manager: manager, store: CurrencyStore(directory: directory), servicesEnabled: { true })
     controller.update()
     #expect(
       String(localized: controller.status)
-        == String(localized: .Converter.localPermissionRestricted))
+        == String(localized: .LocalCurrency.localPermissionRestricted))
     controller.clear()
     controller.locationManager(manager, didUpdateLocations: [])
     controller.locationManager(manager, didFailWithError: CLError(.locationUnknown))
     #expect(!controller.isUpdating)
-    #expect(String(localized: controller.status) == String(localized: .Converter.localRemoved))
+    #expect(String(localized: controller.status) == String(localized: .LocalCurrency.localRemoved))
   }
 }

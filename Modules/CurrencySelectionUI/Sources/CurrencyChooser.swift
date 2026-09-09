@@ -1,36 +1,49 @@
 import CurrencySupport
 import ExchangeRates
 import SwiftUI
-import WidgetKit
 
-enum PickerPurpose: String, Identifiable {
-  case source, add
-  var id: String { rawValue }
+/// Whether the reusable picker chooses a base currency or adds to a list.
+public enum PickerPurpose: String, Identifiable {
+  /// Selects the currency receiving input.
+  case source
+  /// Appends a currency to a collection.
+  case add
+  /// Stable presentation identity.
+  public var id: String { rawValue }
 }
 
-struct CurrencyChooser: View {
+/// A searchable currency picker shared by app features.
+public struct CurrencyChooser: View {
   @Environment(\.locale) private var locale
   let purpose: PickerPurpose
   let selected: [String]
   let homeCurrencies: [String]
   let available: Set<String>
+  let allowedCodes: Set<String>?
+  let title: LocalizedStringResource?
   var choose: (String) -> Void
   @State private var search = ""
   @State private var category: CurrencyCategory
   @Environment(\.dismiss) private var dismiss
-  init(
+  /// Creates a picker with caller-owned selection and optional supported-code filtering.
+  public init(
     purpose: PickerPurpose, selected: [String], homeCurrencies: [String],
-    available: Set<String>, choose: @escaping (String) -> Void
+    available: Set<String>, allowedCodes: Set<String>? = nil,
+    title: LocalizedStringResource? = nil, choose: @escaping (String) -> Void
   ) {
     self.purpose = purpose
     self.selected = selected
     self.homeCurrencies = homeCurrencies
     self.available = available
+    self.allowedCodes = allowedCodes
+    self.title = title
     self.choose = choose
-    _category = State(initialValue: purpose == .source ? .selected : .currencies)
+    _category = State(
+      initialValue: purpose == .source && !homeCurrencies.isEmpty ? .selected : .currencies)
   }
 
-  var body: some View {
+  /// The searchable currency list and category controls.
+  public var body: some View {
     NavigationStack {
       List {
         ForEach(filteredCodes, id: \.self) { code in
@@ -49,7 +62,7 @@ struct CurrencyChooser: View {
               if selected.contains(code) {
                 Image(systemName: "checkmark").foregroundStyle(.secondary)
               } else if !available.contains(code) {
-                Text(.Converter.unavailable).font(AppStyle.font(.caption2))
+                Text(.CurrencySelection.unavailable).font(AppStyle.font(.caption2))
                   .foregroundStyle(.secondary)
               }
             }
@@ -67,7 +80,7 @@ struct CurrencyChooser: View {
               Text(category.title).tag(category)
             }
           } label: {
-            Text(.Converter.assetCategory)
+            Text(.CurrencySelection.assetCategory)
           }
           .pickerStyle(.segmented)
           .padding(.horizontal)
@@ -77,12 +90,13 @@ struct CurrencyChooser: View {
       }
       .searchable(text: $search)
       .navigationTitle(
-        purpose == .source ? .Converter.baseCurrency : .Converter.addCurrency
+        title
+          ?? (purpose == .source ? .CurrencySelection.baseCurrency : .CurrencySelection.addCurrency)
       )
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .topBarTrailing) {
-          Button(.Converter.close, systemImage: "xmark") { dismiss() }
+          Button(.CurrencySelection.close, systemImage: "xmark") { dismiss() }
             .labelStyle(.iconOnly)
         }
       }
@@ -98,8 +112,11 @@ struct CurrencyChooser: View {
   }
 
   private var filteredCodes: [String] {
-    if search.isEmpty, category == .selected { return homeCurrencies }
+    if search.isEmpty, category == .selected {
+      return homeCurrencies.filter { allowedCodes?.contains($0) ?? true }
+    }
     return CurrencyCatalog.codes.filter { code in
+      guard allowedCodes?.contains(code) ?? true else { return false }
       if search.isEmpty { return category.contains(code) }
       return "\(code) \(CurrencyDisplay.name(code, locale: locale))"
         .localizedCaseInsensitiveContains(search)
@@ -112,10 +129,10 @@ private enum CurrencyCategory: CaseIterable {
 
   var title: LocalizedStringResource {
     switch self {
-    case .selected: .Converter.selectedCurrencies
-    case .crypto: .Converter.crypto
-    case .metals: .Converter.metals
-    case .currencies: .Converter.currencies
+    case .selected: .CurrencySelection.selectedCurrencies
+    case .crypto: .CurrencySelection.crypto
+    case .metals: .CurrencySelection.metals
+    case .currencies: .CurrencySelection.currencies
     }
   }
 

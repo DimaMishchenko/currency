@@ -1,0 +1,113 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "addCurrency": {
+      "extractionState": "manual",
+      "comment": "Converter interface: addCurrency.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add currency"
+          }
+        }
+      }
+    },
+    "assetCategory": {
+      "extractionState": "manual",
+      "comment": "Accessibility label for the currency picker category control.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asset category"
+          }
+        }
+      }
+    },
+    "baseCurrency": {
+      "extractionState": "manual",
+      "comment": "Converter interface: baseCurrency.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Base currency"
+          }
+        }
+      }
+    },
+    "close": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
+          }
+        }
+      }
+    },
+    "crypto": {
+      "extractionState": "manual",
+      "comment": "Converter interface: crypto.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crypto"
+          }
+        }
+      }
+    },
+    "currencies": {
+      "extractionState": "manual",
+      "comment": "Converter interface: currencies.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Currencies"
+          }
+        }
+      }
+    },
+    "metals": {
+      "extractionState": "manual",
+      "comment": "Currency picker category for precious metals.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Metals"
+          }
+        }
+      }
+    },
+    "selectedCurrencies": {
+      "extractionState": "manual",
+      "comment": "First category in the base currency picker, containing currencies already on the home screen.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selected"
+          }
+        }
+      }
+    },
+    "unavailable": {
+      "extractionState": "manual",
+      "comment": "Converter interface: unavailable.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unavailable"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

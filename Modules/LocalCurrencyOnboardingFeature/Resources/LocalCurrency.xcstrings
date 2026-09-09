@@ -1,0 +1,470 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "close": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
+          }
+        }
+      }
+    },
+    "done": {
+      "extractionState": "manual",
+      "comment": "Converter interface: done.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        }
+      }
+    },
+    "guideLocalCurrency": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: guideLocalCurrency.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local currency"
+          }
+        }
+      }
+    },
+    "localAwaitingPermission": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: localAwaitingPermission.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waiting for your permission…"
+          }
+        }
+      }
+    },
+    "localChooseManually": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: localChooseManually.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a currency manually"
+          }
+        }
+      }
+    },
+    "localFinding": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finding local currency…"
+          }
+        }
+      }
+    },
+    "localFindingDetail": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: localFindingDetail.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "We’re looking up a currency for this location."
+          }
+        }
+      }
+    },
+    "localFindingProgress": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: localFindingProgress.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finding your currency…"
+          }
+        }
+      }
+    },
+    "localFindingTitle": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: localFindingTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finding your place\nin the world."
+          }
+        }
+      }
+    },
+    "localInitial": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap Update to set up local currency. Last-known currency remains available after authorized lookup failures."
+          }
+        }
+      }
+    },
+    "localIntroDetail": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: localIntroDetail.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find the currency around you,\nready for your widget."
+          }
+        }
+      }
+    },
+    "localIntroTitle": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: localIntroTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Feel at home,\nanywhere."
+          }
+        }
+      }
+    },
+    "localManualInstructions": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: localManualInstructions.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add this currency to your app list. For a Custom widget, choose it directly in Edit Widget instead of Local currency."
+          }
+        }
+      }
+    },
+    "localManualSaveFailed": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: localManualSaveFailed.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn’t save. Please try again."
+          }
+        }
+      }
+    },
+    "localManualSaved": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: localManualSaved.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Added to your app currencies. Default widgets follow this list. For a Custom widget, choose this currency in Edit Widget."
+          }
+        }
+      }
+    },
+    "localPermissionDenied": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Location access is off. Allow location for Currency in Settings to update your local currency."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Доступ к геопозиции отключён. Разрешите доступ для Currency в Настройках, чтобы обновить местную валюту."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Доступ до геопозиції вимкнено. Дозвольте доступ для Currency в Параметрах, щоб оновити місцеву валюту."
+          }
+        }
+      }
+    },
+    "localPermissionRestricted": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Location access is restricted on this device. Your local currency could not be updated."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Доступ к геопозиции ограничен на этом устройстве. Не удалось обновить местную валюту."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Доступ до геопозиції обмежено на цьому пристрої. Не вдалося оновити місцеву валюту."
+          }
+        }
+      }
+    },
+    "localPrivacyDetail": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: localPrivacyDetail.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only the country and currency are saved."
+          }
+        }
+      }
+    },
+    "localPrivacySummary": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: localPrivacySummary.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Approximate location. Only when you ask."
+          }
+        }
+      }
+    },
+    "localRecoveryTitle": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: localRecoveryTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your currency.\nYour choice."
+          }
+        }
+      }
+    },
+    "localRegionMap": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: localRegionMap. Arguments stay together so translations can reorder them.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Region map for %1$@. No exact location is shown."
+          }
+        }
+      }
+    },
+    "localRemoveFailed": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not remove the saved currency. Try again."
+          }
+        }
+      }
+    },
+    "localRemoved": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local currency removed. Widgets use your selected comparison."
+          }
+        }
+      }
+    },
+    "localRetry": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: localRetry.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try again"
+          }
+        }
+      }
+    },
+    "localSaved": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved local currency: %1$@ (%2$@)"
+          }
+        }
+      }
+    },
+    "localServicesDisabled": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: localServicesDisabled.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Location Services are off. You can enable them in Settings, or choose a currency manually."
+          }
+        }
+      }
+    },
+    "localUnavailable": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Location unavailable. Widgets use your selected comparison."
+          }
+        }
+      }
+    },
+    "localUnsupported": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No supported local currency found. Your selected comparison is used."
+          }
+        }
+      }
+    },
+    "localUpdateAction": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: localUpdateAction.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Update location"
+          }
+        }
+      }
+    },
+    "localUpdateFailed": {
+      "extractionState": "manual",
+      "comment": "Configurable widget collection.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not update the saved currency. Try again."
+          }
+        }
+      }
+    },
+    "localUseInApp": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: localUseInApp.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use in app"
+          }
+        }
+      }
+    },
+    "localUseLocation": {
+      "extractionState": "manual",
+      "comment": "Widget onboarding: localUseLocation.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use my location"
+          }
+        }
+      }
+    },
+    "openLocationSettings": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Settings"
+          }
+        }
+      }
+    },
+    "localReadyCurrency": {
+      "extractionState": "manual",
+      "comment": "Local currency onboarding action or status.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Widgets set to Local will use %1$@."
+          }
+        }
+      }
+    },
+    "localChangeAction": {
+      "extractionState": "manual",
+      "comment": "Local currency onboarding action or status.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change local currency"
+          }
+        }
+      }
+    },
+    "localClearAction": {
+      "extractionState": "manual",
+      "comment": "Local currency onboarding action or status.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear local currency"
+          }
+        }
+      }
+    },
+    "localManualPrivacy": {
+      "extractionState": "manual",
+      "comment": "Local currency onboarding action or status.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No location needed for this choice."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

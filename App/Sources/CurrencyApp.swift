@@ -1,8 +1,10 @@
 import ConverterFeature
 import CurrencySupport
 import ExchangeRates
+import LocalCurrencyOnboardingFeature
 import RateDetailsFeature
 import SwiftUI
+import WidgetOnboardingFeature
 
 @main
 struct CurrencyApp: App {
@@ -13,6 +15,12 @@ struct CurrencyApp: App {
     WindowGroup {
       ConverterScreen { code, reference, snapshot in
         RateDetailsScreen(code: code, reference: reference, snapshot: snapshot, history: history)
+      } widgets: {
+        WidgetOnboardingScreen { LocalCurrencyOnboardingScreen() }
+      } localCurrency: {
+        LocalCurrencyOnboardingScreen()
+      } reconcileLocalCurrency: {
+        LocalCurrencyAuthorization.reconcile()
       }
       .environment(appearance)
       .tint(appearance.accent)

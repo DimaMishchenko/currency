@@ -1,6 +1,6 @@
 # Localization
 
-The app currently ships English source strings only. Each feature owns an Xcode string catalog: `Converter.xcstrings`, `Details.xcstrings`, and `Support.xcstrings`; the extension owns `Widgets.xcstrings`. App and extension display names live in `InfoPlist.xcstrings`. Add translations to these catalogs when another language is approved.
+The app currently ships English source strings only. Each feature owns an Xcode string catalog: `Converter.xcstrings`, `Details.xcstrings`, `WidgetOnboarding.xcstrings`, and `LocalCurrency.xcstrings`. Shared modules own `Support.xcstrings`, `CurrencySelection.xcstrings`, and `WidgetPresentation.xcstrings`; the extension owns `Widgets.xcstrings`. App and extension display names live in `InfoPlist.xcstrings`. Add translations to these catalogs when another language is approved.
 
 `STRING_CATALOG_GENERATE_SYMBOLS` and `SWIFT_EMIT_LOC_STRINGS` are enabled in the Tuist project. Xcode generates internal `LocalizedStringResource` accessors at build time; generated Swift files are not checked in. Within the owning module, use them directly:
 
@@ -17,7 +17,7 @@ App Intents is the compiler-enforced exception: its metadata extractor requires 
 
 ## Resource ownership
 
-The three app modules are dynamic frameworks so Xcode-generated accessors resolve their owning resource bundle using `Bundle(for:)`. No custom localization getter generator or bundle-rewriting wrapper is used. The app consumes the root package's `ExchangeRatesDynamic` product, embedded explicitly; other repositories can continue using the automatic-linking `ExchangeRates` product. Both products expose the same module and source API. Do not link both products into one executable.
+App feature and shared UI modules are dynamic frameworks so Xcode-generated accessors resolve their owning resource bundle using `Bundle(for:)`. No custom localization getter generator or bundle-rewriting wrapper is used. The app consumes the root package's `ExchangeRatesDynamic` product, embedded explicitly; other repositories can continue using the automatic-linking `ExchangeRates` product. Both products expose the same module and source API. Do not link both products into one executable.
 
 Tuist's native-package graph checker conservatively reports this package as static even though its manifest explicitly declares the dynamic product. Verify actual embedding/linkage when changing this setup; the compiled frameworks must reference the shared rate framework, which must be present in the host's Frameworks directory.
 

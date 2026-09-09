@@ -1,3 +1,4 @@
+import CurrencySelectionUI
 import CurrencySupport
 import ExchangeRates
 import SwiftUI
@@ -5,22 +6,39 @@ import WidgetKit
 
 struct CurrencyDetailSelection: Identifiable { let id: String }
 
-/// The converter feature, with rate-details navigation supplied by the host app.
-public struct ConverterScreen<Details: View>: View {
+private enum WidgetOnboardingSheet: String, Identifiable {
+  case showcase, localCurrency
+  var id: Self { self }
+}
+
+/// The converter feature, with details and onboarding destinations supplied by the host app.
+public struct ConverterScreen<Details: View, Widgets: View, LocalCurrency: View>: View {
   @Environment(\.verticalSizeClass) private var verticalSizeClass
   @Environment(\.locale) private var locale
   private let details: (String, String, RateSnapshot) -> Details
+  private let widgets: () -> Widgets
+  private let localCurrency: () -> LocalCurrency
+  private let reconcileLocalCurrency: () -> Void
 
   /// Creates a converter using the shared store and a destination for currency details.
   /// - Parameters:
   ///   - store: Storage for converter input and rate snapshots; defaults to the App Group.
   ///   - service: Rate providers used by activation, periodic, and manual refreshes.
   ///   - details: Builds details for a currency code, reference code, and current snapshot.
+  ///   - widgets: Builds widget discovery and installation guidance.
+  ///   - localCurrency: Builds the direct local-currency setup destination.
+  ///   - reconcileLocalCurrency: Reconciles saved permission when the app becomes active.
   public init(
     store: CurrencyStore = .shared, service: RateService = RateService(),
-    @ViewBuilder details: @escaping (String, String, RateSnapshot) -> Details
+    @ViewBuilder details: @escaping (String, String, RateSnapshot) -> Details,
+    @ViewBuilder widgets: @escaping () -> Widgets,
+    @ViewBuilder localCurrency: @escaping () -> LocalCurrency,
+    reconcileLocalCurrency: @escaping () -> Void
   ) {
     self.details = details
+    self.widgets = widgets
+    self.localCurrency = localCurrency
+    self.reconcileLocalCurrency = reconcileLocalCurrency
     _model = State(initialValue: ConverterModel(store: store, service: service))
   }
 
@@ -29,7 +47,7 @@ public struct ConverterScreen<Details: View>: View {
   @State private var picker: PickerPurpose?
   @State private var showInfo = false
   @State private var showManage = false
-  @State private var showWidgets = false
+  @State private var widgetSheet: WidgetOnboardingSheet?
   @State private var detail: CurrencyDetailSelection?
   @State private var replaceOnNextDigit = true
   @State private var feedback = 0
@@ -112,7 +130,12 @@ public struct ConverterScreen<Details: View>: View {
         ManageCurrencies(model: model)
       }
       .sheet(isPresented: $showInfo) { rateInformation }
-      .sheet(isPresented: $showWidgets) { WidgetGuide() }
+      .sheet(item: $widgetSheet, onDismiss: { model.reloadInput() }) { destination in
+        switch destination {
+        case .showcase: widgets()
+        case .localCurrency: localCurrency()
+        }
+      }
       .sheet(item: $detail) { selection in
         if reduceMotion {
           details(selection.id, model.input.source, model.snapshot)
@@ -130,13 +153,15 @@ public struct ConverterScreen<Details: View>: View {
       .onChange(of: scenePhase) { _, phase in
         if phase == .active {
           model.reloadInput()
-          WidgetLocationController().reconcileAuthorization()
+          reconcileLocalCurrency()
           Task { await model.refresh() }
         }
       }
       .onOpenURL { url in
         model.reloadInput()
-        if url.host == "local-currency" { showWidgets = true }
+        if url.scheme == "currency", url.host == "local-currency" {
+          widgetSheet = .localCurrency
+        }
       }
       .sensoryFeedback(.selection, trigger: feedback)
     }
@@ -188,7 +213,7 @@ public struct ConverterScreen<Details: View>: View {
   @ViewBuilder
   private var headerActions: some View {
     Button {
-      if editingAmount { dismissAmount() } else { showWidgets = true }
+      if editingAmount { dismissAmount() } else { widgetSheet = .showcase }
     } label: {
       Image(systemName: "square.grid.2x2")
     }
@@ -258,7 +283,7 @@ public struct ConverterScreen<Details: View>: View {
         Text(amountLabel)
           .font(
             verticalSizeClass == .compact
-            ? AppStyle.font(.title2, weight: .regular)
+              ? AppStyle.font(.title2, weight: .regular)
               : .system(
                 size: editingAmount ? editingAmountSize : amountSize,
                 weight: .regular, design: .rounded)
@@ -507,16 +532,18 @@ public struct ConverterScreen<Details: View>: View {
     license: String? = nil, licenseURL: String? = nil
   ) -> some View {
     VStack(alignment: .leading, spacing: AppStyle.Space.small) {
-      Link(destination: URL(string: website)!) {
-        HStack {
-          Text(verbatim: name).font(AppStyle.font(.headline))
-          Spacer()
-          Image(systemName: "arrow.up.right").font(AppStyle.font(.caption))
+      if let website = URL(string: website) {
+        Link(destination: website) {
+          HStack {
+            Text(verbatim: name).font(AppStyle.font(.headline))
+            Spacer()
+            Image(systemName: "arrow.up.right").font(AppStyle.font(.caption))
+          }
         }
       }
       Text(description).font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
-      if let license, let licenseURL {
-        Link(destination: URL(string: licenseURL)!) {
+      if let license, let licenseURL, let url = URL(string: licenseURL) {
+        Link(destination: url) {
           Label(license, systemImage: "doc.text")
             .font(AppStyle.font(.caption, weight: .medium))
         }

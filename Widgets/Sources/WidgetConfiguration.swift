@@ -2,6 +2,7 @@ import AppIntents
 import CurrencySupport
 import ExchangeRates
 import Foundation
+import WidgetPresentation
 
 private let localCurrencyID = "@local"
 
@@ -288,51 +289,6 @@ struct CalculatorInstanceQuery: EntityQuery {
 
 protocol SuiteConfiguration: WidgetConfigurationIntent {
   func specification(kind: String, location: WidgetLocation?) -> WidgetSpec
-}
-
-struct WidgetSpec: Sendable {
-  var kind: String
-  var codes: [String]
-  var amount = "1"
-  var locationStatus: WidgetLocationStatus = .notDetermined
-  var localCode: String?
-  var localIsStale = false
-  var canonicalCodes: [String]
-  var usesLocation: Bool { canonicalCodes.contains(localCurrencyID) }
-  var instanceID: String?
-  var synchronized = false
-  var requiresCurrencySelection = false
-  var key: String {
-    if let instanceID {
-      return "\(kind)|instance|\(instanceID)|\(synchronized ? "default" : "custom")"
-    }
-    return ([kind] + canonicalCodes).joined(separator: "|")
-  }
-
-  init(
-    kind: String, codes: [String], amount: String = "1",
-    local: Bool = false, location: WidgetLocation? = nil, instanceID: String? = nil
-  ) {
-    self.kind = kind
-    var configured = codes
-    if local, !configured.contains(localCurrencyID) {
-      if configured.count > 1 {
-        configured[1] = localCurrencyID
-      } else {
-        configured.append(localCurrencyID)
-      }
-    }
-    locationStatus = CurrencyStore.shared.widgetLocationStatus()
-    let resolved = WidgetResolvedSelection(
-      codes: configured, location: location, status: locationStatus)
-    canonicalCodes = resolved.canonical
-    self.codes = resolved.codes
-    localCode = resolved.localCode
-    localIsStale = resolved.localIsStale
-    self.instanceID = instanceID
-    self.amount = amount
-
-  }
 }
 
 struct MultiSettings: SuiteConfiguration {

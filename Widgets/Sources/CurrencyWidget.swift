@@ -3,6 +3,7 @@ import CurrencySupport
 import ExchangeRates
 import SwiftUI
 import WidgetKit
+import WidgetPresentation
 
 struct CurrencyEntry: TimelineEntry {
   let date: Date
@@ -52,46 +53,10 @@ struct CurrencyTimeline: TimelineProvider {
 }
 
 struct QuickRateView: View {
-  @Environment(\.locale) private var locale
-  let entry: CurrencyEntry
   @Environment(\.widgetFamily) private var family
-  private var target: String { entry.input.destinations.first ?? entry.input.source }
-
-  private var amount: String {
-    CurrencyDisplay.format(
-      entry.snapshot.convert(entry.input.decimal, from: entry.input.source, to: target),
-      code: target, locale: locale)
-  }
-
+  let entry: CurrencyEntry
   var body: some View {
-    Group {
-      if family == .accessoryInline {
-        Text(
-
-          .Widgets.inlineConversion(
-            CurrencyDisplay.inputAmount(entry.input.amount, locale: locale),
-            CurrencyDisplay.flag(entry.input.source) + " " + entry.input.source,
-            amount, CurrencyDisplay.flag(target) + " " + target))
-      } else {
-        VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
-          HStack(spacing: AppStyle.Space.xs) {
-            CurrencyIcon(entry.input.source, size: 16)
-            Text(
-              "\(CurrencyDisplay.inputAmount(entry.input.amount, locale: locale)) \(entry.input.source)"
-            )
-          }
-          .font(AppStyle.font(.caption))
-          HStack(spacing: AppStyle.Space.xs) {
-            CurrencyIcon(target, size: 16)
-            Text("\(amount) \(target)").font(AppStyle.font(.title2, weight: .semibold))
-              .minimumScaleFactor(0.4)
-          }
-        }
-      }
-    }
-    .lineLimit(1).tint(Color(uiColor: .label))
-    .containerBackground(for: .widget) { Color.clear }
-    .widgetURL(URL(string: "currency://convert"))
+    QuickRateLayout(input: entry.input, snapshot: entry.snapshot, family: family)
   }
 }
 
