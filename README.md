@@ -37,13 +37,14 @@ No provider included requires credentials or a subscription. Crypto is periodica
 
 ## Architecture
 
-The app composes two independent feature modules. All app-specific modules are Tuist targets; reusable rate logic lives in its own Swift package.
+The app composes independent feature modules. All app-specific modules are Tuist targets; reusable rate logic lives in its own Swift package.
 
 | Module | Responsibility | Entry point |
 | --- | --- | --- |
 | [ExchangeRates](Sources/ExchangeRates/README.md) | Conversion, providers, refresh, history, offline rates | `RateSnapshot`, `RateService`, `HistoryService`, `RateCache` |
 | [CurrencySupport](Modules/CurrencySupport/README.md) | Shared converter state, formatting, App Group integration | `ConverterState`, `CurrencyStore`, `CurrencyDisplay` |
 | [ConverterFeature](Modules/ConverterFeature/README.md) | Amount entry, currency list, refresh, destination routing | `ConverterScreen` |
+| [OnboardingFeature](Modules/OnboardingFeature/README.md) | First-launch setup, recovery, draft choices, completion and replay | `OnboardingFlow` |
 | [WidgetOnboardingFeature](Modules/WidgetOnboardingFeature/README.md) | Widget showcase, temporary previews, add/edit tutorials | `WidgetOnboardingScreen` |
 | [LocalCurrencyOnboardingFeature](Modules/LocalCurrencyOnboardingFeature/README.md) | Foreground location setup and recovery | `LocalCurrencyOnboardingScreen` |
 | [CurrencySelectionUI](Modules/CurrencySelectionUI/README.md) | Reusable searchable currency picker | `CurrencyChooser` |

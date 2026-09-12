@@ -21,6 +21,9 @@ public struct CurrencyChooser: View {
   let available: Set<String>
   let allowedCodes: Set<String>?
   let title: LocalizedStringResource?
+  let allowsMultipleSelection: Bool
+  let requiresAvailableRate: Bool
+  let showsSelectedCategory: Bool
   var choose: (String) -> Void
   @State private var search = ""
   @State private var category: CurrencyCategory
@@ -29,7 +32,9 @@ public struct CurrencyChooser: View {
   public init(
     purpose: PickerPurpose, selected: [String], homeCurrencies: [String],
     available: Set<String>, allowedCodes: Set<String>? = nil,
-    title: LocalizedStringResource? = nil, choose: @escaping (String) -> Void
+    title: LocalizedStringResource? = nil, allowsMultipleSelection: Bool = false,
+    requiresAvailableRate: Bool = false, showsSelectedCategory: Bool = true,
+    choose: @escaping (String) -> Void
   ) {
     self.purpose = purpose
     self.selected = selected
@@ -38,8 +43,12 @@ public struct CurrencyChooser: View {
     self.allowedCodes = allowedCodes
     self.title = title
     self.choose = choose
+    self.allowsMultipleSelection = allowsMultipleSelection
+    self.requiresAvailableRate = requiresAvailableRate
+    self.showsSelectedCategory = showsSelectedCategory
     _category = State(
-      initialValue: purpose == .source && !homeCurrencies.isEmpty ? .selected : .currencies)
+      initialValue: showsSelectedCategory && purpose == .source && !homeCurrencies.isEmpty
+        ? .selected : .currencies)
   }
 
   /// The searchable currency list and category controls.
@@ -49,7 +58,7 @@ public struct CurrencyChooser: View {
         ForEach(filteredCodes, id: \.self) { code in
           Button {
             choose(code)
-            dismiss()
+            if !allowsMultipleSelection { dismiss() }
           } label: {
             HStack(spacing: AppStyle.Space.large) {
               CurrencyIcon(code)
@@ -68,11 +77,26 @@ public struct CurrencyChooser: View {
             }
             .padding(.vertical, AppStyle.Space.xs)
           }
-          .foregroundStyle(.primary).disabled(selected.contains(code))
+          .foregroundStyle(.primary)
+          .disabled(
+            (selected.contains(code) && !allowsMultipleSelection)
+              || (requiresAvailableRate && !available.contains(code) && !selected.contains(code))
+          )
+          .accessibilityIdentifier("currency.picker.\(code)")
+          .accessibilityAddTraits(selected.contains(code) ? .isSelected : [])
           .listRowBackground(Color.clear)
         }
       }
       .scrollContentBackground(.hidden)
+      .overlay {
+        if filteredCodes.isEmpty {
+          ContentUnavailableView {
+            Label(.CurrencySelection.noResults, systemImage: "magnifyingglass")
+          } description: {
+            Text(.CurrencySelection.noResultsDetail)
+          }
+        }
+      }
       .safeAreaInset(edge: .top, spacing: 0) {
         if search.isEmpty {
           Picker(selection: $category) {
@@ -108,7 +132,9 @@ public struct CurrencyChooser: View {
   }
 
   private var categories: [CurrencyCategory] {
-    CurrencyCategory.allCases.filter { purpose == .source || $0 != .selected }
+    CurrencyCategory.allCases.filter {
+      $0 != .selected || (showsSelectedCategory && (purpose == .source || allowsMultipleSelection))
+    }
   }
 
   private var filteredCodes: [String] {

@@ -1123,6 +1123,39 @@
           }
         }
       }
+    },
+    "replayOnboarding": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replay onboarding"
+          }
+        }
+      }
+    },
+    "replayFailed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Setup couldn’t be reopened. Please try again."
+          }
+        }
+      }
+    },
+    "retryReplay": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try again"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

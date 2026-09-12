@@ -6,6 +6,7 @@ import Testing
 @testable import CurrencySelectionUI
 @testable import CurrencySupport
 @testable import LocalCurrencyOnboardingFeature
+@testable import OnboardingFeature
 @testable import RateDetailsFeature
 @testable import WidgetOnboardingFeature
 @testable import WidgetPresentation
@@ -30,6 +31,15 @@ import Testing
     #expect(
       RateMessages.providerDescription(.init(provider: .fawaz, observation: .dailyRate))
         == "Fawaz · daily")
+  }
+
+  @Test func onboardingAccessorsResolveFeatureBundleAndSubstitutions() {
+    #expect(String(localized: .Onboarding.welcomeTitle) == "Currency, at a glance")
+    #expect(String(localized: .Onboarding.baseTitle) == "Choose your base")
+    #expect(String(localized: .Onboarding.updated("today")) == "Last updated today")
+    var resource = LocalizedStringResource.Onboarding.homeScreenTitle
+    resource.locale = Locale(identifier: "uk_UA")
+    #expect(String(localized: resource) == "On your Home Screen")
   }
 
   @Test func ratesAndLoadingCopyPreserveTimestampMeaning() {

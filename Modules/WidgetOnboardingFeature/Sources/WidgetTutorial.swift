@@ -15,6 +15,9 @@ struct WidgetTutorial: View {
   let kind: WidgetShowcaseKind
   let family: WidgetFamily
   let editing: Bool
+  private let continuation: Bool
+  private let onFinished: (() -> Void)?
+  @State private var didFinish = false
   @Environment(\.dismiss) private var dismiss
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(\.dynamicTypeSize) private var textSize
@@ -31,10 +34,16 @@ struct WidgetTutorial: View {
   private enum TutorialPicker: String, Identifiable {
     case base, comparison, add; var id: Self { self }
   }
-  init(kind: WidgetShowcaseKind, family: WidgetFamily? = nil, editing: Bool = false) {
+  init(
+    kind: WidgetShowcaseKind, family: WidgetFamily? = nil, editing: Bool = false,
+    continuation: Bool = false,
+    onFinished: (() -> Void)? = nil
+  ) {
     self.kind = kind
     self.family = family.flatMap { kind.families.contains($0) ? $0 : nil } ?? kind.families[0]
     self.editing = editing
+    self.continuation = continuation
+    self.onFinished = onFinished
     _base = State(initialValue: kind.codes[0])
     _comparison = State(initialValue: kind.codes.last ?? "USD")
   }
@@ -134,132 +143,211 @@ struct WidgetTutorial: View {
     ]
   }
   var body: some View {
-    NavigationStack {
-      GeometryReader { geometry in
-        let illustrationWidth: CGFloat =
-          editing && step == 2
-          ? 200 : min(340, max(210, (geometry.size.height - 200) * 1.03))
-        let canvasWidth: CGFloat = editing && step == 2 ? 340 : illustrationWidth
-        ScrollViewReader { scroll in
-          ScrollView {
-            VStack(spacing: 24) {
-              HStack(spacing: 4) {
-                ForEach(steps.indices, id: \.self) { index in
-                  Capsule().fill(index <= step ? Color.primary : Color.primary.opacity(0.12))
-                    .frame(height: 3)
-                }
-              }
-              .accessibilityLabel(.WidgetOnboarding.guideStep(step + 1, steps.count))
-              .id("tutorialStart")
-              MiniHomeScreen(
-                kind: kind, family: family, step: step, editing: editing, lockScreen: lockScreen,
-                codes: previewCodes, amount: kind == .board && custom ? amount : nil,
-                synchronized: kind == .calculator && !custom,
-                paused: location || currencyPicker != nil
-              )
-              .id(replay)
-              .frame(width: canvasWidth, height: canvasWidth / 1.03)
-              .scaleEffect(illustrationWidth / canvasWidth)
-              .frame(width: illustrationWidth, height: illustrationWidth / 1.03)
-              .accessibilityHidden(true)
-              VStack(spacing: 12) {
-                Text(steps[step].title).font(AppStyle.font(.title2, weight: .semibold))
-                  .accessibilityAddTraits(.isHeader).accessibilityFocused($headingFocused)
-                Text(steps[step].detail).font(AppStyle.font(.body)).foregroundStyle(.secondary)
-              }
-              .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
-              if editing && !lockScreen && step == 2 { configurationDemo }
-              if editing && !lockScreen && step == 3 && kind != .board {
-                Button {
-                  location = true
-                } label: {
-                  Label(.WidgetOnboarding.guideAutomaticLocal, systemImage: "location")
-                }
-                .buttonStyle(.bordered).controlSize(.large)
-                Text(.WidgetOnboarding.guideLocalPrivacy)
-                  .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
-              }
-              if textSize.isAccessibilitySize { actions }
-            }
-            .padding(24)
-          }
-          .onChange(of: step) { _, _ in
-            if textSize.isAccessibilitySize { scroll.scrollTo("tutorialStart", anchor: .top) }
-          }
-        }
+    Group {
+      if continuation {
+        content
+      } else {
+        NavigationStack { content }
       }
-      .background(Color(uiColor: .systemGroupedBackground))
-      .safeAreaInset(edge: .bottom, spacing: 0) {
-        if !textSize.isAccessibilitySize { actions }
-      }
-      .navigationTitle(
-        lockScreen
-          ? String(localized: .WidgetOnboarding.guideLockTitle)
-          : editing
-            ? String(localized: .WidgetOnboarding.guideEditNavigation)
-            : String(localized: .WidgetOnboarding.guideAddWidget)
-      )
-      .navigationBarTitleDisplayMode(.inline)
-      .toolbar {
-        ToolbarItem(placement: .topBarTrailing) {
-          Button(.WidgetOnboarding.close, systemImage: "xmark") { dismiss() }.labelStyle(.iconOnly)
-        }
-        ToolbarItemGroup(placement: .keyboard) {
-          Spacer()
-          Button(.WidgetOnboarding.done) { amountFocused = false }
-        }
-      }
-      .sheet(item: $currencyPicker) { purpose in
-        CurrencyChooser(
-          purpose: purpose == .add ? .add : .source,
-          selected: purpose == .add ? currencies : [], homeCurrencies: kind.codes,
-          available: Set(WidgetPreviewState.rates.quotes.keys),
-          allowedCodes: kind == .cash
-            ? Set(CurrencyCatalog.codes.filter(WidgetPresets.allows)) : nil,
-          title: purpose == .comparison ? .WidgetOnboarding.guideComparison : nil
-        ) { code in
-          switch purpose {
-          case .base: base = code
-          case .comparison: comparison = code
-          case .add: currencies = WidgetSelection.normalize(currencies + [code], allowsLocal: true)
-          }
-        }
-      }
-      .sheet(isPresented: $location) { localCurrencyDestination() }
     }
   }
+
+  private var background: Color {
+    Color(uiColor: continuation ? .systemBackground : .systemGroupedBackground)
+  }
+
+  private var content: some View {
+    GeometryReader { geometry in
+      let illustrationWidth: CGFloat =
+        editing && step == 2
+        ? 200 : min(340, max(210, (geometry.size.height - 200) * 1.03))
+      let canvasWidth: CGFloat = editing && step == 2 ? 340 : illustrationWidth
+      let centered = continuation && !textSize.isAccessibilitySize
+      ScrollViewReader { scroll in
+        ScrollView {
+          VStack(spacing: 24) {
+            HStack(spacing: 4) {
+              ForEach(steps.indices, id: \.self) { index in
+                Capsule().fill(index <= step ? Color.primary : Color.primary.opacity(0.12))
+                  .frame(height: 3)
+              }
+            }
+            .accessibilityLabel(.WidgetOnboarding.guideStep(step + 1, steps.count))
+            .id("tutorialStart")
+            MiniHomeScreen(
+              kind: kind, family: family, step: step, editing: editing, lockScreen: lockScreen,
+              codes: previewCodes, amount: kind == .board && custom ? amount : nil,
+              synchronized: kind == .calculator && !custom,
+              paused: location || currencyPicker != nil
+            )
+            .id(replay)
+            .frame(width: canvasWidth, height: canvasWidth / 1.03)
+            .scaleEffect(illustrationWidth / canvasWidth)
+            .frame(width: illustrationWidth, height: illustrationWidth / 1.03)
+            .accessibilityHidden(true)
+            .frame(maxWidth: .infinity, maxHeight: centered ? .infinity : nil)
+            if !continuation { guideCopy }
+            if editing && !lockScreen && step == 2 { configurationDemo }
+            if editing && !lockScreen && step == 3 && kind != .board {
+              Button {
+                location = true
+              } label: {
+                Label(.WidgetOnboarding.guideAutomaticLocal, systemImage: "location")
+              }
+              .buttonStyle(.bordered).controlSize(.large)
+              Text(.WidgetOnboarding.guideLocalPrivacy)
+                .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
+            }
+            if textSize.isAccessibilitySize {
+              if continuation { onboardingFooter } else { actions }
+            }
+          }
+          .frame(minHeight: centered ? max(0, geometry.size.height - 48) : nil)
+          .padding(24)
+        }
+        .onChange(of: step) { _, _ in
+          if textSize.isAccessibilitySize { scroll.scrollTo("tutorialStart", anchor: .top) }
+        }
+      }
+    }
+    .background(background)
+    .safeAreaInset(edge: .bottom, spacing: 0) {
+      if !textSize.isAccessibilitySize {
+        if continuation { onboardingFooter } else { actions }
+      }
+    }
+    .navigationTitle(
+      lockScreen
+        ? String(localized: .WidgetOnboarding.guideLockTitle)
+        : editing
+          ? String(localized: .WidgetOnboarding.guideEditNavigation)
+          : String(localized: .WidgetOnboarding.guideAddWidget)
+    )
+    .navigationBarTitleDisplayMode(.inline)
+    .navigationBarBackButtonHidden(continuation && step > 0)
+    .toolbar {
+      if continuation {
+        if step > 0 {
+          ToolbarItem(placement: .topBarLeading) {
+            Button(.WidgetOnboarding.guideBack, systemImage: "chevron.backward") {
+              move(to: step - 1)
+            }
+            .labelStyle(.iconOnly)
+            .accessibilityIdentifier("onboarding.guide.back")
+          }
+        }
+      } else {
+        ToolbarItem(placement: .topBarTrailing) {
+          Button(.WidgetOnboarding.close, systemImage: "xmark") { finish() }.labelStyle(.iconOnly)
+        }
+      }
+      ToolbarItemGroup(placement: .keyboard) {
+        Spacer()
+        Button(.WidgetOnboarding.done) { amountFocused = false }
+      }
+    }
+    .sheet(item: $currencyPicker) { purpose in
+      CurrencyChooser(
+        purpose: purpose == .add ? .add : .source,
+        selected: purpose == .add ? currencies : [], homeCurrencies: kind.codes,
+        available: Set(WidgetPreviewState.rates.quotes.keys),
+        allowedCodes: kind == .cash
+          ? Set(CurrencyCatalog.codes.filter(WidgetPresets.allows)) : nil,
+        title: purpose == .comparison ? .WidgetOnboarding.guideComparison : nil
+      ) { code in
+        switch purpose {
+        case .base: base = code
+        case .comparison: comparison = code
+        case .add: currencies = WidgetSelection.normalize(currencies + [code], allowsLocal: true)
+        }
+      }
+    }
+    .sheet(isPresented: $location) { localCurrencyDestination() }
+  }
+  private var guideCopy: some View {
+    VStack(spacing: continuation ? 8 : 12) {
+      Text(steps[step].title)
+        .font(
+          AppStyle.font(continuation ? .title : .title2, weight: continuation ? .bold : .semibold)
+        )
+        .tracking(continuation ? -0.6 : 0)
+        .contentTransition(.opacity)
+        .accessibilityAddTraits(.isHeader).accessibilityFocused($headingFocused)
+      Text(steps[step].detail)
+        .font(AppStyle.font(continuation ? .subheadline : .body)).foregroundStyle(.secondary)
+        .frame(minHeight: continuation && !textSize.isAccessibilitySize ? 42 : nil, alignment: .top)
+        .contentTransition(.opacity)
+    }
+    .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+  }
+
+  private var onboardingFooter: some View {
+    VStack(spacing: 16) {
+      guideCopy
+      VStack(spacing: 0) {
+        primaryAction
+        replayAction
+          .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
+          .frame(maxWidth: .infinity, minHeight: 44)
+      }
+    }
+    .padding(.horizontal, textSize.isAccessibilitySize ? 0 : 24).padding(.top, 16)
+    .frame(maxWidth: 700).frame(maxWidth: .infinity)
+    .background(background)
+  }
+
+  private var primaryAction: some View {
+    Button {
+      if step == steps.count - 1 { finish() } else { move(to: step + 1) }
+    } label: {
+      Text(
+        step == steps.count - 1
+          ? String(localized: .WidgetOnboarding.guideGotIt)
+          : String(localized: .WidgetOnboarding.guideNext)
+      )
+      .font(AppStyle.font(.headline))
+      .frame(maxWidth: .infinity, minHeight: continuation ? 32 : nil)
+      .padding(.vertical, continuation ? 0 : 8)
+    }
+    .foregroundStyle(Color(uiColor: .systemBackground))
+    .buttonStyle(.borderedProminent).controlSize(.large)
+    .accessibilityIdentifier("onboarding.guide.next")
+  }
+
+  private var replayAction: some View {
+    Button(.WidgetOnboarding.guideReplay, systemImage: "arrow.counterclockwise") {
+      replay += 1
+    }
+  }
+
   private var actions: some View {
     VStack(spacing: 12) {
-      Button {
-        if step == steps.count - 1 { dismiss() } else { move(to: step + 1) }
-      } label: {
-        Text(
-          step == steps.count - 1
-            ? String(localized: .WidgetOnboarding.guideGotIt)
-            : String(localized: .WidgetOnboarding.guideNext)
-        )
-        .font(AppStyle.font(.headline)).frame(maxWidth: .infinity).padding(.vertical, 8)
-      }
-      .foregroundStyle(Color(uiColor: .systemBackground))
-      .buttonStyle(.borderedProminent).controlSize(.large)
+      primaryAction
       let secondaryLayout =
         textSize.isAccessibilitySize
         ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
         : AnyLayout(HStackLayout())
       secondaryLayout {
-        Button(.WidgetOnboarding.guideBack, systemImage: "chevron.left") { move(to: step - 1) }
-          .disabled(step == 0)
-        if !textSize.isAccessibilitySize { Spacer() }
-        Button(.WidgetOnboarding.guideReplay, systemImage: "arrow.counterclockwise") {
-          replay += 1
+        if !continuation {
+          Button(.WidgetOnboarding.guideBack, systemImage: "chevron.left") { move(to: step - 1) }
+            .disabled(step == 0)
         }
+        if !textSize.isAccessibilitySize { Spacer() }
+        replayAction
       }
       .font(AppStyle.font(.subheadline)).frame(minHeight: 32)
     }
     .padding(.horizontal, textSize.isAccessibilitySize ? 0 : 24).padding(.vertical, 12)
-    .background(Color(uiColor: .systemGroupedBackground))
+    .background(background)
+  }
+  private func finish() {
+    guard !didFinish else { return }
+    didFinish = true
+    onFinished?()
+    if !continuation { dismiss() }
   }
   private func move(to index: Int) {
+    guard steps.indices.contains(index) else { return }
     amountFocused = false
     withAnimation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.86)) {
       step = index

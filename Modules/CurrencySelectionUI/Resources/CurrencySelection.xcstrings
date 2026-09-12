@@ -107,6 +107,28 @@
           }
         }
       }
+    },
+    "noResults": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No currencies found"
+          }
+        }
+      }
+    },
+    "noResultsDetail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try a name or currency code"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

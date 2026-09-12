@@ -1,6 +1,6 @@
 # Localization
 
-The app currently ships English source strings only. Each feature owns an Xcode string catalog: `Converter.xcstrings`, `Details.xcstrings`, `WidgetOnboarding.xcstrings`, and `LocalCurrency.xcstrings`. Shared modules own `Support.xcstrings`, `CurrencySelection.xcstrings`, and `WidgetPresentation.xcstrings`; the extension owns `Widgets.xcstrings`. App and extension display names live in `InfoPlist.xcstrings`. Add translations to these catalogs when another language is approved.
+The app currently ships English source strings only. Each feature owns an Xcode string catalog: `Onboarding.xcstrings`, `Converter.xcstrings`, `Details.xcstrings`, `WidgetOnboarding.xcstrings`, and `LocalCurrency.xcstrings`. Shared modules own `Support.xcstrings`, `CurrencySelection.xcstrings`, and `WidgetPresentation.xcstrings`; the extension owns `Widgets.xcstrings`. App and extension display names live in `InfoPlist.xcstrings`. Add translations to these catalogs when another language is approved.
 
 `STRING_CATALOG_GENERATE_SYMBOLS` and `SWIFT_EMIT_LOC_STRINGS` are enabled in the Tuist project. Xcode generates internal `LocalizedStringResource` accessors at build time; generated Swift files are not checked in. Within the owning module, use them directly:
 

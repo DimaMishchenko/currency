@@ -6,39 +6,37 @@ import WidgetKit
 
 struct CurrencyDetailSelection: Identifiable { let id: String }
 
-private enum WidgetOnboardingSheet: String, Identifiable {
-  case showcase, localCurrency
-  var id: Self { self }
-}
-
 /// The converter feature, with details and onboarding destinations supplied by the host app.
-public struct ConverterScreen<Details: View, Widgets: View, LocalCurrency: View>: View {
+public struct ConverterScreen<Details: View, Widgets: View>: View {
   @Environment(\.verticalSizeClass) private var verticalSizeClass
   @Environment(\.locale) private var locale
   private let details: (String, String, RateSnapshot) -> Details
   private let widgets: () -> Widgets
-  private let localCurrency: () -> LocalCurrency
   private let reconcileLocalCurrency: () -> Void
+  private let replayOnboarding: (() throws -> Void)?
+  private let inputRevision: Int
 
   /// Creates a converter using the shared store and a destination for currency details.
   /// - Parameters:
   ///   - store: Storage for converter input and rate snapshots; defaults to the App Group.
   ///   - service: Rate providers used by activation, periodic, and manual refreshes.
+  ///   - inputRevision: Change after a host-owned destination edits saved converter input.
   ///   - details: Builds details for a currency code, reference code, and current snapshot.
   ///   - widgets: Builds widget discovery and installation guidance.
-  ///   - localCurrency: Builds the direct local-currency setup destination.
   ///   - reconcileLocalCurrency: Reconciles saved permission when the app becomes active.
+  ///   - replayOnboarding: Restarts app setup after its progress record has been saved.
   public init(
-    store: CurrencyStore = .shared, service: RateService = RateService(),
+    store: CurrencyStore = .shared, service: RateService = RateService(), inputRevision: Int = 0,
     @ViewBuilder details: @escaping (String, String, RateSnapshot) -> Details,
     @ViewBuilder widgets: @escaping () -> Widgets,
-    @ViewBuilder localCurrency: @escaping () -> LocalCurrency,
-    reconcileLocalCurrency: @escaping () -> Void
+    reconcileLocalCurrency: @escaping () -> Void,
+    replayOnboarding: (() throws -> Void)? = nil
   ) {
     self.details = details
     self.widgets = widgets
-    self.localCurrency = localCurrency
     self.reconcileLocalCurrency = reconcileLocalCurrency
+    self.replayOnboarding = replayOnboarding
+    self.inputRevision = inputRevision
     _model = State(initialValue: ConverterModel(store: store, service: service))
   }
 
@@ -46,8 +44,9 @@ public struct ConverterScreen<Details: View, Widgets: View, LocalCurrency: View>
   @State private var editingAmount = false
   @State private var picker: PickerPurpose?
   @State private var showInfo = false
+  @State private var replayFailed = false
   @State private var showManage = false
-  @State private var widgetSheet: WidgetOnboardingSheet?
+  @State private var showsWidgets = false
   @State private var detail: CurrencyDetailSelection?
   @State private var replaceOnNextDigit = true
   @State private var feedback = 0
@@ -130,12 +129,11 @@ public struct ConverterScreen<Details: View, Widgets: View, LocalCurrency: View>
         ManageCurrencies(model: model)
       }
       .sheet(isPresented: $showInfo) { rateInformation }
-      .sheet(item: $widgetSheet, onDismiss: { model.reloadInput() }) { destination in
-        switch destination {
-        case .showcase: widgets()
-        case .localCurrency: localCurrency()
-        }
+      .alert(.Converter.replayFailed, isPresented: $replayFailed) {
+        Button(.Converter.retryReplay) { restartOnboarding() }
+        Button(.Converter.close, role: .cancel) {}
       }
+      .sheet(isPresented: $showsWidgets, onDismiss: { model.reloadInput() }) { widgets() }
       .sheet(item: $detail) { selection in
         if reduceMotion {
           details(selection.id, model.input.source, model.snapshot)
@@ -157,12 +155,8 @@ public struct ConverterScreen<Details: View, Widgets: View, LocalCurrency: View>
           Task { await model.refresh() }
         }
       }
-      .onOpenURL { url in
-        model.reloadInput()
-        if url.scheme == "currency", url.host == "local-currency" {
-          widgetSheet = .localCurrency
-        }
-      }
+      .onOpenURL { _ in model.reloadInput() }
+      .onChange(of: inputRevision) { _, _ in model.reloadInput() }
       .sensoryFeedback(.selection, trigger: feedback)
     }
     .accessibilityAction(.escape) { dismissAmount() }
@@ -213,7 +207,7 @@ public struct ConverterScreen<Details: View, Widgets: View, LocalCurrency: View>
   @ViewBuilder
   private var headerActions: some View {
     Button {
-      if editingAmount { dismissAmount() } else { widgetSheet = .showcase }
+      if editingAmount { dismissAmount() } else { showsWidgets = true }
     } label: {
       Image(systemName: "square.grid.2x2")
     }
@@ -227,11 +221,21 @@ public struct ConverterScreen<Details: View, Widgets: View, LocalCurrency: View>
         showManage = true
       }
       Button(.Converter.aboutRates, systemImage: "info.circle") { showInfo = true }
+      if replayOnboarding != nil {
+        Button(.Converter.replayOnboarding, systemImage: "arrow.counterclockwise") {
+          restartOnboarding()
+        }
+        .accessibilityIdentifier("converter.replayOnboarding")
+      }
     } label: {
       Image(systemName: "ellipsis")
     }
     .accessibilityLabel(.Converter.options)
     .disabled(editingAmount)
+  }
+
+  private func restartOnboarding() {
+    do { try replayOnboarding?() } catch { replayFailed = true }
   }
 
   @ViewBuilder

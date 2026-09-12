@@ -31,7 +31,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Small things.\nEveryday superpowers."
+            "value": "Small things\nEveryday superpowers"
           }
         }
       }
@@ -43,7 +43,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choose one. Make it yours."
+            "value": "Choose one and make it yours"
           }
         }
       }
@@ -199,7 +199,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Currency Board uses your selected currencies. Choose your local currency manually in its list."
+            "value": "Currency Board uses your selected currencies; choose your local currency manually in its list"
           }
         }
       }
@@ -211,7 +211,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tap Add Widget in the Edit menu to open the widget gallery."
+            "value": "Tap Add Widget in the Edit menu to open the widget gallery"
           }
         }
       }
@@ -235,7 +235,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Swipe to %1$@, choose %2$@, and tap Add Widget."
+            "value": "Swipe to %1$@, choose %2$@, and tap Add Widget"
           }
         }
       }
@@ -307,7 +307,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "This widget keeps its own list. Your app stays the same."
+            "value": "This widget keeps its own list without changing your app"
           }
         }
       }
@@ -319,7 +319,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choose Local currency in the widget’s Currencies or Comparison setting. Then open its setup link to look up your currency once."
+            "value": "Choose Local currency in the widget’s Currencies or Comparison setting, then open its setup link to look up your currency once"
           }
         }
       }
@@ -331,7 +331,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tap Customize below your wallpaper, then choose Lock Screen."
+            "value": "Tap Customize below your wallpaper, then choose Lock Screen"
           }
         }
       }
@@ -367,7 +367,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "This widget follows the currencies selected in your app."
+            "value": "This widget follows the currencies selected in your app"
           }
         }
       }
@@ -379,7 +379,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Turn on Add local currency to Default in the widget’s settings. Then open the widget’s setup link to look up your currency once."
+            "value": "Turn on Add local currency to Default in the widget’s settings, then open the setup link to look up your currency once"
           }
         }
       }
@@ -391,7 +391,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tap Edit Widget in the menu to open its settings."
+            "value": "Tap Edit Widget in the menu to open its settings"
           }
         }
       }
@@ -475,7 +475,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tap outside the settings to finish editing on your Home Screen. Changes made in this tutorial are only a preview."
+            "value": "Tap outside the settings to finish editing on your Home Screen; changes made in this tutorial are only a preview"
           }
         }
       }
@@ -499,7 +499,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Drag your widget into place and tap Done. You’re ready to try it on your Home Screen."
+            "value": "Drag your widget into place and tap Done to try it on your Home Screen"
           }
         }
       }
@@ -523,7 +523,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Close the widget picker and tap Done. These steps are a demonstration; add the widget on your Lock Screen."
+            "value": "Close the widget picker and tap Done; these steps are a demonstration, so add the widget on your Lock Screen"
           }
         }
       }
@@ -559,7 +559,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your currencies.\nAlways within reach."
+            "value": "Your currencies\nAlways within reach"
           }
         }
       }
@@ -571,7 +571,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Touch and hold an empty area of your Home Screen until the apps jiggle."
+            "value": "Touch and hold an empty area of your Home Screen until the apps jiggle"
           }
         }
       }
@@ -595,7 +595,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "On your Home Screen, touch and hold the installed %1$@ widget."
+            "value": "On your Home Screen, touch and hold the installed %1$@ widget"
           }
         }
       }
@@ -607,7 +607,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unlock your iPhone, then touch and hold the Lock Screen to show your wallpapers."
+            "value": "Unlock your iPhone, then touch and hold the Lock Screen to show your wallpapers"
           }
         }
       }
@@ -643,7 +643,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tap the date above the time to add an inline widget."
+            "value": "Tap the date above the time to add an inline widget"
           }
         }
       }
@@ -655,7 +655,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Default follows your app currencies. Custom uses a separate list. Try the controls below."
+            "value": "Default follows your app currencies, while Custom uses a separate list\nTry the controls below"
           }
         }
       }
@@ -679,7 +679,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "You choose when to update. No background location tracking."
+            "value": "Update when you choose, with no background location tracking"
           }
         }
       }
@@ -703,7 +703,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choose Currency, then tap Quick Rate. It follows your latest app conversion."
+            "value": "Choose Currency, then tap Quick Rate to follow your latest app conversion"
           }
         }
       }
@@ -835,7 +835,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choose a base currency and a comparison currency in the widget’s settings."
+            "value": "Choose a base currency and a comparison currency in the widget’s settings"
           }
         }
       }
@@ -883,7 +883,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Practice only. Edit the installed widget to save its settings."
+            "value": "Practice only — edit the installed widget to save its settings"
           }
         }
       }
@@ -895,7 +895,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tap Add Widgets below the time."
+            "value": "Tap Add Widgets below the time"
           }
         }
       }
@@ -931,7 +931,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tap Search Widgets, type Currency, then choose the app."
+            "value": "Tap Search Widgets, type Currency, then choose the app"
           }
         }
       }
@@ -955,7 +955,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Convert, calculate, and check prices\nfrom your Home Screen."
+            "value": "Convert, calculate, and check prices\nfrom your Home Screen"
           }
         }
       }
@@ -967,7 +967,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tap Edit at the top of your Home Screen."
+            "value": "Tap Edit at the top of your Home Screen"
           }
         }
       }
@@ -1015,7 +1015,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Feel at home, anywhere."
+            "value": "Feel at home, anywhere"
           }
         }
       }
@@ -1039,7 +1039,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tap a currency, then try the keys."
+            "value": "Tap a currency, then try the keys"
           }
         }
       }
@@ -1051,7 +1051,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tap a banknote to compare its value."
+            "value": "Tap a banknote to compare its value"
           }
         }
       }
@@ -1099,7 +1099,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Follows your latest app conversion."
+            "value": "Follows your latest app conversion"
           }
         }
       }
@@ -1123,7 +1123,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your currencies, together at a glance."
+            "value": "Your currencies, together at a glance"
           }
         }
       }
@@ -1147,7 +1147,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A little calculator. A world of currencies."
+            "value": "A little calculator for a world of currencies"
           }
         }
       }
@@ -1171,7 +1171,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tap a banknote. Know what it’s worth."
+            "value": "Tap a banknote to know what it’s worth"
           }
         }
       }
@@ -1195,7 +1195,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A simple rule for the prices around you."
+            "value": "A simple rule for the prices around you"
           }
         }
       }
@@ -1219,7 +1219,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A useful conversion, always in your pocket."
+            "value": "A useful conversion, always in your pocket"
           }
         }
       }
@@ -1243,7 +1243,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your latest conversion, on your Lock Screen."
+            "value": "Your latest conversion, on your Lock Screen"
           }
         }
       }
@@ -1351,7 +1351,29 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tap or drag to add widget."
+            "value": "Tap or drag to add widget"
+          }
+        }
+      }
+    },
+    "homeScreenPreview": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Currency calculator widget on an example Home Screen"
+          }
+        }
+      }
+    },
+    "currencyAppName": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Currency"
           }
         }
       }

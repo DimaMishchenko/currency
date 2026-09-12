@@ -319,8 +319,8 @@ struct WidgetPlayground: View {
                 .id(replay)
                 .shadow(color: .black.opacity(0.08), radius: 24, y: 12)
             } else if kind == .board {
-              AnimatedBoardPreview(
-                family: family, maximumWidth: min(380, geometry.size.width - 48),
+              AnimatedWidgetFamilyPreview(
+                kind: .board, family: family, maximumWidth: min(380, geometry.size.width - 48),
                 availableHeight: max(220, geometry.size.height - 212)
               )
               .shadow(color: .black.opacity(0.08), radius: 24, y: 12)

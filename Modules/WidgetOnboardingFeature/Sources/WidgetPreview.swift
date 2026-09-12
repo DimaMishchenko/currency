@@ -75,6 +75,7 @@ extension WidgetFamily {
 /// No store, persistence key, or network dependency. Sample rates are explicitly labeled by the host.
 struct WidgetPreviewState {
   var input: WidgetInput
+  private(set) var snapshot: RateSnapshot
   static let rates = RateSnapshot(quotes: [
     "EUR": ExchangeRate(1, published: "", source: .init(provider: .custom("Preview"))),
     "USD": ExchangeRate(1.08, published: "", source: .init(provider: .custom("Preview"))),
@@ -89,15 +90,39 @@ struct WidgetPreviewState {
     "PLN": ExchangeRate(4.3, published: "", source: .init(provider: .custom("Preview"))),
     "HUF": ExchangeRate(392, published: "", source: .init(provider: .custom("Preview")))
   ])
-  init(kind: WidgetShowcaseKind) {
-    input = WidgetInput(codes: kind.codes, amount: kind == .cash ? "200" : "100")
+  init(
+    kind: WidgetShowcaseKind, snapshot: RateSnapshot = Self.rates,
+    codes: [String]? = nil, amount: String? = nil
+  ) {
+    self.snapshot = snapshot
+    input = WidgetInput(
+      codes: codes ?? kind.codes, amount: amount ?? (kind == .cash ? "200" : "100"))
   }
+  /// External coverage changes do not replay a user's temporary keypad or tile interaction.
+  mutating func update(snapshot: RateSnapshot, codes: [String]?, amount: String?) {
+    self.snapshot = snapshot
+    if let codes { input.reconcile(codes: codes) }
+    if input.editedAt == nil, let amount, input.amount != amount {
+      input = WidgetInput(codes: input.codes, amount: amount)
+    }
+  }
+
+  /// Every preview family receives the same canonical input; only production layout limits it.
+  func entry(synchronized: Bool = false, configuredCodes: [String]? = nil) -> SuiteEntry {
+    let selection = configuredCodes ?? input.codes
+    var spec = WidgetSpec(
+      kind: "preview", codes: selection, amount: input.amount, status: .notDetermined)
+    spec.codes = selection
+    spec.synchronized = synchronized
+    return SuiteEntry(date: .now, spec: spec, input: input, snapshot: snapshot)
+  }
+
   mutating func apply(_ action: WidgetCommand) {
     if let active = action.activeCurrency, input.active == action.hiddenCurrency {
-      input.select(active, snapshot: Self.rates)
+      input.select(active, snapshot: snapshot)
     }
     if action.command.hasPrefix("select:") {
-      input.select(String(action.command.dropFirst(7)), snapshot: Self.rates)
+      input.select(String(action.command.dropFirst(7)), snapshot: snapshot)
     } else if action.command.hasPrefix("preset:"),
       let amount = WidgetMath.parseAmount(String(action.command.dropFirst(7)))
     {
@@ -116,28 +141,38 @@ struct WidgetPreview: View {
   var amount: String? = nil
   var synchronized = false
   var calculatorProgress: CGFloat? = nil
-  @State private var state: WidgetPreviewState
+  let snapshot: RateSnapshot
+  let converterInput: ConverterState?
+  @State private var localState: WidgetPreviewState
+  private let sharedState: Binding<WidgetPreviewState>?
   init(
     kind: WidgetShowcaseKind, family: WidgetFamily, interactive: Bool = false,
-    codes: [String]? = nil, amount: String? = nil, synchronized: Bool = false
+    codes: [String]? = nil, amount: String? = nil, synchronized: Bool = false,
+    snapshot: RateSnapshot = WidgetPreviewState.rates, converterInput: ConverterState? = nil,
+    state: Binding<WidgetPreviewState>? = nil
   ) {
     self.kind = kind; self.family = family; self.interactive = interactive; self.codes = codes;
     self.amount = amount; self.synchronized = synchronized
-    _state = State(initialValue: WidgetPreviewState(kind: kind))
+    self.snapshot = snapshot; self.converterInput = converterInput
+    sharedState = state
+    _localState = State(
+      initialValue: WidgetPreviewState(kind: kind, snapshot: snapshot, codes: codes, amount: amount)
+    )
   }
+  private var previewState: Binding<WidgetPreviewState> { sharedState ?? $localState }
   private var entry: SuiteEntry {
-    let selection = codes ?? state.input.codes
-    var spec = WidgetSpec(
-      kind: "preview", codes: selection, amount: amount ?? state.input.amount,
-      status: .notDetermined)
-    spec.codes = selection
-    spec.synchronized = synchronized
-    return SuiteEntry(
-      date: .now, spec: spec,
-      input: codes == nil
-        ? state.input : WidgetInput(codes: selection, amount: amount ?? state.input.amount),
-      snapshot: WidgetPreviewState.rates)
+    var current = previewState.wrappedValue
+    current.update(snapshot: snapshot, codes: codes, amount: amount)
+    return current.entry(synchronized: synchronized, configuredCodes: codes)
   }
+
+  private func apply(_ command: WidgetCommand) {
+    var current = previewState.wrappedValue
+    current.update(snapshot: snapshot, codes: codes, amount: amount)
+    current.apply(command)
+    previewState.wrappedValue = current
+  }
+
   var body: some View {
     Group {
       switch kind {
@@ -148,7 +183,8 @@ struct WidgetPreview: View {
       case .mental: AnchorView(entry: entry, mental: true)
       case .board: BoardLayout(family: family, entry: entry)
       case .quick:
-        QuickRateLayout(input: ConverterState(), snapshot: WidgetPreviewState.rates, family: family)
+        QuickRateLayout(
+          input: converterInput ?? ConverterState(), snapshot: snapshot, family: family)
       }
     }
     .environment(\.isWidgetPreview, true)
@@ -158,7 +194,7 @@ struct WidgetPreview: View {
         if interactive {
           AnyView(
             Button {
-              state.apply(command)
+              apply(command)
             } label: {
               label
             })
@@ -211,18 +247,28 @@ struct FittedWidgetPreview: View {
   }
 }
 
-/// The calculator's canvas and contents share one interpolated value and one fitting scale.
+/// The calculator's compatible four-tile canvas shares one progress value and fitting scale.
 struct AnimatedCalculatorPreview: View, @preconcurrency Animatable {
   var progress: CGFloat
-  let width: CGFloat
-  var animatableData: CGFloat {
-    get { progress }
-    set { progress = newValue }
+  var width: CGFloat
+  var codes: [String]? = nil
+  var amount: String? = nil
+  var snapshot = WidgetPreviewState.rates
+  var state: Binding<WidgetPreviewState>? = nil
+
+  var animatableData: AnimatablePair<CGFloat, CGFloat> {
+    get { AnimatablePair(progress, width) }
+    set { progress = newValue.first; width = newValue.second }
   }
+
   var body: some View {
     let height = CalculatorPreviewTransition(progress: progress).canvasHeight
-    var preview = WidgetPreview(kind: .calculator, family: .systemMedium, interactive: true)
-    preview.calculatorProgress = progress
+    let atLargeEndpoint = progress >= 0.9999
+    var preview = WidgetPreview(
+      kind: .calculator, family: atLargeEndpoint ? .systemLarge : .systemMedium, interactive: true,
+      codes: codes, amount: amount, snapshot: snapshot, state: state)
+    // At rest use the exact production family, including its footer and full visible capacity.
+    preview.calculatorProgress = progress > 0.0001 && !atLargeEndpoint ? progress : nil
     return
       preview
       .scaleEffect(width / 348, anchor: .topLeading)
@@ -231,61 +277,73 @@ struct AnimatedCalculatorPreview: View, @preconcurrency Animatable {
   }
 }
 
-/// Changes Board families between two legible states without interpolating incompatible row grids.
-struct AnimatedBoardPreview: View {
+/// A brief content fade covers incompatible grids while the outer widget surface resizes smoothly.
+struct AnimatedWidgetFamilyPreview: View {
+  let kind: WidgetShowcaseKind
   let family: WidgetFamily
   let maximumWidth: CGFloat
   let availableHeight: CGFloat
+  var codes: [String]? = nil
+  var amount: String? = nil
+  var snapshot = WidgetPreviewState.rates
+  var converterInput: ConverterState? = nil
+  var state: Binding<WidgetPreviewState>? = nil
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
-  @State private var displayedFamily: WidgetFamily
+  @Environment(\.scenePhase) private var scenePhase
+  @State private var displayedFamily: WidgetFamily?
   @State private var contentOpacity = 1.0
 
-  init(family: WidgetFamily, maximumWidth: CGFloat, availableHeight: CGFloat) {
-    self.family = family
-    self.maximumWidth = maximumWidth
-    self.availableHeight = availableHeight
-    _displayedFamily = State(initialValue: family)
-  }
+  private var visibleFamily: WidgetFamily { displayedFamily ?? family }
 
   var body: some View {
-    let width =
-      displayedFamily == .systemSmall
-      ? min(220, maximumWidth)
-      : min(
-        maximumWidth,
-        availableHeight * displayedFamily.previewSize.width / displayedFamily.previewSize.height)
-    let height = width * displayedFamily.previewSize.height / displayedFamily.previewSize.width
-    RoundedRectangle(cornerRadius: 24 * width / displayedFamily.previewSize.width)
-      .fill(Color(uiColor: .systemBackground))
-      .overlay {
-        WidgetPreview(kind: .board, family: displayedFamily)
-          .transaction { $0.animation = nil }
-          .scaleEffect(width / displayedFamily.previewSize.width)
-          .frame(width: width, height: height)
-          .opacity(contentOpacity)
-      }
+    let natural = visibleFamily.previewSize
+    let width = min(
+      visibleFamily == .systemSmall ? min(220, maximumWidth) : maximumWidth,
+      availableHeight * natural.width / natural.height,
+      kind == .quick ? natural.width * 1.08 : .infinity)
+    let height = width * natural.height / natural.width
+    RoundedRectangle(cornerRadius: 24 * width / natural.width)
+      .fill(kind == .quick ? Color.clear : Color(uiColor: .systemBackground))
       .frame(width: width, height: height)
-      .task(id: Playback(family: family, reduceMotion: reduceMotion)) {
-        guard family != displayedFamily else {
-          withAnimation(reduceMotion ? nil : .easeIn(duration: 0.15)) { contentOpacity = 1 }
-          return
+      .overlay {
+        GeometryReader { geometry in
+          WidgetPreview(
+            kind: kind, family: visibleFamily, interactive: kind.interactive,
+            codes: codes, amount: amount, snapshot: snapshot, converterInput: converterInput,
+            state: state
+          )
+          .transaction { $0.animation = nil }
+          .scaleEffect(geometry.size.width / natural.width, anchor: .topLeading)
+          .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
+          .opacity(contentOpacity)
         }
-        if reduceMotion {
-          displayedFamily = family; contentOpacity = 1
-          return
-        }
-        do {
-          withAnimation(.easeOut(duration: 0.12)) { contentOpacity = 0 }
-          try await Task.sleep(for: .milliseconds(140))
-          withAnimation(.smooth(duration: 0.45)) { displayedFamily = family }
-          try await Task.sleep(for: .milliseconds(120))
-          withAnimation(.easeIn(duration: 0.25)) { contentOpacity = 1 }
-        } catch { return }
       }
+      .clipShape(.rect(cornerRadius: 24 * width / natural.width))
+      .task(id: Playback(family: family, reduceMotion: reduceMotion, active: scenePhase == .active))
+    {
+      guard let displayedFamily else { self.displayedFamily = family; return }
+      guard family != displayedFamily else {
+        withAnimation(reduceMotion ? nil : .easeIn(duration: 0.15)) { contentOpacity = 1 }
+        return
+      }
+      guard scenePhase == .active else { return }
+      if reduceMotion {
+        self.displayedFamily = family; contentOpacity = 1
+        return
+      }
+      do {
+        withAnimation(.easeOut(duration: 0.10)) { contentOpacity = 0 }
+        try await Task.sleep(for: .milliseconds(120))
+        withAnimation(.smooth(duration: 0.42)) { self.displayedFamily = family }
+        try await Task.sleep(for: .milliseconds(100))
+        withAnimation(.easeIn(duration: 0.24)) { contentOpacity = 1 }
+      } catch { return }
+    }
   }
 
   private struct Playback: Equatable {
     let family: WidgetFamily
     let reduceMotion: Bool
+    let active: Bool
   }
 }

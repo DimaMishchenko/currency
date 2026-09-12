@@ -6,7 +6,10 @@ The review covered all Swift production/test sources, SwiftPM and Tuist manifest
 
 ```mermaid
 flowchart TD
-  App[Currency app] --> Converter[ConverterFeature]
+  App[Currency app] --> Onboarding[OnboardingFeature]
+  Onboarding --> Support
+  Onboarding --> Rates
+  App --> Converter[ConverterFeature]
   App --> Details[RateDetailsFeature]
   App --> WidgetGuide[WidgetOnboardingFeature]
   App --> LocalGuide[LocalCurrencyOnboardingFeature]
@@ -32,7 +35,7 @@ flowchart TD
   Support --> Rates
 ```
 
-The app supplies the converter's details, widget-onboarding, and local-currency destinations and creates the shared history service. Widget onboarding receives its local-currency destination from the app. Features do not import other feature implementations; reusable picker and widget layouts live in shared UI modules. Feature models, supporting views, widget intents, feed decoders, and storage identifiers are internal or private. Public service outputs are immutable; converter state changes use operations that preserve currency-list invariants.
+The app routes unfinished setup through `OnboardingFeature` (welcome → base currency → destinations → Home Screen context → widget showcase), supplies its widget scene closure, and opens the converter after completion has been saved. `OnboardingFlow` owns its internal `OnboardingModel` within `OnboardingFeature`; versioned progress records and coordinated persistence remain in `CurrencySupport`, independent of the feature model; `RateService.bootstrap` delivers progressive provider outcomes without changing the converter refresh API. Onboarding drafts, confirmed app input, and completion are saved separately; widget previews use isolated inputs whose edits survive rate updates and family changes. The converter receives a throwing replay callback; restarting saves fresh onboarding progress before routing away and preserves the app amount and cached rates. Onboarding shares the native `CurrencyChooser` through a defaulted multi-selection mode. The app supplies the converter's details and widget-onboarding destinations and creates the shared history service. The stable app root handles local-currency URLs and presents their destination during both unfinished setup and converter use. Widget onboarding receives its local-currency destination from the app. Features do not import other feature implementations; reusable picker and widget layouts live in shared UI modules. Feature models, supporting views, widget intents, feed decoders, and storage identifiers are internal or private. Public service outputs are immutable; converter state changes use operations that preserve currency-list invariants.
 
 `ExchangeRates` is one independently usable package, with automatic and dynamic linking products exposing the same module. It contains conversion, providers, current refresh policy, rate persistence, and historical series. Hosts inject providers, HTTP clients, cache directories, and evaluation times. App-specific state, formatting, error copy, App Group integration, and refresh scheduling remain in Tuist targets. The reusable package supports iOS 16+ and macOS 14+; the SwiftUI app still requires iOS 26.
 

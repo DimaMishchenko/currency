@@ -82,6 +82,91 @@ public actor RateService {
         checkedAt: now), warning: warning)
   }
 
+  /// Starts all providers concurrently and yields after each completion. Consuming hosts
+  /// own the foreground deadline, so an uncooperative provider cannot keep recovery pending.
+  /// The stream preserves daily fallbacks and the primary provider's equal-date precedence.
+  public func bootstrap(previous: RateSnapshot, now: Date = .now) -> AsyncStream<BootstrapUpdate> {
+    let providers: [(Int, any RateProvider)] =
+      [(0, daily), (1, fiat)]
+      + (crypto.map { [(2, $0)] } ?? [])
+    return AsyncStream { continuation in
+      let worker = Task {
+        await withTaskGroup(of: BootstrapProviderResult.self) { group in
+          for (index, provider) in providers {
+            group.addTask {
+              do {
+                let quotes = try await provider.fetch()
+                try Task.checkCancellation()
+                let valid = quotes.filter {
+                  CurrencyCatalog.codes.contains($0.key) && !$0.value.value.isNaN
+                    && $0.value.value > 0
+                }
+                return BootstrapProviderResult(index: index, quotes: valid, failure: nil)
+              } catch {
+                let offline =
+                  (error as? URLError)
+                  .map {
+                    $0.code == .notConnectedToInternet || $0.code == .networkConnectionLost
+                  } ?? false
+                return BootstrapProviderResult(
+                  index: index, quotes: nil, failure: offline ? .offline : .unavailable)
+              }
+            }
+          }
+          var results: [Int: BootstrapProviderResult] = [:]
+          for await result in group {
+            guard !Task.isCancelled else { break }
+            results[result.index] = result
+            var dailyQuotes =
+              previous.dailyQuotes
+              ?? previous.quotes.filter { $0.value.overlayTimestamp == nil }
+            // Rebuild from fixed provider order, never completion order.
+            for index in [0, 1] {
+              for (code, quote) in results[index]?.quotes ?? [:]
+              where quote.published >= (dailyQuotes[code]?.published ?? "") {
+                dailyQuotes[code] = quote
+              }
+            }
+            var effective = dailyQuotes
+            var liveQuotes = results[2]?.quotes ?? [:]
+            // A pending provider has not invalidated the cached overlay. Keep it until
+            // crypto actually returns, then use only that result or the daily fallback.
+            if crypto != nil, results[2] == nil, previous.hasValidFetchTimestamp(now: now) {
+              liveQuotes = previous.quotes.filter {
+                $0.value.overlayTimestamp != nil && !$0.value.value.isNaN && $0.value.value > 0
+              }
+            }
+            for (code, quote) in liveQuotes
+            where CurrencyCatalog.crypto.contains(code)
+              && quote.published >= (dailyQuotes[code]?.published ?? "")
+            {
+              effective[code] = quote
+            }
+            let succeeded = results.values.contains { !($0.quotes ?? [:]).isEmpty }
+            let final = results.count == providers.count
+            // "Offline" is justified only if every provider actually reports connectivity loss.
+            let failure: BootstrapFailure? =
+              final && !succeeded
+              ? (results.values.allSatisfy { $0.failure == .offline } ? .offline : .unavailable)
+              : nil
+            continuation.yield(
+              BootstrapUpdate(
+                snapshot: RateSnapshot(
+                  quotes: effective, fetchedAt: succeeded ? now : previous.fetchedAt,
+                  dailyQuotes: dailyQuotes,
+                  dailyFetchedAt: results[0]?.quotes != nil && results[1]?.quotes != nil
+                    ? now : previous.dailyFetchedAt,
+                  checkedAt: now),
+                isFinal: final, failure: failure))
+          }
+          group.cancelAll()
+        }
+        continuation.finish()
+      }
+      continuation.onTermination = { _ in worker.cancel() }
+    }
+  }
+
   private func fetch(
     _ provider: (any RateProvider)?, timeout: Duration?
   ) async -> [String: ExchangeRate]? {
@@ -98,4 +183,10 @@ public actor RateService {
       return quotes
     }
   }
+}
+
+private struct BootstrapProviderResult: Sendable {
+  let index: Int
+  let quotes: [String: ExchangeRate]?
+  let failure: BootstrapFailure?
 }
