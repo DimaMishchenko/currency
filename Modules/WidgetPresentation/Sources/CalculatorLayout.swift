@@ -32,6 +32,8 @@ public struct CalculatorLayout: View {
       if entry.spec.codes.isEmpty {
         Text(.WidgetPresentation.chooseCustomCurrencies)
           .font(AppStyle.font(.callout)).frame(maxWidth: .infinity, maxHeight: .infinity)
+      } else if let previewProgress {
+        preview(progress: previewProgress)
       } else {
         let medium = family == .systemMedium
         let columns = medium && codes.count <= 2 ? 1 : 2
@@ -83,6 +85,89 @@ public struct CalculatorLayout: View {
     .modifier(WidgetSurface())
   }
 
+  /// Preview cells keep their identity even when one column becomes two or new rows appear.
+  private func preview(progress: CGFloat) -> some View {
+    let mediumCodes = entry.input.visibleCodes(limit: 4, reservesLocal: entry.spec.synchronized)
+    let largeCodes = entry.input.visibleCodes(limit: 8, reservesLocal: entry.spec.synchronized)
+    let rows = max(1, (largeCodes.count + 1) / 2)
+    let spread = CalculatorPreviewTransition(progress: progress).spread
+    let visibleEntry = entry.input.displayedInput(
+      limit: progress < 0.5 ? 4 : 8,
+      reservesLocal: entry.spec.synchronized, snapshot: entry.snapshot)
+    var display = entry
+    display.input = visibleEntry
+    return VStack(spacing: AppStyle.Space.small) {
+      CalculatorArrangement(
+        expansion: progress, largeTileHeight: max(56, 340 * (rows == 1 ? 0.26 : 0.43)),
+        previewProgress: progress
+      ) {
+        CalculatorPreviewGrid(medium: mediumCodes, large: largeCodes, spread: spread) {
+          ForEach(largeCodes, id: \.self) { code in
+            CurrencyTile(
+              entry: display, code: code, compact: mediumCodes.count > 2,
+              stacked: rows == 1, showsCode: true,
+              previewSpread: rows == 1 ? nil : spread, previewDense: rows == 4
+            )
+            .opacity(mediumCodes.contains(code) ? 1 : spread)
+            .allowsHitTesting(mediumCodes.contains(code) || progress == 1)
+            .accessibilityHidden(!mediumCodes.contains(code) && progress < 1)
+          }
+        }
+        WidgetKeypad(
+          spec: entry.spec,
+          activeCurrency: display.input.active != entry.input.active ? display.input.active : nil,
+          hiddenCurrency: display.input.active != entry.input.active ? entry.input.active : nil
+        )
+        .disabled(display.input.active == WidgetSelection.localID)
+      }
+      WidgetFooter(entry: entry)
+    }
+  }
+}
+
+/// Interpolates tile positions without reparenting cells between row containers.
+private struct CalculatorPreviewGrid: Layout {
+  let medium: [String]
+  let large: [String]
+  var spread: CGFloat
+
+  func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+    proposal.replacingUnspecifiedDimensions()
+  }
+
+  func placeSubviews(
+    in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()
+  ) {
+    for (index, view) in subviews.enumerated() {
+      let end = cell(index: index, count: large.count, columns: 2, bounds: bounds)
+      let start =
+        medium.firstIndex(of: large[index])
+        .map {
+          cell(index: $0, count: medium.count, columns: medium.count <= 2 ? 1 : 2, bounds: bounds)
+        } ?? end
+      // For a one-column medium widget, narrow the cells before moving them into one row.
+      // Interpolating both axes together would make the two currency labels cross each other.
+      let oneColumn = medium.count <= 2
+      let horizontal = oneColumn ? min(1, spread * 2) : spread
+      let vertical = oneColumn ? max(0, (spread - 0.5) * 2) : spread
+      let rect = CGRect(
+        x: start.minX + (end.minX - start.minX) * horizontal,
+        y: start.minY + (end.minY - start.minY) * vertical,
+        width: start.width + (end.width - start.width) * horizontal,
+        height: start.height + (end.height - start.height) * vertical)
+      view.place(at: rect.origin, proposal: .init(width: rect.width, height: rect.height))
+    }
+  }
+
+  private func cell(index: Int, count: Int, columns: Int, bounds: CGRect) -> CGRect {
+    let gap = AppStyle.Space.xs
+    let rows = max(1, (count + columns - 1) / columns)
+    let width = max(0, (bounds.width - gap * CGFloat(columns - 1)) / CGFloat(columns))
+    let height = max(0, (bounds.height - gap * CGFloat(rows - 1)) / CGFloat(rows))
+    return CGRect(
+      x: bounds.minX + CGFloat(index % columns) * (width + gap),
+      y: bounds.minY + CGFloat(index / columns) * (height + gap), width: width, height: height)
+  }
 }
 
 /// Moves the keypad below the tiles before either group expands horizontally.
@@ -106,12 +191,15 @@ private struct CalculatorArrangement: Layout {
       let transition = CalculatorPreviewTransition(progress: previewProgress)
       let gap = AppStyle.Space.small
       let mediumWidth = bounds.width * 0.46
-      let targetTileHeight: CGFloat = 340 * 0.43
-      let tileHeight = 140 + (targetTileHeight - 140) * transition.move
-      let keypadHeight = 140 + (340 - targetTileHeight - gap - 140) * transition.move
+      let targetTileHeight = largeTileHeight
+      // Two medium rows must keep enough height until they spread into one large row.
+      let tileResize =
+        targetTileHeight < 140 ? max(0, (transition.spread - 0.5) * 2) : transition.move
+      let tileHeight = 140 + (targetTileHeight - 140) * tileResize
       let tileWidth = mediumWidth + (bounds.width - mediumWidth) * transition.spread
       let keypadX = (mediumWidth + gap) * (1 - transition.spread)
-      let keypadY = (targetTileHeight + gap) * transition.move
+      let keypadY = (tileHeight + gap) * transition.move
+      let keypadHeight = 140 + 200 * transition.move - keypadY
       subviews[0].place(at: bounds.origin, proposal: .init(width: tileWidth, height: tileHeight))
       subviews[1]
         .place(
@@ -140,7 +228,7 @@ private struct CalculatorArrangement: Layout {
   private func smooth(_ value: CGFloat) -> CGFloat { value * value * (3 - 2 * value) }
 }
 
-/// One clock drives the app's four-currency calculator size demonstration.
+/// One clock drives the app's calculator size demonstration.
 /// Installed widgets use their family directly and do not consume this transition.
 public struct CalculatorPreviewTransition {
   let move: CGFloat

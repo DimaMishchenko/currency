@@ -220,6 +220,12 @@ final class OnboardingModel {
     move(to: .widgets)
   }
 
+  /// Finishing or skipping the widget guide leads to a resumable welcome finale.
+  func continueFromWidgets() {
+    guard step == .widgets, !isCompleted else { return }
+    move(to: .ready)
+  }
+
   /// Returns to the preceding scene while retaining all draft choices.
   func back() {
     guard !isCompleted else { return }
@@ -229,17 +235,18 @@ final class OnboardingModel {
     case .selection: move(to: .baseCurrency)
     case .homeScreen: move(to: .selection)
     case .widgets: move(to: .homeScreen)
+    case .ready: move(to: .widgets)
     }
   }
 
-  /// Both Later and a finished/skipped installation guide use this same local commit.
+  /// Only Get started on the finale commits completion and reveals the converter.
   @discardableResult
   func complete() -> Bool {
-    guard step == .widgets else { return false }
+    guard step == .ready else { return false }
     if isCompleted { return true }
     do {
       try configuration.beforeSave?(.completion)
-      try saveProgress(step: .widgets, completed: true)
+      try saveProgress(step: .ready, completed: true)
       isCompleted = true
       saveError = nil
       cancelAttempt()

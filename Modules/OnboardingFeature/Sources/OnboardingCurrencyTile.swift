@@ -36,10 +36,7 @@ struct OnboardingCurrencyTile: View {
         .lineLimit(2).frame(height: textSize.isAccessibilitySize ? 52 : 30, alignment: .top)
       }
       .frame(width: textSize.isAccessibilitySize ? 152 : 96).padding(.vertical, 16)
-      .background(
-        Color(uiColor: .secondarySystemBackground).opacity(selected ? 0.9 : 0.6),
-        in: .rect(cornerRadius: 18)
-      )
+      .background { OnboardingSurface(radius: 18, selected: selected) }
       .overlay(alignment: .topTrailing) {
         if selected {
           OnboardingSelectionMark().padding(6)
@@ -94,9 +91,7 @@ struct OnboardingMoreCurrenciesTile: View {
           .lineLimit(2).frame(height: textSize.isAccessibilitySize ? 52 : 30, alignment: .top)
       }
       .frame(width: textSize.isAccessibilitySize ? 152 : 96).padding(.vertical, 16)
-      .background(
-        Color(uiColor: .secondarySystemBackground).opacity(0.6), in: .rect(cornerRadius: 18)
-      )
+      .background { OnboardingSurface(radius: 18) }
     }
     .buttonStyle(.plain)
     .accessibilityElement(children: .ignore)

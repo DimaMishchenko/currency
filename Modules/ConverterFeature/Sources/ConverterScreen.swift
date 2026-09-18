@@ -105,7 +105,7 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
       .toolbarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .topBarLeading) { sourcePicker }
-        ToolbarItemGroup(placement: .topBarTrailing) { headerActions }
+        headerActions
       }
       .sheet(item: $picker) { purpose in
         let chooser = CurrencyChooser(
@@ -204,23 +204,42 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
       : AnyLayout(HStackLayout())
   }
 
-  @ViewBuilder
-  private var headerActions: some View {
+  @ToolbarContentBuilder
+  private var headerActions: some ToolbarContent {
+    ToolbarItem(placement: .topBarTrailing) {
+      widgetsButton
+    }
+    ToolbarSpacer(.fixed, placement: .topBarTrailing)
+    ToolbarItem(placement: .topBarTrailing) {
+      optionsMenu
+    }
+  }
+
+  private var widgetsButton: some View {
     Button {
-      if editingAmount { dismissAmount() } else { showsWidgets = true }
+      dismissAmount()
+      showsWidgets = true
     } label: {
       Image(systemName: "square.grid.2x2")
     }
     .accessibilityLabel(.Converter.widgets)
+    .accessibilityIdentifier("converter.widgets")
+  }
+
+  private var optionsMenu: some View {
     Menu {
       Button(.Converter.refreshRates, systemImage: "arrow.clockwise") {
         Task { await model.refresh(force: true) }
       }
       .disabled(model.refreshing)
       Button(.Converter.manageCurrencies, systemImage: "slider.horizontal.3") {
+        dismissAmount()
         showManage = true
       }
-      Button(.Converter.aboutRates, systemImage: "info.circle") { showInfo = true }
+      Button(.Converter.aboutRates, systemImage: "info.circle") {
+        dismissAmount()
+        showInfo = true
+      }
       if replayOnboarding != nil {
         Button(.Converter.replayOnboarding, systemImage: "arrow.counterclockwise") {
           restartOnboarding()
@@ -231,7 +250,6 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
       Image(systemName: "ellipsis")
     }
     .accessibilityLabel(.Converter.options)
-    .disabled(editingAmount)
   }
 
   private func restartOnboarding() {
@@ -293,10 +311,6 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
                 weight: .regular, design: .rounded)
           )
           .tracking(-3).lineLimit(1).minimumScaleFactor(0.25).contentTransition(.numericText())
-        if editingAmount {
-          Capsule().fill(accent).frame(width: 2, height: 48).transition(.opacity)
-            .accessibilityHidden(true)
-        }
         Text(verbatim: model.input.source)
           .font(
             AppStyle.font(
@@ -427,7 +441,7 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
                         Image(systemName: "delete.left")
                           .font(AppStyle.font(.title2, weight: .light))
                       } else {
-                        Text(CurrencyDisplay.inputAmount(item, locale: locale))
+                        Text(CurrencyDisplay.keypadLabel(item, locale: locale))
                           .font(AppStyle.font(.title2))
                       }
                     }

@@ -218,7 +218,8 @@ private struct WidgetCollection: View {
                         .font(AppStyle.font(.caption))
                       Text("9:41").font(.system(size: 56, weight: .semibold, design: .rounded))
                       FittedWidgetPreview(kind: kind, family: .accessoryRectangular)
-                        .frame(width: 170)
+                        .frame(width: 170, height: 76)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .padding(32)
                   } else {
@@ -408,9 +409,12 @@ struct WidgetPlayground: View {
       }
       Text("9:41").font(.system(size: 76, weight: .semibold, design: .rounded))
       if family == .accessoryRectangular {
-        FittedWidgetPreview(kind: .quick, family: family).frame(width: 170).padding(.top, 8)
+        FittedWidgetPreview(kind: .quick, family: family)
+          .frame(width: 170, height: 76)
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .padding(.top, 8)
       }
-      Spacer(minLength: 48)
+      Spacer(minLength: 8)
       HStack {
         Image(systemName: "flashlight.off.fill").padding(16)
           .background(.regularMaterial, in: .circle)
@@ -419,7 +423,7 @@ struct WidgetPlayground: View {
       }
       .font(.body)
     }
-    .padding(24).frame(height: 320)
+    .padding(24).frame(height: 380)
     .background(
       LinearGradient(
         colors: [Color.blue.opacity(0.17), Color.cyan.opacity(0.07), Color.indigo.opacity(0.18)],

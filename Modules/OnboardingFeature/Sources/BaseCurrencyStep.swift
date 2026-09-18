@@ -37,7 +37,6 @@ struct BaseCurrencyStep: View {
         "\(CurrencyDisplay.name(model.draft.source, locale: locale)), \(model.draft.source)"
       )
       .accessibilityIdentifier("onboarding.base")
-      .modifier(OnboardingReveal(progress: progress, offset: 10, reduced: reduced))
 
       if !model.hasUsableRates {
         VStack(spacing: 8) {
@@ -55,7 +54,7 @@ struct BaseCurrencyStep: View {
               .padding(.horizontal, 24)
             ScrollView(.horizontal) {
               HStack(spacing: 8) {
-                ForEach(["EUR", "USD", "GBP", "CZK", "JPY", "CHF"], id: \.self) { code in
+                ForEach(OnboardingRecommendations.currencies, id: \.self) { code in
                   quickChoice(code)
                 }
                 Button(action: openPicker) {
@@ -65,8 +64,7 @@ struct BaseCurrencyStep: View {
                   }
                   .font(AppStyle.font(.subheadline, weight: .medium))
                   .frame(width: 104, height: 44)
-                  .background(
-                    Color(uiColor: .secondarySystemBackground).opacity(0.45), in: .capsule)
+                  .background { OnboardingSurface(radius: 22) }
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(Text(.Onboarding.moreCurrencies))
@@ -79,9 +77,9 @@ struct BaseCurrencyStep: View {
           }
         }
       }
-      .modifier(OnboardingReveal(progress: progress, delay: 0.14, offset: 10, reduced: reduced))
       Spacer(minLength: compact ? 12 : 28)
     }
+    .modifier(OnboardingReveal(progress: progress, offset: 24, scale: 0.96, reduced: reduced))
   }
 
   private func quickChoice(_ code: String) -> some View {
@@ -98,9 +96,7 @@ struct BaseCurrencyStep: View {
         }
       }
       .frame(width: 104, height: 44)
-      .background(
-        Color(uiColor: .secondarySystemBackground).opacity(selected ? 1 : 0.45), in: .capsule
-      )
+      .background { OnboardingSurface(radius: 22, selected: selected) }
       .contentShape(.capsule)
     }
     .buttonStyle(.plain).disabled(!available)

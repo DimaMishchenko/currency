@@ -92,17 +92,32 @@ private extension CurrencyCode {
 }
 
 extension CurrencyDisplay {
-  /// Localizes editable digits and the decimal separator without losing trailing zeros.
+  /// Groups the integer and localizes editable digits without losing fractional precision or zeros.
   /// A separator without a following digit stays hidden until the fraction begins.
   public static func inputAmount(_ amount: String, locale: Locale = .current) -> String {
     let visibleAmount = amount.hasSuffix(".") ? String(amount.dropLast()) : amount
-    return (visibleAmount.isEmpty ? "0" : visibleAmount)
-      .map { character in
-        if character == "." { return locale.decimalSeparator ?? "." }
-        guard let digit = character.wholeNumberValue else { return String(character) }
-        return digit.formatted(.number.locale(locale))
-      }
-      .joined()
+    let parts = visibleAmount.split(separator: ".", omittingEmptySubsequences: false)
+    let integer =
+      Decimal(string: String(parts.first ?? "0"), locale: Locale(identifier: "en_US_POSIX")) ?? 0
+    let formatter = NumberFormatter()
+    formatter.locale = locale
+    formatter.numberStyle = .decimal
+    formatter.maximumFractionDigits = 0
+    formatter.usesGroupingSeparator = true
+    let grouped = formatter.string(from: NSDecimalNumber(decimal: integer)) ?? "0"
+    guard parts.count > 1 else { return grouped }
+    let fraction = keypadLabel(String(parts[1]), locale: locale)
+    return grouped + (locale.decimalSeparator ?? ".") + fraction
+  }
+
+  /// Localizes keypad symbols verbatim, keeping multi-zero keys and a standalone decimal separator.
+  public static func keypadLabel(_ key: String, locale: Locale = .current) -> String {
+    key.map { character in
+      if character == "." { return locale.decimalSeparator ?? "." }
+      return character.wholeNumberValue.map { $0.formatted(.number.locale(locale)) }
+        ?? String(character)
+    }
+    .joined()
   }
 
   /// Formats an ISO publication day using the requested locale; unknown values remain verbatim.

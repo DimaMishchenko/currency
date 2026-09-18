@@ -532,16 +532,27 @@ private struct MiniHomeScreen: View {
               editing
                 ? String(localized: .WidgetOnboarding.guideNativeEditWidget)
                 : String(localized: .WidgetOnboarding.guideNativeAddWidget),
-              icon: editing ? "slider.horizontal.3" : "plus", selected: true)
-            Divider()
+              icon: editing ? "slider.horizontal.3" : "widget.small.badge.plus", selected: true)
             menuRow(
               editing
                 ? String(localized: .WidgetOnboarding.guideNativeEditHome)
                 : String(localized: .WidgetOnboarding.guideNativeCustomize),
-              icon: "square.grid.2x2",
+              icon: editing ? "apps.iphone" : "iphone.gen3.radiowaves.left.and.right",
               selected: false)
+            if !editing {
+              menuRow(
+                String(localized: .WidgetOnboarding.guideNativeWallpaper),
+                icon: "photo.on.rectangle", selected: false)
+              menuRow(
+                String(localized: .WidgetOnboarding.guideNativePages), icon: "square.stack",
+                selected: false)
+            }
           }
-          .background(.regularMaterial, in: .rect(cornerRadius: 18))
+          .padding(8)
+          .background(.regularMaterial, in: .rect(cornerRadius: 28))
+          .overlay {
+            RoundedRectangle(cornerRadius: 28).strokeBorder(.primary.opacity(0.12), lineWidth: 0.5)
+          }
           .shadow(color: .black.opacity(0.12), radius: 20, y: 12)
           .frame(width: w * 0.77).offset(x: -w * 0.04, y: editing ? h * 0.47 : 60)
           .transition(.scale(scale: 0.6, anchor: .topLeading).combined(with: .opacity))
@@ -775,11 +786,14 @@ private struct MiniHomeScreen: View {
       .opacity(engaged ? 0 : 1)
   }
   private func menuRow(_ title: String, icon: String, selected: Bool) -> some View {
-    HStack {
-      Text(title); Spacer(); Image(systemName: icon)
+    HStack(spacing: 12) {
+      Image(systemName: icon).frame(width: 22)
+      Text(title)
+      Spacer(minLength: 0)
     }
-    .font(.system(size: 14, weight: selected ? .semibold : .regular, design: .rounded))
-    .padding(16).background(Color.primary.opacity(selected ? 0.04 : 0))
+    .font(.system(size: 14, weight: .regular))
+    .padding(.horizontal, 12).padding(.vertical, 12)
+    .background(Color.primary.opacity(selected ? 0.06 : 0), in: .rect(cornerRadius: 18))
   }
   private func touchPoint(w: CGFloat, h: CGFloat) -> CGPoint {
     if !editing && step == (lockScreen ? 4 : 5) {

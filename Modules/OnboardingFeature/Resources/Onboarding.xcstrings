@@ -550,6 +550,72 @@
           }
         }
       }
+    },
+    "readyTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Welcome to Currency"
+          }
+        }
+      }
+    },
+    "readySubtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your currencies, always close."
+          }
+        }
+      }
+    },
+    "readySummary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your currency setup is ready"
+          }
+        }
+      }
+    },
+    "readyWelcome": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Welcome"
+          }
+        }
+      }
+    },
+    "readyToCurrency": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "to Currency"
+          }
+        }
+      }
+    },
+    "spinHint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag around the circle to spin the currencies."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

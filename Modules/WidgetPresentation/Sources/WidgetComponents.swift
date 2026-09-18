@@ -150,7 +150,7 @@ struct WidgetKeypad: View {
                         ? "C"
                         : key == "."
                           ? (locale.decimalSeparator ?? ".")
-                          : CurrencyDisplay.inputAmount(key, locale: locale))
+                          : CurrencyDisplay.keypadLabel(key, locale: locale))
                   }
                 }
                 .font(
@@ -193,9 +193,15 @@ struct CurrencyTile: View {
   var stacked = false
   var showsCode = true
   var previewSpread: CGFloat? = nil
+  var previewDense = false
 
   private var displayCode: String { WidgetSelection.currency(code) }
   private var selected: Bool { code == entry.input.active }
+  private var codeVisibility: CGFloat {
+    if WidgetSelection.isLocal(code) { return 1 }
+    if previewDense, let previewSpread { return 1 - previewSpread }
+    return showsCode ? 1 : 0
+  }
 
   var body: some View {
     if code == WidgetSelection.localID {
@@ -204,15 +210,18 @@ struct CurrencyTile: View {
       WidgetPresentationButton(command: WidgetCommand("select:" + code, spec: entry.spec)) {
         CurrencyTileArrangement(
           stacked: previewSpread.map { 1 - $0 } ?? (stacked ? 1 : 0),
-          showsCode: showsCode || WidgetSelection.isLocal(code)
+          codeVisibility: codeVisibility
         ) {
-          CurrencyIcon(displayCode, size: previewSpread.map { 16 + 6 * $0 } ?? (compact ? 16 : 22))
-          currencyCode.opacity(showsCode || WidgetSelection.isLocal(code) ? 1 : 0)
+          CurrencyIcon(
+            displayCode,
+            size: previewSpread.map { 16 + (previewDense ? 0 : 6) * $0 } ?? (compact ? 16 : 22))
+          currencyCode.opacity(codeVisibility)
           amount.font(AppStyle.font(stacked && !compact ? .title : .title2, weight: .medium))
         }
         .padding(
           .horizontal,
-          previewSpread.map { 4 + 4 * $0 } ?? (compact ? AppStyle.Space.xs : AppStyle.Space.small)
+          previewSpread.map { 4 + (previewDense ? 0 : 4) * $0 }
+            ?? (compact ? AppStyle.Space.xs : AppStyle.Space.small)
         )
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
@@ -280,10 +289,10 @@ struct CurrencyTile: View {
 /// A flag, code, and value keep one identity while a tile changes its arrangement.
 private struct CurrencyTileArrangement: Layout {
   var stacked: CGFloat
-  let showsCode: Bool
-  var animatableData: CGFloat {
-    get { stacked }
-    set { stacked = newValue }
+  var codeVisibility: CGFloat
+  var animatableData: AnimatablePair<CGFloat, CGFloat> {
+    get { AnimatablePair(stacked, codeVisibility) }
+    set { stacked = newValue.first; codeVisibility = newValue.second }
   }
   func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
     proposal.replacingUnspecifiedDimensions()
@@ -297,7 +306,7 @@ private struct CurrencyTileArrangement: Layout {
     let code = subviews[1].sizeThatFits(.unspecified)
     let amountWidth = max(0, bounds.width - (icon.width + AppStyle.Space.xs) * (1 - p))
     let value = subviews[2].sizeThatFits(ProposedViewSize(width: amountWidth, height: nil))
-    let codeHeight = showsCode ? code.height : 0
+    let codeHeight = code.height * min(1, max(0, codeVisibility))
     let headerHeight = max(icon.height, codeHeight)
     let stackedTop = (bounds.height - headerHeight - AppStyle.Space.xs - value.height) / 2
     let rowTop = (bounds.height - codeHeight - value.height) / 2

@@ -1377,6 +1377,39 @@
           }
         }
       }
+    },
+    "guideNativeWallpaper": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit Wallpaper"
+          }
+        }
+      }
+    },
+    "guideNativePages": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit Pages"
+          }
+        }
+      }
+    },
+    "moreWidgetsInApp": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Explore even more widgets in the app"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

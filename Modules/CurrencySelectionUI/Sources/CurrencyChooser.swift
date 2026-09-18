@@ -54,50 +54,7 @@ public struct CurrencyChooser: View {
   /// The searchable currency list and category controls.
   public var body: some View {
     NavigationStack {
-      List {
-        ForEach(filteredCodes, id: \.self) { code in
-          Button {
-            choose(code)
-            if !allowsMultipleSelection { dismiss() }
-          } label: {
-            HStack(spacing: AppStyle.Space.large) {
-              CurrencyIcon(code)
-              VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
-                Text(code).font(AppStyle.font(.headline))
-                Text(CurrencyDisplay.name(code, locale: locale)).font(AppStyle.font(.caption))
-                  .foregroundStyle(.secondary)
-              }
-              Spacer()
-              if selected.contains(code) {
-                Image(systemName: "checkmark").foregroundStyle(.secondary)
-              } else if !available.contains(code) {
-                Text(.CurrencySelection.unavailable).font(AppStyle.font(.caption2))
-                  .foregroundStyle(.secondary)
-              }
-            }
-            .padding(.vertical, AppStyle.Space.xs)
-          }
-          .foregroundStyle(.primary)
-          .disabled(
-            (selected.contains(code) && !allowsMultipleSelection)
-              || (requiresAvailableRate && !available.contains(code) && !selected.contains(code))
-          )
-          .accessibilityIdentifier("currency.picker.\(code)")
-          .accessibilityAddTraits(selected.contains(code) ? .isSelected : [])
-          .listRowBackground(Color.clear)
-        }
-      }
-      .scrollContentBackground(.hidden)
-      .overlay {
-        if filteredCodes.isEmpty {
-          ContentUnavailableView {
-            Label(.CurrencySelection.noResults, systemImage: "magnifyingglass")
-          } description: {
-            Text(.CurrencySelection.noResultsDetail)
-          }
-        }
-      }
-      .safeAreaInset(edge: .top, spacing: 0) {
+      VStack(spacing: 0) {
         if search.isEmpty {
           Picker(selection: $category) {
             ForEach(categories, id: \.self) { category in
@@ -111,8 +68,20 @@ public struct CurrencyChooser: View {
           .padding(.vertical, AppStyle.Space.small)
 
         }
+        ScrollViewReader { scroll in
+          currencyList
+            .onChange(of: category) { _, _ in
+              if let first = filteredCodes.first { scroll.scrollTo(first, anchor: .top) }
+            }
+            .onChange(of: search) { _, _ in
+              if let first = filteredCodes.first { scroll.scrollTo(first, anchor: .top) }
+            }
+        }
       }
+
       .searchable(text: $search)
+      .autocorrectionDisabled()
+      .textInputAutocapitalization(.never)
       .navigationTitle(
         title
           ?? (purpose == .source ? .CurrencySelection.baseCurrency : .CurrencySelection.addCurrency)
@@ -125,10 +94,54 @@ public struct CurrencyChooser: View {
         }
       }
     }
-    .presentationBackground {
-      Rectangle().fill(.clear)
-        .glassEffect(.regular, in: .rect(cornerRadius: 32))
+  }
+
+  private var currencyList: some View {
+    List {
+      ForEach(filteredCodes, id: \.self) { code in
+        Button {
+          choose(code)
+          if !allowsMultipleSelection { dismiss() }
+        } label: {
+          HStack(spacing: AppStyle.Space.large) {
+            CurrencyIcon(code)
+            VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
+              Text(code).font(AppStyle.font(.headline))
+              Text(CurrencyDisplay.name(code, locale: locale)).font(AppStyle.font(.caption))
+                .foregroundStyle(.secondary)
+            }
+            Spacer()
+            if selected.contains(code) {
+              Image(systemName: "checkmark").foregroundStyle(.secondary)
+            } else if !available.contains(code) {
+              Text(.CurrencySelection.unavailable).font(AppStyle.font(.caption2))
+                .foregroundStyle(.secondary)
+            }
+          }
+          .padding(.vertical, AppStyle.Space.xs)
+        }
+        .foregroundStyle(.primary)
+        .disabled(
+          (selected.contains(code) && !allowsMultipleSelection)
+            || (requiresAvailableRate && !available.contains(code) && !selected.contains(code))
+        )
+        .accessibilityIdentifier("currency.picker.\(code)")
+        .accessibilityAddTraits(selected.contains(code) ? .isSelected : [])
+        .listRowBackground(Color.clear)
+      }
     }
+    .scrollContentBackground(.hidden)
+    .overlay {
+      if filteredCodes.isEmpty {
+        ContentUnavailableView {
+          Label(.CurrencySelection.noResults, systemImage: "magnifyingglass")
+        } description: {
+          Text(.CurrencySelection.noResultsDetail)
+        }
+      }
+    }
+    .listStyle(.plain)
+    .clipped()
   }
 
   private var categories: [CurrencyCategory] {

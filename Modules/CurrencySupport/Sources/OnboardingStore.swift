@@ -5,7 +5,7 @@ import Foundation
 public struct OnboardingProgress: Codable, Sendable {
   /// The resumable scenes encoded in the onboarding progress record.
   public enum Step: String, Codable, Sendable {
-    case welcome, baseCurrency, selection, homeScreen, widgets
+    case welcome, baseCurrency, selection, homeScreen, widgets, ready
   }
   /// The onboarding schema and experience version.
   public var version: Int

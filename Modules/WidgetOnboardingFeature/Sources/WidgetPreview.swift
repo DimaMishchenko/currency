@@ -145,6 +145,7 @@ struct WidgetPreview: View {
   let converterInput: ConverterState?
   @State private var localState: WidgetPreviewState
   private let sharedState: Binding<WidgetPreviewState>?
+  @Environment(\.colorScheme) private var colorScheme
   init(
     kind: WidgetShowcaseKind, family: WidgetFamily, interactive: Bool = false,
     codes: [String]? = nil, amount: String? = nil, synchronized: Bool = false,
@@ -210,13 +211,15 @@ struct WidgetPreview: View {
         ?? family.previewSize.height
     )
     .background(
-      Color(uiColor: .systemBackground).opacity(kind == .quick ? 0 : 1),
+      Color(uiColor: colorScheme == .dark ? .secondarySystemBackground : .systemBackground)
+        .opacity(kind == .quick ? 0 : 1),
       in: .rect(cornerRadius: family == .accessoryInline ? 12 : 24)
     )
     .clipShape(.rect(cornerRadius: family == .accessoryInline ? 12 : 24))
     .overlay {
       RoundedRectangle(cornerRadius: 24)
-        .strokeBorder(.primary.opacity(kind == .quick ? 0 : 0.06), lineWidth: 0.5)
+        .strokeBorder(
+          .primary.opacity(kind == .quick ? 0 : colorScheme == .dark ? 0.16 : 0.06), lineWidth: 1)
     }
     .environment(\.openURL, OpenURLAction { _ in .handled })
     .allowsHitTesting(interactive)
@@ -247,7 +250,7 @@ struct FittedWidgetPreview: View {
   }
 }
 
-/// The calculator's compatible four-tile canvas shares one progress value and fitting scale.
+/// One progress value resizes the calculator and repositions its persistent currency cells.
 struct AnimatedCalculatorPreview: View, @preconcurrency Animatable {
   var progress: CGFloat
   var width: CGFloat
@@ -263,21 +266,23 @@ struct AnimatedCalculatorPreview: View, @preconcurrency Animatable {
 
   var body: some View {
     let height = CalculatorPreviewTransition(progress: progress).canvasHeight
-    let atLargeEndpoint = progress >= 0.9999
+    let atMediumEndpoint = progress <= 0.0001
     var preview = WidgetPreview(
-      kind: .calculator, family: atLargeEndpoint ? .systemLarge : .systemMedium, interactive: true,
+      kind: .calculator, family: atMediumEndpoint ? .systemMedium : .systemLarge, interactive: true,
       codes: codes, amount: amount, snapshot: snapshot, state: state)
-    // At rest use the exact production family, including its footer and full visible capacity.
-    preview.calculatorProgress = progress > 0.0001 && !atLargeEndpoint ? progress : nil
+    // Keep the same cell tree at both endpoints and throughout the interpolation.
+    preview.calculatorProgress = progress
     return
       preview
       .scaleEffect(width / 348, anchor: .topLeading)
       .frame(width: width, height: height * width / 348, alignment: .topLeading)
-      .transaction { $0.animation = nil }
+      .transaction {
+        $0.animation = nil; $0.disablesAnimations = true
+      }
   }
 }
 
-/// A brief content fade covers incompatible grids while the outer widget surface resizes smoothly.
+/// One live preview retains its input while the widget surface and production layout resize.
 struct AnimatedWidgetFamilyPreview: View {
   let kind: WidgetShowcaseKind
   let family: WidgetFamily
@@ -290,60 +295,21 @@ struct AnimatedWidgetFamilyPreview: View {
   var state: Binding<WidgetPreviewState>? = nil
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(\.scenePhase) private var scenePhase
-  @State private var displayedFamily: WidgetFamily?
-  @State private var contentOpacity = 1.0
-
-  private var visibleFamily: WidgetFamily { displayedFamily ?? family }
 
   var body: some View {
-    let natural = visibleFamily.previewSize
+    let natural = family.previewSize
     let width = min(
-      visibleFamily == .systemSmall ? min(220, maximumWidth) : maximumWidth,
+      family == .systemSmall ? min(220, maximumWidth) : maximumWidth,
       availableHeight * natural.width / natural.height,
       kind == .quick ? natural.width * 1.08 : .infinity)
-    let height = width * natural.height / natural.width
-    RoundedRectangle(cornerRadius: 24 * width / natural.width)
-      .fill(kind == .quick ? Color.clear : Color(uiColor: .systemBackground))
-      .frame(width: width, height: height)
-      .overlay {
-        GeometryReader { geometry in
-          WidgetPreview(
-            kind: kind, family: visibleFamily, interactive: kind.interactive,
-            codes: codes, amount: amount, snapshot: snapshot, converterInput: converterInput,
-            state: state
-          )
-          .transaction { $0.animation = nil }
-          .scaleEffect(geometry.size.width / natural.width, anchor: .topLeading)
-          .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
-          .opacity(contentOpacity)
-        }
-      }
-      .clipShape(.rect(cornerRadius: 24 * width / natural.width))
-      .task(id: Playback(family: family, reduceMotion: reduceMotion, active: scenePhase == .active))
-    {
-      guard let displayedFamily else { self.displayedFamily = family; return }
-      guard family != displayedFamily else {
-        withAnimation(reduceMotion ? nil : .easeIn(duration: 0.15)) { contentOpacity = 1 }
-        return
-      }
-      guard scenePhase == .active else { return }
-      if reduceMotion {
-        self.displayedFamily = family; contentOpacity = 1
-        return
-      }
-      do {
-        withAnimation(.easeOut(duration: 0.10)) { contentOpacity = 0 }
-        try await Task.sleep(for: .milliseconds(120))
-        withAnimation(.smooth(duration: 0.42)) { self.displayedFamily = family }
-        try await Task.sleep(for: .milliseconds(100))
-        withAnimation(.easeIn(duration: 0.24)) { contentOpacity = 1 }
-      } catch { return }
-    }
-  }
-
-  private struct Playback: Equatable {
-    let family: WidgetFamily
-    let reduceMotion: Bool
-    let active: Bool
+    WidgetPreview(
+      kind: kind, family: family, interactive: kind.interactive,
+      codes: codes, amount: amount, snapshot: snapshot, converterInput: converterInput,
+      state: state
+    )
+    .scaleEffect(width / natural.width)
+    .frame(width: width, height: width * natural.height / natural.width)
+    .animation(
+      reduceMotion || scenePhase != .active ? nil : .smooth(duration: 0.55), value: family)
   }
 }

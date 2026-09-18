@@ -13,6 +13,7 @@ public struct OnboardingWidgetShowcase: View {
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(\.dynamicTypeSize) private var textSize
   @State private var page: WidgetShowcaseKind? = .calculator
+  private let featured: [WidgetShowcaseKind] = [.calculator, .board, .cash]
   @State private var families: [WidgetShowcaseKind: WidgetFamily] = [:]
 
   /// Creates a personalized showcase and continues into the installation guide when requested.
@@ -34,7 +35,7 @@ public struct OnboardingWidgetShowcase: View {
   public var body: some View {
     GeometryReader { geometry in
       let accessible = textSize.isAccessibilitySize
-      let heroHeight = max(156, geometry.size.height - (accessible ? 260 : 174))
+      let heroHeight = max(156, geometry.size.height - (accessible ? 320 : 218))
       VStack(spacing: AppStyle.Space.medium) {
         carousel(width: geometry.size.width, height: heroHeight)
         VStack(spacing: AppStyle.Space.xs) {
@@ -54,12 +55,17 @@ public struct OnboardingWidgetShowcase: View {
         familyControl
           .padding(.horizontal, AppStyle.Space.section)
         pageControl
+        Text(.WidgetOnboarding.moreWidgetsInApp)
+          .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
+          .fixedSize(horizontal: false, vertical: true)
+          .multilineTextAlignment(.center).padding(.horizontal, AppStyle.Space.section)
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
     }
     .navigationDestination(isPresented: $guideRequested) {
       WidgetTutorial(kind: selected, family: family, continuation: true) {
-        guideRequested = false
+        // The host crossfades the entire navigation stack into its finale.
+        // Keep the tutorial visible until that transition removes this scene.
         onGuideFinished()
       }
     }
@@ -81,7 +87,7 @@ public struct OnboardingWidgetShowcase: View {
     let cardWidth = min(420, max(240, width - 64))
     return ScrollView(.horizontal) {
       HStack(spacing: AppStyle.Space.large) {
-        ForEach(WidgetShowcaseKind.allCases) { kind in
+        ForEach(featured) { kind in
           let chosenFamily = family(for: kind)
           let configuration = OnboardingWidgetConfiguration(
             kind: kind, snapshot: snapshot, input: input)
@@ -122,7 +128,7 @@ public struct OnboardingWidgetShowcase: View {
 
   private var pageControl: some View {
     HStack(spacing: 0) {
-      ForEach(WidgetShowcaseKind.allCases) { kind in
+      ForEach(featured) { kind in
         Button {
           withAnimation(reduceMotion ? nil : .smooth(duration: 0.3)) { page = kind }
         } label: {
@@ -178,7 +184,7 @@ private struct OnboardingWidgetCard: View {
 
   @ViewBuilder private var preview: some View {
     let availableHeight = max(120, height - 16)
-    if kind == .calculator && configuration.codes.count == 4 {
+    if kind == .calculator {
       let fittedWidth = min(
         width, availableHeight * family.previewSize.width / family.previewSize.height)
       AnimatedCalculatorPreview(
@@ -193,9 +199,8 @@ private struct OnboardingWidgetCard: View {
         kind: .board, family: family, maximumWidth: width, availableHeight: availableHeight,
         codes: configuration.codes, amount: configuration.input.amount,
         snapshot: configuration.snapshot, state: $state)
-    } else if kind == .calculator || kind == .quick {
-      // Two/eight-tile Calculator grids and accessory layouts are incompatible geometries.
-      // A short content fade retains their real endpoints without inventing a tile morph.
+    } else if kind == .quick {
+      // Retain the live production layout for every personalized currency count.
       AnimatedWidgetFamilyPreview(
         kind: kind, family: family, maximumWidth: width, availableHeight: availableHeight,
         codes: configuration.codes, amount: configuration.input.amount,

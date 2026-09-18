@@ -215,10 +215,11 @@ private func waitFor(_ predicate: () -> Bool) async throws {
     #expect(model.step == .widgets)
     #expect(store.input().destinations == ["USD", "GBP"])
     #expect(store.input().amount == "42")
+    model.continueFromWidgets()
     failure.operation = .completion
     #expect(!model.complete())
     #expect(!model.isCompleted)
-    #expect(model.step == .widgets)
+    #expect(model.step == .ready)
     #expect(model.saveError == .completion)
     failure.operation = nil
     model.retrySave()
@@ -363,10 +364,11 @@ private func waitFor(_ predicate: () -> Bool) async throws {
     #expect(model.step == .selection)
     model.continueFromSelection()
     model.continueFromHomeScreen()
+    model.continueFromWidgets()
     #expect(model.complete())
     model.back()
     model.toggle("GBP")
-    #expect(model.step == .widgets)
+    #expect(model.step == .ready)
     #expect(model.draft.destinations == ["USD"])
     #expect(CurrencyStore(directory: location).onboardingProgress()?.completed == true)
   }
@@ -566,6 +568,61 @@ private func waitFor(_ predicate: () -> Bool) async throws {
     #expect(model.draft.destinations == ["USD", "GBP"])
   }
 
+  @Test func failedGuideFinishPreservesShowcaseAndCanRetryFinaleSave() throws {
+    let location = directory()
+    defer { try? FileManager.default.removeItem(at: location) }
+    let store = CurrencyStore(directory: location)
+    _ = try readyModel(at: location)
+    let failure = OnboardingSaveFailure(nil)
+    let model = OnboardingModel(
+      store: store,
+      configuration: .init(beforeSave: { operation in
+        if operation == failure.operation { throw CocoaError(.fileWriteOutOfSpace) }
+      }))
+    model.continueFromWelcome()
+    model.continueFromBaseCurrency()
+    model.continueFromSelection()
+    model.continueFromHomeScreen()
+    let committed = store.input()
+    failure.operation = .draft
+    model.continueFromWidgets()
+    #expect(model.step == .widgets)
+    #expect(model.saveError == .draft)
+    #expect(!model.isCompleted)
+    #expect(OnboardingModel(store: store).step == .widgets)
+    #expect(store.input() == committed)
+    failure.operation = nil
+    model.retrySave()
+    #expect(model.step == .ready)
+    #expect(model.saveError == nil)
+    #expect(!model.isCompleted)
+    #expect(OnboardingModel(store: store).step == .ready)
+    #expect(store.input() == committed)
+  }
+
+  @Test func finaleResumesAndRequiresExplicitGetStarted() throws {
+    let location = directory()
+    defer { try? FileManager.default.removeItem(at: location) }
+    let store = CurrencyStore(directory: location)
+    let model = try readyModel(at: location)
+    model.continueFromWelcome()
+    model.continueFromBaseCurrency()
+    model.continueFromSelection()
+    model.continueFromHomeScreen()
+    #expect(!model.complete())
+    model.continueFromWidgets()
+    #expect(model.step == .ready)
+    #expect(!model.isCompleted)
+    let resumed = OnboardingModel(store: store)
+    #expect(resumed.step == .ready)
+    #expect(!resumed.isCompleted)
+    resumed.back()
+    #expect(resumed.step == .widgets)
+    resumed.continueFromWidgets()
+    #expect(resumed.complete())
+    #expect(OnboardingModel(store: store).isCompleted)
+  }
+
   @Test func replayUsesCurrentAppChoicesAndPreservesAmountAndRates() throws {
     let location = directory()
     defer { try? FileManager.default.removeItem(at: location) }
@@ -575,6 +632,7 @@ private func waitFor(_ predicate: () -> Bool) async throws {
     model.continueFromBaseCurrency()
     model.continueFromSelection()
     model.continueFromHomeScreen()
+    model.continueFromWidgets()
     #expect(model.complete())
     try store.updateInput {
       $0.changeSource("GBP")
@@ -612,6 +670,7 @@ private func waitFor(_ predicate: () -> Bool) async throws {
     model.continueFromBaseCurrency()
     model.continueFromSelection()
     model.continueFromHomeScreen()
+    model.continueFromWidgets()
     #expect(model.complete())
     let input = store.input()
     failure.operation = .draft
@@ -710,4 +769,48 @@ private func waitFor(_ predicate: () -> Bool) async throws {
     #expect(OnboardingModel(store: store).isCompleted)
   }
 
+}
+
+@Suite struct OnboardingOrbitTests {
+  @Test func crossingAngleBoundaryKeepsDragContinuous() {
+    let turn = OnboardingOrbit.shortestTurn(from: .pi - 0.02, to: -.pi + 0.02)
+    #expect(abs(turn - 0.04) < 0.000001)
+    #expect(abs(OnboardingOrbit.shortestTurn(from: -.pi + 0.02, to: .pi - 0.02) + 0.04) < 0.000001)
+  }
+
+  @Test func grabbingMovingOrbitDoesNotJumpAndStopsDriftWhileHeld() {
+    var orbit = OnboardingOrbit()
+    let before = orbit.angle(at: 10)
+    orbit.grab(at: 10)
+    #expect(orbit.angle(at: 10) == before)
+    #expect(orbit.angle(at: 30) == before)
+    orbit.turn(by: -0.7)
+    #expect(abs(orbit.angle(at: 30) - (before - 0.7)) < 0.000001)
+    orbit.release(at: 30, velocity: -8)
+    #expect(abs(orbit.angle(at: 30) - (before - 0.7)) < 0.000001)
+  }
+
+  @Test func flickWorksInBothDirectionsAndDecaysToAmbientSpeed() {
+    for direction in [-1.0, 1.0] {
+      var orbit = OnboardingOrbit()
+      orbit.grab(at: 0)
+      orbit.release(at: 0, velocity: direction * 10)
+      let first = orbit.angle(at: 0.1) - orbit.angle(at: 0)
+      #expect(first * direction > 0)
+      let late = orbit.angle(at: 10.1) - orbit.angle(at: 10)
+      #expect(abs(late - Double.pi * 2 / 32 * 0.1) < 0.00001)
+    }
+  }
+
+  @Test func grabbingDuringMomentumContinuesFromRenderedPosition() {
+    var orbit = OnboardingOrbit()
+    orbit.grab(at: 0)
+    orbit.release(at: 0, velocity: 12)
+    let rendered = orbit.angle(at: 0.4)
+    orbit.grab(at: 0.4)
+    #expect(orbit.angle(at: 0.4) == rendered)
+    orbit.turn(by: 0.3)
+    orbit.release(at: 0.8, velocity: 0)
+    #expect(abs(orbit.angle(at: 0.8) - rendered - 0.3) < 0.000001)
+  }
 }
