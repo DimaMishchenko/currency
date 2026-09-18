@@ -361,7 +361,10 @@ private struct HistorySkeleton: View {
   @State private var isVisible = false
 
   var body: some View {
-    Chart {}
+    Chart {
+      // Keep the empty chart compatible with iOS 26 under Xcode 27's ViewBuilder inference.
+      ChartContentBuilder.buildBlock()
+    }
       .chartXScale(domain: 0.0...1.0).chartYScale(domain: 0.0...1.0)
       .chartYAxis {
         AxisMarks(position: .trailing, values: [0.0, 0.33, 0.66, 1.0]) { _ in
