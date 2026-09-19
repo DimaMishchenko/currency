@@ -1,8 +1,17 @@
 # To-do
 
-- [ ] Add localization for popular languages.
-- [ ] Add a language option to Settings.
-- [ ] Add an About section to Settings with author information and support options.
-- [ ] Add a privacy policy and terms and conditions, linked from Settings.
-- [ ] Add a widget with a historical exchange-rate chart.
-- [ ] Revisit Home Screen widgets.
+Keep only unfinished work. Release checks below are unverified or need revalidation; they are not claims of current defects. Close them with a dated result and durable issue/PR evidence, then remove completed entries.
+
+## Product work
+
+- [ ] Choose and add the first additional languages, with a language option in Settings.
+- [ ] Add an Apple Watch app.
+- [ ] Add author/support information and connect the feedback placeholder to a real support destination.
+- [ ] Add privacy policy and terms links in Settings.
+- [ ] Add a historical exchange-rate chart widget.
+
+## Release checks
+
+- [ ] Verify Local permission recovery, Allow Once expiry, Settings routing, and eligible widget updates over multiple days; do not require an exact scheduling deadline.
+- [ ] Walk through onboarding and converter with spoken VoiceOver, largest text, Reduce Motion, increased contrast, and reduced transparency. Check cold search focus, orbit gestures, rapid navigation, and save-failure recovery.
+- [ ] Configure and verify distribution signing and shared App Group access in a release build.
