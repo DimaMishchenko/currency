@@ -15,6 +15,31 @@ private struct SlowFeedbackProvider: RateProvider {
 
 @MainActor
 struct ConverterFeedbackTests {
+  @Test func locationReloadPreservesValidEditorAndClosesOnlyRemovedLocalCurrency() throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = CurrencyStore(directory: directory)
+    try store.updateInput {
+      $0.setDestinations(["USD"]); $0.setUsesLocalCurrency(true)
+    }
+    try store.saveWidgetLocation(WidgetLocation(country: "CZ", currency: "CZK"))
+    let model = ConverterModel(store: store, service: RateService())
+    model.snapshot = RateSnapshot(quotes: [
+      "EUR": ExchangeRate(1, published: "2026-09-19", source: .init(provider: .custom("test"))),
+      "USD": ExchangeRate(2, published: "2026-09-19", source: .init(provider: .custom("test"))),
+      "CZK": ExchangeRate(25, published: "2026-09-19", source: .init(provider: .custom("test")))
+    ])
+    model.beginEditing("USD")
+    model.reloadInput(preservingEditor: true)
+    #expect(model.editor != nil)
+    #expect(model.editingCode == "USD")
+    model.beginEditing("CZK")
+    try store.saveWidgetLocation(WidgetLocation(country: "GB", currency: "GBP"))
+    model.reloadInput(preservingEditor: true)
+    #expect(model.editor == nil)
+    #expect(model.input.destinations == ["USD", "GBP"])
+  }
+
   @Test func secondaryEditingKeepsBaseAndOrderAndPersistsValue() throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }

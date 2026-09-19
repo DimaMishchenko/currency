@@ -72,6 +72,42 @@
         }
       }
     },
+    "localCurrency": {
+      "extractionState": "manual",
+      "comment": "Location-backed option in the main converter currency picker.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local currency"
+          }
+        }
+      }
+    },
+    "localCurrencyName": {
+      "extractionState": "manual",
+      "comment": "Location-backed currency name. The argument is a localized currency name.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local currency · %1$@"
+          }
+        }
+      }
+    },
+    "location": {
+      "extractionState": "manual",
+      "comment": "Section title for location-backed currency choices.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Location"
+          }
+        }
+      }
+    },
     "metals": {
       "extractionState": "manual",
       "comment": "Currency picker category for precious metals.",
@@ -92,6 +128,18 @@
           "stringUnit": {
             "state": "translated",
             "value": "Selected"
+          }
+        }
+      }
+    },
+    "setUpLocation": {
+      "extractionState": "manual",
+      "comment": "Opens the permission-only local currency setup.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use location to find it"
           }
         }
       }

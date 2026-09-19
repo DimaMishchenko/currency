@@ -1,26 +1,24 @@
-import CurrencySelectionUI
 import CurrencySupport
 import MapKit
 import SwiftUI
 import WidgetKit
 
-/// On-demand country lookup, permission recovery, and manual currency selection.
+/// On-demand country lookup and permission recovery.
 public struct LocalCurrencyOnboardingScreen: View {
   /// Creates the local-currency onboarding flow without requesting permission.
-  public init() {}
+  public init(addsResolvedCurrencyToApp: Bool = false) {
+    self.addsResolvedCurrencyToApp = addsResolvedCurrencyToApp
+  }
+  private let addsResolvedCurrencyToApp: Bool
   @Environment(\.dismiss) private var dismiss
   @Environment(\.openURL) private var openURL
   @Environment(\.scenePhase) private var scenePhase
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(\.dynamicTypeSize) private var textSize
   @State private var location = WidgetLocationController()
-  @State private var manualPicker = false
-  @State private var manage = false
-  @State private var manualCode: String?
-  @State private var manualSaved = false
-  @State private var manualError = false
+  @State private var saveError = false
   private var ready: Bool {
-    manualCode == nil && location.phase == .ready && location.resolved != nil
+    location.phase == .ready && location.resolved?.isFresh() == true
   }
   /// The permission explanation and location result.
   public var body: some View {
@@ -50,22 +48,10 @@ public struct LocalCurrencyOnboardingScreen: View {
               .font(AppStyle.font(.subheadline)).frame(minHeight: 44)
             }
 
-            if manualError {
-              Text(.LocalCurrency.localManualSaveFailed).font(AppStyle.font(.caption))
+            if saveError {
+              Text(.LocalCurrency.localSaveFailed).font(AppStyle.font(.caption))
                 .foregroundStyle(.secondary)
             }
-            VStack(spacing: 8) {
-              if manualCode == nil {
-                Label(.LocalCurrency.localPrivacySummary, systemImage: "location")
-                  .font(AppStyle.font(.subheadline))
-                Text(.LocalCurrency.localPrivacyDetail)
-                  .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
-              } else {
-                Label(.LocalCurrency.localManualPrivacy, systemImage: "location.slash")
-                  .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
-              }
-            }
-            .multilineTextAlignment(.center)
             if textSize.isAccessibilitySize { actions }
           }
           .padding(24)
@@ -85,41 +71,27 @@ public struct LocalCurrencyOnboardingScreen: View {
         }
       }
       .onChange(of: scenePhase) { _, phase in
-        if phase == .active { location.reconcileAuthorization() }
+        if phase == .active { refreshLocation() }
       }
+      .task { refreshLocation() }
       .onChange(of: location.phase) { old, phase in
         guard old == .locating || old == .requestingPermission else { return }
         if phase == .ready { AppHaptics.play(.success) }
         if phase == .unavailable { AppHaptics.play(.error) }
       }
       .onDisappear { location.cancel() }
-      .confirmationDialog(.LocalCurrency.guideLocalCurrency, isPresented: $manage) {
-        Button(.LocalCurrency.localUpdateAction) {
-          AppHaptics.play(.action); location.update()
-        }
-        Button(.LocalCurrency.localChooseManually) { manualPicker = true }
-        Button(.LocalCurrency.localClearAction, role: .destructive) {
-          location.clear()
-          AppHaptics.play(
-            location.status == .LocalCurrency.localRemoveFailed ? .error : .delete)
-        }
-      }
-      .sheet(isPresented: $manualPicker) {
-        CurrencyChooser(
-          purpose: .add, selected: [], homeCurrencies: [],
-          available: Set(CurrencyStore.shared.loadRates().quotes.keys)
-        ) {
-          manualCode = $0; manualSaved = false; manualError = false
-        }
-      }
     }
   }
   private var actions: some View {
     VStack(spacing: 8) {
-      if ready || manualSaved {
-        primary(String(localized: .LocalCurrency.done)) { dismiss() }
-      } else if manualCode != nil {
-        primary(String(localized: .LocalCurrency.localUseInApp)) { saveManualCurrency() }
+      if ready {
+        primary(
+          String(
+            localized: addsResolvedCurrencyToApp
+              ? .LocalCurrency.localAddToApp : .LocalCurrency.done)
+        ) {
+          if addsResolvedCurrencyToApp { saveResolvedCurrency() } else { dismiss() }
+        }
       } else if location.permissionDenied || location.servicesDisabled {
         primary(String(localized: .LocalCurrency.openLocationSettings)) {
           if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
@@ -134,21 +106,23 @@ public struct LocalCurrencyOnboardingScreen: View {
         }
         .disabled(location.isUpdating)
       }
-      if ready {
-        Button(.LocalCurrency.localChangeAction) { manage = true }
-          .font(AppStyle.font(.subheadline)).frame(minHeight: 44)
-      } else {
-        Button(.LocalCurrency.localChooseManually) {
-          location.cancel(); manualPicker = true
-        }
-        .font(AppStyle.font(.subheadline)).frame(minHeight: 44)
-      }
+      Text(.LocalCurrency.localPrivacySummary)
+        .font(AppStyle.font(.caption2))
+        .foregroundStyle(.secondary)
+        .multilineTextAlignment(.center)
+        .fixedSize(horizontal: false, vertical: true)
+        .padding(.top, 4)
     }
     .padding(.horizontal, textSize.isAccessibilitySize ? 0 : 24).padding(.vertical, 12)
     .background(Color(uiColor: .systemGroupedBackground))
   }
+  private func refreshLocation() {
+    location.reconcileAuthorization()
+    if location.permissionAuthorized && !ready && !location.isUpdating {
+      location.update(requestPermission: false)
+    }
+  }
   private var title: String {
-    if let manualCode { return CurrencyDisplay.name(manualCode) }
     if ready, let resolved = location.resolved { return CurrencyDisplay.name(resolved.currency) }
     if location.isUpdating { return String(localized: .LocalCurrency.localFindingTitle) }
     if location.phase == .unavailable {
@@ -157,13 +131,11 @@ public struct LocalCurrencyOnboardingScreen: View {
     return String(localized: .LocalCurrency.localIntroTitle)
   }
   private var detail: String {
-    if manualCode != nil {
-      return String(
-        localized: manualSaved
-          ? .LocalCurrency.localManualSaved : .LocalCurrency.localManualInstructions)
-    }
     if ready, let code = location.resolved?.currency {
-      return String(localized: .LocalCurrency.localReadyCurrency(code))
+      return String(
+        localized: addsResolvedCurrencyToApp
+          ? .LocalCurrency.localReadyAppCurrency(code)
+          : .LocalCurrency.localReadyCurrency(code))
     }
     if location.phase == .unavailable { return String(localized: location.status) }
     if location.isUpdating { return String(localized: .LocalCurrency.localFindingDetail) }
@@ -205,22 +177,20 @@ public struct LocalCurrencyOnboardingScreen: View {
         )
         .transition(.opacity)
     } else {
-      CurrencyOrbit(
-        active: location.isUpdating, code: manualCode ?? (ready ? location.resolved?.currency : nil)
-      )
+      CurrencyOrbit(active: location.isUpdating, code: ready ? location.resolved?.currency : nil)
     }
   }
-  private func saveManualCurrency() {
-    guard let manualCode else { return }
+  private func saveResolvedCurrency() {
+    guard ready else { return }
     do {
       try CurrencyStore.shared.updateInput { input in
-        if input.source != manualCode { input.setDestinations(input.destinations + [manualCode]) }
+        input.setUsesLocalCurrency(true)
       }
       WidgetCenter.shared.reloadAllTimelines()
       AppHaptics.play(.success)
-      manualSaved = true
-      manualError = false
-    } catch { manualError = true; AppHaptics.play(.error) }
+      saveError = false
+      dismiss()
+    } catch { saveError = true; AppHaptics.play(.error) }
   }
   private func primary(_ title: String, action: @escaping () -> Void) -> some View {
     Button {

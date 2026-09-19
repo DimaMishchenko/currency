@@ -1,7 +1,75 @@
 import CryptoKit
 import Foundation
 
+private struct LocalCurrencyRefreshRecord: Codable {
+  var attemptedAt: Date?
+  var generation: UUID?
+}
+
 extension CurrencyStore {
+  /// Claims a shared refresh opportunity so multiple app/widget processes do not duplicate work.
+  public func claimLocalCurrencyRefresh(now: Date = .now) throws -> Bool {
+    try coordinate("widget-location-refresh.json") {
+      if widgetLocationStatus() == .removed { return false }
+      if widgetLocationStatus() == .available, widgetLocation()?.isFresh(now: now) == true {
+        return false
+      }
+      var record = localRefreshRecord()
+      if let attempted = record.attemptedAt,
+        now >= attempted, now.timeIntervalSince(attempted) < 3600
+      {
+        return false
+      }
+      record.attemptedAt = now
+      try saveLocalRefreshRecord(record)
+      return true
+    }
+  }
+  private func localRefreshRecord() -> LocalCurrencyRefreshRecord {
+    guard
+      let data = try? Data(
+        contentsOf: directory.appendingPathComponent("widget-location-refresh.json")),
+      let record = try? JSONDecoder().decode(LocalCurrencyRefreshRecord.self, from: data)
+    else { return LocalCurrencyRefreshRecord() }
+    return record
+  }
+
+  private func saveLocalRefreshRecord(_ record: LocalCurrencyRefreshRecord) throws {
+    try JSONEncoder().encode(record)
+      .write(
+        to: directory.appendingPathComponent("widget-location-refresh.json"), options: .atomic)
+  }
+
+  func beginLocalCurrencyLookup() throws -> UUID {
+    try coordinate("widget-location-refresh.json") {
+      var record = localRefreshRecord()
+      let generation = UUID()
+      record.generation = generation
+      try saveLocalRefreshRecord(record)
+      return generation
+    }
+  }
+
+  /// Only the newest lookup may change the observation or mark it failed.
+  func completeLocalCurrencyLookup(_ generation: UUID, location: WidgetLocation?) throws -> Bool {
+    try coordinate("widget-location-refresh.json") {
+      guard localRefreshRecord().generation == generation else { return false }
+      if let location { try saveWidgetLocation(location) }
+      try saveWidgetLocationStatus(location == nil ? .failed : .available)
+      return true
+    }
+  }
+
+  func clearLocalCurrency(outcome: WidgetLocationStatus) throws {
+    try coordinate("widget-location-refresh.json") {
+      var record = localRefreshRecord()
+      record.generation = nil
+      try saveLocalRefreshRecord(record)
+      try saveWidgetLocationStatus(outcome)
+      try saveWidgetLocation(nil)
+    }
+  }
+
   private func widgetFilename(_ key: String) -> String {
     "widget-" + SHA256.hash(data: Data(key.utf8)).map { String(format: "%02x", $0) }.joined()
       + ".json"

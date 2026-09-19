@@ -31,17 +31,24 @@ public enum WidgetSelection {
     normalize([input.source] + input.destinations)
   }
 
+  /// App selection with Local intent preserved for synchronized widgets.
+  public static func appConfiguration(_ input: ConverterState) -> [String] {
+    normalize(
+      [input.source] + input.manualDestinations + (input.usesLocalCurrency ? [localID] : []),
+      allowsLocal: true)
+  }
+
   /// Resolves only list ownership; amounts and active input remain widget-specific.
   public static func calculator(
     app: ConverterState, custom: [String]?, usesCustom: Bool, includeLocal: Bool
   ) -> [String] {
     if usesCustom { return normalize(custom ?? [], allowsLocal: true) }
-    return normalize(appCurrencies(app) + (includeLocal ? [localID] : []), allowsLocal: true)
+    return normalize(appConfiguration(app) + (includeLocal ? [localID] : []), allowsLocal: true)
   }
 
   /// Places the board base before its unique target currencies.
   public static func board(base: String, targets: [String]) -> [String] {
-    normalize([base] + targets)
+    normalize([base] + targets, allowsLocal: true)
   }
 }
 

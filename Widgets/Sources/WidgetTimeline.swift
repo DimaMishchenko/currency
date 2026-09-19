@@ -24,6 +24,7 @@ struct SuiteTimeline<Configuration: SuiteConfiguration>: AppIntentTimelineProvid
       // A tap never waits for network refresh or a second read of the same cached files.
       return timeline(starting: current)
     }
+    if current.spec.usesLocation { await LocalCurrencyController.refreshForWidget() }
     let result = try? await CurrencyStore.shared.refreshRates(
       using: RateService(), force: current.snapshot.quotes.isEmpty, providerTimeout: .seconds(2))
     let refreshed = entry(configuration)

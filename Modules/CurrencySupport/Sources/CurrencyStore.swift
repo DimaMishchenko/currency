@@ -29,8 +29,13 @@ public struct CurrencyStore: Sendable {
   /// Loads the shared converter input.
   public func input() -> ConverterState {
     guard let data = try? Data(contentsOf: directory.appendingPathComponent("input.json")),
-      let input = try? JSONDecoder().decode(ConverterState.self, from: data)
-    else { return ConverterState() }
+      var input = try? JSONDecoder().decode(ConverterState.self, from: data)
+    else {
+      var input = ConverterState()
+      input.resolveLocalCurrency(widgetLocation(), status: widgetLocationStatus())
+      return input
+    }
+    input.resolveLocalCurrency(widgetLocation(), status: widgetLocationStatus())
     return input
   }
 

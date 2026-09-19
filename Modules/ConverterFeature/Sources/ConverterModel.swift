@@ -25,9 +25,14 @@ final class ConverterModel {
   var editingCode: String { editor?.active ?? input.source }
   var editingText: String { editor?.amount ?? input.amount }
 
-  func reloadInput() {
-    input = store.input()
-    editor = nil
+  func reloadInput(preservingEditor: Bool = false) {
+    let next = store.input()
+    if !preservingEditor || next.source != input.source || next.amount != input.amount
+      || (editor.map { !([next.source] + next.destinations).contains($0.active) } ?? false)
+    {
+      editor = nil
+    }
+    input = next
   }
 
   func beginEditing(_ code: String) {

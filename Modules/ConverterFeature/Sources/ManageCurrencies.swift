@@ -10,7 +10,7 @@ struct ManageCurrencies: View {
     NavigationStack {
       List {
         Section {
-          ForEach(model.input.destinations, id: \.self) { code in
+          ForEach(model.input.manualDestinations, id: \.self) { code in
             Label {
               Text(code).font(AppStyle.font(.body).weight(.medium))
             } icon: {
@@ -18,15 +18,15 @@ struct ManageCurrencies: View {
             }
           }
           .onDelete { offsets in
-            let removed = offsets.map { model.input.destinations[$0] }
+            let removed = offsets.map { model.input.manualDestinations[$0] }
             if model.updateInput({
-              $0.setDestinations($0.destinations.filter { !removed.contains($0) })
+              $0.setDestinations($0.manualDestinations.filter { !removed.contains($0) })
             }) {
               AppHaptics.play(.delete)
             }
           }
           .onMove { source, destination in
-            let list = model.input.destinations
+            let list = model.input.manualDestinations
             let moved = source.map { list[$0] }
             let anchor = list.dropFirst(destination).first { !moved.contains($0) }
             if model.updateInput({ $0.moveDestinations(moved, before: anchor) }) {
@@ -35,6 +35,16 @@ struct ManageCurrencies: View {
           }
         } footer: {
           Text(.Converter.reorderHint)
+        }
+        if model.input.usesLocalCurrency {
+          Section {
+            ForEach([WidgetSelection.localID], id: \.self) { _ in
+              Label(.Converter.localCurrency, systemImage: "location")
+            }
+            .onDelete { _ in
+              if model.updateInput({ $0.setUsesLocalCurrency(false) }) { AppHaptics.play(.delete) }
+            }
+          }
         }
       }
       .safeAreaInset(edge: .bottom) {

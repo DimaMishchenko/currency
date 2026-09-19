@@ -91,8 +91,7 @@ let project = Project(
       ],
       dependencies: [
         .package(product: "ExchangeRatesDynamic", type: .runtimeEmbedded),
-        .target(name: "CurrencySupport"),
-        .target(name: "CurrencySelectionUI")
+        .target(name: "CurrencySupport")
       ],
       metadata: .metadata(tags: ["tag:feature:local-currency-onboarding"])
     ),

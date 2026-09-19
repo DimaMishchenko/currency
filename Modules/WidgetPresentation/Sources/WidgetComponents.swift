@@ -41,6 +41,7 @@ struct WidgetFooter: View {
 
 struct LocalCurrencySetup: View {
   let status: WidgetLocationStatus
+  var compact = false
   private var message: LocalizedStringResource {
     switch status {
     case .denied:
@@ -64,23 +65,34 @@ struct LocalCurrencySetup: View {
   var body: some View {
     if let destination = URL(string: "currency://local-currency") {
       Link(destination: destination) {
-        VStack(alignment: .leading, spacing: AppStyle.Space.xxs) {
-          Image(systemName: "location")
-          Text(message).font(AppStyle.font(.caption2))
-          Text(
-            LocalizedStringResource(
-              "localOpenApp", defaultValue: "Open app", table: "WidgetPresentation",
-              bundle: .atURL(Bundle.module.bundleURL))
-          )
+        if compact {
+          Label {
+            Text(message)
+          } icon: {
+            Image(systemName: "location")
+          }
           .font(AppStyle.font(.caption2)).foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-        .padding(AppStyle.Space.xs)
-        .multilineTextAlignment(.leading)
-        .foregroundStyle(.primary)
-        .background {
-          OpaquePermissionBackground()
-            .clipShape(.rect(cornerRadius: AppStyle.Widget.keyRadius))
+          .lineLimit(2).minimumScaleFactor(0.7)
+          .frame(maxWidth: .infinity, alignment: .leading)
+        } else {
+          VStack(alignment: .leading, spacing: AppStyle.Space.xxs) {
+            Image(systemName: "location")
+            Text(message).font(AppStyle.font(.caption2))
+            Text(
+              LocalizedStringResource(
+                "localOpenApp", defaultValue: "Open app", table: "WidgetPresentation",
+                bundle: .atURL(Bundle.module.bundleURL))
+            )
+            .font(AppStyle.font(.caption2)).foregroundStyle(.secondary)
+          }
+          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+          .padding(AppStyle.Space.xs)
+          .multilineTextAlignment(.leading)
+          .foregroundStyle(.primary)
+          .background {
+            OpaquePermissionBackground()
+              .clipShape(.rect(cornerRadius: AppStyle.Widget.keyRadius))
+          }
         }
       }
     }
@@ -185,6 +197,27 @@ struct WidgetKeypad: View {
   }
 }
 
+/// Keeps the resolved Local indicator quiet and consistent across widget families.
+struct WidgetCurrencyIcon: View {
+  let code: String
+  let size: CGFloat
+  var isLocal = false
+
+  var body: some View {
+    CurrencyIcon(code, size: size)
+      .overlay(alignment: .bottomTrailing) {
+        if isLocal {
+          Image(systemName: "location.fill")
+            .font(.system(size: 5, weight: .medium))
+            .foregroundStyle(.secondary)
+            .offset(x: 3, y: 2)
+            .accessibilityLabel(.WidgetPresentation.localCurrencyChoice)
+            .allowsHitTesting(false)
+        }
+      }
+  }
+}
+
 struct CurrencyTile: View {
   @Environment(\.locale) private var locale
   let entry: SuiteEntry
@@ -198,7 +231,6 @@ struct CurrencyTile: View {
   private var displayCode: String { WidgetSelection.currency(code) }
   private var selected: Bool { code == entry.input.active }
   private var codeVisibility: CGFloat {
-    if WidgetSelection.isLocal(code) { return 1 }
     if previewDense, let previewSpread { return 1 - previewSpread }
     return showsCode ? 1 : 0
   }
@@ -212,9 +244,11 @@ struct CurrencyTile: View {
           stacked: previewSpread.map { 1 - $0 } ?? (stacked ? 1 : 0),
           codeVisibility: codeVisibility
         ) {
-          CurrencyIcon(
-            displayCode,
-            size: previewSpread.map { 16 + (previewDense ? 0 : 6) * $0 } ?? (compact ? 16 : 22))
+          WidgetCurrencyIcon(
+            code: displayCode,
+            size: previewSpread.map { 16 + (previewDense ? 0 : 6) * $0 } ?? (compact ? 16 : 22),
+            isLocal: WidgetSelection.isLocal(code)
+          )
           currencyCode.opacity(codeVisibility)
           amount.font(AppStyle.font(stacked && !compact ? .title : .title2, weight: .medium))
         }
@@ -259,14 +293,8 @@ struct CurrencyTile: View {
   }
 
   private var currencyCode: some View {
-    HStack(spacing: AppStyle.Space.xxs) {
-      Text(verbatim: displayCode)
-      if WidgetSelection.isLocal(code) {
-        Image(systemName: "location.fill")
-          .accessibilityLabel(.WidgetPresentation.localCurrencyChoice)
-      }
-    }
-    .font(AppStyle.font(.caption2, weight: .medium))
+    Text(verbatim: displayCode)
+      .font(AppStyle.font(.caption2, weight: .medium))
   }
 
   private var amount: some View {

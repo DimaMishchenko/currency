@@ -30,8 +30,7 @@ public struct CashView: View {
           Image(systemName: "location")
         } else {
           Text(target).font(AppStyle.font(.caption, weight: .medium))
-          if entry.spec.usesLocation { Image(systemName: "location.fill") }
-          CurrencyIcon(target, size: 22)
+          WidgetCurrencyIcon(code: target, size: 22, isLocal: entry.spec.usesLocation)
         }
       }
       if target == WidgetSelection.localID {
@@ -130,8 +129,8 @@ public struct AnchorView: View {
           Text(CurrencyDisplay.format(rule.factor, code: "BTC", locale: locale))
             .font(AppStyle.font(.largeTitle)).lineLimit(1).minimumScaleFactor(0.4)
           HStack(spacing: AppStyle.Space.xs) {
-            CurrencyIcon(target, size: 20); Text("≈ \(target)")
-            if entry.spec.usesLocation { Image(systemName: "location.fill") }
+            WidgetCurrencyIcon(code: target, size: 20, isLocal: entry.spec.usesLocation)
+            Text("≈ \(target)")
           }
           .foregroundStyle(.secondary)
         } else if let anchor = WidgetMath.anchor(rate: rate) {
@@ -158,9 +157,8 @@ public struct AnchorView: View {
   private func pocketRow(code: String, isLocal: Bool = false, amount: String) -> some View {
     VStack(alignment: .leading, spacing: 0) {
       HStack(spacing: AppStyle.Space.xs) {
-        CurrencyIcon(code, size: 16).frame(width: 20, height: 20)
+        WidgetCurrencyIcon(code: code, size: 16, isLocal: isLocal).frame(width: 20, height: 20)
         Text(code).font(AppStyle.font(.caption2)).foregroundStyle(.secondary)
-        if isLocal { Image(systemName: "location.fill") }
       }
       Text(amount).font(AppStyle.font(.title)).monospacedDigit()
         .frame(maxWidth: .infinity, alignment: .trailing)

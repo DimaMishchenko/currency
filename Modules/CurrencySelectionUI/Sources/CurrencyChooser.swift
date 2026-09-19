@@ -24,6 +24,10 @@ public struct CurrencyChooser: View {
   let allowsMultipleSelection: Bool
   let requiresAvailableRate: Bool
   let showsSelectedCategory: Bool
+  let showsLocalCurrency: Bool
+  let localCurrencyCode: String?
+  let localCurrencySelected: Bool
+  let setUpLocalCurrency: (() -> Void)?
   var choose: (String) -> Void
   @State private var search = ""
   @State private var category: CurrencyCategory
@@ -34,6 +38,9 @@ public struct CurrencyChooser: View {
     available: Set<String>, allowedCodes: Set<String>? = nil,
     title: LocalizedStringResource? = nil, allowsMultipleSelection: Bool = false,
     requiresAvailableRate: Bool = false, showsSelectedCategory: Bool = true,
+    showsLocalCurrency: Bool = false, localCurrencyCode: String? = nil,
+    localCurrencySelected: Bool = false,
+    setUpLocalCurrency: (() -> Void)? = nil,
     choose: @escaping (String) -> Void
   ) {
     self.purpose = purpose
@@ -46,6 +53,10 @@ public struct CurrencyChooser: View {
     self.allowsMultipleSelection = allowsMultipleSelection
     self.requiresAvailableRate = requiresAvailableRate
     self.showsSelectedCategory = showsSelectedCategory
+    self.showsLocalCurrency = showsLocalCurrency
+    self.localCurrencyCode = localCurrencyCode
+    self.localCurrencySelected = localCurrencySelected
+    self.setUpLocalCurrency = setUpLocalCurrency
     _category = State(
       initialValue: showsSelectedCategory && purpose == .source && !homeCurrencies.isEmpty
         ? .selected : .currencies)
@@ -101,6 +112,11 @@ public struct CurrencyChooser: View {
 
   private var currencyList: some View {
     List {
+      if showsLocalCurrency && localMatchesSearch {
+        Section(.CurrencySelection.location) {
+          localCurrencyRow
+        }
+      }
       ForEach(filteredCodes, id: \.self) { code in
         Button {
           AppHaptics.play(.selection)
@@ -136,7 +152,7 @@ public struct CurrencyChooser: View {
     }
     .scrollContentBackground(.hidden)
     .overlay {
-      if filteredCodes.isEmpty {
+      if filteredCodes.isEmpty && !(showsLocalCurrency && localMatchesSearch) {
         ContentUnavailableView {
           Label(.CurrencySelection.noResults, systemImage: "magnifyingglass")
         } description: {
@@ -146,6 +162,87 @@ public struct CurrencyChooser: View {
     }
     .listStyle(.plain)
     .clipped()
+  }
+
+  private var localCurrencyRow: some View {
+    Button {
+      AppHaptics.play(.selection)
+      if localCurrencyCode != nil {
+        choose(WidgetSelection.localID)
+      } else {
+        setUpLocalCurrency?()
+      }
+      dismiss()
+    } label: {
+      HStack(spacing: AppStyle.Space.large) {
+        ZStack(alignment: .bottomTrailing) {
+          if let localCurrencyCode {
+            CurrencyIcon(localCurrencyCode)
+          } else {
+            Image(systemName: "location.fill")
+              .font(AppStyle.font(.headline))
+              .frame(width: 28, height: 28)
+              .background(.quaternary, in: .circle)
+          }
+          if localCurrencyCode != nil {
+            Image(systemName: "location.fill")
+              .font(.system(size: 8, weight: .bold))
+              .foregroundStyle(Color(uiColor: .systemBackground))
+              .padding(3)
+              .background(.primary, in: .circle)
+              .offset(x: 4, y: 4)
+          }
+        }
+        VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
+          Text(localCurrencyCode ?? String(localized: .CurrencySelection.localCurrency))
+            .font(AppStyle.font(.headline))
+          Text(
+            localCurrencyCode.map {
+              String(
+                localized: .CurrencySelection.localCurrencyName(
+                  CurrencyDisplay.name($0, locale: locale)))
+            } ?? String(localized: .CurrencySelection.setUpLocation)
+          )
+          .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
+        }
+        Spacer()
+        if localCurrencySelected {
+          Image(systemName: "checkmark").foregroundStyle(.secondary)
+        } else if let localCurrencyCode,
+          requiresAvailableRate && !available.contains(localCurrencyCode)
+        {
+          Text(.CurrencySelection.unavailable).font(AppStyle.font(.caption2))
+            .foregroundStyle(.secondary)
+        } else if localCurrencyCode == nil {
+          Image(systemName: "chevron.right").font(AppStyle.font(.caption, weight: .semibold))
+            .foregroundStyle(.tertiary)
+        }
+      }
+      .padding(.vertical, AppStyle.Space.xs)
+    }
+    .foregroundStyle(.primary)
+    .disabled(
+      localCurrencyCode.map {
+        localCurrencySelected || (requiresAvailableRate && !available.contains($0))
+      } ?? (setUpLocalCurrency == nil)
+    )
+    .accessibilityIdentifier("currency.picker.local")
+    .accessibilityAddTraits(
+      localCurrencySelected ? .isSelected : []
+    )
+    .listRowBackground(Color.clear)
+  }
+
+  private var localMatchesSearch: Bool {
+    guard !search.isEmpty else { return true }
+    let content = [
+      String(localized: .CurrencySelection.localCurrency),
+      String(localized: .CurrencySelection.location),
+      localCurrencyCode ?? "",
+      localCurrencyCode.map { CurrencyDisplay.name($0, locale: locale) } ?? ""
+    ]
+    .joined(separator: " ")
+    return content.localizedCaseInsensitiveContains(search)
   }
 
   private var categories: [CurrencyCategory] {

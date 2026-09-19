@@ -21,7 +21,15 @@ import Testing
       String(localized: .WidgetOnboarding.guideExploreWidget("Calculator", "Large"))
         == "Explore Calculator, Large")
     #expect(String(localized: .LocalCurrency.localUseLocation) == "Use my location")
+    #expect(String(localized: .LocalCurrency.localAddToApp) == "Add to app")
+    #expect(
+      String(localized: .LocalCurrency.localReadyAppCurrency("CZK"))
+        == "Add Local to follow the currency around you. Currently CZK.")
     #expect(String(localized: .CurrencySelection.baseCurrency) == "Base currency")
+    #expect(String(localized: .CurrencySelection.localCurrency) == "Local currency")
+    #expect(
+      String(localized: .CurrencySelection.localCurrencyName("Czech Koruna"))
+        == "Local currency · Czech Koruna")
     #expect(String(localized: .WidgetPresentation.clear) == "Clear")
     #expect(String(localized: .Converter.sourceAccessibility("Euro")) == "Source currency, Euro")
     #expect(String(localized: .Details.unitConversion("BTC", "USD")) == "1 BTC in USD")

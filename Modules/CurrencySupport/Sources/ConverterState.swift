@@ -5,6 +5,13 @@ import Foundation
 public struct ConverterState: Codable, Sendable, Equatable {
   /// The user's ordered destination currencies.
   private var savedTargets: [String]? = nil
+  private var followsLocalCurrency: Bool? = nil
+  /// Whether the converter retains a dynamic Local selection.
+  public var usesLocalCurrency: Bool { followsLocalCurrency == true }
+  /// The permitted observation, resolved when the store loads input; never persisted as a selection.
+  public private(set) var localCurrencyCode: String?
+  /// Whether the observation needs a refresh.
+  public private(set) var localCurrencyIsStale = false
   /// The time of the most recent input edit.
   public private(set) var editedAt: Date? = nil
   /// The source amount as editable decimal text.
@@ -14,7 +21,7 @@ public struct ConverterState: Codable, Sendable, Equatable {
   /// The primary destination currency code.
   public private(set) var primaryDestination = "USD"
   private enum CodingKeys: String, CodingKey {
-    case savedTargets, editedAt, amount
+    case savedTargets, editedAt, amount, followsLocalCurrency
     case source = "from"
     case primaryDestination = "to"
   }
@@ -74,8 +81,8 @@ public struct ConverterState: Codable, Sendable, Equatable {
 }
 
 extension ConverterState {
-  /// The normalized ordered destination currencies.
-  public var destinations: [String] {
+  /// The explicitly chosen destination currencies, independent of Local.
+  public var manualDestinations: [String] {
     var seen = Set<String>()
     return (savedTargets ?? [primaryDestination, "GBP", "CZK", "JPY", "CHF", "BTC"])
       .filter {
@@ -83,10 +90,37 @@ extension ConverterState {
       }
   }
 
+  /// The display currencies, including a resolved Local selection without duplicate rows.
+  public var destinations: [String] {
+    WidgetSelection.normalize(
+      manualDestinations + (usesLocalCurrency ? [localCurrencyCode].compactMap { $0 } : [])
+    )
+    .filter { $0 != source }
+  }
+
+  /// Enables or removes the dynamic Local selection without changing explicit currencies.
+  public mutating func setUsesLocalCurrency(_ enabled: Bool) { followsLocalCurrency = enabled }
+
+  /// Resolves Local from shared permission and cache state.
+  public mutating func resolveLocalCurrency(
+    _ location: WidgetLocation?, status: WidgetLocationStatus
+  ) {
+    let resolved = WidgetResolvedSelection(
+      codes: [WidgetSelection.localID], location: location, status: status)
+    localCurrencyCode = resolved.localCode
+    localCurrencyIsStale = resolved.localIsStale
+  }
+
+  /// Removes a displayed currency, including its Local selection when applicable.
+  public mutating func removeDestination(_ code: String) {
+    if usesLocalCurrency && localCurrencyCode == code { setUsesLocalCurrency(false) }
+    setDestinations(manualDestinations.filter { $0 != code })
+  }
+
   /// Replaces and normalizes the destination currencies.
   public mutating func setDestinations(_ codes: [String]) {
     savedTargets = codes
-    savedTargets = destinations
+    savedTargets = manualDestinations
     primaryDestination = destinations.first ?? source
   }
 
@@ -99,7 +133,10 @@ extension ConverterState {
     var rounded = Decimal()
     NSDecimalRound(&rounded, &value, CurrencyDisplay.fractionDigits(code), .plain)
     let oldSource = source
-    let updated = destinations.map { $0 == code ? oldSource : $0 }
+    var updated = manualDestinations.map { $0 == code ? oldSource : $0 }
+    if usesLocalCurrency && localCurrencyCode == code && !manualDestinations.contains(code) {
+      updated.append(oldSource)
+    }
     source = code
     amount = NSDecimalNumber(decimal: rounded).stringValue
     setDestinations(updated)
@@ -110,7 +147,7 @@ extension ConverterState {
   public mutating func changeSource(_ code: String) {
     guard CurrencyCatalog.codes.contains(code), code != source else { return }
     let oldSource = source
-    let updated = destinations.map { $0 == code ? oldSource : $0 }
+    let updated = manualDestinations.map { $0 == code ? oldSource : $0 }
     source = code
     setDestinations(updated)
   }
@@ -120,8 +157,8 @@ extension ConverterState {
   /// Moves existing destinations before an anchor, preserving concurrently added currencies.
   /// A missing anchor places the moved currencies at the end.
   public mutating func moveDestinations(_ codes: [String], before anchor: String?) {
-    let moving = codes.filter { destinations.contains($0) }
-    var remaining = destinations.filter { !moving.contains($0) }
+    let moving = codes.filter { manualDestinations.contains($0) }
+    var remaining = manualDestinations.filter { !moving.contains($0) }
     let index = anchor.flatMap { remaining.firstIndex(of: $0) } ?? remaining.endIndex
     remaining.insert(contentsOf: moving, at: index)
     setDestinations(remaining)

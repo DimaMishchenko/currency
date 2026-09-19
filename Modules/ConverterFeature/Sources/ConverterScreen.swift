@@ -18,6 +18,7 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
   private let details: (String, String, RateSnapshot) -> Details
   private let widgets: () -> Widgets
   private let reconcileLocalCurrency: () -> Void
+  private let configureLocalCurrency: () -> Void
   private let replayOnboarding: (() throws -> Void)?
   private let inputRevision: Int
 
@@ -29,17 +30,20 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
   ///   - details: Builds details for a currency code, reference code, and current snapshot.
   ///   - widgets: Builds widget discovery and installation guidance.
   ///   - reconcileLocalCurrency: Reconciles saved permission when the app becomes active.
+  ///   - configureLocalCurrency: Presents the permission-based local-currency setup flow.
   ///   - replayOnboarding: Restarts app setup after its progress record has been saved.
   public init(
     store: CurrencyStore = .shared, service: RateService = RateService(), inputRevision: Int = 0,
     @ViewBuilder details: @escaping (String, String, RateSnapshot) -> Details,
     @ViewBuilder widgets: @escaping () -> Widgets,
     reconcileLocalCurrency: @escaping () -> Void,
+    configureLocalCurrency: @escaping () -> Void,
     replayOnboarding: (() throws -> Void)? = nil
   ) {
     self.details = details
     self.widgets = widgets
     self.reconcileLocalCurrency = reconcileLocalCurrency
+    self.configureLocalCurrency = configureLocalCurrency
     self.replayOnboarding = replayOnboarding
     self.inputRevision = inputRevision
     _model = State(initialValue: ConverterModel(store: store, service: service))
@@ -53,6 +57,7 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
   @State private var replayFailed = false
   @State private var showManage = false
   @State private var showsWidgets = false
+  @State private var opensLocalCurrencyAfterPicker = false
   @State private var detail: CurrencyDetailSelection?
   @Namespace private var currencyMotion
   @Namespace private var detailsMotion
@@ -112,19 +117,35 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
         ToolbarItem(placement: .topBarLeading) { sourcePicker }
         headerActions
       }
-      .sheet(item: $picker) { purpose in
+      .sheet(item: $picker, onDismiss: openRequestedLocalCurrency) { purpose in
+        let locationStatus = model.store.widgetLocationStatus()
+        let localCurrencyCode =
+          locationStatus == .available && model.store.widgetLocation()?.isFresh() == true
+          ? model.store.widgetLocation()?.currency : nil
         let chooser = CurrencyChooser(
           purpose: purpose,
           selected: purpose == .source
             ? [model.input.source] : model.input.destinations + [model.input.source],
           homeCurrencies: [model.input.source] + model.input.destinations,
-          available: Set(model.snapshot.quotes.keys)
+          available: Set(model.snapshot.quotes.keys),
+          showsLocalCurrency: purpose == .add,
+          localCurrencyCode: localCurrencyCode,
+          localCurrencySelected: model.input.usesLocalCurrency,
+          setUpLocalCurrency: {
+            opensLocalCurrencyAfterPicker = true
+          }
         ) { code in
           withAnimation(motion) {
             if purpose == .source {
               model.updateInput { $0.changeSource(code) }
             } else {
-              model.updateInput { $0.setDestinations($0.destinations + [code]) }
+              model.updateInput {
+                if code == WidgetSelection.localID {
+                  $0.setUsesLocalCurrency(true)
+                } else {
+                  $0.setDestinations($0.manualDestinations + [code])
+                }
+              }
             }
           }
         }
@@ -164,10 +185,16 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
         if empty { editingAmount = false }
       }
       .onOpenURL { _ in model.reloadInput() }
-      .onChange(of: inputRevision) { _, _ in model.reloadInput() }
+      .onChange(of: inputRevision) { _, _ in model.reloadInput(preservingEditor: true) }
     }
     .accessibilityAction(.escape) { dismissAmount() }
     .tint(accent)
+  }
+
+  private func openRequestedLocalCurrency() {
+    guard opensLocalCurrencyAfterPicker else { return }
+    opensLocalCurrencyAfterPicker = false
+    configureLocalCurrency()
   }
 
   @ViewBuilder
@@ -193,6 +220,23 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
                 Divider().padding(.leading, Self.destinationTextInset)
               }
               .id(code)
+            }
+            if model.input.usesLocalCurrency
+              && (model.input.localCurrencyCode == nil || model.input.localCurrencyIsStale)
+            {
+              Button(action: configureLocalCurrency) {
+                Label {
+                  Text(
+                    model.input.localCurrencyCode == nil
+                      ? .Converter.localUnavailable
+                      : .Converter.localLastKnown)
+                } icon: {
+                  Image(systemName: "location")
+                }
+                .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 12)
+              }
+              .buttonStyle(.plain)
             }
           }
           .scrollTargetLayout()
@@ -384,11 +428,26 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
             : AnyLayout(HStackLayout(spacing: AppStyle.Space.medium))
           rowLayout {
             VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
-              Text(code).font(AppStyle.font(.body, weight: .medium))
-                .matchedGeometryEffect(id: code, in: currencyMotion)
-              Text(CurrencyDisplay.name(code, locale: locale)).font(AppStyle.font(.caption))
-                .foregroundStyle(.secondary)
-                .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
+              HStack(spacing: AppStyle.Space.xs) {
+                Text(code).font(AppStyle.font(.body, weight: .medium))
+                  .matchedGeometryEffect(id: code, in: currencyMotion)
+                if model.input.usesLocalCurrency && model.input.localCurrencyCode == code {
+                  Image(systemName: "location.fill")
+                    .font(AppStyle.font(.caption2))
+                    .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
+                }
+              }
+              Text(
+                model.input.usesLocalCurrency && model.input.localCurrencyCode == code
+                  ? String(
+                    localized: .Converter.localCurrencyName(
+                      CurrencyDisplay.name(code, locale: locale)))
+                  : CurrencyDisplay.name(code, locale: locale)
+              )
+              .font(AppStyle.font(.caption))
+              .foregroundStyle(.secondary)
+              .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
             }
             if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: AppStyle.Space.medium) }
             Text(
@@ -432,7 +491,7 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
             model.snapshot, from: model.input.source, to: code, locale: locale))
         Button(.Converter.remove, systemImage: "minus.circle", role: .destructive) {
           withAnimation(motion) {
-            if model.updateInput({ $0.setDestinations($0.destinations.filter { $0 != code }) }) {
+            if model.updateInput({ $0.removeDestination(code) }) {
               AppHaptics.play(.delete)
             }
           }

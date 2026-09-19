@@ -13,6 +13,7 @@ struct CurrencyApp: App {
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @State private var appearance = AppAppearance()
   @State private var showsLocalCurrency = false
+  @State private var addsLocalCurrencyToApp = false
   @State private var inputRevision = 0
   private let store: CurrencyStore
 
@@ -36,17 +37,27 @@ struct CurrencyApp: App {
       }
       .onOpenURL { url in
         if url.scheme == "currency", url.host == "local-currency" {
+          addsLocalCurrencyToApp = false
           showsLocalCurrency = true
         }
       }
       .sheet(isPresented: $showsLocalCurrency, onDismiss: { inputRevision += 1 }) {
-        LocalCurrencyOnboardingScreen()
+        LocalCurrencyOnboardingScreen(
+          addsResolvedCurrencyToApp: addsLocalCurrencyToApp && !store.input().usesLocalCurrency)
       }
       .onChange(of: scenePhase, initial: true) { _, phase in
         AppHaptics.configure(active: phase == .active, reducedMotion: reduceMotion)
       }
       .onChange(of: reduceMotion) { _, value in
         AppHaptics.configure(active: scenePhase == .active, reducedMotion: value)
+      }
+      .task(id: scenePhase) {
+        guard scenePhase == .active else { return }
+        while !Task.isCancelled {
+          await LocalCurrencyController.foreground.refreshIfNeeded()
+          inputRevision += 1
+          do { try await Task.sleep(for: .seconds(300)) } catch { break }
+        }
       }
       .environment(appearance)
       .tint(appearance.accent)
@@ -60,6 +71,9 @@ struct CurrencyApp: App {
       WidgetOnboardingScreen { LocalCurrencyOnboardingScreen() }
     } reconcileLocalCurrency: {
       LocalCurrencyAuthorization.reconcile()
+    } configureLocalCurrency: {
+      addsLocalCurrencyToApp = true
+      showsLocalCurrency = true
     } replayOnboarding: {
       try replayOnboarding()
     }

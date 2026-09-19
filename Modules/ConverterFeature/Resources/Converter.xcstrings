@@ -1,6 +1,22 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "localCurrency": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Local currency" } } }
+    },
+    "localCurrencyName": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Local · %1$@" } } }
+    },
+    "localUnavailable": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Local currency unavailable · Tap to retry" } } }
+    },
+    "localLastKnown": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Last-known local currency · Tap to retry" } } }
+    },
     "yourCurrenciesHeading": {
       "extractionState": "manual",
       "comment": "Converter interface: yourCurrenciesHeading.",

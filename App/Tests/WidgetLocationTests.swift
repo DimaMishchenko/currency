@@ -31,7 +31,8 @@ struct WidgetLocationTests {
     #expect(!controller.isUpdating)
     #expect(store.widgetLocation() == nil)
     #expect(
-      String(localized: controller.status) == String(localized: .LocalCurrency.localPermissionDenied))
+      String(localized: controller.status)
+        == String(localized: .LocalCurrency.localPermissionDenied))
     #expect(manager.locationRequests == 0)
     #expect(manager.authorizationRequests == 0)
   }
@@ -122,7 +123,8 @@ struct WidgetLocationTests {
     controller.locationManagerDidChangeAuthorization(manager)
     #expect(!controller.isUpdating)
     #expect(
-      String(localized: controller.status) == String(localized: .LocalCurrency.localPermissionDenied))
+      String(localized: controller.status)
+        == String(localized: .LocalCurrency.localPermissionDenied))
   }
 
   @Test func restrictedPermissionAndLateCallbacksDoNotReportSuccessfulRemoval() {
@@ -141,5 +143,66 @@ struct WidgetLocationTests {
     controller.locationManager(manager, didFailWithError: CLError(.locationUnknown))
     #expect(!controller.isUpdating)
     #expect(String(localized: controller.status) == String(localized: .LocalCurrency.localRemoved))
+  }
+
+  @Test func automaticRefreshNeverPromptsAndSkipsFreshObservation() async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = CurrencyStore(directory: directory)
+    let manager = LocationManager()
+    let controller = WidgetLocationController(
+      manager: manager, store: store, servicesEnabled: { true })
+    await controller.refreshIfNeeded()
+    #expect(manager.authorizationRequests == 0)
+    #expect(manager.locationRequests == 0)
+    manager.permission = .authorizedWhenInUse
+    try store.saveWidgetLocation(WidgetLocation(country: "CZ", currency: "CZK"))
+    try store.saveWidgetLocationStatus(.available)
+    await controller.refreshIfNeeded()
+    #expect(manager.locationRequests == 0)
+  }
+
+  @Test func dailyRefreshTimesOutOnceAndThrottlesRetry() async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = CurrencyStore(directory: directory)
+    try store.saveWidgetLocation(
+      WidgetLocation(country: "CZ", currency: "CZK", updatedAt: .distantPast))
+    let manager = LocationManager()
+    manager.permission = .authorizedWhenInUse
+    let controller = WidgetLocationController(
+      manager: manager, store: store, timeoutDuration: .milliseconds(10), servicesEnabled: { true })
+    await controller.refreshIfNeeded()
+    #expect(manager.locationRequests == 1)
+    #expect(manager.authorizationRequests == 0)
+    #expect(store.widgetLocationStatus() == .failed)
+    #expect(store.widgetLocation()?.currency == "CZK")
+    await controller.refreshIfNeeded()
+    #expect(manager.locationRequests == 1)
+  }
+
+  @Test func olderControllerFailureCannotMarkNewerSuccessfulLookupFailed() async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = CurrencyStore(directory: directory)
+    let firstManager = LocationManager()
+    firstManager.permission = .authorizedWhenInUse
+    let secondManager = LocationManager()
+    secondManager.permission = .authorizedWhenInUse
+    let first = WidgetLocationController(
+      manager: firstManager, store: store, servicesEnabled: { true })
+    let second = WidgetLocationController(
+      manager: secondManager, store: store, servicesEnabled: { true }, countryLookup: { _ in "GB" })
+    first.update()
+    second.update()
+    second.locationManager(
+      secondManager, didUpdateLocations: [CLLocation(latitude: 51.5, longitude: -0.1)])
+    for _ in 0..<100 where second.isUpdating { try await Task.sleep(for: .milliseconds(2)) }
+    #expect(second.phase == .ready)
+    first.locationManager(firstManager, didFailWithError: CLError(.locationUnknown))
+    #expect(store.widgetLocation()?.currency == "GBP")
+    #expect(store.widgetLocationStatus() == .available)
+    first.cancel()
+    second.cancel()
   }
 }

@@ -461,10 +461,11 @@ struct BoardSettings: SuiteConfiguration {
       codes: WidgetSelection.board(
         base: list == .synchronized ? CurrencyStore.shared.input().source : base.id,
         targets: (list == .synchronized
-          ? WidgetSelection.appCurrencies(CurrencyStore.shared.input())
+          ? WidgetSelection.appConfiguration(CurrencyStore.shared.input())
           : (currencies?.map(\.id) ?? []))
       ),
-      amount: list == .synchronized ? CurrencyStore.shared.input().amount : amount)
+      amount: list == .synchronized ? CurrencyStore.shared.input().amount : amount,
+      location: location)
     spec.requiresCurrencySelection = list == .selected && (currencies?.isEmpty ?? true)
     return spec
   }

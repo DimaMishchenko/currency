@@ -1,32 +1,50 @@
 import CoreLocation
-import CurrencySupport
 import MapKit
 import Observation
 import WidgetKit
 
-/// Requests one coarse foreground location only after the user taps Update.
+/// One-shot coarse location shared by app setup, foreground refresh, and widget timelines.
 @MainActor @Observable
-final class WidgetLocationController: NSObject, @preconcurrency CLLocationManagerDelegate {
-  enum Phase: Equatable { case introduction, requestingPermission, locating, ready, unavailable }
-  var phase: Phase = .introduction
-  var resolved: CurrencySupport.WidgetLocation?
+public final class LocalCurrencyController: NSObject, @preconcurrency CLLocationManagerDelegate {
+  /// Retains in-flight foreground refreshes across SwiftUI view updates.
+  public static let foreground = LocalCurrencyController()
+  private static let widget = LocalCurrencyController(
+    timeoutDuration: .seconds(5), reloadWidgets: {})
+  /// The current setup or refresh phase.
+  public enum Phase: Equatable {
+    case introduction, requestingPermission, locating, ready, unavailable
+  }
+  /// Resource-independent result, localized by the feature presenting it.
+  public enum Message: Equatable {
+    case initial, finding, saved, removed, permissionDenied, permissionRestricted
+    case servicesDisabled, unavailable, unsupported, removeFailed, updateFailed
+  }
+  /// The current phase.
+  public var phase: Phase = .introduction
+  /// A successfully resolved observation.
+  public var resolved: WidgetLocation?
   /// A broad map region exists only after a fresh, authorized lookup succeeds.
-  var region: MKCoordinateRegion?
-  var servicesDisabled = false
+  public var region: MKCoordinateRegion?
+  /// Whether system location services are disabled.
+  public var servicesDisabled = false
   private let servicesEnabled: (() -> Bool)?
   private var availability: Task<Void, Never>?
   private var mayRequestLocation = false
   private let countryLookup: (@MainActor (CLLocation) async throws -> String?)?
   private let reloadWidgets: () -> Void
-  var status: LocalizedStringResource = .LocalCurrency.localInitial
-  var isUpdating = false
+  /// The current result or recovery reason.
+  public var message: Message = .initial
+  /// Whether permission or location work is in flight.
+  public var isUpdating = false
   private let manager: CLLocationManager
   private let store: CurrencyStore
   private var request: MKReverseGeocodingRequest?
   private var timeout: Task<Void, Never>?
   private let timeoutDuration: Duration
+  private var generation: UUID?
 
-  init(
+  /// Creates a controller without requesting permission or location.
+  public init(
     manager: CLLocationManager = CLLocationManager(), store: CurrencyStore = .shared,
     timeoutDuration: Duration = .seconds(20),
     servicesEnabled: (() -> Bool)? = nil,
@@ -45,7 +63,7 @@ final class WidgetLocationController: NSObject, @preconcurrency CLLocationManage
     if store.widgetLocationStatus() == .available,
       let location = store.widgetLocation(), location.isFresh()
     {
-      status = .LocalCurrency.localSaved(location.currency, location.country)
+      message = .saved
       if manager.authorizationStatus == .authorizedWhenInUse
         || manager.authorizationStatus == .authorizedAlways
       {
@@ -55,38 +73,72 @@ final class WidgetLocationController: NSObject, @preconcurrency CLLocationManage
     }
   }
 
-  var permissionRestricted: Bool { manager.authorizationStatus == .restricted }
-  var permissionAuthorized: Bool {
+  /// Whether system policy restricts location access.
+  public var permissionRestricted: Bool { manager.authorizationStatus == .restricted }
+  /// Whether foreground location access has been granted.
+  public var permissionAuthorized: Bool {
     manager.authorizationStatus == .authorizedWhenInUse
       || manager.authorizationStatus == .authorizedAlways
   }
-  var approximate: Bool { manager.accuracyAuthorization == .reducedAccuracy }
-  var permissionDenied: Bool { manager.authorizationStatus == .denied }
+  /// Whether the system supplies reduced-accuracy coordinates.
+  public var approximate: Bool { manager.accuracyAuthorization == .reducedAccuracy }
+  /// Whether the user denied location access.
+  public var permissionDenied: Bool { manager.authorizationStatus == .denied }
 
-  func update() {
+  /// Starts an explicit lookup, requesting foreground permission only if needed.
+  public func update(requestPermission: Bool = true) {
     guard !isUpdating else { return }
+    guard requestPermission || permissionAuthorized else {
+      reconcileAuthorization()
+      return
+    }
     isUpdating = true
     mayRequestLocation = false
     phase = manager.authorizationStatus == .notDetermined ? .requestingPermission : .locating
-    status = .LocalCurrency.localFinding
+    message = .finding
     checkServices { [weak self] enabled in
       guard let self, self.isUpdating else { return }
       self.servicesDisabled = !enabled
       guard enabled else {
         self.isUpdating = false
         self.phase = .unavailable
-        self.status = .LocalCurrency.localServicesDisabled
+        self.message = .servicesDisabled
         return
       }
       self.mayRequestLocation = true
       self.region = nil
       self.resolved = nil
       if self.manager.authorizationStatus == .notDetermined {
-        self.manager.requestWhenInUseAuthorization()
+        if requestPermission {
+          self.manager.requestWhenInUseAuthorization()
+        } else {
+          self.cancel(); self.reconcileAuthorization()
+        }
       } else {
         self.requestIfAuthorized()
       }
     }
+  }
+
+  /// Refreshes at most daily after success, with hourly retries after failure. Never prompts.
+  public func refreshIfNeeded(now: Date = .now) async {
+    guard !Task.isCancelled else { return }
+    reconcileAuthorization()
+    guard permissionAuthorized, store.widgetLocationStatus() != .removed else { return }
+    if !isUpdating {
+      guard (try? store.claimLocalCurrencyRefresh(now: now)) == true else { return }
+      update(requestPermission: false)
+    }
+    while isUpdating {
+      do { try await Task.sleep(for: .milliseconds(100)) } catch { cancel(); return }
+    }
+  }
+
+  /// Refreshes an eligible widget without requesting permission or altering app-only denial state.
+  public static func refreshForWidget() async {
+    let eligibility = CLLocationManager()
+    guard eligibility.isAuthorizedForWidgetUpdates else { return }
+    await widget.refreshIfNeeded()
   }
 
   /// Service availability may involve IPC; keep that query off the UI thread.
@@ -100,8 +152,9 @@ final class WidgetLocationController: NSObject, @preconcurrency CLLocationManage
     }
   }
 
-  func clear(
-    status message: LocalizedStringResource = .LocalCurrency.localRemoved,
+  /// Clears the observation and cancels outstanding callbacks.
+  public func clear(
+    status message: Message = .removed,
     outcome: WidgetLocationStatus = .removed
   ) {
     availability?.cancel()
@@ -117,14 +170,14 @@ final class WidgetLocationController: NSObject, @preconcurrency CLLocationManage
     region = nil
     phase = outcome == .denied || outcome == .restricted ? .unavailable : .introduction
     do {
-      try store.saveWidgetLocationStatus(outcome)
-      try store.saveWidgetLocation(nil)
-      status = message
+      try store.clearLocalCurrency(outcome: outcome)
+      self.message = message
       reloadWidgets()
-    } catch { status = .LocalCurrency.localRemoveFailed }
+    } catch { self.message = .removeFailed }
   }
 
-  func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+  /// Reconciles permission callbacks and resumes an explicitly started request.
+  public func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
     if manager.authorizationStatus == .denied || manager.authorizationStatus == .restricted {
       clear(
         status: permissionStatus,
@@ -143,12 +196,18 @@ final class WidgetLocationController: NSObject, @preconcurrency CLLocationManage
     switch manager.authorizationStatus {
     case .authorizedAlways, .authorizedWhenInUse:
       guard timeout == nil else { return }
+      do { generation = try store.beginLocalCurrencyLookup() } catch {
+        isUpdating = false
+        phase = .unavailable
+        message = .updateFailed
+        return
+      }
       phase = .locating
       let duration = timeoutDuration
       timeout = Task { [weak self] in
         try? await Task.sleep(for: duration)
         guard !Task.isCancelled else { return }
-        self?.finish(.LocalCurrency.localUnavailable)
+        self?.finish(.unavailable)
       }
       manager.requestLocation()
     case .denied, .restricted:
@@ -159,18 +218,21 @@ final class WidgetLocationController: NSObject, @preconcurrency CLLocationManage
     }
   }
 
-  private var permissionStatus: LocalizedStringResource {
+  private var permissionStatus: Message {
     manager.authorizationStatus == .restricted
-      ? .LocalCurrency.localPermissionRestricted : .LocalCurrency.localPermissionDenied
+      ? .permissionRestricted : .permissionDenied
   }
 
-  func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+  /// Validates a current coordinate and resolves only its country and currency.
+  public func locationManager(
+    _ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]
+  ) {
     guard isUpdating, mayRequestLocation, permissionAuthorized, request == nil else { return }
     guard let location = locations.last, location.horizontalAccuracy >= 0,
       abs(location.timestamp.timeIntervalSinceNow) < 300,
       let request = MKReverseGeocodingRequest(location: location)
     else {
-      finish(.LocalCurrency.localUnavailable)
+      finish(.unavailable)
       return
     }
     self.request = request
@@ -193,12 +255,17 @@ final class WidgetLocationController: NSObject, @preconcurrency CLLocationManage
         guard let country,
           let currency = WidgetLocation.currency(for: country)
         else {
-          finish(.LocalCurrency.localUnsupported)
+          finish(.unsupported)
           return
         }
-        try store.saveWidgetLocation(
-          WidgetLocation(country: country, currency: currency))
-        try store.saveWidgetLocationStatus(.available)
+        guard let generation,
+          try store.completeLocalCurrencyLookup(
+            generation, location: WidgetLocation(country: country, currency: currency))
+        else {
+          cancel()
+          adoptSavedObservation()
+          return
+        }
         resolved = store.widgetLocation()
         // Deliberately omit a location dot and exact coordinates from the presentation.
         region = MKCoordinateRegion(
@@ -207,20 +274,21 @@ final class WidgetLocationController: NSObject, @preconcurrency CLLocationManage
             longitude: location.coordinate.longitude.rounded()),
           span: MKCoordinateSpan(latitudeDelta: 8, longitudeDelta: 8))
         reloadWidgets()
-        finish(.LocalCurrency.localSaved(currency, country), succeeded: true)
+        finish(.saved, succeeded: true)
       } catch {
         guard isUpdating, self.request === request else { return }
-        finish(.LocalCurrency.localUnavailable)
+        finish(.unavailable)
       }
     }
   }
 
-  func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+  /// Ends a failed lookup while preserving any usable last-known observation.
+  public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
     guard isUpdating else { return }
-    finish(.LocalCurrency.localUnavailable)
+    finish(.unavailable)
   }
 
-  private func finish(_ message: LocalizedStringResource, succeeded: Bool = false) {
+  private func finish(_ message: Message, succeeded: Bool = false) {
     timeout?.cancel()
     timeout = nil
     availability?.cancel()
@@ -230,32 +298,47 @@ final class WidgetLocationController: NSObject, @preconcurrency CLLocationManage
     manager.stopUpdatingLocation()
     isUpdating = false
     mayRequestLocation = false
-    status = message
+    self.message = message
     phase = succeeded ? .ready : .unavailable
     if !succeeded {
-      do { try store.saveWidgetLocationStatus(.failed) } catch {
-        status = .LocalCurrency.localUpdateFailed
+      do {
+        if let generation, try !store.completeLocalCurrencyLookup(generation, location: nil) {
+          adoptSavedObservation()
+        }
+      } catch {
+        self.message = .updateFailed
       }
       reloadWidgets()
     }
   }
 
+  private func adoptSavedObservation() {
+    guard permissionAuthorized, store.widgetLocationStatus() == .available,
+      let saved = store.widgetLocation(), saved.isFresh()
+    else { return }
+    if saved != resolved { region = nil }
+    resolved = saved
+    phase = .ready
+    message = .saved
+  }
+
   /// Dismissing the flow cancels pending work; a late geocoder cannot save a result.
-  func cancel() {
+  public func cancel() {
     availability?.cancel(); availability = nil
     request?.cancel(); request = nil
     timeout?.cancel(); timeout = nil
     manager.stopUpdatingLocation()
     if isUpdating {
       phase = .introduction
-      status = .LocalCurrency.localInitial
+      message = .initial
     }
     isUpdating = false
     mayRequestLocation = false
+    generation = nil
   }
 
   /// Reconcile permission on foreground return without starting a location request.
-  func reconcileAuthorization() {
+  public func reconcileAuthorization() {
     if manager.authorizationStatus == .denied || manager.authorizationStatus == .restricted {
       clear(
         status: permissionStatus,
@@ -263,22 +346,29 @@ final class WidgetLocationController: NSObject, @preconcurrency CLLocationManage
     } else if manager.authorizationStatus == .notDetermined {
       if isUpdating && timeout == nil && request == nil { return }
       if store.widgetLocationStatus() != .removed {
-        clear(status: .LocalCurrency.localInitial, outcome: .notDetermined)
+        clear(status: .initial, outcome: .notDetermined)
       }
     } else if [.denied, .restricted].contains(store.widgetLocationStatus()) {
       try? store.saveWidgetLocationStatus(.notDetermined)
-      status = .LocalCurrency.localInitial
+      message = .initial
       phase = .introduction
       reloadWidgets()
     }
     guard !isUpdating else { return }
+    adoptSavedObservation()
     checkServices { [weak self] enabled in
       guard let self, !self.isUpdating else { return }
       let wasDisabled = self.servicesDisabled
       self.servicesDisabled = !enabled
+      if !enabled {
+        self.phase = .unavailable
+        self.message = .servicesDisabled
+        self.resolved = nil
+        self.region = nil
+      }
       if wasDisabled && enabled && self.permissionAuthorized {
         self.phase = .introduction
-        self.status = .LocalCurrency.localInitial
+        self.message = .initial
       }
     }
   }

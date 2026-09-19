@@ -30,7 +30,7 @@
 	<key>NSLocationDefaultAccuracyReduced</key>
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Find your country’s currency for widgets when you choose Use my location. Only the country and currency are saved.</string>
+	<string>Find your country’s currency and refresh it daily while the app or widgets are in use. Only the country and currency are saved.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

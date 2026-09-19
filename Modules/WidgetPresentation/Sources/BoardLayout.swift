@@ -15,7 +15,14 @@ public struct BoardLayout: View {
 
   private var limit: Int { family == .systemSmall ? 4 : family == .systemMedium ? 6 : 12 }
 
-  private var targets: [String] { Array(entry.spec.codes.prefix(limit)) }
+  private var targets: [String] {
+    var visible = Array(entry.spec.codes.prefix(limit))
+    if let local = entry.spec.codes.first(where: WidgetSelection.isLocal), !visible.contains(local)
+    {
+      visible[visible.count - 1] = local
+    }
+    return visible
+  }
 
   /// Currency rows, overflow information, and local-currency status.
   public var body: some View {
@@ -27,12 +34,17 @@ public struct BoardLayout: View {
             count: family == .systemSmall ? 1 : 2),
           spacing: family == .systemLarge ? AppStyle.Space.large : AppStyle.Space.small
         ) {
-          ForEach(targets, id: \.self) { code in
-            row(
-              code: code,
-              amount: CurrencyDisplay.format(
-                entry.snapshot.convert(amount, from: base, to: code), code: code, locale: locale),
-              primary: code == base)
+          ForEach(targets, id: \.self) { selection in
+            let code = WidgetSelection.currency(selection)
+            if code == WidgetSelection.localID {
+              LocalCurrencySetup(status: entry.spec.locationStatus, compact: true)
+            } else {
+              row(
+                code: code,
+                amount: CurrencyDisplay.format(
+                  entry.snapshot.convert(amount, from: base, to: code), code: code, locale: locale),
+                primary: selection == base, local: WidgetSelection.isLocal(selection))
+            }
           }
         }
         Spacer(minLength: 0)
@@ -56,9 +68,11 @@ public struct BoardLayout: View {
     .modifier(WidgetSurface())
   }
 
-  private func row(code: String, amount: String, primary: Bool = false) -> some View {
+  private func row(
+    code: String, amount: String, primary: Bool = false, local: Bool = false
+  ) -> some View {
     HStack(spacing: AppStyle.Space.xs) {
-      CurrencyIcon(code, size: 14)
+      WidgetCurrencyIcon(code: code, size: 14, isLocal: local)
         .frame(width: 20, height: 20)
       Text(code).font(AppStyle.font(.caption2)).bold(primary)
       Spacer(minLength: 0)

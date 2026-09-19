@@ -48,14 +48,14 @@
         }
       }
     },
-    "localChooseManually": {
+    "localAddToApp": {
       "extractionState": "manual",
-      "comment": "Widget onboarding: localChooseManually.",
+      "comment": "Adds a successfully location-resolved currency to the main converter.",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choose a currency manually"
+            "value": "Add to app"
           }
         }
       }
@@ -115,7 +115,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tap Update to set up local currency. Last-known currency remains available after authorized lookup failures."
+            "value": "Allow location to find your local currency."
           }
         }
       }
@@ -127,7 +127,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Find the currency around you,\nready for your widget."
+            "value": "Find the currency around you,\nready for the app and widgets."
           }
         }
       }
@@ -140,42 +140,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Feel at home,\nanywhere."
-          }
-        }
-      }
-    },
-    "localManualInstructions": {
-      "extractionState": "manual",
-      "comment": "Widget onboarding: localManualInstructions.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Add this currency to your app list. For a Custom widget, choose it directly in Edit Widget instead of Local currency."
-          }
-        }
-      }
-    },
-    "localManualSaveFailed": {
-      "extractionState": "manual",
-      "comment": "Widget onboarding: localManualSaveFailed.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couldn’t save. Please try again."
-          }
-        }
-      }
-    },
-    "localManualSaved": {
-      "extractionState": "manual",
-      "comment": "Widget onboarding: localManualSaved.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Added to your app currencies. Default widgets follow this list. For a Custom widget, choose this currency in Edit Widget."
           }
         }
       }
@@ -226,18 +190,6 @@
         }
       }
     },
-    "localPrivacyDetail": {
-      "extractionState": "manual",
-      "comment": "Widget onboarding: localPrivacyDetail.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Only the country and currency are saved."
-          }
-        }
-      }
-    },
     "localPrivacySummary": {
       "extractionState": "manual",
       "comment": "Widget onboarding: localPrivacySummary.",
@@ -245,7 +197,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Approximate location. Only when you ask."
+            "value": "Approximate location. Country and currency only."
           }
         }
       }
@@ -257,7 +209,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your currency.\nYour choice."
+            "value": "Location\nunavailable."
           }
         }
       }
@@ -293,7 +245,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Local currency removed. Widgets use your selected comparison."
+            "value": "Local currency removed."
           }
         }
       }
@@ -329,7 +281,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Location Services are off. You can enable them in Settings, or choose a currency manually."
+            "value": "Location Services are off. Enable them in Settings to find your local currency."
           }
         }
       }
@@ -341,7 +293,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Location unavailable. Widgets use your selected comparison."
+            "value": "Location is unavailable. Try again when you have a connection or a clearer signal."
           }
         }
       }
@@ -353,19 +305,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "No supported local currency found. Your selected comparison is used."
-          }
-        }
-      }
-    },
-    "localUpdateAction": {
-      "extractionState": "manual",
-      "comment": "Widget onboarding: localUpdateAction.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Update location"
+            "value": "No supported currency was found for this location."
           }
         }
       }
@@ -382,14 +322,14 @@
         }
       }
     },
-    "localUseInApp": {
+    "localSaveFailed": {
       "extractionState": "manual",
-      "comment": "Widget onboarding: localUseInApp.",
+      "comment": "Shown when adding the successfully resolved local currency to the app fails.",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Use in app"
+            "value": "Couldn’t add this currency. Please try again."
           }
         }
       }
@@ -424,43 +364,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Widgets set to Local will use %1$@."
+            "value": "Your local currency is %1$@. It refreshes daily when the app or widgets are in use."
           }
         }
       }
     },
-    "localChangeAction": {
+    "localReadyAppCurrency": {
       "extractionState": "manual",
-      "comment": "Local currency onboarding action or status.",
+      "comment": "A location-resolved currency is ready to be added to the main converter.",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Change local currency"
-          }
-        }
-      }
-    },
-    "localClearAction": {
-      "extractionState": "manual",
-      "comment": "Local currency onboarding action or status.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Clear local currency"
-          }
-        }
-      }
-    },
-    "localManualPrivacy": {
-      "extractionState": "manual",
-      "comment": "Local currency onboarding action or status.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No location needed for this choice."
+            "value": "Add Local to follow the currency around you. Currently %1$@."
           }
         }
       }
