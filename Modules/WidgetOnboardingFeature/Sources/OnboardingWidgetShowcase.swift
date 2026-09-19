@@ -138,7 +138,11 @@ public struct OnboardingWidgetShowcase: View {
         Button {
           withAnimation(reduceMotion ? nil : .smooth(duration: 0.3)) { page = kind }
         } label: {
-          Circle().fill(.primary.opacity(selected == kind ? 0.8 : 0.16))
+          Circle()
+            .fill(
+              selected == kind
+                ? AnyShapeStyle(.tint) : AnyShapeStyle(Color.primary.opacity(0.16))
+            )
             .frame(width: 6, height: 6).frame(width: 44, height: 44)
             .contentShape(.rect)
         }

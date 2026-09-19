@@ -104,7 +104,7 @@ public struct CurrencyChooser: View {
           Button(.CurrencySelection.close, systemImage: "xmark") {
             AppHaptics.play(.action); dismiss()
           }
-          .labelStyle(.iconOnly)
+          .labelStyle(.iconOnly).tint(nil)
         }
       }
     }
@@ -132,7 +132,7 @@ public struct CurrencyChooser: View {
             }
             Spacer()
             if selected.contains(code) {
-              Image(systemName: "checkmark").foregroundStyle(.secondary)
+              Image(systemName: "checkmark").foregroundStyle(.tint)
             } else if !available.contains(code) {
               Text(.CurrencySelection.unavailable).font(AppStyle.font(.caption2))
                 .foregroundStyle(.secondary)
@@ -140,7 +140,7 @@ public struct CurrencyChooser: View {
           }
           .padding(.vertical, AppStyle.Space.xs)
         }
-        .foregroundStyle(.primary)
+        .foregroundStyle(Color.primary)
         .disabled(
           (selected.contains(code) && !allowsMultipleSelection)
             || (requiresAvailableRate && !available.contains(code) && !selected.contains(code))
@@ -189,7 +189,7 @@ public struct CurrencyChooser: View {
               .font(.system(size: 8, weight: .bold))
               .foregroundStyle(Color(uiColor: .systemBackground))
               .padding(3)
-              .background(.primary, in: .circle)
+              .background(Color.primary, in: .circle)
               .offset(x: 4, y: 4)
           }
         }
@@ -207,7 +207,7 @@ public struct CurrencyChooser: View {
         }
         Spacer()
         if localCurrencySelected {
-          Image(systemName: "checkmark").foregroundStyle(.secondary)
+          Image(systemName: "checkmark").foregroundStyle(.tint)
         } else if let localCurrencyCode,
           requiresAvailableRate && !available.contains(localCurrencyCode)
         {
@@ -220,7 +220,7 @@ public struct CurrencyChooser: View {
       }
       .padding(.vertical, AppStyle.Space.xs)
     }
-    .foregroundStyle(.primary)
+    .foregroundStyle(Color.primary)
     .disabled(
       localCurrencyCode.map {
         localCurrencySelected || (requiresAvailableRate && !available.contains($0))

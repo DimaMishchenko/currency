@@ -60,7 +60,7 @@ struct ManageCurrencies: View {
           Button(.Converter.close, systemImage: "xmark") {
             AppHaptics.play(.action); dismiss()
           }
-          .labelStyle(.iconOnly)
+          .labelStyle(.iconOnly).tint(nil)
         }
       }
     }

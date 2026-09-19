@@ -168,7 +168,11 @@ struct WidgetTutorial: View {
           VStack(spacing: 24) {
             HStack(spacing: 4) {
               ForEach(steps.indices, id: \.self) { index in
-                Capsule().fill(index <= step ? Color.primary : Color.primary.opacity(0.12))
+                Capsule()
+                  .fill(
+                    index <= step
+                      ? AnyShapeStyle(.tint) : AnyShapeStyle(Color.primary.opacity(0.12))
+                  )
                   .frame(height: 3)
               }
             }
@@ -232,18 +236,19 @@ struct WidgetTutorial: View {
             Button(.WidgetOnboarding.guideBack, systemImage: "chevron.backward") {
               move(to: step - 1)
             }
-            .labelStyle(.iconOnly)
+            .labelStyle(.iconOnly).tint(nil)
             .accessibilityIdentifier("onboarding.guide.back")
           }
         }
       } else {
         ToolbarItem(placement: .topBarTrailing) {
           Button(.WidgetOnboarding.close, systemImage: "xmark") { finish() }.labelStyle(.iconOnly)
+            .tint(nil)
         }
       }
       ToolbarItemGroup(placement: .keyboard) {
         Spacer()
-        Button(.WidgetOnboarding.done) { amountFocused = false }
+        Button(.WidgetOnboarding.done) { amountFocused = false }.tint(nil)
       }
     }
     .sheet(item: $currencyPicker) { purpose in
@@ -305,11 +310,10 @@ struct WidgetTutorial: View {
           ? String(localized: .WidgetOnboarding.guideGotIt)
           : String(localized: .WidgetOnboarding.guideNext)
       )
-      .font(AppStyle.font(.headline))
+      .font(AppStyle.font(.headline)).modifier(AppAccentLabel())
       .frame(maxWidth: .infinity, minHeight: continuation ? 32 : nil)
       .padding(.vertical, continuation ? 0 : 8)
     }
-    .foregroundStyle(Color(uiColor: .systemBackground))
     .buttonStyle(.borderedProminent).controlSize(.large)
     .accessibilityIdentifier("onboarding.guide.next")
   }

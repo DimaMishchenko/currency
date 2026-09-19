@@ -204,7 +204,7 @@ struct OnboardingScreen<Widgets: View>: View {
           settleTransition()
           navigate { model.back() }
         }
-        .labelStyle(.iconOnly)
+        .labelStyle(.iconOnly).tint(nil)
         .accessibilityIdentifier("onboarding.back")
       }
     }
@@ -214,7 +214,7 @@ struct OnboardingScreen<Widgets: View>: View {
           settleTransition()
           search = model.step == .baseCurrency ? .base : .destinations
         }
-        .labelStyle(.iconOnly)
+        .labelStyle(.iconOnly).tint(nil)
         .matchedTransitionSource(id: "search", in: searchMotion)
         .accessibilityIdentifier(
           model.step == .baseCurrency ? "onboarding.baseSearch" : "onboarding.search")
@@ -349,7 +349,7 @@ struct OnboardingScreen<Widgets: View>: View {
             Text(model.draft.source).font(AppStyle.font(.title2, weight: .semibold))
           }
         }
-        .foregroundStyle(.primary)
+        .foregroundStyle(Color.primary)
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("onboarding.baseContext")
       }
@@ -393,7 +393,7 @@ struct OnboardingScreen<Widgets: View>: View {
             } label: {
               HStack(spacing: 12) {
                 CurrencyIcon(code, size: 28)
-                Text(code).font(AppStyle.font(.headline))
+                Text(code).font(AppStyle.font(.headline)).foregroundStyle(Color.primary)
                 Spacer(minLength: 0)
                 if model.draft.destinations.contains(code) {
                   OnboardingSelectionMark()
@@ -481,6 +481,7 @@ struct OnboardingScreen<Widgets: View>: View {
           ZStack {
             ForEach([leavingStep, displayedStep].compactMap { $0 }, id: \.self) { step in
               Text(actionTitle(for: step)).font(AppStyle.font(.headline))
+                .modifier(AppAccentLabel())
                 .opacity(step == displayedStep ? arrival : 1 - departure)
                 .accessibilityHidden(step != displayedStep)
             }
@@ -488,10 +489,6 @@ struct OnboardingScreen<Widgets: View>: View {
           .frame(maxWidth: .infinity, minHeight: 32)
         }
         .buttonStyle(.borderedProminent).controlSize(.large).buttonBorderShape(.capsule)
-        .foregroundStyle(
-          actionDisabled
-            ? Color(uiColor: .secondaryLabel) : Color(uiColor: .systemBackground)
-        )
         .disabled(actionDisabled)
         .allowsHitTesting(!navigating)
         .opacity(model.step == .welcome && model.phase == .opening ? 0 : 1)

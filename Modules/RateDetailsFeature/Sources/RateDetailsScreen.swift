@@ -8,7 +8,6 @@ public struct RateDetailsScreen: View {
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(\.locale) private var locale
-  @Environment(AppAppearance.self) private var appearance
   @ScaledMetric(relativeTo: .largeTitle) private var amountSize = 48
   @ScaledMetric(relativeTo: .caption2) private var axisWidth = 52
   private let history: HistoryService
@@ -139,7 +138,7 @@ public struct RateDetailsScreen: View {
           Button(.Details.close, systemImage: "xmark") {
             AppHaptics.play(.action); dismiss()
           }
-          .labelStyle(.iconOnly)
+          .labelStyle(.iconOnly).tint(nil)
         }
       }
       .onChange(of: range) { _, _ in AppHaptics.play(.selection) }
@@ -229,7 +228,7 @@ public struct RateDetailsScreen: View {
         x: .value(String(localized: .Details.chartDate), point.date),
         y: .value(quote, point.value)
       )
-      .foregroundStyle(appearance.accent).opacity(0)
+      .opacity(0)
       if selectedDate != nil, selected?.id == point.id {
         RuleMark(x: .value(String(localized: .Details.chartDate), point.date))
           .foregroundStyle(.secondary.opacity(0.3))
@@ -237,7 +236,7 @@ public struct RateDetailsScreen: View {
           x: .value(String(localized: .Details.chartDate), point.date),
           y: .value(quote, point.value)
         )
-        .foregroundStyle(appearance.accent)
+        .foregroundStyle(.tint)
       }
     }
     .chartYScale(domain: domain)
@@ -278,7 +277,7 @@ public struct RateDetailsScreen: View {
               }
             }
           }
-          .stroke(appearance.accent, style: StrokeStyle(lineWidth: 2, lineJoin: .round))
+          .stroke(.tint, style: StrokeStyle(lineWidth: 2, lineJoin: .round))
           .frame(width: plot.width, height: plot.height)
           .mask(alignment: .leading) {
             Rectangle().scaleEffect(x: reduceMotion ? 1 : reveal, y: 1, anchor: .leading)

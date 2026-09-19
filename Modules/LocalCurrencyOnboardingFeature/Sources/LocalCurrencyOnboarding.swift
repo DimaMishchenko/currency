@@ -67,7 +67,7 @@ public struct LocalCurrencyOnboardingScreen: View {
           Button(.LocalCurrency.close, systemImage: "xmark") {
             AppHaptics.play(.action); dismiss()
           }
-          .labelStyle(.iconOnly)
+          .labelStyle(.iconOnly).tint(nil)
         }
       }
       .onChange(of: scenePhase) { _, phase in
@@ -197,9 +197,9 @@ public struct LocalCurrencyOnboardingScreen: View {
       AppHaptics.play(.action)
       action()
     } label: {
-      Text(title).font(AppStyle.font(.headline)).frame(maxWidth: .infinity).padding(.vertical, 8)
+      Text(title).font(AppStyle.font(.headline)).modifier(AppAccentLabel())
+        .frame(maxWidth: .infinity).padding(.vertical, 8)
     }
-    .foregroundStyle(Color(uiColor: .systemBackground))
     .buttonStyle(.borderedProminent).controlSize(.large)
   }
 }

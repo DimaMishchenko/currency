@@ -8,6 +8,7 @@ import Testing
 @testable import LocalCurrencyOnboardingFeature
 @testable import OnboardingFeature
 @testable import RateDetailsFeature
+@testable import SettingsFeature
 @testable import WidgetOnboardingFeature
 @testable import WidgetPresentation
 
@@ -41,6 +42,18 @@ import Testing
         == "Fawaz · daily")
   }
 
+  @Test func settingsAccessorsResolveFeatureBundle() {
+    #expect(String(localized: .Converter.settings) == "Settings")
+    #expect(String(localized: .Settings.settings) == "Settings")
+    #expect(String(localized: .Settings.locationSettings) == "Location")
+    var resource = LocalizedStringResource.Settings.quoteRetrieved("today")
+    resource.locale = Locale(identifier: "uk_UA")
+    #expect(String(localized: resource) == "Retrieved today")
+    #expect(String(localized: .Settings.appearanceSystem) == "System")
+    #expect(String(localized: .Settings.appearancePrimary) == "Default")
+    #expect(String(localized: .Settings.acknowledgements) == "Acknowledgements")
+  }
+
   @Test func onboardingAccessorsResolveFeatureBundleAndSubstitutions() {
     #expect(String(localized: .Onboarding.welcomeTitle) == "Currency, at a glance")
     #expect(String(localized: .Onboarding.baseTitle) == "Choose your base")
@@ -51,11 +64,11 @@ import Testing
   }
 
   @Test func ratesAndLoadingCopyPreserveTimestampMeaning() {
-    #expect(String(localized: .Converter.ratesRetrieved) == "Rates retrieved")
-    #expect(String(localized: .Converter.lastChecked) == "Last checked")
+    #expect(String(localized: .Settings.ratesRetrieved) == "Rates retrieved")
+    #expect(String(localized: .Settings.lastChecked) == "Last checked")
     #expect(
-      String(localized: .Converter.quoteRetrieved("today"))
-        == "Retrieved today · market timestamp unavailable")
+      String(localized: .Settings.quoteRetrieved("today"))
+        == "Retrieved today")
     #expect(String(localized: .Details.loadingHistory) == "Loading history…")
   }
 

@@ -75,7 +75,7 @@ struct WidgetGuide: View {
           Button(.WidgetOnboarding.close, systemImage: "xmark") {
             AppHaptics.play(.action); dismiss()
           }
-          .labelStyle(.iconOnly)
+          .labelStyle(.iconOnly).tint(nil)
         }
       }
       .sheet(item: $selection) { kind in
@@ -93,9 +93,9 @@ struct WidgetGuide: View {
         tutorial = true
       } label: {
         Text(.WidgetOnboarding.guideAddWidget)
-          .font(AppStyle.font(.headline)).frame(maxWidth: .infinity).padding(.vertical, 8)
+          .font(AppStyle.font(.headline)).modifier(AppAccentLabel())
+          .frame(maxWidth: .infinity).padding(.vertical, 8)
       }
-      .foregroundStyle(Color(uiColor: .systemBackground))
       .buttonStyle(.borderedProminent).controlSize(.large)
       Button(.WidgetOnboarding.guideExploreCollection) {
         AppHaptics.play(.action); collection = true
@@ -282,7 +282,7 @@ private struct WidgetCollection: View {
           Button(.WidgetOnboarding.close, systemImage: "xmark") {
             AppHaptics.play(.action); dismiss()
           }
-          .labelStyle(.iconOnly)
+          .labelStyle(.iconOnly).tint(nil)
         }
       }
       .sheet(item: $selection) { WidgetPlayground(kind: $0) }
@@ -382,7 +382,7 @@ struct WidgetPlayground: View {
           Button(.WidgetOnboarding.close, systemImage: "xmark") {
             AppHaptics.play(.action); dismiss()
           }
-          .labelStyle(.iconOnly)
+          .labelStyle(.iconOnly).tint(nil)
         }
       }
       .sheet(isPresented: $tutorial) { WidgetTutorial(kind: kind, family: family) }
@@ -401,9 +401,9 @@ struct WidgetPlayground: View {
             ? String(localized: .WidgetOnboarding.guideAddLockScreen)
             : String(localized: .WidgetOnboarding.guideAddHomeScreen)
         )
-        .font(AppStyle.font(.headline)).frame(maxWidth: .infinity).padding(.vertical, 8)
+        .font(AppStyle.font(.headline)).modifier(AppAccentLabel())
+        .frame(maxWidth: .infinity).padding(.vertical, 8)
       }
-      .foregroundStyle(Color(uiColor: .systemBackground))
       .buttonStyle(.borderedProminent).controlSize(.large)
       if kind == .quick {
         Text(.WidgetOnboarding.quickFollowsApp).font(AppStyle.font(.caption))

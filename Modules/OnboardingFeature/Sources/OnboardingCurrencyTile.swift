@@ -59,9 +59,16 @@ struct OnboardingCurrencyTile: View {
 
 /// A shared selected state; unselected choices keep their content uncluttered.
 struct OnboardingSelectionMark: View {
+  @Environment(AppAppearance.self) private var appearance
+  @Environment(\.colorScheme) private var colorScheme
+  @Environment(\.colorSchemeContrast) private var contrast
   var body: some View {
     Image(systemName: "checkmark.circle.fill")
-      .font(.system(size: 17)).foregroundStyle(.primary)
+      .font(.system(size: 17))
+      .symbolRenderingMode(.palette)
+      .foregroundStyle(
+        appearance.accentForeground(colorScheme: colorScheme, contrast: contrast), appearance.accent
+      )
       .accessibilityHidden(true)
   }
 }

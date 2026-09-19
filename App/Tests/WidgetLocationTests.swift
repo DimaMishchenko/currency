@@ -18,6 +18,24 @@ struct WidgetLocationTests {
     override func stopUpdatingLocation() {}
   }
 
+  @Test func settingsRoutesCurrentPermissionWithoutPromptingOrLocating() {
+    let manager = LocationManager()
+    var destinations: [String] = []
+    for permission: CLAuthorizationStatus in [
+      .notDetermined, .denied, .authorizedWhenInUse, .authorizedAlways, .restricted, .notDetermined
+    ] {
+      manager.permission = permission
+      LocalCurrencyAuthorization.managePermission(manager: manager) {
+        destinations.append("setup")
+      } openSettings: {
+        destinations.append("settings")
+      }
+    }
+    #expect(destinations == ["setup", "settings", "settings", "settings", "settings", "setup"])
+    #expect(manager.authorizationRequests == 0)
+    #expect(manager.locationRequests == 0)
+  }
+
   @Test func deniedUpdateClearsCacheAndExplainsHowToEnablePermission() throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }

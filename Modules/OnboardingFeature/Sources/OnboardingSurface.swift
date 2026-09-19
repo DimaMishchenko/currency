@@ -12,7 +12,10 @@ struct OnboardingSurface: View {
       .overlay {
         RoundedRectangle(cornerRadius: radius)
           .strokeBorder(
-            .primary.opacity(selected ? 0.28 : colorScheme == .dark ? 0.12 : 0.07), lineWidth: 1)
+            selected
+              ? AnyShapeStyle(.tint)
+              : AnyShapeStyle(Color.primary.opacity(colorScheme == .dark ? 0.12 : 0.07)),
+            lineWidth: selected ? 1.5 : 1)
       }
       .shadow(color: .black.opacity(colorScheme == .dark ? 0 : 0.06), radius: 16, y: 6)
   }

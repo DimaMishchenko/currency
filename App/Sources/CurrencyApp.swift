@@ -4,7 +4,9 @@ import ExchangeRates
 import LocalCurrencyOnboardingFeature
 import OnboardingFeature
 import RateDetailsFeature
+import SettingsFeature
 import SwiftUI
+import UIKit
 import WidgetOnboardingFeature
 
 @main
@@ -61,6 +63,7 @@ struct CurrencyApp: App {
       }
       .environment(appearance)
       .tint(appearance.accent)
+      .preferredColorScheme(appearance.theme.colorScheme)
     }
   }
 
@@ -74,8 +77,21 @@ struct CurrencyApp: App {
     } configureLocalCurrency: {
       addsLocalCurrencyToApp = true
       showsLocalCurrency = true
-    } replayOnboarding: {
-      try replayOnboarding()
+    } settings: { snapshot, codes, isRefreshing, warning, refresh in
+      SettingsScreen(
+        snapshot: snapshot, codes: codes, isRefreshing: isRefreshing, warning: warning,
+        refresh: refresh, manageLocation: manageLocationPermission,
+        replayOnboarding: replayOnboarding)
+    }
+  }
+
+  private func manageLocationPermission() {
+    LocalCurrencyAuthorization.managePermission {
+      addsLocalCurrencyToApp = false
+      showsLocalCurrency = true
+    } openSettings: {
+      guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+      UIApplication.shared.open(url)
     }
   }
 }

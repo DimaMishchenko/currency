@@ -128,6 +128,20 @@ let project = Project(
       metadata: .metadata(tags: ["tag:feature:converter"])
     ),
     .target(
+      name: "SettingsFeature",
+      destinations: .iOS,
+      product: .framework,
+      bundleId: "com.dimasike.currency.settingsfeature",
+      deploymentTargets: .iOS("26.0"),
+      infoPlist: .default,
+      buildableFolders: ["Modules/SettingsFeature/Sources", "Modules/SettingsFeature/Resources"],
+      dependencies: [
+        .package(product: "ExchangeRatesDynamic", type: .runtimeEmbedded),
+        .target(name: "CurrencySupport")
+      ],
+      metadata: .metadata(tags: ["tag:feature:settings"])
+    ),
+    .target(
       name: "RateDetailsFeature",
       destinations: .iOS,
       product: .framework,
@@ -168,6 +182,7 @@ let project = Project(
         .target(name: "CurrencySupport"),
         .target(name: "WidgetPresentation"),
         .target(name: "ConverterFeature"),
+        .target(name: "SettingsFeature"),
         .target(name: "WidgetOnboardingFeature"),
         .target(name: "LocalCurrencyOnboardingFeature"),
         .target(name: "CurrencySelectionUI"),
@@ -209,6 +224,7 @@ let project = Project(
         .target(name: "CurrencySupport"),
         .target(name: "CurrencyWidgets"),
         .target(name: "ConverterFeature"),
+        .target(name: "SettingsFeature"),
         .target(name: "WidgetOnboardingFeature"),
         .target(name: "LocalCurrencyOnboardingFeature"),
         .target(name: "CurrencySelectionUI"),

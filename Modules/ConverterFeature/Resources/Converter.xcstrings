@@ -1,6 +1,7 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "settings": {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Settings"}}}},
     "localCurrency": {
       "extractionState": "manual",
       "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Local currency" } } }
@@ -121,18 +122,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Manage currencies"
-          }
-        }
-      }
-    },
-    "aboutRates": {
-      "extractionState": "manual",
-      "comment": "Converter interface: aboutRates.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "About these rates"
           }
         }
       }
@@ -293,42 +282,6 @@
         }
       }
     },
-    "dailyRateExplanation": {
-      "extractionState": "manual",
-      "comment": "Converter interface: dailyRateExplanation.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reference rates are saved on your device. Every conversion uses the latest downloaded rates; bank fees aren’t included."
-          }
-        }
-      }
-    },
-    "lastChecked": {
-      "extractionState": "manual",
-      "comment": "Converter interface: lastChecked.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Last checked"
-          }
-        }
-      }
-    },
-    "refreshNow": {
-      "extractionState": "manual",
-      "comment": "Converter interface: refreshNow.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Refresh now"
-          }
-        }
-      }
-    },
     "publicationDates": {
       "extractionState": "manual",
       "comment": "Converter interface: publicationDates.",
@@ -365,18 +318,6 @@
         }
       }
     },
-    "sources": {
-      "extractionState": "manual",
-      "comment": "Converter interface: sources.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sources"
-          }
-        }
-      }
-    },
     "providerExplanation": {
       "extractionState": "manual",
       "comment": "Converter interface: providerExplanation.",
@@ -385,30 +326,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Frankfurter v2 for daily fiat rates, with direct ECB fallback. Fawaz supplies daily crypto and backup rates. Coinbase public market data is checked every 30 minutes while active, falling back to daily crypto rates if unavailable. iOS schedules widget refreshes. No accounts or API keys."
-          }
-        }
-      }
-    },
-    "unavailable": {
-      "extractionState": "manual",
-      "comment": "Converter interface: unavailable.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Unavailable"
-          }
-        }
-      }
-    },
-    "notDownloaded": {
-      "extractionState": "manual",
-      "comment": "Converter interface: notDownloaded.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Not downloaded"
           }
         }
       }
@@ -986,72 +903,6 @@
         }
       }
     },
-    "rates": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rates"
-          }
-        }
-      }
-    },
-    "ratesRetrieved": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rates retrieved"
-          }
-        }
-      }
-    },
-    "observedAt": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Last trade %@"
-          }
-        }
-      }
-    },
-    "quoteRetrieved": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Retrieved %@ · market timestamp unavailable"
-          }
-        }
-      }
-    },
-    "quoteInformation": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Quote information"
-          }
-        }
-      }
-    },
-    "publishedAt": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Published %@"
-          }
-        }
-      }
-    },
     "close": {
       "extractionState": "manual",
       "localizations": {
@@ -1059,116 +910,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Close"
-          }
-        }
-      }
-    },
-    "artwork": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Artwork"
-          }
-        }
-      }
-    },
-    "frankfurterCredit": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Daily fiat reference rates and historical exchange rates."
-          }
-        }
-      }
-    },
-    "ecbCredit": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Direct daily fiat reference rates when the primary source is unavailable."
-          }
-        }
-      }
-    },
-    "fawazCredit": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Daily cryptocurrency rates and backup exchange rates."
-          }
-        }
-      }
-    },
-    "coinbaseCredit": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Current cryptocurrency exchange rates and completed historical candles in USD."
-          }
-        }
-      }
-    },
-    "web3Credit": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cryptocurrency artwork by 0xa3k5. © 2024 0xa3k5. Used without artwork changes."
-          }
-        }
-      }
-    },
-    "dogeCredit": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dogecoin artwork from Cryptocurrency Icons. Used without artwork changes."
-          }
-        }
-      }
-    },
-    "replayOnboarding": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Replay onboarding"
-          }
-        }
-      }
-    },
-    "replayFailed": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Setup couldn’t be reopened. Please try again."
-          }
-        }
-      }
-    },
-    "retryReplay": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Try again"
           }
         }
       }

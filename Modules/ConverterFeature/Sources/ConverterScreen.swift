@@ -6,8 +6,8 @@ import WidgetKit
 
 struct CurrencyDetailSelection: Identifiable { let id: String }
 
-/// The converter feature, with details and onboarding destinations supplied by the host app.
-public struct ConverterScreen<Details: View, Widgets: View>: View {
+/// The converter feature, with details, widgets, and settings supplied by the host app.
+public struct ConverterScreen<Details: View, Widgets: View, Settings: View>: View {
   private static var destinationIconColumnWidth: CGFloat { 44 }
   private static var destinationTextInset: CGFloat {
     destinationIconColumnWidth + AppStyle.Space.medium
@@ -15,11 +15,14 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
 
   @Environment(\.verticalSizeClass) private var verticalSizeClass
   @Environment(\.locale) private var locale
+  @Environment(AppAppearance.self) private var appearance
   private let details: (String, String, RateSnapshot) -> Details
   private let widgets: () -> Widgets
   private let reconcileLocalCurrency: () -> Void
   private let configureLocalCurrency: () -> Void
-  private let replayOnboarding: (() throws -> Void)?
+  private let settings:
+    (RateSnapshot, [String], Bool, LocalizedStringResource?, @escaping @MainActor () async -> Void)
+      -> Settings
   private let inputRevision: Int
 
   /// Creates a converter using the shared store and a destination for currency details.
@@ -31,20 +34,24 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
   ///   - widgets: Builds widget discovery and installation guidance.
   ///   - reconcileLocalCurrency: Reconciles saved permission when the app becomes active.
   ///   - configureLocalCurrency: Presents the permission-based local-currency setup flow.
-  ///   - replayOnboarding: Restarts app setup after its progress record has been saved.
+  ///   - settings: Builds settings from current rates, currency codes, refresh state, warning, and refresh action.
   public init(
     store: CurrencyStore = .shared, service: RateService = RateService(), inputRevision: Int = 0,
     @ViewBuilder details: @escaping (String, String, RateSnapshot) -> Details,
     @ViewBuilder widgets: @escaping () -> Widgets,
     reconcileLocalCurrency: @escaping () -> Void,
     configureLocalCurrency: @escaping () -> Void,
-    replayOnboarding: (() throws -> Void)? = nil
+    @ViewBuilder settings:
+      @escaping (
+        RateSnapshot, [String], Bool, LocalizedStringResource?,
+        @escaping @MainActor () async -> Void
+      ) -> Settings
   ) {
     self.details = details
     self.widgets = widgets
     self.reconcileLocalCurrency = reconcileLocalCurrency
     self.configureLocalCurrency = configureLocalCurrency
-    self.replayOnboarding = replayOnboarding
+    self.settings = settings
     self.inputRevision = inputRevision
     _model = State(initialValue: ConverterModel(store: store, service: service))
   }
@@ -53,8 +60,7 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
   @State private var editingAmount = false
   @State private var listPosition = ScrollPosition(idType: String.self)
   @State private var picker: PickerPurpose?
-  @State private var showInfo = false
-  @State private var replayFailed = false
+  @State private var showsSettings = false
   @State private var showManage = false
   @State private var showsWidgets = false
   @State private var opensLocalCurrencyAfterPicker = false
@@ -65,11 +71,9 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
   @Namespace private var keypadMotion
   @Environment(\.scenePhase) private var scenePhase
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
-  @Environment(AppAppearance.self) private var appearance
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @ScaledMetric(relativeTo: .largeTitle) private var amountSize = 68
   @ScaledMetric(relativeTo: .largeTitle) private var editingAmountSize = 48
-  private var accent: Color { appearance.accent }
   private var motion: Animation? {
     reduceMotion ? nil : .spring(response: 0.42, dampingFraction: 0.86)
   }
@@ -114,7 +118,7 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
       .background(Color(uiColor: .systemBackground).ignoresSafeArea())
       .toolbarTitleDisplayMode(.inline)
       .toolbar {
-        ToolbarItem(placement: .topBarLeading) { sourcePicker }
+        ToolbarItem(placement: .topBarLeading) { sourcePicker.tint(nil) }
         headerActions
       }
       .sheet(item: $picker, onDismiss: openRequestedLocalCurrency) { purpose in
@@ -154,10 +158,13 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
       .sheet(isPresented: $showManage) {
         ManageCurrencies(model: model)
       }
-      .sheet(isPresented: $showInfo) { rateInformation }
-      .alert(.Converter.replayFailed, isPresented: $replayFailed) {
-        Button(.Converter.retryReplay) { restartOnboarding() }
-        Button(.Converter.close, role: .cancel) {}
+      .navigationDestination(isPresented: $showsSettings) {
+        settings(
+          model.snapshot, [model.input.source] + model.input.destinations,
+          model.refreshing, model.warning
+        ) {
+          await model.refresh(force: true)
+        }
       }
       .sheet(isPresented: $showsWidgets, onDismiss: { model.reloadInput() }) { widgets() }
       .sheet(item: $detail) { selection in
@@ -188,7 +195,6 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
       .onChange(of: inputRevision) { _, _ in model.reloadInput(preservingEditor: true) }
     }
     .accessibilityAction(.escape) { dismissAmount() }
-    .tint(accent)
   }
 
   private func openRequestedLocalCurrency() {
@@ -273,20 +279,14 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
     }
   }
 
-  private var adaptiveLayout: AnyLayout {
-    dynamicTypeSize.isAccessibilitySize
-      ? AnyLayout(VStackLayout(alignment: .leading, spacing: AppStyle.Space.small))
-      : AnyLayout(HStackLayout())
-  }
-
   @ToolbarContentBuilder
   private var headerActions: some ToolbarContent {
     ToolbarItem(placement: .topBarTrailing) {
-      widgetsButton
+      widgetsButton.tint(nil)
     }
     ToolbarSpacer(.fixed, placement: .topBarTrailing)
     ToolbarItem(placement: .topBarTrailing) {
-      optionsMenu
+      optionsMenu.tint(nil)
     }
   }
 
@@ -304,37 +304,24 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
 
   private var optionsMenu: some View {
     Menu {
-      Button(.Converter.refreshRates, systemImage: "arrow.clockwise") {
-        Task { await model.refresh(force: true) }
-      }
-      .disabled(model.refreshing)
-      Button(.Converter.manageCurrencies, systemImage: "slider.horizontal.3") {
-        dismissAmount(feedback: false)
-        AppHaptics.play(.action)
-        showManage = true
-      }
-      Button(.Converter.aboutRates, systemImage: "info.circle") {
-        dismissAmount(feedback: false)
-        AppHaptics.play(.action)
-        showInfo = true
-      }
-      if replayOnboarding != nil {
-        Button(.Converter.replayOnboarding, systemImage: "arrow.counterclockwise") {
-          restartOnboarding()
+      Group {
+        Button(.Converter.manageCurrencies, systemImage: "slider.horizontal.3") {
+          dismissAmount(feedback: false)
+          AppHaptics.play(.action)
+          showManage = true
         }
-        .accessibilityIdentifier("converter.replayOnboarding")
+        Button(.Converter.settings, systemImage: "gearshape") {
+          dismissAmount(feedback: false)
+          AppHaptics.play(.action)
+          showsSettings = true
+        }
+        .accessibilityIdentifier("converter.settings")
       }
+      .tint(appearance.accent)
     } label: {
       Image(systemName: "ellipsis")
     }
     .accessibilityLabel(.Converter.options)
-  }
-
-  private func restartOnboarding() {
-    do { try replayOnboarding?(); AppHaptics.play(.transition) } catch {
-      replayFailed = true
-      AppHaptics.play(.error)
-    }
   }
 
   @ViewBuilder
@@ -363,6 +350,7 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
         CurrencyIcon(model.input.source, size: 23)
           .accessibilityHidden(true)
         Text(model.input.source).font(AppStyle.font(.subheadline, weight: .semibold))
+          .foregroundStyle(Color.primary)
           .lineLimit(1)
         Image(systemName: "chevron.down").font(AppStyle.font(.caption2, weight: .bold))
           .foregroundStyle(.secondary)
@@ -504,11 +492,15 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
         Image(systemName: "chart.xyaxis.line").font(AppStyle.font(.callout))
           .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
           .foregroundStyle(.secondary)
-          .frame(width: Self.destinationIconColumnWidth, height: 60, alignment: .trailing)
+          .frame(width: Self.destinationIconColumnWidth, height: 70, alignment: .trailing)
+          // Plain buttons otherwise hit-test only the small symbol, not its padded frame.
+          .contentShape(Rectangle())
       }
       .buttonStyle(.plain)
       .accessibilityLabel(
-        .Converter.detailsAccessibility(CurrencyDisplay.name(code, locale: locale)))
+        .Converter.detailsAccessibility(CurrencyDisplay.name(code, locale: locale))
+      )
+      .accessibilityIdentifier("converter.chart.\(code)")
     }
   }
 
@@ -599,7 +591,7 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
           }
           .buttonStyle(.plain)
           .accessibilityLabel(.Converter.enterAmount)
-          Rectangle().fill(.primary.opacity(0.1)).frame(width: 1, height: 20)
+          Rectangle().fill(Color.primary.opacity(0.1)).frame(width: 1, height: 20)
           Button {
             AppHaptics.play(.action)
             picker = .add
@@ -652,138 +644,4 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
     }
   }
 
-  private func timestamp(_ date: Date) -> String {
-    date.formatted(.dateTime.day().month().year().hour().minute().locale(locale))
-  }
-
-  private func timestampRow(_ title: LocalizedStringResource, date: Date?) -> some View {
-    adaptiveLayout {
-      Text(title)
-      if !dynamicTypeSize.isAccessibilitySize { Spacer() }
-      Text(date.map(timestamp) ?? String(localized: .Converter.unavailable))
-        .foregroundStyle(.secondary)
-    }
-  }
-
-  private func sourceCredit(
-    _ name: String, description: LocalizedStringResource, website: String,
-    license: String? = nil, licenseURL: String? = nil
-  ) -> some View {
-    VStack(alignment: .leading, spacing: AppStyle.Space.small) {
-      if let website = URL(string: website) {
-        Link(destination: website) {
-          HStack {
-            Text(verbatim: name).font(AppStyle.font(.headline))
-            Spacer()
-            Image(systemName: "arrow.up.right").font(AppStyle.font(.caption))
-          }
-        }
-      }
-      Text(description).font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
-      if let license, let licenseURL, let url = URL(string: licenseURL) {
-        Link(destination: url) {
-          Label(license, systemImage: "doc.text")
-            .font(AppStyle.font(.caption, weight: .medium))
-        }
-      }
-    }
-    .padding(.vertical, AppStyle.Space.small)
-  }
-
-  private var rateInformation: some View {
-    NavigationStack {
-      List {
-        Section {
-          timestampRow(
-            .Converter.ratesRetrieved,
-            date: model.snapshot.fetchedAt == .distantPast ? nil : model.snapshot.fetchedAt)
-          timestampRow(.Converter.lastChecked, date: model.snapshot.checkedAt)
-          Button(.Converter.refreshNow, systemImage: "arrow.clockwise") {
-            Task { await model.refresh(force: true) }
-          }
-          .disabled(model.refreshing)
-          if let warning = model.warning {
-            Text(warning).font(AppStyle.font(.caption)).foregroundStyle(.secondary)
-          }
-        } header: {
-          Text(.Converter.rates)
-        } footer: {
-          Text(.Converter.dailyRateExplanation)
-        }
-        Section(.Converter.quoteInformation) {
-          ForEach([model.input.source] + model.input.destinations, id: \.self) { code in
-            adaptiveLayout {
-              HStack(spacing: AppStyle.Space.small) {
-                CurrencyIcon(code, size: 20).accessibilityHidden(true)
-                Text(verbatim: code)
-              }
-              if !dynamicTypeSize.isAccessibilitySize { Spacer() }
-              VStack(
-                alignment: dynamicTypeSize.isAccessibilitySize ? .leading : .trailing,
-                spacing: AppStyle.Space.xs
-              ) {
-                if let rate = model.snapshot.quotes[code] {
-                  if let observed = rate.observedAt {
-                    Text(.Converter.observedAt(timestamp(observed)))
-                  } else if let retrieved = rate.retrievedAt {
-                    Text(.Converter.quoteRetrieved(timestamp(retrieved)))
-                  } else {
-                    Text(
-                      .Converter.publishedAt(
-                        CurrencyDisplay.publicationDate(rate.published, locale: locale)))
-                  }
-                  Text(RateMessages.providerDescription(rate.source, locale: locale))
-                    .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
-                } else {
-                  Text(.Converter.notDownloaded)
-                  Text(.Converter.unavailable)
-                    .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
-                }
-              }
-            }
-
-          }
-        }
-        Section(.Converter.sources) {
-          sourceCredit(
-            "Frankfurter", description: .Converter.frankfurterCredit,
-            website: "https://frankfurter.dev/")
-          sourceCredit(
-            "European Central Bank", description: .Converter.ecbCredit,
-            website:
-              "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html"
-          )
-          sourceCredit(
-            "Fawaz Exchange API", description: .Converter.fawazCredit,
-            website: "https://github.com/fawazahmed0/exchange-api")
-          sourceCredit(
-            "Coinbase", description: .Converter.coinbaseCredit,
-            website: "https://docs.cdp.coinbase.com/coinbase-app/track-apis/exchange-rates")
-        }
-        Section(.Converter.artwork) {
-          sourceCredit(
-            "Web3 Icons", description: .Converter.web3Credit,
-            website: "https://github.com/0xa3k5/web3icons",
-            license: "MIT",
-            licenseURL:
-              "https://github.com/0xa3k5/web3icons/blob/64e21e68cc6eaa36ff9d0a135ca2c809a759ccd6/LICENCE"
-          )
-          sourceCredit(
-            "Cryptocurrency Icons", description: .Converter.dogeCredit,
-            website: "https://github.com/spothq/cryptocurrency-icons",
-            license: "CC0 1.0",
-            licenseURL:
-              "https://github.com/spothq/cryptocurrency-icons/blob/1a63530be6e374711a8554f31b17e4cb92c25fa5/LICENSE.md"
-          )
-        }
-      }
-      .navigationTitle(.Converter.aboutRates).navigationBarTitleDisplayMode(.inline)
-      .toolbar {
-        ToolbarItem(placement: .topBarTrailing) {
-          Button(.Converter.close, systemImage: "xmark") { showInfo = false }
-            .labelStyle(.iconOnly)
-        }
-      }
-    }
-  }
 }

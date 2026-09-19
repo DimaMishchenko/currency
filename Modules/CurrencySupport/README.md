@@ -23,3 +23,7 @@ Use `CurrencyStore.shared` in production and `CurrencyStore(directory:)` for iso
 Generate with `tuist generate --no-open`, then test the `CurrencySupport` scheme on an iOS 26 simulator.
 
 The module owns its English string catalog under `Resources`. Xcode generates typed accessors during the build; add translations there rather than editing generated Swift files.
+
+`AppAppearance` persists the app theme and accent. Supply it in the root environment and apply its `.accent` with `.tint` once; in-content actions and selection indicators inherit `.tint`. Toolbar controls reset inherited tint with `.tint(nil)` to retain platform defaults. Use `Color.primary` for neutral content inside buttons, since hierarchical `.primary` can inherit the button's tint. Widget presentation keeps its own system appearance.
+
+Apply `.modifier(AppAccentLabel())` directly to text or symbols inside a solid `.borderedProminent` button label. It chooses black or white against the selected adaptive system color using the current theme and contrast setting, while preserving the native button style. These views require `AppAppearance` in the environment. See [the accent audit](../../Documentation/Appearance/AccentAudit.md) for the usage rules and validation evidence.

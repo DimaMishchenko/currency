@@ -46,6 +46,7 @@ The app composes independent feature modules. All app-specific modules are Tuist
 | [ExchangeRates](Sources/ExchangeRates/README.md) | Conversion, providers, refresh, history, offline rates | `RateSnapshot`, `RateService`, `HistoryService`, `RateCache` |
 | [CurrencySupport](Modules/CurrencySupport/README.md) | Shared converter state, formatting, App Group integration | `ConverterState`, `CurrencyStore`, `CurrencyDisplay` |
 | [ConverterFeature](Modules/ConverterFeature/README.md) | Amount entry, currency list, refresh, destination routing | `ConverterScreen` |
+| [SettingsFeature](Modules/SettingsFeature/README.md) | Appearance, system location settings, rates, credits, onboarding replay | `SettingsScreen` |
 | [OnboardingFeature](Modules/OnboardingFeature/README.md) | First-launch setup, recovery, draft choices, completion and replay | `OnboardingFlow` |
 | [WidgetOnboardingFeature](Modules/WidgetOnboardingFeature/README.md) | Widget showcase, temporary previews, add/edit tutorials | `WidgetOnboardingScreen` |
 | [LocalCurrencyOnboardingFeature](Modules/LocalCurrencyOnboardingFeature/README.md) | Foreground location setup and recovery | `LocalCurrencyOnboardingScreen` |
@@ -83,9 +84,7 @@ Core tests cover Decimal cross-conversion, missing rates, XML/JSON parsing, malf
 
 Before shipping, validate widget rapid taps on a physical device, Dynamic Type, VoiceOver, dark/tinted home screens, and App Group provisioning. App Store signing and distribution are not configured.
 
-## Visual gallery
-
-Open `Documentation/Gallery.html` for the three actual WidgetKit sizes and the keypad, currency picker, management, and rate-details screens. Widget screenshots were captured using simulator ad-hoc signing so App Group sharing works. For simulator integration builds, keep code signing enabled (use `CODE_SIGN_IDENTITY=-`); `CODE_SIGNING_ALLOWED=NO` is sufficient for compile checks but strips the entitlements needed for shared storage.
+For simulator integration builds, keep code signing enabled (use `CODE_SIGN_IDENTITY=-`); `CODE_SIGNING_ALLOWED=NO` is sufficient for compile checks but strips the entitlements needed for shared storage.
 
 ### Crypto icons
 

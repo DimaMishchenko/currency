@@ -1,16 +1,92 @@
 import Observation
 import SwiftUI
 
-/// App-owned appearance state. A future settings screen can bind to `accent`.
-/// The default follows the system's primary label color in light, dark, and increased contrast modes.
+/// Persisted appearance for the app. Widgets retain their system appearance.
 @MainActor @Observable
 public final class AppAppearance {
-  /// Accent shared by custom app content and controls.
-  public var accent: Color
+  /// Preferred app color scheme; System follows the device.
+  public enum Theme: String, CaseIterable, Identifiable, Sendable {
+    case system, light, dark
+    /// Stable identity for preference lists.
+    public var id: Self { self }
+    /// A nil override restores the device color scheme.
+    public var colorScheme: ColorScheme? {
+      switch self {
+      case .system: nil
+      case .light: .light
+      case .dark: .dark
+      }
+    }
+  }
 
-  /// Creates appearance state with an adaptive system-label accent by default.
-  public init(accent: Color = Color(uiColor: .label)) {
-    self.accent = accent
+  /// Named adaptive system colors offered in Settings.
+  public enum Accent: String, CaseIterable, Identifiable, Sendable {
+    case primary, blue, indigo, purple, pink, red, orange, green, teal
+    /// Stable identity for preference lists.
+    public var id: Self { self }
+    /// Resolves the selected adaptive system color.
+    public var color: Color { Color(uiColor: uiColor) }
+
+    var uiColor: UIColor {
+      switch self {
+      case .primary: .label
+      case .blue: .systemBlue
+      case .indigo: .systemIndigo
+      case .purple: .systemPurple
+      case .pink: .systemPink
+      case .red: .systemRed
+      case .orange: .systemOrange
+      case .green: .systemGreen
+      case .teal: .systemTeal
+      }
+    }
+
+    var foregroundColor: UIColor {
+      let background = uiColor
+      return UIColor { traits in
+        let resolved = background.resolvedColor(with: traits)
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        resolved.getRed(&red, green: &green, blue: &blue, alpha: nil)
+        func linear(_ value: CGFloat) -> CGFloat {
+          value <= 0.04045 ? value / 12.92 : pow((value + 0.055) / 1.055, 2.4)
+        }
+        let luminance = 0.2126 * linear(red) + 0.7152 * linear(green) + 0.0722 * linear(blue)
+        let blackContrast = (luminance + 0.05) / 0.05
+        let whiteContrast = 1.05 / (luminance + 0.05)
+        return blackContrast >= whiteContrast ? .black : .white
+      }
+    }
+  }
+
+  private let defaults: UserDefaults
+  /// Selected theme, saved whenever it changes.
+  public var theme: Theme {
+    didSet { defaults.set(theme.rawValue, forKey: "appearance.theme") }
+  }
+  /// Selected accent, saved whenever it changes.
+  public var accentSelection: Accent {
+    didSet { defaults.set(accentSelection.rawValue, forKey: "appearance.accent") }
+  }
+  /// Tint for actions, links, selections, and chart emphasis; not general content text.
+  public var accent: Color { accentSelection.color }
+
+  /// A contrasting label color for a solid accent fill in the current appearance.
+  public func accentForeground(colorScheme: ColorScheme, contrast: ColorSchemeContrast) -> Color {
+    let traits = UITraitCollection {
+      $0.userInterfaceStyle = colorScheme == .dark ? .dark : .light
+      $0.accessibilityContrast = contrast == .increased ? .high : .normal
+    }
+    return Color(uiColor: accentSelection.foregroundColor.resolvedColor(with: traits))
+  }
+
+  /// Restores preferences, falling back safely for missing or unknown values.
+  public init(defaults: UserDefaults = .standard) {
+    self.defaults = defaults
+    theme = Theme(rawValue: defaults.string(forKey: "appearance.theme") ?? "") ?? .system
+    accentSelection =
+      Accent(rawValue: defaults.string(forKey: "appearance.accent") ?? "") ?? .primary
   }
 }
 
