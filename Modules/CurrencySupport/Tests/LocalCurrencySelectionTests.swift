@@ -50,20 +50,52 @@ struct LocalCurrencySelectionTests {
     }
   }
 
-  @Test func localDeduplicatesDisplayAndDoesNotChangeExplicitSelections() {
+  @Test func localKeepsIndependentRowsAndDoesNotChangeExplicitSelections() {
     var input = ConverterState()
     input.setDestinations(["USD", "CZK"])
     input.setUsesLocalCurrency(true)
     input.resolveLocalCurrency(WidgetLocation(country: "CZ", currency: "CZK"), status: .available)
     #expect(input.destinations == ["USD", "CZK"])
+    #expect(input.destinationRows.map(\.id) == ["USD", "CZK", "@local"])
+    #expect(input.destinationRows.map(\.code) == ["USD", "CZK", "CZK"])
     input.changeSource("CZK")
+    #expect(input.destinationRows.map(\.code) == ["USD", "EUR", "CZK"])
     #expect(input.destinations == ["USD", "EUR"])
     #expect(input.usesLocalCurrency)
     input.resolveLocalCurrency(WidgetLocation(country: "GB", currency: "GBP"), status: .available)
     #expect(input.destinations == ["USD", "EUR", "GBP"])
-    input.removeDestination("GBP")
+    input.removeDestination(WidgetSelection.localID)
     #expect(!input.usesLocalCurrency)
     #expect(input.destinations == ["USD", "EUR"])
+  }
+
+  @Test func fixedAndLocalSelectionsPersistAndRemoveIndependently() throws {
+    try withStore { store in
+      try store.saveWidgetLocation(WidgetLocation(country: "CZ", currency: "CZK"))
+      try store.saveWidgetLocationStatus(.available)
+      try store.updateInput {
+        $0.setDestinations([])
+        $0.setUsesLocalCurrency(true)
+      }
+      #expect(!store.input().manualDestinations.contains("CZK"))
+      try store.updateInput { $0.setDestinations(["CZK"]) }
+      #expect(store.input().destinationRows.map(\.id) == ["CZK", "@local"])
+      #expect(store.input().destinationRows.map(\.code) == ["CZK", "CZK"])
+      #expect(WidgetSelection.appConfiguration(store.input()) == ["EUR", "CZK", "@local"])
+      try store.saveWidgetLocation(WidgetLocation(country: "GB", currency: "GBP"))
+      #expect(store.input().destinationRows.map(\.code) == ["CZK", "GBP"])
+      try store.saveWidgetLocation(WidgetLocation(country: "CZ", currency: "CZK"))
+      try store.updateInput { $0.removeDestination("CZK") }
+      #expect(store.input().destinationRows.map(\.id) == ["@local"])
+      try store.updateInput { $0.setDestinations(["CZK"]) }
+      try store.updateInput { $0.removeDestination(WidgetSelection.localID) }
+      #expect(store.input().destinationRows.map(\.id) == ["CZK"])
+      #expect(!store.input().usesLocalCurrency)
+      try store.updateInput { $0.setUsesLocalCurrency(true) }
+      try store.saveWidgetLocationStatus(.denied)
+      #expect(store.input().destinationRows.map(\.id) == ["CZK"])
+      #expect(store.input().usesLocalCurrency)
+    }
   }
 
   @Test func automaticRefreshIsDailyAndFailureRetriesAreThrottledAcrossStores() throws {

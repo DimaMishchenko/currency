@@ -4,7 +4,10 @@ import ExchangeRates
 import SwiftUI
 import WidgetKit
 
-struct CurrencyDetailSelection: Identifiable { let id: String }
+struct CurrencyDetailSelection: Identifiable {
+  let id: String
+  let code: String
+}
 
 /// The converter feature, with details, widgets, and settings supplied by the host app.
 public struct ConverterScreen<Details: View, Widgets: View, Settings: View>: View {
@@ -79,7 +82,7 @@ public struct ConverterScreen<Details: View, Widgets: View, Settings: View>: Vie
   }
 
   private var amountLabel: String {
-    if editingAmount && model.editingCode == model.input.source {
+    if editingAmount && model.editingSelectionID == model.input.source {
       CurrencyDisplay.inputAmount(model.editingText, locale: locale)
     } else {
       CurrencyDisplay.format(model.input.decimal, code: model.input.source, locale: locale)
@@ -129,7 +132,7 @@ public struct ConverterScreen<Details: View, Widgets: View, Settings: View>: Vie
         let chooser = CurrencyChooser(
           purpose: purpose,
           selected: purpose == .source
-            ? [model.input.source] : model.input.destinations + [model.input.source],
+            ? [model.input.source] : model.input.manualDestinations + [model.input.source],
           homeCurrencies: [model.input.source] + model.input.destinations,
           available: Set(model.snapshot.quotes.keys),
           showsLocalCurrency: purpose == .add,
@@ -169,9 +172,9 @@ public struct ConverterScreen<Details: View, Widgets: View, Settings: View>: Vie
       .sheet(isPresented: $showsWidgets, onDismiss: { model.reloadInput() }) { widgets() }
       .sheet(item: $detail) { selection in
         if reduceMotion {
-          details(selection.id, model.input.source, model.snapshot)
+          details(selection.code, model.input.source, model.snapshot)
         } else {
-          details(selection.id, model.input.source, model.snapshot)
+          details(selection.code, model.input.source, model.snapshot)
             .navigationTransition(.zoom(sourceID: selection.id, in: detailsMotion))
         }
       }
@@ -220,12 +223,12 @@ public struct ConverterScreen<Details: View, Widgets: View, Settings: View>: Vie
       GeometryReader { viewport in
         ScrollView {
           LazyVStack(spacing: 0) {
-            ForEach(model.input.destinations, id: \.self) { code in
+            ForEach(model.input.destinationRows) { row in
               VStack(spacing: 0) {
-                destinationRow(code)
+                destinationRow(row)
                 Divider().padding(.leading, Self.destinationTextInset)
               }
-              .id(code)
+              .id(row.id)
             }
             if model.input.usesLocalCurrency
               && (model.input.localCurrencyCode == nil || model.input.localCurrencyIsStale)
@@ -261,14 +264,14 @@ public struct ConverterScreen<Details: View, Widgets: View, Settings: View>: Vie
         .scrollBounceBehavior(.always)
         .scrollPosition($listPosition)
         .padding(.horizontal, AppStyle.Space.large)
-        .task(id: "\(editingAmount)-\(model.editingCode)-\(viewport.size)") {
+        .task(id: "\(editingAmount)-\(model.editingSelectionID ?? "")-\(viewport.size)") {
           // Wait for the keypad's layout transaction before resolving the row's scroll position.
           do { try await Task.sleep(for: .milliseconds(100)) } catch { return }
-          guard editingAmount, model.editingCode != model.input.source else { return }
-          if model.editingCode == model.input.destinations.last {
+          guard editingAmount, model.editingSelectionID != model.input.source else { return }
+          if model.editingSelectionID == model.input.destinationRows.last?.id {
             listPosition.scrollTo(edge: .bottom)
           } else {
-            listPosition.scrollTo(id: model.editingCode, anchor: .center)
+            listPosition.scrollTo(id: model.editingSelectionID, anchor: .center)
           }
         }
       }
@@ -374,11 +377,11 @@ public struct ConverterScreen<Details: View, Widgets: View, Settings: View>: Vie
             verticalSizeClass == .compact
               ? AppStyle.font(
                 .title2,
-                weight: editingAmount && model.editingCode == model.input.source
+                weight: editingAmount && model.editingSelectionID == model.input.source
                   ? .semibold : .regular)
               : .system(
                 size: editingAmount ? editingAmountSize : amountSize,
-                weight: editingAmount && model.editingCode == model.input.source
+                weight: editingAmount && model.editingSelectionID == model.input.source
                   ? .semibold : .regular, design: .rounded)
           )
           .tracking(-3).lineLimit(1).minimumScaleFactor(0.25).contentTransition(.numericText())
@@ -399,17 +402,19 @@ public struct ConverterScreen<Details: View, Widgets: View, Settings: View>: Vie
     .accessibilityValue(amountLabel)
   }
 
-  private func destinationRow(_ code: String) -> some View {
+  private func destinationRow(_ row: ConverterState.Destination) -> some View {
+    let code = row.code
     let value = model.snapshot.convert(model.input.decimal, from: model.input.source, to: code)
     return HStack(spacing: 0) {
       Button {
         guard value != nil else { return }
-        beginEditing(code)
+        beginEditing(code, selectionID: row.id)
       } label: {
         HStack(spacing: AppStyle.Space.medium) {
           CurrencyIcon(code, size: 28)
             .frame(width: Self.destinationIconColumnWidth, alignment: .leading)
-            .matchedGeometryEffect(id: "flag-" + code, in: currencyMotion).accessibilityHidden(true)
+            .matchedGeometryEffect(id: "flag-" + row.id, in: currencyMotion)
+            .accessibilityHidden(true)
           let rowLayout =
             dynamicTypeSize.isAccessibilitySize
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: AppStyle.Space.small))
@@ -418,8 +423,8 @@ public struct ConverterScreen<Details: View, Widgets: View, Settings: View>: Vie
             VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
               HStack(spacing: AppStyle.Space.xs) {
                 Text(code).font(AppStyle.font(.body, weight: .medium))
-                  .matchedGeometryEffect(id: code, in: currencyMotion)
-                if model.input.usesLocalCurrency && model.input.localCurrencyCode == code {
+                  .matchedGeometryEffect(id: row.id, in: currencyMotion)
+                if row.isLocal {
                   Image(systemName: "location.fill")
                     .font(AppStyle.font(.caption2))
                     .foregroundStyle(.secondary)
@@ -427,7 +432,7 @@ public struct ConverterScreen<Details: View, Widgets: View, Settings: View>: Vie
                 }
               }
               Text(
-                model.input.usesLocalCurrency && model.input.localCurrencyCode == code
+                row.isLocal
                   ? String(
                     localized: .Converter.localCurrencyName(
                       CurrencyDisplay.name(code, locale: locale)))
@@ -439,13 +444,14 @@ public struct ConverterScreen<Details: View, Widgets: View, Settings: View>: Vie
             }
             if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: AppStyle.Space.medium) }
             Text(
-              editingAmount && model.editingCode == code
+              editingAmount && model.editingSelectionID == row.id
                 ? CurrencyDisplay.inputAmount(model.editingText, locale: locale)
                 : CurrencyDisplay.format(value, code: code, locale: locale)
             )
             .font(
               AppStyle.font(
-                .title2, weight: editingAmount && model.editingCode == code ? .semibold : .regular)
+                .title2,
+                weight: editingAmount && model.editingSelectionID == row.id ? .semibold : .regular)
             )
             .monospacedDigit()
             .lineLimit(1).minimumScaleFactor(0.45).contentTransition(.numericText())
@@ -453,21 +459,26 @@ public struct ConverterScreen<Details: View, Widgets: View, Settings: View>: Vie
           }
         }
         .frame(maxWidth: .infinity, minHeight: 70, alignment: .leading).contentShape(Rectangle())
-        .matchedTransitionSource(id: code, in: detailsMotion)
+        .matchedTransitionSource(id: row.id, in: detailsMotion)
       }
       .buttonStyle(.plain)
       .accessibilityLabel(
 
         .Converter.conversionAccessibility(
-          CurrencyDisplay.name(code, locale: locale),
+          row.isLocal
+            ? String(
+              localized: .Converter.localCurrencyName(CurrencyDisplay.name(code, locale: locale)))
+            : CurrencyDisplay.name(code, locale: locale),
           CurrencyDisplay.format(value, code: code, locale: locale))
       )
       .accessibilityHint(.Converter.editAmountHint)
-      .accessibilityAddTraits(editingAmount && model.editingCode == code ? .isSelected : [])
+      .accessibilityAddTraits(
+        editingAmount && model.editingSelectionID == row.id ? .isSelected : []
+      )
       .contextMenu {
         Button(.Converter.detailsAndHistory, systemImage: "chart.xyaxis.line") {
           AppHaptics.play(.action)
-          detail = CurrencyDetailSelection(id: code)
+          detail = CurrencyDetailSelection(id: row.id, code: code)
         }
         Button(.Converter.copyAmount, systemImage: "doc.on.doc") {
           UIPasteboard.general.string = CurrencyDisplay.format(value, code: code, locale: locale)
@@ -479,7 +490,7 @@ public struct ConverterScreen<Details: View, Widgets: View, Settings: View>: Vie
             model.snapshot, from: model.input.source, to: code, locale: locale))
         Button(.Converter.remove, systemImage: "minus.circle", role: .destructive) {
           withAnimation(motion) {
-            if model.updateInput({ $0.removeDestination(code) }) {
+            if model.updateInput({ $0.removeDestination(row.id) }) {
               AppHaptics.play(.delete)
             }
           }
@@ -487,7 +498,7 @@ public struct ConverterScreen<Details: View, Widgets: View, Settings: View>: Vie
       }
       Button {
         AppHaptics.play(.action)
-        detail = CurrencyDetailSelection(id: code)
+        detail = CurrencyDetailSelection(id: row.id, code: code)
       } label: {
         Image(systemName: "chart.xyaxis.line").font(AppStyle.font(.callout))
           .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
@@ -500,7 +511,7 @@ public struct ConverterScreen<Details: View, Widgets: View, Settings: View>: Vie
       .accessibilityLabel(
         .Converter.detailsAccessibility(CurrencyDisplay.name(code, locale: locale))
       )
-      .accessibilityIdentifier("converter.chart.\(code)")
+      .accessibilityIdentifier("converter.chart.\(row.id)")
     }
   }
 
@@ -629,8 +640,8 @@ public struct ConverterScreen<Details: View, Widgets: View, Settings: View>: Vie
     }
   }
 
-  private func beginEditing(_ code: String) {
-    model.beginEditing(code)
+  private func beginEditing(_ code: String, selectionID: String? = nil) {
+    model.beginEditing(code, selectionID: selectionID)
     guard model.editor != nil else { return }
     AppHaptics.play(.action)
     withAnimation(motion) { editingAmount = true }

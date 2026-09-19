@@ -33,11 +33,49 @@ struct ConverterFeedbackTests {
     model.reloadInput(preservingEditor: true)
     #expect(model.editor != nil)
     #expect(model.editingCode == "USD")
-    model.beginEditing("CZK")
+    model.beginEditing("CZK", selectionID: WidgetSelection.localID)
     try store.saveWidgetLocation(WidgetLocation(country: "GB", currency: "GBP"))
     model.reloadInput(preservingEditor: true)
     #expect(model.editor == nil)
     #expect(model.input.destinations == ["USD", "GBP"])
+  }
+
+  @Test func localEditorTracksSelectionRatherThanMatchingFixedCurrency() throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = CurrencyStore(directory: directory)
+    try store.updateInput {
+      $0.setDestinations(["CZK"]); $0.setUsesLocalCurrency(true)
+    }
+    try store.saveWidgetLocation(WidgetLocation(country: "CZ", currency: "CZK"))
+    let model = ConverterModel(store: store, service: RateService())
+    model.snapshot = RateSnapshot(quotes: [
+      "EUR": ExchangeRate(1, published: "2026-09-19", source: .init(provider: .custom("test"))),
+      "CZK": ExchangeRate(25, published: "2026-09-19", source: .init(provider: .custom("test")))
+    ])
+    model.beginEditing("CZK", selectionID: WidgetSelection.localID)
+    #expect(model.editingSelectionID == WidgetSelection.localID)
+    #expect(model.press("2"))
+    #expect(model.input.destinationRows.count == 2)
+    try store.saveWidgetLocation(WidgetLocation(country: "GB", currency: "GBP"))
+    model.reloadInput(preservingEditor: true)
+    #expect(model.editor == nil)
+    model.beginEditing("CZK")
+    try store.saveWidgetLocation(WidgetLocation(country: "CZ", currency: "CZK"))
+    model.reloadInput(preservingEditor: true)
+    #expect(model.editor != nil)
+    #expect(model.editingSelectionID == "CZK")
+    #expect(model.updateInput { $0.removeDestination("CZK") })
+    #expect(model.editor == nil)
+    #expect(model.input.usesLocalCurrency)
+    #expect(model.updateInput { $0.changeSource("CZK") })
+    model.beginEditing("CZK", selectionID: WidgetSelection.localID)
+    #expect(model.editor != nil)
+    #expect(model.editingSelectionID == WidgetSelection.localID)
+    #expect(model.press("3"))
+    #expect(model.updateInput { $0.removeDestination(WidgetSelection.localID) })
+    #expect(model.editor == nil)
+    #expect(model.input.source == "CZK")
   }
 
   @Test func secondaryEditingKeepsBaseAndOrderAndPersistsValue() throws {

@@ -90,12 +90,31 @@ extension ConverterState {
       }
   }
 
-  /// The display currencies, including a resolved Local selection without duplicate rows.
+  /// Unique resolved codes used for calculations and rate requests.
   public var destinations: [String] {
     WidgetSelection.normalize(
       manualDestinations + (usesLocalCurrency ? [localCurrencyCode].compactMap { $0 } : [])
     )
     .filter { $0 != source }
+  }
+
+  /// A displayed selection, whose identity stays independent of its resolved currency.
+  public struct Destination: Identifiable, Equatable, Sendable {
+    /// The fixed currency code or the stable Local selection identifier.
+    public let id: String
+    /// The currently resolved ISO currency code.
+    public let code: String
+    /// Whether this selection follows the device location.
+    public var isLocal: Bool { id == WidgetSelection.localID }
+  }
+
+  /// Separate fixed and dynamic rows, even when Local matches a fixed row or the base.
+  public var destinationRows: [Destination] {
+    var rows = manualDestinations.map { Destination(id: $0, code: $0) }
+    if usesLocalCurrency, let localCurrencyCode {
+      rows.append(Destination(id: WidgetSelection.localID, code: localCurrencyCode))
+    }
+    return rows
   }
 
   /// Enables or removes the dynamic Local selection without changing explicit currencies.
@@ -111,10 +130,13 @@ extension ConverterState {
     localCurrencyIsStale = resolved.localIsStale
   }
 
-  /// Removes a displayed currency, including its Local selection when applicable.
-  public mutating func removeDestination(_ code: String) {
-    if usesLocalCurrency && localCurrencyCode == code { setUsesLocalCurrency(false) }
-    setDestinations(manualDestinations.filter { $0 != code })
+  /// Removes exactly one selection; Local is addressed by its stable selection ID.
+  public mutating func removeDestination(_ id: String) {
+    if id == WidgetSelection.localID {
+      setUsesLocalCurrency(false)
+    } else {
+      setDestinations(manualDestinations.filter { $0 != id })
+    }
   }
 
   /// Replaces and normalizes the destination currencies.

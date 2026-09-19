@@ -22,21 +22,23 @@ final class ConverterModel {
 
   private var widgetReload: Task<Void, Never>?
   private(set) var editor: WidgetInput?
+  private(set) var editingSelectionID: String?
   var editingCode: String { editor?.active ?? input.source }
   var editingText: String { editor?.amount ?? input.amount }
 
   func reloadInput(preservingEditor: Bool = false) {
     let next = store.input()
     if !preservingEditor || next.source != input.source || next.amount != input.amount
-      || (editor.map { !([next.source] + next.destinations).contains($0.active) } ?? false)
+      || (editor.map { !canEdit($0.active, selectionID: editingSelectionID, in: next) } ?? false)
     {
       editor = nil
     }
     input = next
   }
 
-  func beginEditing(_ code: String) {
-    guard ([input.source] + input.destinations).contains(code),
+  func beginEditing(_ code: String, selectionID: String? = nil) {
+    let id = selectionID ?? code
+    guard canEdit(code, selectionID: id, in: input),
       snapshot.convert(input.decimal, from: input.source, to: code) != nil
     else { return }
     var next = WidgetInput(codes: [input.source] + input.destinations)
@@ -47,6 +49,12 @@ final class ConverterModel {
     NSDecimalRound(&rounded, &value, CurrencyDisplay.fractionDigits(code), .plain)
     next.preset(rounded)
     editor = next
+    editingSelectionID = id
+  }
+
+  private func canEdit(_ code: String, selectionID: String?, in state: ConverterState) -> Bool {
+    if selectionID == state.source { return code == state.source }
+    return state.destinationRows.contains { $0.id == selectionID && $0.code == code }
   }
 
   func endEditing() { editor = nil }
@@ -57,7 +65,7 @@ final class ConverterModel {
     next.press(key)
     guard
       updateInput({
-        guard ([$0.source] + $0.destinations).contains(next.active),
+        guard canEdit(next.active, selectionID: editingSelectionID, in: $0),
           let value = snapshot.convert(next.decimal, from: next.active, to: $0.source)
         else { throw EditingError.unavailableCurrency }
         if next.active == $0.source {
@@ -77,7 +85,7 @@ final class ConverterModel {
   func updateInput(_ mutation: (inout ConverterState) throws -> Void) -> Bool {
     do {
       input = try store.updateInput(mutation)
-      if let editor, !([input.source] + input.destinations).contains(editor.active) {
+      if let editor, !canEdit(editor.active, selectionID: editingSelectionID, in: input) {
         self.editor = nil
       }
       widgetReload?.cancel()
