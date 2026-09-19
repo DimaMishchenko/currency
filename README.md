@@ -2,6 +2,8 @@
 
 A minimal one-to-many SwiftUI converter for iOS 26: one amount, a personal list of currencies, flag emoji, restrained Liquid Glass controls, Decimal arithmetic, and offline rates. See [the design brief](Documentation/Design.md).
 
+Planned improvements: [to-do list](Documentation/TODO.md).
+
 ## Run
 
 Generate the workspace without opening Xcode:
