@@ -75,7 +75,7 @@ The shared ephemeral HTTP session pools connections and coalesces identical in-f
 - Currency board: up to six in medium and twelve in large.
 - Quick rate: inline and rectangular Lock Screen variations.
 
-Add, remove, and reorder currencies in the app; widgets share that ordered list and amount. Tap a result in the app to make it the source, preserving the displayed converted amount (rounded to that currency’s displayed precision). Existing saved input migrates automatically. Widget buttons use App Intents and run without opening the app. [Apple’s interaction model](https://developer.apple.com/documentation/widgetkit/adding-interactivity-to-widgets-and-live-activities) supports buttons and toggles, not a system keyboard/TextField. Each input requires system processing and a new widget timeline; fast calculator-style response cannot be guaranteed. iOS also controls scheduled refresh timing. The in-app keypad is immediate.
+Add, remove, and reorder currencies in the app; widgets share that ordered list and amount. Tap any result to edit its amount directly. The selected amount uses semibold weight while the keypad is open; switching rows keeps the base and list order fixed. Change the base explicitly with the top-left currency picker. Existing saved input migrates automatically. Widget buttons use App Intents and run without opening the app. [Apple’s interaction model](https://developer.apple.com/documentation/widgetkit/adding-interactivity-to-widgets-and-live-activities) supports buttons and toggles, not a system keyboard/TextField. Each input requires system processing and a new widget timeline; fast calculator-style response cannot be guaranteed. iOS also controls scheduled refresh timing. The in-app keypad is immediate.
 
 ## Verification
 

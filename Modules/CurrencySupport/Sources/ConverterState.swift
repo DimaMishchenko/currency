@@ -33,6 +33,13 @@ public struct ConverterState: Codable, Sendable, Equatable {
     editedAt = .now
   }
 
+  /// Stores a converted value without rounding away small secondary-currency edits.
+  public mutating func setConvertedAmount(_ value: Decimal) {
+    guard !value.isNaN, value >= 0 else { return }
+    amount = NSDecimalNumber(decimal: value).stringValue
+    editedAt = .now
+  }
+
   /// Stores a widget-provided value with the app's editable precision.
   mutating func setWidgetAmount(_ value: Decimal) {
     guard !value.isNaN, value >= 0 else { return }

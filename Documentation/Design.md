@@ -6,17 +6,17 @@ The screen is a personal currency list. One source amount leads; every row answe
 
 A small wordmark and options control, a generous source amount, then a flat list. Values align on the trailing edge; codes and names anchor the leading edge. Fine separators establish rhythm without cards. Secondary information stays in a sheet, where each publication date and provider remains inspectable.
 
-The default list contains six destinations. The keyboard is tucked into one floating control so the list gets most of the screen. Entering an amount expands a single glass keypad; tapping Done returns to the ledger. Native sheets support search, removal, and reordering.
+The default list contains six destinations. The keyboard is tucked into one floating control so the list gets most of the screen. Entering an amount expands a single glass keypad in reserved space below the list. The selected row scrolls into view above it, including the bottom row. Tapping Done restores the normal list viewport without extra bottom padding. Native sheets support search, removal, and reordering.
 
 ## Signature interaction
 
-Tap a destination to promote it to the source. The converted amount becomes the editable amount, and the previous source takes the destination’s place. Currency identity moves with a short spring; values use numeric transitions. No looping glow, parallax, or ambient animation. Reduce Motion disables custom movement; keypad feedback uses the system selection haptic.
+Tap any destination to open the keypad and edit that currency directly. The base and list order remain stable until the user changes the base with the top-left picker. Only the amount changes to semibold weight to identify the active row; the keypad header identifies its currency and provides Done. Rows remain tappable while editing, allowing direct switching. Values use numeric transitions. No looping glow, parallax, or ambient animation. Reduce Motion disables custom movement; keypad feedback uses the system selection haptic.
 
 ## HIG decisions
 
 [Apple’s material guidance](https://sosumi.ai/design/human-interface-guidelines/materials) places Liquid Glass on controls and navigation, with restrained use. Accordingly, the currency rows are plain content; glass is reserved for the floating input control, expanded keypad, and options button. Native sheets and menus retain system behavior.
 
-Touch targets in the app are at least 44 points. Currency flags are decorative for VoiceOver; rows announce the currency name, value, and action. Typography responds to Dynamic Type, long numbers scale, and the screen scrolls as needed. Source selection and context-menu actions provide alternatives to the animated row interaction.
+Touch targets in the app are at least 44 points. Currency flags are decorative for VoiceOver; rows announce the currency name, value, and action. Typography responds to Dynamic Type, long numbers scale, and the screen scrolls as needed. Source selection is explicit in the top-left picker; context menus retain history, copying, and removal.
 
 ## Verification boundaries
 

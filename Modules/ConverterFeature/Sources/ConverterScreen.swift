@@ -42,13 +42,13 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
 
   @State private var model: ConverterModel
   @State private var editingAmount = false
+  @State private var listPosition = ScrollPosition(idType: String.self)
   @State private var picker: PickerPurpose?
   @State private var showInfo = false
   @State private var replayFailed = false
   @State private var showManage = false
   @State private var showsWidgets = false
   @State private var detail: CurrencyDetailSelection?
-  @State private var replaceOnNextDigit = true
   @Namespace private var currencyMotion
   @Namespace private var detailsMotion
   @Namespace private var pickerMotion
@@ -65,7 +65,11 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
   }
 
   private var amountLabel: String {
-    CurrencyDisplay.inputAmount(model.input.amount, locale: locale)
+    if editingAmount && model.editingCode == model.input.source {
+      CurrencyDisplay.inputAmount(model.editingText, locale: locale)
+    } else {
+      CurrencyDisplay.format(model.input.decimal, code: model.input.source, locale: locale)
+    }
   }
 
   /// The converter screen content.
@@ -76,12 +80,12 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
           HStack(spacing: AppStyle.Space.large) {
             VStack(spacing: AppStyle.Space.small) {
               source.padding(.horizontal, AppStyle.Space.large)
-                .overlay { outsideDismissal }
+
               Spacer(minLength: 0)
               inputDock
             }
             .frame(width: geometry.size.width * 0.48)
-            currencyList.overlay { outsideDismissal }
+            currencyList
           }
           .padding(.top, AppStyle.Space.small)
         } else {
@@ -90,13 +94,10 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
               .padding(.horizontal, AppStyle.Space.large)
               .padding(.vertical, AppStyle.Space.large)
               .frame(maxWidth: 580)
-              .allowsHitTesting(!editingAmount)
-              .accessibilityHidden(editingAmount)
             currencyList
+            inputDock
           }
           .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-          .overlay { outsideDismissal }
-          .safeAreaInset(edge: .bottom, spacing: 0) { inputDock }
         }
       }
       .background { outsideDismissal.accessibilityHidden(true) }
@@ -154,6 +155,9 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
           Task { await model.refresh() }
         }
       }
+      .onChange(of: model.editor == nil) { _, empty in
+        if empty { editingAmount = false }
+      }
       .onOpenURL { _ in model.reloadInput() }
       .onChange(of: inputRevision) { _, _ in model.reloadInput() }
     }
@@ -175,27 +179,44 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
 
   private var currencyList: some View {
     VStack(spacing: 0) {
-      ScrollView {
-        LazyVStack(spacing: 0) {
-          ForEach(model.input.destinations, id: \.self) { code in
-            destinationRow(code)
-            Divider().padding(.leading, AppStyle.Space.spacious)
+      GeometryReader { viewport in
+        ScrollView {
+          LazyVStack(spacing: 0) {
+            ForEach(model.input.destinations, id: \.self) { code in
+              VStack(spacing: 0) {
+                destinationRow(code)
+                Divider().padding(.leading, AppStyle.Space.spacious)
+              }
+              .id(code)
+            }
+          }
+          .scrollTargetLayout()
+          .frame(maxWidth: 580).frame(maxWidth: .infinity)
+          .background {
+            if !editingAmount {
+              CurrencyRefreshAttachment(refreshing: model.manuallyRefreshing, enabled: true) {
+                await model.refresh(force: true)
+              }
+            }
           }
         }
+        .accessibilityAction(named: Text(.Converter.refreshRates)) {
+          Task { await model.refresh(force: true) }
+        }
+        .scrollBounceBehavior(.always)
+        .scrollPosition($listPosition)
         .padding(.horizontal, AppStyle.Space.large)
-        .frame(maxWidth: 580).frame(maxWidth: .infinity)
-        .allowsHitTesting(!editingAmount)
-        .accessibilityHidden(editingAmount)
-        .background {
-          CurrencyRefreshAttachment(refreshing: model.manuallyRefreshing, enabled: !editingAmount) {
-            await model.refresh(force: true)
+        .task(id: "\(editingAmount)-\(model.editingCode)-\(viewport.size)") {
+          // Wait for the keypad's layout transaction before resolving the row's scroll position.
+          do { try await Task.sleep(for: .milliseconds(100)) } catch { return }
+          guard editingAmount, model.editingCode != model.input.source else { return }
+          if model.editingCode == model.input.destinations.last {
+            listPosition.scrollTo(edge: .bottom)
+          } else {
+            listPosition.scrollTo(id: model.editingCode, anchor: .center)
           }
         }
       }
-      .accessibilityAction(named: Text(.Converter.refreshRates)) {
-        Task { await model.refresh(force: true) }
-      }
-      .scrollBounceBehavior(.always)
       if let warning = model.warning {
         Text(warning).font(AppStyle.font(.caption)).foregroundStyle(.secondary)
           .multilineTextAlignment(.center).padding(.horizontal, AppStyle.Space.large)
@@ -270,7 +291,7 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
   @ViewBuilder
   private var source: some View {
     if verticalSizeClass == .compact {
-      amountEntry.accessibilityHidden(editingAmount)
+      amountEntry
     } else {
       VStack(alignment: .leading, spacing: AppStyle.Space.large) {
         amountEntry
@@ -278,9 +299,6 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
           Text(CurrencyDisplay.name(model.input.source, locale: locale))
             .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
           Spacer()
-          if editingAmount {
-            Text(.Converter.editing).font(AppStyle.font(.caption2)).foregroundStyle(accent)
-          }
         }
       }
     }
@@ -289,11 +307,8 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
   private var sourcePicker: some View {
     Button {
       AppHaptics.play(.action)
-      if editingAmount {
-        dismissAmount(feedback: false)
-      } else {
-        picker = .source
-      }
+      dismissAmount(feedback: false)
+      picker = .source
     } label: {
       HStack(spacing: AppStyle.Space.small) {
         CurrencyIcon(model.input.source, size: 23)
@@ -314,18 +329,20 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
 
   private var amountEntry: some View {
     Button {
-      AppHaptics.play(.action)
-      replaceOnNextDigit = true
-      withAnimation(motion) { editingAmount = true }
+      beginEditing(model.input.source)
     } label: {
       HStack(alignment: .firstTextBaseline, spacing: AppStyle.Space.small) {
         Text(amountLabel)
           .font(
             verticalSizeClass == .compact
-              ? AppStyle.font(.title2, weight: .regular)
+              ? AppStyle.font(
+                .title2,
+                weight: editingAmount && model.editingCode == model.input.source
+                  ? .semibold : .regular)
               : .system(
                 size: editingAmount ? editingAmountSize : amountSize,
-                weight: .regular, design: .rounded)
+                weight: editingAmount && model.editingCode == model.input.source
+                  ? .semibold : .regular, design: .rounded)
           )
           .tracking(-3).lineLimit(1).minimumScaleFactor(0.25).contentTransition(.numericText())
         Text(verbatim: model.input.source)
@@ -350,7 +367,7 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
     return HStack(spacing: 0) {
       Button {
         guard value != nil else { return }
-        useAsBase(code)
+        beginEditing(code)
       } label: {
         HStack(spacing: AppStyle.Space.medium) {
           CurrencyIcon(code, size: 28).frame(width: 36)
@@ -368,10 +385,18 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
                 .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
             }
             if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: AppStyle.Space.medium) }
-            Text(CurrencyDisplay.format(value, code: code, locale: locale))
-              .font(AppStyle.font(.title2, weight: .regular)).monospacedDigit()
-              .lineLimit(1).minimumScaleFactor(0.45).contentTransition(.numericText())
-              .layoutPriority(1)
+            Text(
+              editingAmount && model.editingCode == code
+                ? CurrencyDisplay.inputAmount(model.editingText, locale: locale)
+                : CurrencyDisplay.format(value, code: code, locale: locale)
+            )
+            .font(
+              AppStyle.font(
+                .title2, weight: editingAmount && model.editingCode == code ? .semibold : .regular)
+            )
+            .monospacedDigit()
+            .lineLimit(1).minimumScaleFactor(0.45).contentTransition(.numericText())
+            .layoutPriority(1)
           }
         }
         .frame(maxWidth: .infinity, minHeight: 70, alignment: .leading).contentShape(Rectangle())
@@ -384,16 +409,13 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
           CurrencyDisplay.name(code, locale: locale),
           CurrencyDisplay.format(value, code: code, locale: locale))
       )
-      .accessibilityHint(.Converter.makeBaseHint)
+      .accessibilityHint(.Converter.editAmountHint)
+      .accessibilityAddTraits(editingAmount && model.editingCode == code ? .isSelected : [])
       .contextMenu {
         Button(.Converter.detailsAndHistory, systemImage: "chart.xyaxis.line") {
           AppHaptics.play(.action)
           detail = CurrencyDetailSelection(id: code)
         }
-        Button(.Converter.useAsBase, systemImage: "arrow.up") {
-          useAsBase(code)
-        }
-        .disabled(value == nil)
         Button(.Converter.copyAmount, systemImage: "doc.on.doc") {
           UIPasteboard.general.string = CurrencyDisplay.format(value, code: code, locale: locale)
           AppHaptics.play(.success)
@@ -435,14 +457,21 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
     GlassEffectContainer(spacing: AppStyle.Space.section) {
       if editingAmount {
         VStack(spacing: AppStyle.Space.xs) {
-          if verticalSizeClass != .compact {
+          Group {
             HStack(spacing: AppStyle.Space.small) {
-              CurrencyIcon(model.input.source, size: 14).accessibilityHidden(true)
-              Text(verbatim: model.input.source)
+              CurrencyIcon(model.editingCode, size: 14).accessibilityHidden(true)
+              Text(verbatim: model.editingCode)
+              Spacer()
+              Button {
+                dismissAmount()
+              } label: {
+                Image(systemName: "checkmark").frame(width: 44, height: 44)
+              }
+              .accessibilityLabel(.Converter.doneEntering)
             }
+            .padding(.horizontal, AppStyle.Space.large)
             .font(AppStyle.font(.caption, weight: .semibold))
-            .accessibilityElement(children: .combine)
-            .accessibilityValue(amountLabel)
+            .accessibilityElement(children: .contain)
             .frame(maxWidth: .infinity)
             .padding(.vertical, AppStyle.Space.small)
           }
@@ -490,9 +519,7 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
       } else {
         HStack(spacing: 0) {
           Button {
-            AppHaptics.play(.action)
-            replaceOnNextDigit = true
-            withAnimation(motion) { editingAmount = true }
+            beginEditing(model.input.source)
           } label: {
             Group {
               if dynamicTypeSize.isAccessibilitySize {
@@ -534,35 +561,29 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
         Color.clear.contentShape(Rectangle()).onTapGesture { dismissAmount() }
       }
     }
-    .padding(.bottom, editingAmount && verticalSizeClass != .compact ? -AppStyle.Space.large : 0)
 
   }
 
   private func dismissAmount(feedback: Bool = true) {
     guard editingAmount else { return }
     if feedback { AppHaptics.play(.action) }
-    withAnimation(motion) { editingAmount = false }
+    withAnimation(motion) {
+      editingAmount = false; model.endEditing()
+    }
   }
 
-  private func useAsBase(_ code: String) {
-    withAnimation(motion) {
-      if model.updateInput({ $0.useAsBase(code, snapshot: model.snapshot) }) {
-        AppHaptics.play(.transition)
-      }
-    }
+  private func beginEditing(_ code: String) {
+    model.beginEditing(code)
+    guard model.editor != nil else { return }
+    AppHaptics.play(.action)
+    withAnimation(motion) { editingAmount = true }
   }
 
   private func key(_ key: String) {
     withAnimation(reduceMotion ? nil : .snappy(duration: 0.22)) {
-      let before = model.input.amount
-      let saved = model.updateInput {
-        if replaceOnNextDigit && key != "⌫" { $0.press("AC") }
-        $0.press(key)
-      }
-      if saved && model.input.amount != before {
+      if model.press(key) {
         AppHaptics.play(key == "⌫" ? .delete : .selection)
       }
-      replaceOnNextDigit = false
     }
   }
 

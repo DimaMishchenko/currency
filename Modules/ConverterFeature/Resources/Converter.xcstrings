@@ -157,14 +157,14 @@
         }
       }
     },
-    "makeBaseHint": {
+    "editAmountHint": {
       "extractionState": "manual",
-      "comment": "Converter interface: makeBaseHint.",
+      "comment": "Converter interface: editAmountHint.",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Make this the base currency"
+            "value": "Tap to edit this amount"
           }
         }
       }
