@@ -62,6 +62,7 @@ public struct OnboardingWidgetShowcase: View {
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
     }
+    .onChange(of: page) { _, _ in AppHaptics.play(.selection) }
     .navigationDestination(isPresented: $guideRequested) {
       WidgetTutorial(kind: selected, family: family, continuation: true) {
         // The host crossfades the entire navigation stack into its finale.
@@ -111,7 +112,12 @@ public struct OnboardingWidgetShowcase: View {
     if selected.families.count > 1 {
       Picker(
         .WidgetOnboarding.previewSize,
-        selection: Binding(get: { family }, set: { families[selected] = $0 })
+        selection: Binding(
+          get: { family },
+          set: {
+            AppHaptics.play(.transition)
+            families[selected] = $0
+          })
       ) {
         ForEach(selected.families, id: \.self) { choice in
           Text(choice.showcaseTitle).tag(choice)

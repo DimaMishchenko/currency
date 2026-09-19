@@ -29,7 +29,9 @@ struct WidgetGuide: View {
               height: textSize.isAccessibilitySize ? 220 : max(160, geometry.size.height - 208)
             )
             .accessibilityRepresentation {
-              Button(.WidgetOnboarding.guideExploreCollection) { collection = true }
+              Button(.WidgetOnboarding.guideExploreCollection) {
+                AppHaptics.play(.action); collection = true
+              }
             }
             .overlay(alignment: .bottomTrailing) {
               if !reduceMotion {
@@ -39,6 +41,7 @@ struct WidgetGuide: View {
                     : String(localized: .WidgetOnboarding.guidePauseMotion),
                   systemImage: paused ? "play.fill" : "pause.fill"
                 ) {
+                  AppHaptics.play(.selection)
                   paused.toggle()
                 }
                 .font(.subheadline).labelStyle(.iconOnly)
@@ -69,7 +72,10 @@ struct WidgetGuide: View {
       .navigationTitle(.WidgetOnboarding.widgets).navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .topBarTrailing) {
-          Button(.WidgetOnboarding.close, systemImage: "xmark") { dismiss() }.labelStyle(.iconOnly)
+          Button(.WidgetOnboarding.close, systemImage: "xmark") {
+            AppHaptics.play(.action); dismiss()
+          }
+          .labelStyle(.iconOnly)
         }
       }
       .sheet(item: $selection) { kind in
@@ -83,6 +89,7 @@ struct WidgetGuide: View {
   private var actions: some View {
     VStack(spacing: 4) {
       Button {
+        AppHaptics.play(.action)
         tutorial = true
       } label: {
         Text(.WidgetOnboarding.guideAddWidget)
@@ -90,8 +97,10 @@ struct WidgetGuide: View {
       }
       .foregroundStyle(Color(uiColor: .systemBackground))
       .buttonStyle(.borderedProminent).controlSize(.large)
-      Button(.WidgetOnboarding.guideExploreCollection) { collection = true }
-        .font(AppStyle.font(.subheadline, weight: .medium)).frame(minHeight: 44)
+      Button(.WidgetOnboarding.guideExploreCollection) {
+        AppHaptics.play(.action); collection = true
+      }
+      .font(AppStyle.font(.subheadline, weight: .medium)).frame(minHeight: 44)
     }
     .padding(.horizontal, 24).padding(.top, 8)
     .background(Color(uiColor: .systemGroupedBackground))
@@ -176,6 +185,7 @@ private struct WidgetGalleryWall: View {
     Button {
       selectedFamily = family
       selectedSource = source
+      AppHaptics.play(.action)
       selection = kind
     } label: {
       FittedWidgetPreview(kind: kind, family: family)
@@ -207,6 +217,7 @@ private struct WidgetCollection: View {
           }
           ForEach(WidgetShowcaseKind.allCases) { kind in
             Button {
+              AppHaptics.play(.action)
               selection = kind
             } label: {
               VStack(alignment: .leading, spacing: 16) {
@@ -245,6 +256,7 @@ private struct WidgetCollection: View {
             .accessibilityLabel(kind.title).accessibilityHint(kind.detail)
           }
           Button {
+            AppHaptics.play(.action)
             location = true
           } label: {
             HStack(spacing: 16) {
@@ -267,7 +279,10 @@ private struct WidgetCollection: View {
       .navigationTitle(.WidgetOnboarding.collectionTitle).navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .topBarTrailing) {
-          Button(.WidgetOnboarding.close, systemImage: "xmark") { dismiss() }.labelStyle(.iconOnly)
+          Button(.WidgetOnboarding.close, systemImage: "xmark") {
+            AppHaptics.play(.action); dismiss()
+          }
+          .labelStyle(.iconOnly)
         }
       }
       .sheet(item: $selection) { WidgetPlayground(kind: $0) }
@@ -299,6 +314,7 @@ struct WidgetPlayground: View {
               Spacer()
               if kind.interactive {
                 Button(.WidgetOnboarding.previewReset, systemImage: "arrow.counterclockwise") {
+                  AppHaptics.play(.action)
                   replay = UUID()
                 }
                 .font(AppStyle.font(.subheadline))
@@ -309,6 +325,7 @@ struct WidgetPlayground: View {
                 ForEach(kind.families, id: \.self) { Text($0.showcaseTitle).tag($0) }
               }
               .pickerStyle(.segmented)
+              .onChange(of: family) { _, _ in AppHaptics.play(.transition) }
             }
             Spacer(minLength: 0)
             if kind == .quick {
@@ -362,7 +379,10 @@ struct WidgetPlayground: View {
       .navigationTitle(kind.title).navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .topBarTrailing) {
-          Button(.WidgetOnboarding.close, systemImage: "xmark") { dismiss() }.labelStyle(.iconOnly)
+          Button(.WidgetOnboarding.close, systemImage: "xmark") {
+            AppHaptics.play(.action); dismiss()
+          }
+          .labelStyle(.iconOnly)
         }
       }
       .sheet(isPresented: $tutorial) { WidgetTutorial(kind: kind, family: family) }
@@ -373,6 +393,7 @@ struct WidgetPlayground: View {
   private var actions: some View {
     VStack(spacing: 4) {
       Button {
+        AppHaptics.play(.action)
         tutorial = true
       } label: {
         Text(
@@ -388,8 +409,10 @@ struct WidgetPlayground: View {
         Text(.WidgetOnboarding.quickFollowsApp).font(AppStyle.font(.caption))
           .foregroundStyle(.secondary).frame(minHeight: 44)
       } else {
-        Button(.WidgetOnboarding.guideEditWidget) { edit = true }
-          .font(AppStyle.font(.subheadline, weight: .medium)).frame(minHeight: 44)
+        Button(.WidgetOnboarding.guideEditWidget) {
+          AppHaptics.play(.action); edit = true
+        }
+        .font(AppStyle.font(.subheadline, weight: .medium)).frame(minHeight: 44)
       }
     }
     .padding(.horizontal, textSize.isAccessibilitySize ? 0 : 24).padding(.top, 12)

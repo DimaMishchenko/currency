@@ -9,7 +9,7 @@ struct OnboardingFinale: View {
   @State private var elapsed: TimeInterval = 0
   @State private var started = Date.now
 
-  @State private var spin = OnboardingOrbit()
+  @State private var spin = CurrencyOrbitMotion()
   @State private var dragAngle: Double?
   @State private var dragTime: Date?
   @State private var dragVelocity: Double = 0
@@ -55,6 +55,9 @@ struct OnboardingFinale: View {
           .opacity(titleProgress)
           .offset(y: reduceMotion ? 0 : (1 - titleProgress) * 12)
         }
+        .onChange(of: Int(floor(orbit / (.pi / 24)))) { _, _ in
+          if moving && spin.hasUserMomentum(at: clock) { AppHaptics.play(.rotaryTick) }
+        }
         .frame(width: diameter, height: diameter)
         .contentShape(Circle())
         .highPriorityGesture(spinGesture(diameter: diameter))
@@ -65,6 +68,7 @@ struct OnboardingFinale: View {
     .accessibilityIdentifier("onboarding.ready")
     .accessibilityHint(Text(.Onboarding.spinHint))
     .accessibilityAdjustableAction { direction in
+      AppHaptics.play(.selection)
       spin.grab(at: clock)
       spin.turn(by: direction == .decrement ? -.pi / 4 : .pi / 4)
       spin.release(at: clock, velocity: 0)
@@ -94,7 +98,7 @@ struct OnboardingFinale: View {
         }
         let angle = atan2(y, x)
         if let previous = dragAngle, let date = dragTime {
-          let delta = OnboardingOrbit.shortestTurn(from: previous, to: angle)
+          let delta = CurrencyOrbitMotion.shortestTurn(from: previous, to: angle)
           let interval = value.time.timeIntervalSince(date)
           spin.turn(by: delta)
           if interval > 0 {
@@ -102,6 +106,7 @@ struct OnboardingFinale: View {
           }
         } else {
           spin.grab(at: clock)
+          AppHaptics.play(.action)
         }
         dragAngle = angle
         dragTime = value.time
@@ -115,39 +120,4 @@ struct OnboardingFinale: View {
       }
   }
 
-}
-
-/// Analytic deceleration keeps momentum independent of rendering frequency.
-struct OnboardingOrbit {
-  private var offset: Double = 0
-  private var releasedAt: TimeInterval = 0
-  private var velocity: Double = 0
-  private var held = false
-  private let drift = Double.pi * 2 / 32
-  private let friction = 1.7
-
-  func angle(at time: TimeInterval) -> Double {
-    guard !held else { return offset }
-    let duration = max(0, time - releasedAt)
-    return offset + drift * duration + velocity * (1 - exp(-friction * duration)) / friction
-  }
-
-  mutating func grab(at time: TimeInterval) {
-    offset = angle(at: time)
-    held = true
-    velocity = 0
-  }
-
-  mutating func turn(by angle: Double) { offset += angle }
-
-  mutating func release(at time: TimeInterval, velocity: Double) {
-    guard held else { return }
-    releasedAt = time
-    self.velocity = velocity
-    held = false
-  }
-
-  static func shortestTurn(from start: Double, to end: Double) -> Double {
-    atan2(sin(end - start), cos(end - start))
-  }
 }

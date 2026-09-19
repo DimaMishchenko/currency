@@ -9,6 +9,8 @@ import WidgetOnboardingFeature
 
 @main
 struct CurrencyApp: App {
+  @Environment(\.scenePhase) private var scenePhase
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @State private var appearance = AppAppearance()
   @State private var showsLocalCurrency = false
   @State private var inputRevision = 0
@@ -39,6 +41,12 @@ struct CurrencyApp: App {
       }
       .sheet(isPresented: $showsLocalCurrency, onDismiss: { inputRevision += 1 }) {
         LocalCurrencyOnboardingScreen()
+      }
+      .onChange(of: scenePhase, initial: true) { _, phase in
+        AppHaptics.configure(active: phase == .active, reducedMotion: reduceMotion)
+      }
+      .onChange(of: reduceMotion) { _, value in
+        AppHaptics.configure(active: scenePhase == .active, reducedMotion: value)
       }
       .environment(appearance)
       .tint(appearance.accent)

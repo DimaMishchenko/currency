@@ -25,6 +25,5 @@ struct OnboardingCurrencySearch: View {
     ) { code in
       if choosingBase { model.changeBase(code) } else { model.toggle(code) }
     }
-    .sensoryFeedback(.selection, trigger: model.draft)
   }
 }

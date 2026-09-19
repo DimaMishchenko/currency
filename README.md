@@ -22,6 +22,8 @@ Run the `CurrencySupport` scheme’s tests in Xcode on an iOS 26 simulator for c
 
 ## Localization
 
+Loading, tactile feedback, and interaction validation are documented in [interaction feedback](Documentation/InteractionFeedback.md).
+
 English source catalogs use Xcode-generated typed accessors throughout the app and widgets. See [localization](Documentation/Localization.md) for adding languages and testing resource integration. The [independent review](Documentation/IndependentReview.md) records two remaining P2 storage recommendations.
 
 ## Provider decision (verified September 5, 2026)

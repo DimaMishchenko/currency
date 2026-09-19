@@ -49,7 +49,6 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
   @State private var showsWidgets = false
   @State private var detail: CurrencyDetailSelection?
   @State private var replaceOnNextDigit = true
-  @State private var feedback = 0
   @Namespace private var currencyMotion
   @Namespace private var detailsMotion
   @Namespace private var pickerMotion
@@ -157,7 +156,6 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
       }
       .onOpenURL { _ in model.reloadInput() }
       .onChange(of: inputRevision) { _, _ in model.reloadInput() }
-      .sensoryFeedback(.selection, trigger: feedback)
     }
     .accessibilityAction(.escape) { dismissAmount() }
     .tint(accent)
@@ -188,8 +186,15 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
         .frame(maxWidth: 580).frame(maxWidth: .infinity)
         .allowsHitTesting(!editingAmount)
         .accessibilityHidden(editingAmount)
+        .background {
+          CurrencyRefreshAttachment(refreshing: model.manuallyRefreshing, enabled: !editingAmount) {
+            await model.refresh(force: true)
+          }
+        }
       }
-      .refreshable { await model.refresh(force: true) }
+      .accessibilityAction(named: Text(.Converter.refreshRates)) {
+        Task { await model.refresh(force: true) }
+      }
       .scrollBounceBehavior(.always)
       if let warning = model.warning {
         Text(warning).font(AppStyle.font(.caption)).foregroundStyle(.secondary)
@@ -217,7 +222,8 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
 
   private var widgetsButton: some View {
     Button {
-      dismissAmount()
+      dismissAmount(feedback: false)
+      AppHaptics.play(.action)
       showsWidgets = true
     } label: {
       Image(systemName: "square.grid.2x2")
@@ -233,11 +239,13 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
       }
       .disabled(model.refreshing)
       Button(.Converter.manageCurrencies, systemImage: "slider.horizontal.3") {
-        dismissAmount()
+        dismissAmount(feedback: false)
+        AppHaptics.play(.action)
         showManage = true
       }
       Button(.Converter.aboutRates, systemImage: "info.circle") {
-        dismissAmount()
+        dismissAmount(feedback: false)
+        AppHaptics.play(.action)
         showInfo = true
       }
       if replayOnboarding != nil {
@@ -253,7 +261,10 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
   }
 
   private func restartOnboarding() {
-    do { try replayOnboarding?() } catch { replayFailed = true }
+    do { try replayOnboarding?(); AppHaptics.play(.transition) } catch {
+      replayFailed = true
+      AppHaptics.play(.error)
+    }
   }
 
   @ViewBuilder
@@ -277,7 +288,12 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
 
   private var sourcePicker: some View {
     Button {
-      if editingAmount { dismissAmount() } else { picker = .source }
+      AppHaptics.play(.action)
+      if editingAmount {
+        dismissAmount(feedback: false)
+      } else {
+        picker = .source
+      }
     } label: {
       HStack(spacing: AppStyle.Space.small) {
         CurrencyIcon(model.input.source, size: 23)
@@ -298,6 +314,7 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
 
   private var amountEntry: some View {
     Button {
+      AppHaptics.play(.action)
       replaceOnNextDigit = true
       withAnimation(motion) { editingAmount = true }
     } label: {
@@ -333,8 +350,7 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
     return HStack(spacing: 0) {
       Button {
         guard value != nil else { return }
-        feedback += 1
-        withAnimation(motion) { model.updateInput { $0.useAsBase(code, snapshot: model.snapshot) } }
+        useAsBase(code)
       } label: {
         HStack(spacing: AppStyle.Space.medium) {
           CurrencyIcon(code, size: 28).frame(width: 36)
@@ -371,16 +387,16 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
       .accessibilityHint(.Converter.makeBaseHint)
       .contextMenu {
         Button(.Converter.detailsAndHistory, systemImage: "chart.xyaxis.line") {
+          AppHaptics.play(.action)
           detail = CurrencyDetailSelection(id: code)
         }
         Button(.Converter.useAsBase, systemImage: "arrow.up") {
-          withAnimation(motion) {
-            model.updateInput { $0.useAsBase(code, snapshot: model.snapshot) }
-          }
+          useAsBase(code)
         }
         .disabled(value == nil)
         Button(.Converter.copyAmount, systemImage: "doc.on.doc") {
           UIPasteboard.general.string = CurrencyDisplay.format(value, code: code, locale: locale)
+          AppHaptics.play(.success)
         }
         .disabled(value == nil)
         Text(
@@ -388,11 +404,14 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
             model.snapshot, from: model.input.source, to: code, locale: locale))
         Button(.Converter.remove, systemImage: "minus.circle", role: .destructive) {
           withAnimation(motion) {
-            model.updateInput { $0.setDestinations($0.destinations.filter { $0 != code }) }
+            if model.updateInput({ $0.setDestinations($0.destinations.filter { $0 != code }) }) {
+              AppHaptics.play(.delete)
+            }
           }
         }
       }
       Button {
+        AppHaptics.play(.action)
         detail = CurrencyDetailSelection(id: code)
       } label: {
         Image(systemName: "chart.xyaxis.line").font(AppStyle.font(.caption))
@@ -471,6 +490,7 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
       } else {
         HStack(spacing: 0) {
           Button {
+            AppHaptics.play(.action)
             replaceOnNextDigit = true
             withAnimation(motion) { editingAmount = true }
           } label: {
@@ -489,6 +509,7 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
           .accessibilityLabel(.Converter.enterAmount)
           Rectangle().fill(.primary.opacity(0.1)).frame(width: 1, height: 20)
           Button {
+            AppHaptics.play(.action)
             picker = .add
           } label: {
             Image(systemName: "plus").font(AppStyle.font(.body, weight: .medium))
@@ -517,16 +538,29 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
 
   }
 
-  private func dismissAmount() {
+  private func dismissAmount(feedback: Bool = true) {
+    guard editingAmount else { return }
+    if feedback { AppHaptics.play(.action) }
     withAnimation(motion) { editingAmount = false }
   }
 
+  private func useAsBase(_ code: String) {
+    withAnimation(motion) {
+      if model.updateInput({ $0.useAsBase(code, snapshot: model.snapshot) }) {
+        AppHaptics.play(.transition)
+      }
+    }
+  }
+
   private func key(_ key: String) {
-    feedback += 1
     withAnimation(reduceMotion ? nil : .snappy(duration: 0.22)) {
-      model.updateInput {
+      let before = model.input.amount
+      let saved = model.updateInput {
         if replaceOnNextDigit && key != "⌫" { $0.press("AC") }
         $0.press(key)
+      }
+      if saved && model.input.amount != before {
+        AppHaptics.play(key == "⌫" ? .delete : .selection)
       }
       replaceOnNextDigit = false
     }

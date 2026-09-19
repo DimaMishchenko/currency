@@ -89,7 +89,18 @@ struct OnboardingScreen<Widgets: View>: View {
       }
       .onChange(of: model.step) { _, step in transition(to: step) }
       .onDisappear { transitionTask?.cancel() }
-      .sensoryFeedback(.selection, trigger: model.draft)
+      .onChange(of: model.draft) { _, _ in
+        if search == nil && model.saveError == nil { AppHaptics.play(.selection) }
+      }
+      .onChange(of: model.phase) { _, phase in
+        if phase == .offline || phase == .failed { AppHaptics.play(.warning) }
+      }
+      .onChange(of: model.saveError) { _, error in
+        if error != nil { AppHaptics.play(.error) }
+      }
+      .onChange(of: needsWelcomeBootstrap) { old, new in
+        if old && !new { AppHaptics.play(.success) }
+      }
     }
   }
 
@@ -582,8 +593,9 @@ struct OnboardingScreen<Widgets: View>: View {
     case .baseCurrency: navigate { model.continueFromBaseCurrency() }
     case .selection: navigate { model.continueFromSelection() }
     case .homeScreen: navigate { model.continueFromHomeScreen() }
-    case .widgets: guide = true
-    case .ready: _ = model.complete()
+    case .widgets: AppHaptics.play(.action); guide = true
+    case .ready:
+      if model.complete() { AppHaptics.play(.success) }
     }
   }
   private func settleTransition() {
@@ -606,6 +618,7 @@ struct OnboardingScreen<Widgets: View>: View {
   private func transition(to next: OnboardingModel.Step) {
     guard next != displayedStep else { navigating = false; return }
     transitionTask?.cancel()
+    AppHaptics.play(next == .ready ? .celebration : .transition)
     let order: [OnboardingModel.Step] = [
       .welcome, .baseCurrency, .selection, .homeScreen, .widgets, .ready
     ]

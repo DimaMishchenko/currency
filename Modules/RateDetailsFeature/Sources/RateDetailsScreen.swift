@@ -136,10 +136,17 @@ public struct RateDetailsScreen: View {
           .accessibilityHidden(!compactTitle)
         }
         ToolbarItem(placement: .topBarTrailing) {
-          Button(.Details.close, systemImage: "xmark") { dismiss() }
-            .labelStyle(.iconOnly)
+          Button(.Details.close, systemImage: "xmark") {
+            AppHaptics.play(.action); dismiss()
+          }
+          .labelStyle(.iconOnly)
         }
       }
+      .onChange(of: range) { _, _ in AppHaptics.play(.selection) }
+      .onChange(of: selected?.date) { _, _ in
+        if selectedDate != nil && !loading { AppHaptics.play(.selection) }
+      }
+      .onDisappear { AppHaptics.stop(.chartReveal) }
       .task(id: range) {
         reveal = 0
         loading = true
@@ -153,6 +160,7 @@ public struct RateDetailsScreen: View {
         series = result.series
         message = RateMessages.history(result.issue)
         loading = false
+        if result.issue != nil { AppHaptics.play(.warning) }
         guard result.series?.points.isEmpty == false else { return }
         if reduceMotion {
           reveal = 1
@@ -160,6 +168,7 @@ public struct RateDetailsScreen: View {
           // Let the accepted final domains lay out before revealing the plot.
           await Task.yield()
           guard !Task.isCancelled else { return }
+          if result.issue == nil { AppHaptics.play(.chartReveal) }
           withAnimation(.easeOut(duration: 0.55)) { reveal = 1 }
         }
       }
@@ -365,59 +374,59 @@ private struct HistorySkeleton: View {
       // Keep the empty chart compatible with iOS 26 under Xcode 27's ViewBuilder inference.
       ChartContentBuilder.buildBlock()
     }
-      .chartXScale(domain: 0.0...1.0).chartYScale(domain: 0.0...1.0)
-      .chartYAxis {
-        AxisMarks(position: .trailing, values: [0.0, 0.33, 0.66, 1.0]) { _ in
-          AxisGridLine().foregroundStyle(.quaternary)
-          AxisValueLabel {
-            Text("0.000").font(AppStyle.font(.caption2)).hidden()
-              .frame(width: axisWidth, alignment: .leading)
-              .overlay(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 3).fill(.quaternary).frame(width: 32, height: 8)
-              }
-          }
-        }
-      }
-      .chartXAxis {
-        AxisMarks(values: singleDateLabel ? [0.5] : [0.1, 0.5, 0.9]) { _ in
-          AxisGridLine().foregroundStyle(.quaternary)
-          AxisValueLabel {
-            Text("00 Sep").font(AppStyle.font(.caption2)).hidden().fixedSize()
-              .overlay {
-                RoundedRectangle(cornerRadius: 3).fill(.quaternary).frame(width: 36, height: 8)
-              }
-          }
-        }
-      }
-      .chartOverlay { proxy in
-        GeometryReader { geometry in
-          if let anchor = proxy.plotFrame {
-            let plot = geometry[anchor]
-            Path { path in
-              let width = plot.width
-              let height = plot.height
-              path.move(to: CGPoint(x: 0, y: height * 0.55))
-              path.addCurve(
-                to: CGPoint(x: width * 0.5, y: height * 0.5),
-                control1: CGPoint(x: width * 0.2, y: height * 0.25),
-                control2: CGPoint(x: width * 0.3, y: height * 0.75))
-              path.addCurve(
-                to: CGPoint(x: width, y: height * 0.55),
-                control1: CGPoint(x: width * 0.7, y: height * 0.25),
-                control2: CGPoint(x: width * 0.8, y: height * 0.75))
+    .chartXScale(domain: 0.0...1.0).chartYScale(domain: 0.0...1.0)
+    .chartYAxis {
+      AxisMarks(position: .trailing, values: [0.0, 0.33, 0.66, 1.0]) { _ in
+        AxisGridLine().foregroundStyle(.quaternary)
+        AxisValueLabel {
+          Text("0.000").font(AppStyle.font(.caption2)).hidden()
+            .frame(width: axisWidth, alignment: .leading)
+            .overlay(alignment: .leading) {
+              RoundedRectangle(cornerRadius: 3).fill(.quaternary).frame(width: 32, height: 8)
             }
-            .stroke(.secondary.opacity(0.25), style: StrokeStyle(lineWidth: 2, lineCap: .round))
-            .offset(x: plot.minX, y: plot.minY)
-          }
         }
       }
-      .phaseAnimator(reduceMotion || !isVisible ? [0.7] : [0.55, 1.0]) { content, opacity in
-        content.opacity(opacity)
-      } animation: { _ in
-        .easeInOut(duration: 1.2)
+    }
+    .chartXAxis {
+      AxisMarks(values: singleDateLabel ? [0.5] : [0.1, 0.5, 0.9]) { _ in
+        AxisGridLine().foregroundStyle(.quaternary)
+        AxisValueLabel {
+          Text("00 Sep").font(AppStyle.font(.caption2)).hidden().fixedSize()
+            .overlay {
+              RoundedRectangle(cornerRadius: 3).fill(.quaternary).frame(width: 36, height: 8)
+            }
+        }
       }
-      .onScrollVisibilityChange(threshold: 0.01) { isVisible = $0 }
-      .onDisappear { isVisible = false }
-      .allowsHitTesting(false)
+    }
+    .chartOverlay { proxy in
+      GeometryReader { geometry in
+        if let anchor = proxy.plotFrame {
+          let plot = geometry[anchor]
+          Path { path in
+            let width = plot.width
+            let height = plot.height
+            path.move(to: CGPoint(x: 0, y: height * 0.55))
+            path.addCurve(
+              to: CGPoint(x: width * 0.5, y: height * 0.5),
+              control1: CGPoint(x: width * 0.2, y: height * 0.25),
+              control2: CGPoint(x: width * 0.3, y: height * 0.75))
+            path.addCurve(
+              to: CGPoint(x: width, y: height * 0.55),
+              control1: CGPoint(x: width * 0.7, y: height * 0.25),
+              control2: CGPoint(x: width * 0.8, y: height * 0.75))
+          }
+          .stroke(.secondary.opacity(0.25), style: StrokeStyle(lineWidth: 2, lineCap: .round))
+          .offset(x: plot.minX, y: plot.minY)
+        }
+      }
+    }
+    .phaseAnimator(reduceMotion || !isVisible ? [0.7] : [0.55, 1.0]) { content, opacity in
+      content.opacity(opacity)
+    } animation: { _ in
+      .easeInOut(duration: 1.2)
+    }
+    .onScrollVisibilityChange(threshold: 0.01) { isVisible = $0 }
+    .onDisappear { isVisible = false }
+    .allowsHitTesting(false)
   }
 }

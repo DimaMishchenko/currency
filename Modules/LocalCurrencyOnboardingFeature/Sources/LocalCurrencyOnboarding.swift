@@ -78,17 +78,31 @@ public struct LocalCurrencyOnboardingScreen: View {
       .navigationTitle(.LocalCurrency.guideLocalCurrency).navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .topBarTrailing) {
-          Button(.LocalCurrency.close, systemImage: "xmark") { dismiss() }.labelStyle(.iconOnly)
+          Button(.LocalCurrency.close, systemImage: "xmark") {
+            AppHaptics.play(.action); dismiss()
+          }
+          .labelStyle(.iconOnly)
         }
       }
       .onChange(of: scenePhase) { _, phase in
         if phase == .active { location.reconcileAuthorization() }
       }
+      .onChange(of: location.phase) { old, phase in
+        guard old == .locating || old == .requestingPermission else { return }
+        if phase == .ready { AppHaptics.play(.success) }
+        if phase == .unavailable { AppHaptics.play(.error) }
+      }
       .onDisappear { location.cancel() }
       .confirmationDialog(.LocalCurrency.guideLocalCurrency, isPresented: $manage) {
-        Button(.LocalCurrency.localUpdateAction) { location.update() }
+        Button(.LocalCurrency.localUpdateAction) {
+          AppHaptics.play(.action); location.update()
+        }
         Button(.LocalCurrency.localChooseManually) { manualPicker = true }
-        Button(.LocalCurrency.localClearAction, role: .destructive) { location.clear() }
+        Button(.LocalCurrency.localClearAction, role: .destructive) {
+          location.clear()
+          AppHaptics.play(
+            location.status == .LocalCurrency.localRemoveFailed ? .error : .delete)
+        }
       }
       .sheet(isPresented: $manualPicker) {
         CurrencyChooser(
@@ -203,12 +217,16 @@ public struct LocalCurrencyOnboardingScreen: View {
         if input.source != manualCode { input.setDestinations(input.destinations + [manualCode]) }
       }
       WidgetCenter.shared.reloadAllTimelines()
+      AppHaptics.play(.success)
       manualSaved = true
       manualError = false
-    } catch { manualError = true }
+    } catch { manualError = true; AppHaptics.play(.error) }
   }
   private func primary(_ title: String, action: @escaping () -> Void) -> some View {
-    Button(action: action) {
+    Button {
+      AppHaptics.play(.action)
+      action()
+    } label: {
       Text(title).font(AppStyle.font(.headline)).frame(maxWidth: .infinity).padding(.vertical, 8)
     }
     .foregroundStyle(Color(uiColor: .systemBackground))
@@ -221,15 +239,20 @@ private struct CurrencyOrbit: View {
   let code: String?
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(\.scenePhase) private var scenePhase
-  @State private var phaseOrigin = Date.now
-  @State private var phaseOffset: TimeInterval = 0
-  @State private var speed: Double = 1 / 18
+  @State private var started = Date.now
+  @State private var elapsed: TimeInterval = 0
+  @State private var spin = CurrencyOrbitMotion(drift: 1 / 18)
+  @State private var dragAngle: Double?
+  @State private var dragTime: Date?
+  @State private var dragVelocity: Double = 0
   private var running: Bool { !reduceMotion && scenePhase == .active }
+  private var clock: TimeInterval {
+    elapsed + (running ? Date.now.timeIntervalSince(started) : 0)
+  }
   var body: some View {
     TimelineView(.animation(minimumInterval: 1 / 60, paused: !running)) { context in
-      let phase =
-        reduceMotion
-        ? 0 : phaseOffset + (running ? context.date.timeIntervalSince(phaseOrigin) * speed : 0)
+      let time = elapsed + (running ? context.date.timeIntervalSince(started) : 0)
+      let phase = spin.angle(at: time)
       GeometryReader { geometry in
         let center = CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2)
         let radius = min(geometry.size.width, geometry.size.height) * 0.36
@@ -258,17 +281,75 @@ private struct CurrencyOrbit: View {
           }
         }
         .position(center)
+        .frame(width: geometry.size.width, height: geometry.size.height)
+        .contentShape(Rectangle())
+        .highPriorityGesture(spinGesture(center: center, deadZone: 44 * scale))
+        .onChange(of: Int(floor(phase / (.pi / 24)))) { _, _ in
+          if spin.hasUserMomentum(at: time) { AppHaptics.play(.rotaryTick) }
+        }
       }
     }
-    .accessibilityHidden(true)
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel(Text(.LocalCurrency.orbitLabel))
+    .accessibilityHint(Text(.LocalCurrency.orbitHint))
+    .accessibilityIdentifier("location.currencyOrbit")
+    .accessibilityAdjustableAction { direction in
+      spin.grab(at: clock)
+      spin.turn(by: direction == .decrement ? -.pi / 6 : .pi / 6)
+      spin.release(at: clock, velocity: 0)
+      AppHaptics.play(.selection)
+    }
+    .onAppear { spin.setDrift(running ? (active ? 1 / 6 : 1 / 18) : 0, at: clock) }
     .onChange(of: active) { _, value in
-      if running { phaseOffset += Date.now.timeIntervalSince(phaseOrigin) * speed }
-      phaseOrigin = .now
-      speed = value ? 1 / 6 : 1 / 18
+      spin.setDrift(running ? (value ? 1 / 6 : 1 / 18) : 0, at: clock)
     }
-    .onChange(of: running) { wasRunning, _ in
-      if wasRunning { phaseOffset += Date.now.timeIntervalSince(phaseOrigin) * speed }
-      phaseOrigin = .now
+    .onChange(of: running) { wasRunning, nowRunning in
+      if wasRunning { elapsed += Date.now.timeIntervalSince(started) }
+      started = .now
+      cancelDrag(at: elapsed)
+      spin.setDrift(nowRunning ? (active ? 1 / 6 : 1 / 18) : 0, at: elapsed)
     }
+    .onDisappear { cancelDrag(at: clock) }
+  }
+
+  private func cancelDrag(at time: TimeInterval) {
+    spin.grab(at: time)
+    spin.release(at: time, velocity: 0)
+    dragAngle = nil
+    dragTime = nil
+    dragVelocity = 0
+  }
+
+  private func spinGesture(center: CGPoint, deadZone: CGFloat) -> some Gesture {
+    DragGesture(minimumDistance: 5)
+      .onChanged { value in
+        let x = value.location.x - center.x
+        let y = value.location.y - center.y
+        guard hypot(x, y) > deadZone else {
+          cancelDrag(at: clock)
+          return
+        }
+        let angle = atan2(y, x)
+        if let previous = dragAngle, let date = dragTime {
+          let delta = CurrencyOrbitMotion.shortestTurn(from: previous, to: angle)
+          let interval = value.time.timeIntervalSince(date)
+          spin.turn(by: delta)
+          if interval > 0 {
+            dragVelocity = max(-14, min(14, 0.65 * delta / interval + 0.35 * dragVelocity))
+          }
+        } else {
+          spin.grab(at: clock)
+          AppHaptics.play(.action)
+        }
+        dragAngle = angle
+        dragTime = value.time
+      }
+      .onEnded { value in
+        let fresh = dragTime.map { value.time.timeIntervalSince($0) < 0.12 } ?? false
+        spin.release(at: clock, velocity: reduceMotion || !fresh ? 0 : dragVelocity)
+        dragAngle = nil
+        dragTime = nil
+        dragVelocity = 0
+      }
   }
 }

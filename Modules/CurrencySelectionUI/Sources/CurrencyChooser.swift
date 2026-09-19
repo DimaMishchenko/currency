@@ -71,6 +71,7 @@ public struct CurrencyChooser: View {
         ScrollViewReader { scroll in
           currencyList
             .onChange(of: category) { _, _ in
+              AppHaptics.play(.selection)
               if let first = filteredCodes.first { scroll.scrollTo(first, anchor: .top) }
             }
             .onChange(of: search) { _, _ in
@@ -89,8 +90,10 @@ public struct CurrencyChooser: View {
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .topBarTrailing) {
-          Button(.CurrencySelection.close, systemImage: "xmark") { dismiss() }
-            .labelStyle(.iconOnly)
+          Button(.CurrencySelection.close, systemImage: "xmark") {
+            AppHaptics.play(.action); dismiss()
+          }
+          .labelStyle(.iconOnly)
         }
       }
     }
@@ -100,6 +103,7 @@ public struct CurrencyChooser: View {
     List {
       ForEach(filteredCodes, id: \.self) { code in
         Button {
+          AppHaptics.play(.selection)
           choose(code)
           if !allowsMultipleSelection { dismiss() }
         } label: {

@@ -170,6 +170,7 @@ struct WidgetPreview: View {
   private func apply(_ command: WidgetCommand) {
     var current = previewState.wrappedValue
     current.update(snapshot: snapshot, codes: codes, amount: amount)
+    AppHaptics.play(.selection)
     current.apply(command)
     previewState.wrappedValue = current
   }

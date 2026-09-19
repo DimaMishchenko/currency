@@ -464,6 +464,28 @@
           }
         }
       }
+    },
+    "orbitLabel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Currency orbit"
+          }
+        }
+      }
+    },
+    "orbitHint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag to spin, or swipe up or down to rotate the currencies."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

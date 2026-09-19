@@ -343,11 +343,13 @@ struct WidgetTutorial: View {
   private func finish() {
     guard !didFinish else { return }
     didFinish = true
+    if !continuation { AppHaptics.play(.success) }
     onFinished?()
     if !continuation { dismiss() }
   }
   private func move(to index: Int) {
-    guard steps.indices.contains(index) else { return }
+    guard steps.indices.contains(index), index != step else { return }
+    AppHaptics.play(.transition)
     amountFocused = false
     withAnimation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.86)) {
       step = index
@@ -356,7 +358,10 @@ struct WidgetTutorial: View {
   }
   private func currencyRow(_ title: String, code: String, action: @escaping () -> Void) -> some View
   {
-    Button(action: action) {
+    Button {
+      AppHaptics.play(.action)
+      action()
+    } label: {
       HStack {
         Text(title); Spacer(); CurrencyIcon(code, size: 20); Text(code);
         Image(systemName: "chevron.up.chevron.down").font(.caption)

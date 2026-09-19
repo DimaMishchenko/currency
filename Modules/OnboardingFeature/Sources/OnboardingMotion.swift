@@ -1,27 +1,6 @@
 import CurrencySupport
 import SwiftUI
 
-/// One fixed optical box; the supported symbol replacement has a standard fallback.
-struct CurrencySymbolLoader: View {
-  let moving: Bool
-  @State private var index = 1
-  private let symbols = ["dollarsign", "eurosign", "sterlingsign", "yensign"]
-  var body: some View {
-    Image(systemName: moving ? symbols[index] : "eurosign")
-      .font(.system(size: 26, weight: .medium, design: .rounded))
-      .contentTransition(.symbolEffect(.replace.magic(fallback: .replace)))
-      .frame(width: 40, height: 40)
-      .accessibilityHidden(true)
-      .task(id: moving) {
-        guard moving else { return }
-        while !Task.isCancelled {
-          do { try await Task.sleep(for: .milliseconds(720)) } catch { return }
-          withAnimation(.easeInOut(duration: 0.28)) { index = (index + 1) % symbols.count }
-        }
-      }
-  }
-}
-
 /// Deterministic positions and independent slow periods keep the field quiet and asymmetric.
 struct CurrencyDepthField: View {
   let moving: Bool
