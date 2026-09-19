@@ -8,6 +8,11 @@ struct CurrencyDetailSelection: Identifiable { let id: String }
 
 /// The converter feature, with details and onboarding destinations supplied by the host app.
 public struct ConverterScreen<Details: View, Widgets: View>: View {
+  private static var destinationIconColumnWidth: CGFloat { 44 }
+  private static var destinationTextInset: CGFloat {
+    destinationIconColumnWidth + AppStyle.Space.medium
+  }
+
   @Environment(\.verticalSizeClass) private var verticalSizeClass
   @Environment(\.locale) private var locale
   private let details: (String, String, RateSnapshot) -> Details
@@ -185,7 +190,7 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
             ForEach(model.input.destinations, id: \.self) { code in
               VStack(spacing: 0) {
                 destinationRow(code)
-                Divider().padding(.leading, AppStyle.Space.spacious)
+                Divider().padding(.leading, Self.destinationTextInset)
               }
               .id(code)
             }
@@ -370,7 +375,8 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
         beginEditing(code)
       } label: {
         HStack(spacing: AppStyle.Space.medium) {
-          CurrencyIcon(code, size: 28).frame(width: 36)
+          CurrencyIcon(code, size: 28)
+            .frame(width: Self.destinationIconColumnWidth, alignment: .leading)
             .matchedGeometryEffect(id: "flag-" + code, in: currencyMotion).accessibilityHidden(true)
           let rowLayout =
             dynamicTypeSize.isAccessibilitySize
@@ -436,10 +442,10 @@ public struct ConverterScreen<Details: View, Widgets: View>: View {
         AppHaptics.play(.action)
         detail = CurrencyDetailSelection(id: code)
       } label: {
-        Image(systemName: "chart.xyaxis.line").font(AppStyle.font(.caption))
+        Image(systemName: "chart.xyaxis.line").font(AppStyle.font(.callout))
           .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
           .foregroundStyle(.secondary)
-          .frame(width: 44, height: 60)
+          .frame(width: Self.destinationIconColumnWidth, height: 60, alignment: .trailing)
       }
       .buttonStyle(.plain)
       .accessibilityLabel(
