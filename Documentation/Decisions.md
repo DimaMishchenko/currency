@@ -1,10 +1,10 @@
 # Decisions and boundaries
 
-Document rationale and non-obvious constraints here. Module graphs belong in `Project.swift`, API contracts in code comments, and regressions in tests. Keep completed reviews and validation diaries in Git history.
+Document rationale and non-obvious constraints here. Architecture principles and DI rules live in [Architecture](Architecture.md); build manifests describe the concrete module graph. API contracts belong in code comments and regressions in tests. Keep completed reviews and validation diaries in Git history.
 
 ## Ownership and persistence
 
-- Keep the rate package reusable: UI, localized copy, App Groups, and refresh scheduling belong to its hosts. The app composes navigation so features remain independent.
+- Keep the rate core reusable and independent of UI. Currency-specific UI and localized copy belong to a separate domain UI module; App Group configuration and foreground scheduling remain app-owned. The app composes navigation so features remain independent.
 - The app and widgets are concurrent writers. Mutate freshly loaded input through coordinated storage and merge rate commits; saving an in-memory snapshot can erase the other process's changes. Network work must stay outside the coordination lock.
 - Default widgets share the app's monetary value; Custom input stays independent. Widget size must not change canonical configuration or discard hidden input. Treat persisted identifiers and widget configuration changes as compatibility decisions.
 - Onboarding drafts and interactive previews must not overwrite confirmed app amounts or configured-widget state. Preview the production layouts with isolated actions. Save completion before leaving setup.

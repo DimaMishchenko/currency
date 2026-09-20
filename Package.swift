@@ -12,7 +12,11 @@ let package = Package(
     .library(name: "ExchangeRatesDynamic", type: .dynamic, targets: ["ExchangeRates"])
   ],
   targets: [
-    .target(name: "ExchangeRates", exclude: ["README.md"]),
-    .testTarget(name: "ExchangeRatesTests", dependencies: ["ExchangeRates"])
+    .target(
+      name: "ExchangeRates", path: "Domain/ExchangeRates/Sources/ExchangeRates",
+      exclude: ["README.md"]),
+    .testTarget(
+      name: "ExchangeRatesTests", dependencies: ["ExchangeRates"],
+      path: "Domain/ExchangeRates/Tests/ExchangeRatesTests")
   ]
 )

@@ -1,32 +1,23 @@
 # Development
 
-## Build and validate
+## Working locally
 
-Run commands from the repository root. Use Xcode with Swift 6.2+ and an iOS 26+ simulator, Tuist, and `xcbeautify`.
+Use Xcode and Tuist. Toolchain and deployment requirements live in the manifests.
 
-Regenerate with `tuist generate --no-open` after manifest or dependency-graph changes. Source changes inside buildable folders do not require regeneration. The manifests and generated schemes are the source of truth for targets.
+Run `tuist generate --no-open` after changing manifests or dependencies, then open `Currency.xcworkspace`. Changes inside existing buildable folders do not require regeneration.
 
-```sh
-swift test
-swift format lint --recursive --strict Sources Tests Modules App/Sources App/Tests Widgets/Sources
-```
+- `Currency` builds the app and widget extension.
+- `CurrencyTests` runs the combined test suite; `swift test` runs the standalone rate-core tests.
+- `CurrencyHarnesses` builds the isolated development apps. Module READMEs list their harness launch arguments.
 
-In Xcode, build `Currency` and run `CurrencySupport` and `CurrencyIntegrationTests`. For command-line runs, choose an installed simulator UUID:
+For command-line Xcode builds, use `set -o pipefail` and pipe combined output through `xcbeautify`. Use a separate simulator and derived-data directory for parallel work.
 
-```sh
-SIMULATOR_ID='<simulator UUID>'
-set -o pipefail
-xcodebuild test -workspace Currency.xcworkspace -scheme CurrencyIntegrationTests \
-  -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
-  CODE_SIGN_IDENTITY=- 2>&1 | xcbeautify
-```
+Before delivery, run the relevant tests, check affected UI, and verify formatting with `swift format lint --recursive --strict App Domain Features DesignSystem` and `git diff --check`. Outstanding device and release checks live in [TODO](TODO.md).
 
-Use the same destination/signing options with the `CurrencySupport` scheme for support tests, or `build -scheme Currency -configuration Debug` / `Release` for app and widget builds. Xcode's Build Documentation checks the package API reference. Native release checks live in [TODO](TODO.md); passing model tests does not close them.
+## Conventions
 
-## Signing and resource pitfalls
+Keep signing enabled when validating shared App Group storage, including on simulators. Device builds require a configured signing team.
 
-- Device builds need a signing team for the app and extension and the registered `group.com.dimasike.currency` App Group. If changing identifiers, update the manifest, both entitlements, and the shared store consistently.
-- Keep signing enabled for simulator integration tests. `CODE_SIGNING_ALLOWED=NO` can compile but removes entitlements needed by shared storage. Inspect the built bundle identifier before installing or changing simulator permissions; Debug and Release installations can coexist.
-- Feature frameworks own their string catalogs, including Settings. Use Xcode-generated accessors in the owning module; keep placeholders in a single translatable entry. App Intent metadata requires literal localized-resource initializers. Export translations through Xcode; never edit generated Swift.
-- Dynamic frameworks allow generated localization accessors to find their resource bundles. The app embeds `ExchangeRatesDynamic`; other consumers may use `ExchangeRates`. Never link both products into one executable. If changing linkage, verify actual embedding and resource lookup, not just Tuist's graph diagnostics.
-- Feature hosts and previews must supply `AppAppearance` in the environment. Use isolated stores for tests and previews.
+Use Xcode-generated string-catalog symbols in the owning UI module. Keep resource and interpolation behavior covered by integration tests.
+
+[Architecture](Architecture.md) describes ownership and dependency rules; [Decisions](Decisions.md) records durable constraints. Module READMEs explain purpose and boundaries. Keep API details in source comments and harness launch options in the owning module README.

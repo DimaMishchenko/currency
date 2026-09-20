@@ -12,6 +12,7 @@ Keep only unfinished work. Release checks below are unverified or need revalidat
 
 ## Release checks
 
+- [ ] Verify upgrades preserve already-placed widgets, configuration identities, and keypad intents on a physical device.
 - [ ] Verify Local permission recovery, Allow Once expiry, Settings routing, and eligible widget updates over multiple days; do not require an exact scheduling deadline.
 - [ ] Walk through onboarding and converter with spoken VoiceOver, largest text, Reduce Motion, increased contrast, and reduced transparency. Check cold search focus, orbit gestures, rapid navigation, and save-failure recovery.
 - [ ] Configure and verify distribution signing and shared App Group access in a release build.
