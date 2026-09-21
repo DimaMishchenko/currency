@@ -216,7 +216,7 @@ private struct OnboardingWidgetCard: View {
         kind: .board, family: family, maximumWidth: width, availableHeight: availableHeight,
         codes: configuration.codes, amount: configuration.input.amount,
         snapshot: configuration.snapshot, state: $state)
-    } else if kind == .quick {
+    } else if kind == .icon {
       // Retain the live production layout for every personalized currency count.
       AnimatedWidgetFamilyPreview(
         kind: kind, family: family, maximumWidth: width, availableHeight: availableHeight,

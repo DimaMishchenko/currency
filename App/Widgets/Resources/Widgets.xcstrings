@@ -85,30 +85,6 @@
         }
       }
     },
-    "quickRate": {
-      "extractionState": "manual",
-      "comment": "Widgets interface: quickRate.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Quick rate"
-          }
-        }
-      }
-    },
-    "quickRateDescription": {
-      "extractionState": "manual",
-      "comment": "Widgets interface: quickRateDescription.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Your latest app conversion on the Lock Screen."
-          }
-        }
-      }
-    },
     "enterAmount": {
       "extractionState": "manual",
       "comment": "Widgets interface: enterAmount.",
@@ -711,17 +687,6 @@
         }
       }
     },
-    "includeLocal": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Add local currency to Default"
-          }
-        }
-      }
-    },
     "calculatorListHelp": {
       "extractionState": "manual",
       "localizations": {
@@ -743,16 +708,6 @@
         }
       }
     },
-    "Medium follows the first 4 app currencies. Local uses the last slot when enabled.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Medium follows the first 4 app currencies. Local uses the last slot when enabled."
-          }
-        }
-      }
-    },
     "Large shows the first 8 currencies. Medium shows the first 4.": {
       "localizations": {
         "en": {
@@ -763,12 +718,22 @@
         }
       }
     },
-    "Large follows the first 8 app currencies. Local uses the last slot when enabled.": {
+    "Medium follows the first 4 app currencies, including Local when selected.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Large follows the first 8 app currencies. Local uses the last slot when enabled."
+            "value": "Medium follows the first 4 app currencies, including Local when selected."
+          }
+        }
+      }
+    },
+    "Large follows the first 8 app currencies, including Local when selected.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Large follows the first 8 app currencies, including Local when selected."
           }
         }
       }

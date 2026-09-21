@@ -2,7 +2,7 @@ import Foundation
 
 /// Supported widget capabilities, independent of WidgetKit presentation families.
 public enum WidgetShowcaseKind: String, CaseIterable, Identifiable, Sendable {
-  case calculator, cash, pocket, mental, board, quick
+  case calculator, cash, pocket, mental, board, icon
   /// Stable identity for selection controls.
   public var id: Self { self }
   /// Ordered canonical currency codes used by this presentation.
@@ -14,7 +14,7 @@ public enum WidgetShowcaseKind: String, CaseIterable, Identifiable, Sendable {
     case .cash: ["CZK", "EUR"]
     case .pocket: ["EUR", "USD"]
     case .mental: ["EUR", "CZK"]
-    case .quick: ["EUR", "USD"]
+    case .icon: ["EUR", "USD"]
     }
   }
   /// Whether the capability supports keypad or preset interactions.

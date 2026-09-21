@@ -15,7 +15,6 @@ struct WidgetTutorialStep: Equatable {
 }
 
 struct WidgetTutorial: View {
-  @Environment(\.widgetOnboardingDependencies) private var onboardingDependencies
   let kind: WidgetShowcaseKind
   let family: WidgetFamily
   let editing: Bool
@@ -34,7 +33,6 @@ struct WidgetTutorial: View {
   @State private var base = "EUR"
   @State private var amount = "100"
   @FocusState private var amountFocused: Bool
-  @State private var includeLocal = false
   private enum TutorialPicker: String, Identifiable {
     case base, comparison, add; var id: Self { self }
   }
@@ -53,7 +51,7 @@ struct WidgetTutorial: View {
   }
   private var previewCodes: [String] {
     if kind == .calculator {
-      return custom ? currencies : kind.codes + (includeLocal ? [WidgetSelection.localID] : [])
+      return custom ? currencies : kind.codes
     }
     if kind == .board {
       return custom ? WidgetSelection.board(base: base, targets: currencies) : kind.codes
@@ -61,7 +59,7 @@ struct WidgetTutorial: View {
     return [base, comparison]
   }
   @AccessibilityFocusState private var headingFocused: Bool
-  private var lockScreen: Bool { kind == .quick }
+  private var lockScreen: Bool { kind == .icon }
   private var steps: [WidgetTutorialStep] {
     if lockScreen {
       return [
@@ -74,9 +72,7 @@ struct WidgetTutorial: View {
           detail: String(localized: .WidgetOnboarding.guideCustomizeDetail)),
         .init(
           title: String(localized: .WidgetOnboarding.guideWidgetAreaTitle),
-          detail: family == .accessoryInline
-            ? String(localized: .WidgetOnboarding.guideInlineAreaDetail)
-            : String(localized: .WidgetOnboarding.guideRectangleAreaDetail)),
+          detail: String(localized: .WidgetOnboarding.guideRectangleAreaDetail)),
         .init(
           title: String(localized: .WidgetOnboarding.guideFindCurrencyTitle),
           detail: String(localized: .WidgetOnboarding.guideLockCurrencyDetail)),
@@ -108,7 +104,9 @@ struct WidgetTutorial: View {
             ? String(localized: .WidgetOnboarding.guideBoardLocalDetail)
             : (kind == .calculator && !custom
               ? String(localized: .WidgetOnboarding.guideDefaultLocalDetail)
-              : String(localized: .WidgetOnboarding.guideCustomLocalDetail))
+              : (kind == .calculator
+                ? String(localized: .WidgetOnboarding.guideCustomLocalDetail)
+                : String(localized: .WidgetOnboarding.guidePairLocalDetail)))
         ),
         .init(
           title: String(localized: .WidgetOnboarding.guideFinishEditTitle),
@@ -144,12 +142,6 @@ struct WidgetTutorial: View {
           String(localized: .WidgetOnboarding.guideFinishHomeDetail)
       )
     ]
-  }
-  private func requestLocation() {
-    guard let onboardingDependencies else {
-      preconditionFailure("Widget onboarding requires widgetOnboardingDependencies")
-    }
-    onboardingDependencies.output(.locationRequested)
   }
   var body: some View {
     Group {
@@ -201,16 +193,6 @@ struct WidgetTutorial: View {
             .frame(maxWidth: .infinity, maxHeight: centered ? .infinity : nil)
             if !continuation { guideCopy }
             if editing && !lockScreen && step == 2 { configurationDemo }
-            if editing && !lockScreen && step == 3 && kind != .board {
-              Button {
-                requestLocation()
-              } label: {
-                Label(.WidgetOnboarding.guideAutomaticLocal, systemImage: "location")
-              }
-              .buttonStyle(.bordered).controlSize(.large)
-              Text(.WidgetOnboarding.guideLocalPrivacy)
-                .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
-            }
             if textSize.isAccessibilitySize {
               if continuation { onboardingFooter } else { actions }
             }
@@ -239,17 +221,16 @@ struct WidgetTutorial: View {
     .navigationBarTitleDisplayMode(.inline)
     .navigationBarBackButtonHidden(continuation && step > 0)
     .toolbar {
-      if continuation {
-        if step > 0 {
-          ToolbarItem(placement: .topBarLeading) {
-            Button(.WidgetOnboarding.guideBack, systemImage: "chevron.backward") {
-              move(to: step - 1)
-            }
-            .labelStyle(.iconOnly).tint(nil)
-            .accessibilityIdentifier("onboarding.guide.back")
+      if step > 0 || !continuation {
+        ToolbarItem(placement: .topBarLeading) {
+          Button(.WidgetOnboarding.guideBack, systemImage: "chevron.backward") {
+            if step > 0 { move(to: step - 1) } else { finish() }
           }
+          .labelStyle(.iconOnly).tint(nil)
+          .accessibilityIdentifier("onboarding.guide.back")
         }
-      } else {
+      }
+      if !continuation {
         ToolbarItem(placement: .topBarTrailing) {
           Button(.WidgetOnboarding.close, systemImage: "xmark") { finish() }
             .labelStyle(.iconOnly)
@@ -268,7 +249,10 @@ struct WidgetTutorial: View {
         available: Set(WidgetPreviewState.rates.quotes.keys),
         allowedCodes: kind == .cash
           ? Set(CurrencyCatalog.codes.filter(WidgetPresets.allows)) : nil,
-        title: purpose == .comparison ? .WidgetOnboarding.guideComparison : nil
+        title: purpose == .comparison ? .WidgetOnboarding.guideComparison : nil,
+        showsLocalCurrency: purpose != .base,
+        localCurrencyCode: WidgetPreviewState.sampleLocalCurrencyCode,
+        localCurrencySelected: purpose == .add && currencies.contains(WidgetSelection.localID)
       ) { code in
         switch purpose {
         case .base: base = code
@@ -336,21 +320,9 @@ struct WidgetTutorial: View {
   private var actions: some View {
     VStack(spacing: 12) {
       primaryAction
-      let secondaryLayout =
-        textSize.isAccessibilitySize
-        ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
-        : AnyLayout(HStackLayout())
-      secondaryLayout {
-        if !continuation {
-          Button(.WidgetOnboarding.guideBack, systemImage: "chevron.left") {
-            move(to: step - 1)
-          }
-          .disabled(step == 0)
-        }
-        if !textSize.isAccessibilitySize { Spacer() }
-        replayAction
-      }
-      .font(AppStyle.font(.subheadline)).frame(minHeight: 32)
+      replayAction
+        .font(AppStyle.font(.subheadline))
+        .frame(maxWidth: .infinity, minHeight: 44)
     }
     .padding(.horizontal, textSize.isAccessibilitySize ? 0 : 24).padding(.vertical, 12)
     .background(background)
@@ -378,7 +350,14 @@ struct WidgetTutorial: View {
       action()
     } label: {
       HStack {
-        Text(title); Spacer(); CurrencyIcon(code, size: 20); Text(code);
+        Text(title)
+        Spacer()
+        if code == WidgetSelection.localID {
+          Label(.WidgetOnboarding.guideLocalCurrency, systemImage: "location")
+        } else {
+          CurrencyIcon(code, size: 20)
+          Text(code)
+        }
         Image(systemName: "chevron.up.chevron.down").font(.caption)
       }
     }
@@ -391,15 +370,6 @@ struct WidgetTutorial: View {
           Text(.WidgetOnboarding.guideCustom).tag(true)
         }
         .pickerStyle(.segmented)
-        Text(
-          custom
-            ? String(localized: .WidgetOnboarding.guideCustomListHint)
-            : String(localized: .WidgetOnboarding.guideDefaultListHint)
-        )
-        .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
-      }
-      if kind == .calculator && !custom {
-        Toggle(.WidgetOnboarding.guideAddLocalDefault, isOn: $includeLocal)
       }
       if kind == .board && custom {
         currencyRow(String(localized: .WidgetOnboarding.guideBase), code: base) {
@@ -438,11 +408,6 @@ struct WidgetTutorial: View {
           }
         }
         Button(.WidgetOnboarding.addCurrency, systemImage: "plus") { currencyPicker = .add }
-        if kind == .calculator && !currencies.contains(WidgetSelection.localID) {
-          Button(.WidgetOnboarding.guideAddLocal, systemImage: "location") {
-            currencies.append(WidgetSelection.localID)
-          }
-        }
       } else if kind != .calculator && kind != .board {
         currencyRow(String(localized: .WidgetOnboarding.guideBase), code: base) {
           currencyPicker = .base
@@ -451,8 +416,6 @@ struct WidgetTutorial: View {
           currencyPicker = .comparison
         }
       }
-      Text(.WidgetOnboarding.guidePracticeOnly)
-        .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
     }
     .padding(16).background(.background, in: .rect(cornerRadius: 20))
   }
@@ -694,24 +657,16 @@ private struct MiniHomeScreen: View {
   }
   private var lockFace: some View {
     VStack(spacing: 8) {
-      if family == .accessoryInline && step >= 2 {
-        HStack(spacing: 4) {
-          Text(Date.now.formatted(.dateTime.weekday(.abbreviated).day()))
-            .font(.system(size: 11, weight: .medium, design: .rounded)).fixedSize()
-          FittedWidgetPreview(kind: .quick, family: .accessoryInline).frame(height: 24)
-        }
-      } else {
-        Text(Date.now.formatted(.dateTime.weekday(.wide).month(.wide).day()))
-          .font(.system(size: 13, weight: .medium, design: .rounded))
-      }
+      Text(Date.now.formatted(.dateTime.weekday(.wide).month(.wide).day()))
+        .font(.system(size: 13, weight: .medium, design: .rounded))
       Text("9:41").font(.system(size: 64, weight: .semibold, design: .rounded))
-      if family != .accessoryInline && step >= 2 {
+      if step >= 2 {
         RoundedRectangle(cornerRadius: 14)
           .strokeBorder(.primary.opacity(0.3), style: StrokeStyle(lineWidth: 1, dash: [4]))
           .frame(height: 58)
           .overlay {
             if step >= 3 {
-              FittedWidgetPreview(kind: .quick, family: family).padding(6)
+              FittedWidgetPreview(kind: .icon, family: family).padding(6)
             } else {
               Text(.WidgetOnboarding.guideNativeAddWidgets)
                 .font(.system(size: 12, design: .rounded))
@@ -728,28 +683,14 @@ private struct MiniHomeScreen: View {
   private func galleryCard(height: CGFloat) -> some View {
     VStack(spacing: 14) {
       Capsule().fill(.tertiary).frame(width: 30, height: 4)
-      if lockScreen && family == .accessoryInline {
-        Text(.WidgetOnboarding.guideNativeChooseWidget)
-          .font(.system(size: 14, weight: .semibold, design: .rounded))
-        VStack(alignment: .leading, spacing: 8) {
-          Text("Currency").font(.system(size: 13, weight: .semibold, design: .rounded))
-          VStack(alignment: .leading, spacing: 4) {
-            FittedWidgetPreview(kind: .quick, family: family)
-              .frame(maxWidth: family == .accessoryInline ? .infinity : 170)
-              .frame(height: family == .accessoryInline ? 28 : 76)
-            Text(kind.title).font(.system(size: 11, design: .rounded)).foregroundStyle(.secondary)
-          }
-          .padding(12).frame(maxWidth: .infinity, alignment: .leading)
-          .background(.quaternary, in: .rect(cornerRadius: 12))
-        }
-      } else if lockScreen {
+      if lockScreen {
         HStack {
           Text("Currency"); Spacer(); Image(systemName: "xmark")
         }
         .font(.system(size: 13, weight: .semibold, design: .rounded))
         Text(kind.title).font(.system(size: 17, weight: .semibold, design: .rounded))
-        FittedWidgetPreview(kind: .quick, family: family)
-          .frame(width: 150, height: 67)
+        FittedWidgetPreview(kind: .icon, family: family)
+          .frame(width: 67, height: 67)
           .padding(8).background(.quaternary, in: .rect(cornerRadius: 12))
         Text(.WidgetOnboarding.guideNativeTapToAdd)
           .font(.system(size: 11, design: .rounded)).foregroundStyle(.secondary)

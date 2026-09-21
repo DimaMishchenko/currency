@@ -19,6 +19,35 @@ struct OnboardingWidgetTests {
     ])
   }
 
+  @Test func tutorialLocalSelectionResolvesTheSameSampleAsItsPicker() {
+    for kind in [WidgetShowcaseKind.calculator, .board, .cash, .pocket, .mental] {
+      let codes = ["EUR", WidgetSelection.localID]
+      let state = WidgetPreviewState(kind: kind, codes: codes, amount: "100")
+      let entry = state.entry(configuredCodes: codes, sampleLocation: true)
+      #expect(entry.spec.canonicalCodes == codes)
+      #expect(entry.spec.localCode == WidgetPreviewState.sampleLocalCurrencyCode)
+      #expect(entry.spec.codes == ["EUR", "@local:CZK"])
+      #expect(entry.input.codes == ["EUR", "@local:CZK"])
+      #expect(entry.input.amount == "100")
+      #expect(entry.snapshot.convert(entry.input.decimal, from: "EUR", to: "CZK") == 2500)
+      #expect(state.input.codes == codes)
+    }
+  }
+
+  @Test func localOnlyTutorialKeepsItsAmountWhenTheSampleLocationResolves() {
+    let state = WidgetPreviewState(
+      kind: .calculator, codes: [WidgetSelection.localID], amount: "100")
+    let entry = state.entry(configuredCodes: [WidgetSelection.localID], sampleLocation: true)
+    #expect(entry.input.active == "@local:CZK")
+    #expect(entry.input.amount == "100")
+    var edited = state
+    edited.input = entry.input
+    edited.apply(WidgetCommand("7", spec: entry.spec))
+    let next = edited.entry(configuredCodes: [WidgetSelection.localID], sampleLocation: true)
+    #expect(next.input.active == "@local:CZK")
+    #expect(next.input.amount == "7")
+  }
+
   @Test func personalizedPreviewUsesSuppliedRatesAndDoesNotMutateAppInput() {
     var input = ConverterState()
     input.setAmount("100")
@@ -44,7 +73,7 @@ struct OnboardingWidgetTests {
   @Test func pairWidgetsChooseFirstUsableDestinationWithoutFallbackNumbers() {
     var input = ConverterState()
     input.setDestinations(["CZK", "GBP", "USD"])
-    for kind in [WidgetShowcaseKind.pocket, .mental, .quick] {
+    for kind in [WidgetShowcaseKind.pocket, .mental, .icon] {
       let configuration = OnboardingWidgetConfiguration(kind: kind, snapshot: rates, input: input)
       #expect(configuration.codes == ["EUR", "GBP"])
       #expect(configuration.input.primaryDestination == "GBP")

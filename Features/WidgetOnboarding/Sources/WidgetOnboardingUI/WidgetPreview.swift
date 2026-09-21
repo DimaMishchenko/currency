@@ -16,7 +16,7 @@ extension WidgetShowcaseKind {
     case .pocket: String(localized: .WidgetOnboarding.widgetPocketTitle)
     case .mental: String(localized: .WidgetOnboarding.widgetMentalTitle)
     case .board: String(localized: .WidgetOnboarding.widgetBoardTitle)
-    case .quick: String(localized: .WidgetOnboarding.widgetQuickTitle)
+    case .icon: String(localized: .WidgetOnboarding.widgetQuickTitle)
     }
   }
   var detail: String {
@@ -26,7 +26,7 @@ extension WidgetShowcaseKind {
     case .pocket: String(localized: .WidgetOnboarding.widgetPocketDetail)
     case .mental: String(localized: .WidgetOnboarding.widgetMentalDetail)
     case .board: String(localized: .WidgetOnboarding.widgetBoardDetail)
-    case .quick: String(localized: .WidgetOnboarding.widgetQuickDetail)
+    case .icon: String(localized: .WidgetOnboarding.widgetQuickDetail)
     }
   }
   var families: [WidgetFamily] {
@@ -35,7 +35,7 @@ extension WidgetShowcaseKind {
     case .cash: [.systemMedium]
     case .pocket, .mental: [.systemSmall]
     case .board: [.systemSmall, .systemMedium, .systemLarge]
-    case .quick: [.accessoryRectangular, .accessoryInline]
+    case .icon: [.accessoryCircular]
     }
   }
 }
@@ -46,6 +46,7 @@ extension WidgetFamily {
     case .systemSmall: String(localized: .WidgetOnboarding.widgetSizeSmall)
     case .systemMedium: String(localized: .WidgetOnboarding.widgetSizeMedium)
     case .systemLarge: String(localized: .WidgetOnboarding.widgetSizeLarge)
+    case .accessoryCircular: "Circular"
     case .accessoryInline: String(localized: .WidgetOnboarding.widgetSizeInline)
     default: String(localized: .WidgetOnboarding.widgetSizeRectangular)
     }
@@ -54,6 +55,7 @@ extension WidgetFamily {
     switch self {
     case .systemSmall: CGSize(width: 164, height: 164)
     case .systemLarge: CGSize(width: 348, height: 364)
+    case .accessoryCircular: CGSize(width: 76, height: 76)
     case .accessoryInline: CGSize(width: 300, height: 40)
     case .accessoryRectangular: CGSize(width: 170, height: 76)
     default: CGSize(width: 348, height: 164)
@@ -62,14 +64,25 @@ extension WidgetFamily {
 }
 
 extension WidgetPreviewState {
+  static var sampleLocalCurrencyCode: String { "CZK" }
+
   /// Every preview family receives the same canonical input; only production layout limits it.
-  func entry(synchronized: Bool = false, configuredCodes: [String]? = nil) -> SuiteEntry {
+  func entry(
+    synchronized: Bool = false, configuredCodes: [String]? = nil, sampleLocation: Bool = false
+  ) -> SuiteEntry {
     let selection = configuredCodes ?? input.codes
     var spec = WidgetSpec(
-      kind: "preview", codes: selection, amount: input.amount, status: .notDetermined)
-    spec.codes = selection
+      kind: "preview", codes: selection, amount: input.amount,
+      location: sampleLocation ? .init(country: "CZ", currency: Self.sampleLocalCurrencyCode) : nil,
+      status: sampleLocation ? .available : .notDetermined)
     spec.synchronized = synchronized
-    return SuiteEntry(date: .now, spec: spec, input: input, snapshot: snapshot)
+    var resolvedInput = input
+    if input.active == WidgetSelection.localID, spec.localCode != nil {
+      resolvedInput = WidgetInput(codes: spec.codes, amount: input.amount)
+    } else {
+      resolvedInput.reconcile(codes: spec.codes)
+    }
+    return SuiteEntry(date: .now, spec: spec, input: resolvedInput, snapshot: snapshot)
   }
 
 }
@@ -77,6 +90,7 @@ extension WidgetPreviewState {
 struct WidgetPreview: View {
   let kind: WidgetShowcaseKind
   let family: WidgetFamily
+  var symbol: CurrencySymbol = .dollar
   var interactive = false
   var codes: [String]? = nil
   var amount: String? = nil
@@ -91,8 +105,9 @@ struct WidgetPreview: View {
     kind: WidgetShowcaseKind, family: WidgetFamily, interactive: Bool = false,
     codes: [String]? = nil, amount: String? = nil, synchronized: Bool = false,
     snapshot: RateSnapshot = WidgetPreviewState.rates, converterInput: ConverterState? = nil,
-    state: Binding<WidgetPreviewState>? = nil
+    state: Binding<WidgetPreviewState>? = nil, symbol: CurrencySymbol = .dollar
   ) {
+    self.symbol = symbol
     self.kind = kind; self.family = family; self.interactive = interactive; self.codes = codes;
     self.amount = amount; self.synchronized = synchronized
     self.snapshot = snapshot; self.converterInput = converterInput
@@ -102,15 +117,23 @@ struct WidgetPreview: View {
     )
   }
   private var previewState: Binding<WidgetPreviewState> { sharedState ?? $localState }
-  private var entry: SuiteEntry {
+  private func currentState() -> WidgetPreviewState {
     var current = previewState.wrappedValue
-    current.update(snapshot: snapshot, codes: codes, amount: amount)
-    return current.entry(synchronized: synchronized, configuredCodes: codes)
+    // Resolve the demo list before updating state so Local tile/keypad edits keep their identity.
+    let projected = current.entry(
+      synchronized: synchronized, configuredCodes: codes, sampleLocation: converterInput == nil)
+    current.input = projected.input
+    current.update(snapshot: snapshot, codes: projected.spec.codes, amount: amount)
+    return current
+  }
+  private var entry: SuiteEntry {
+    currentState()
+      .entry(
+        synchronized: synchronized, configuredCodes: codes, sampleLocation: converterInput == nil)
   }
 
   private func apply(_ command: WidgetCommand) {
-    var current = previewState.wrappedValue
-    current.update(snapshot: snapshot, codes: codes, amount: amount)
+    var current = currentState()
     AppHaptics.play(.selection)
     current.apply(command)
     previewState.wrappedValue = current
@@ -125,9 +148,8 @@ struct WidgetPreview: View {
       case .pocket: AnchorView(entry: entry)
       case .mental: AnchorView(entry: entry, mental: true)
       case .board: BoardLayout(family: family, entry: entry)
-      case .quick:
-        QuickRateLayout(
-          input: converterInput ?? ConverterState(), snapshot: snapshot, family: family)
+      case .icon:
+        CurrencySymbolLayout(symbol: symbol)
       }
     }
     .environment(\.isWidgetPreview, true)
@@ -146,7 +168,7 @@ struct WidgetPreview: View {
         }
       }
     )
-    .padding(family == .accessoryInline ? 0 : 12)
+    .padding(kind == .icon || family == .accessoryInline ? 0 : 12)
     .frame(
       width: family.previewSize.width,
       height: calculatorProgress.map { CalculatorPreviewTransition(progress: $0).canvasHeight }
@@ -154,14 +176,14 @@ struct WidgetPreview: View {
     )
     .background(
       Color(uiColor: colorScheme == .dark ? .secondarySystemBackground : .systemBackground)
-        .opacity(kind == .quick ? 0 : 1),
+        .opacity(kind == .icon ? 0 : 1),
       in: .rect(cornerRadius: family == .accessoryInline ? 12 : 24)
     )
     .clipShape(.rect(cornerRadius: family == .accessoryInline ? 12 : 24))
     .overlay {
       RoundedRectangle(cornerRadius: 24)
         .strokeBorder(
-          .primary.opacity(kind == .quick ? 0 : colorScheme == .dark ? 0.16 : 0.06), lineWidth: 1)
+          .primary.opacity(kind == .icon ? 0 : colorScheme == .dark ? 0.16 : 0.06), lineWidth: 1)
     }
     .environment(\.openURL, OpenURLAction { _ in .handled })
     .allowsHitTesting(interactive)
@@ -172,6 +194,7 @@ struct WidgetPreview: View {
 struct FittedWidgetPreview: View {
   let kind: WidgetShowcaseKind
   let family: WidgetFamily
+  var symbol: CurrencySymbol = .dollar
   var interactive = false
   var codes: [String]? = nil
   var amount: String? = nil
@@ -183,7 +206,7 @@ struct FittedWidgetPreview: View {
         geometry.size.height / family.previewSize.height)
       WidgetPreview(
         kind: kind, family: family, interactive: interactive, codes: codes, amount: amount,
-        synchronized: synchronized
+        synchronized: synchronized, symbol: symbol
       )
       .scaleEffect(scale)
       .frame(width: geometry.size.width, height: geometry.size.height)
@@ -243,7 +266,7 @@ struct AnimatedWidgetFamilyPreview: View {
     let width = min(
       family == .systemSmall ? min(220, maximumWidth) : maximumWidth,
       availableHeight * natural.width / natural.height,
-      kind == .quick ? natural.width * 1.08 : .infinity)
+      kind == .icon ? natural.width * 1.08 : .infinity)
     WidgetPreview(
       kind: kind, family: family, interactive: kind.interactive,
       codes: codes, amount: amount, snapshot: snapshot, converterInput: converterInput,

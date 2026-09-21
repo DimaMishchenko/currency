@@ -1,31 +1,39 @@
 import AppIntents
-import Conversion
-import ExchangeRates
-import ExchangeRatesUI
-import LocalCurrency
 import SwiftUI
 import WidgetKit
 import Widgets
 import WidgetsUI
 
-struct QuickRateView: View {
-  @Environment(\.widgetFamily) private var family
-  let entry: CurrencyEntry
-  var body: some View {
-    QuickRateLayout(input: entry.input, snapshot: entry.snapshot, family: family)
+struct CurrencyIconEntry: TimelineEntry {
+  let date: Date
+  let symbol: CurrencySymbol
+}
+
+struct CurrencyIconTimeline: AppIntentTimelineProvider {
+  func placeholder(in context: Context) -> CurrencyIconEntry { .init(date: .now, symbol: .dollar) }
+  func snapshot(
+    for configuration: CurrencyIconSettings, in context: Context
+  ) async -> CurrencyIconEntry {
+    .init(date: .now, symbol: configuration.symbol.symbol)
+  }
+  func timeline(
+    for configuration: CurrencyIconSettings, in context: Context
+  ) async -> Timeline<CurrencyIconEntry> {
+    Timeline(entries: [await snapshot(for: configuration, in: context)], policy: .never)
   }
 }
 
-struct QuickRateWidget: Widget {
+struct CurrencyIconWidget: Widget {
   var body: some WidgetConfiguration {
-    StaticConfiguration(
-      kind: "CurrencyQuickRate",
-      provider: CurrencyTimeline(dependencies: WidgetComposition.timeline())
-    ) {
-      QuickRateView(entry: $0)
+    AppIntentConfiguration(
+      kind: "CurrencyIcon", intent: CurrencyIconSettings.self, provider: CurrencyIconTimeline()
+    ) { entry in
+      CurrencySymbolLayout(symbol: entry.symbol)
+        .containerBackground(.clear, for: .widget)
+        .widgetURL(URL(string: "currency://convert"))
     }
-    .configurationDisplayName(Text(.Widgets.quickRate))
-    .description(Text(.Widgets.quickRateDescription))
-    .supportedFamilies([.accessoryInline, .accessoryRectangular])
+    .configurationDisplayName("Currency Icon")
+    .description("A currency symbol for your Lock Screen. Tap to open Currency.")
+    .supportedFamilies([.accessoryCircular])
   }
 }

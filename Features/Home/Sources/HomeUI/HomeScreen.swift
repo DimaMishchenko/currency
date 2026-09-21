@@ -143,7 +143,8 @@ struct HomeScreen: View {
     VStack(spacing: 0) {
       GeometryReader { viewport in
         ScrollView {
-          LazyVStack(spacing: 0) {
+          // Keep the first row mounted while UIKit collapses the pull-to-refresh inset.
+          VStack(spacing: 0) {
             ForEach(model.input.destinationRows) { row in
               VStack(spacing: 0) {
                 destinationRow(row)

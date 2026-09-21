@@ -199,7 +199,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Currency Board uses your selected currencies; choose your local currency manually in its list"
+            "value": "Choose Local from the currency picker for a custom list, or include it in your app list when using Default."
           }
         }
       }
@@ -312,6 +312,18 @@
         }
       }
     },
+    "guidePairLocalDetail": {
+      "extractionState": "manual",
+      "comment": "Local selection instructions for pair widgets.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose Comparison, then select Local in the Location section."
+          }
+        }
+      }
+    },
     "guideCustomLocalDetail": {
       "extractionState": "manual",
       "comment": "Widget onboarding: guideCustomLocalDetail.",
@@ -319,7 +331,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choose Local currency in the widget’s Currencies or Comparison setting, then open its setup link to look up your currency once"
+            "value": "Choose Add currency, then select Local in the Location section. It stays a separate selection from fixed currencies."
           }
         }
       }
@@ -379,7 +391,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Turn on Add local currency to Default in the widget’s settings, then open the setup link to look up your currency once"
+            "value": "Default follows your app list, including Local. Add Local from Add currency in the app."
           }
         }
       }
@@ -523,7 +535,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Close the widget picker and tap Done; these steps are a demonstration, so add the widget on your Lock Screen"
+            "value": "Close the widget picker and tap Done to save your Lock Screen. Tap the icon anytime to open Currency."
           }
         }
       }
@@ -655,7 +667,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Default follows your app currencies, while Custom uses a separate list\nTry the controls below"
+            "value": "Default follows your app. Custom uses its own list."
           }
         }
       }
@@ -703,7 +715,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choose Currency, then tap Quick Rate to follow your latest app conversion"
+            "value": "Choose Currency, then tap Currency Icon to add it. Tap the placed icon to choose a symbol."
           }
         }
       }
@@ -895,7 +907,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tap Add Widgets below the time"
+            "value": "Tap the widget area below the clock"
           }
         }
       }
@@ -1099,7 +1111,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Follows your latest app conversion"
+            "value": "While customizing your Lock Screen, tap the icon to choose its symbol"
           }
         }
       }
@@ -1111,7 +1123,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quick Rate on a sample Lock Screen"
+            "value": "Sample Lock Screen with a currency symbol"
           }
         }
       }
@@ -1243,7 +1255,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your latest conversion, on your Lock Screen"
+            "value": "Your favorite currency symbol, on your Lock Screen"
           }
         }
       }
@@ -1255,7 +1267,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quick Rate"
+            "value": "Currency Icon"
           }
         }
       }

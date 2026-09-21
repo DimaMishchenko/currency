@@ -210,15 +210,8 @@ private struct WidgetGalleryWall: View {
 }
 
 private struct WidgetCollection: View {
-  @Environment(\.widgetOnboardingDependencies) private var onboardingDependencies
   @Environment(\.dismiss) private var dismiss
   @State private var selection: WidgetShowcaseKind?
-  private func requestLocation() {
-    guard let onboardingDependencies else {
-      preconditionFailure("Widget onboarding requires widgetOnboardingDependencies")
-    }
-    onboardingDependencies.output(.locationRequested)
-  }
   var body: some View {
     NavigationStack {
       ScrollView {
@@ -237,14 +230,14 @@ private struct WidgetCollection: View {
               VStack(alignment: .leading, spacing: 16) {
                 ZStack {
                   RoundedRectangle(cornerRadius: 32).fill(.quaternary.opacity(0.5))
-                  if kind == .quick {
+                  if kind == .icon {
                     VStack(spacing: 8) {
                       Text(Date.now.formatted(.dateTime.weekday(.wide).month(.wide).day()))
                         .font(AppStyle.font(.caption))
                       Text("9:41").font(.system(size: 56, weight: .semibold, design: .rounded))
-                      FittedWidgetPreview(kind: kind, family: .accessoryRectangular)
-                        .frame(width: 170, height: 76)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                      FittedWidgetPreview(kind: kind, family: .accessoryCircular)
+                        .frame(width: 44, height: 44)
+                        .frame(maxWidth: .infinity)
                     }
                     .padding(32)
                   } else {
@@ -255,37 +248,20 @@ private struct WidgetCollection: View {
                   }
                 }
                 .frame(minHeight: 212).contentShape(.rect)
-                HStack(alignment: .top) {
+                HStack(alignment: .center) {
                   VStack(alignment: .leading, spacing: 4) {
                     Text(kind.title).font(AppStyle.font(.title3, weight: .semibold))
                     Text(kind.detail).font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
                   }
                   Spacer(minLength: 8)
-                  Image(systemName: "arrow.up.right").font(.body)
-                    .padding(12).background(.quaternary, in: .circle)
+                  Image(systemName: "chevron.right").font(.body)
+                    .foregroundStyle(.secondary)
                 }
               }
             }
             .buttonStyle(.plain).accessibilityElement(children: .ignore)
             .accessibilityLabel(kind.title).accessibilityHint(kind.detail)
           }
-          Button {
-            AppHaptics.play(.action)
-            requestLocation()
-          } label: {
-            HStack(spacing: 16) {
-              Image(systemName: "location").font(.title2)
-              VStack(alignment: .leading, spacing: 4) {
-                Text(.WidgetOnboarding.localCollectionTitle).font(AppStyle.font(.headline))
-                Text(.WidgetOnboarding.localSetupAction).font(AppStyle.font(.subheadline))
-                  .foregroundStyle(.secondary)
-              }
-              Spacer(minLength: 0)
-              Image(systemName: "chevron.right").font(.caption)
-            }
-            .padding(20).background(.background, in: .rect(cornerRadius: 24))
-          }
-          .buttonStyle(.plain)
         }
         .padding(24)
       }
@@ -310,9 +286,9 @@ struct WidgetPlayground: View {
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(\.dynamicTypeSize) private var textSize
   @State private var family: WidgetFamily
-  @State private var replay = UUID()
   @State private var tutorial = false
   @State private var edit = false
+  @State private var symbol: CurrencySymbol = .dollar
   init(kind: WidgetShowcaseKind, family: WidgetFamily? = nil) {
     self.kind = kind; _family = State(initialValue: family ?? kind.families[0])
   }
@@ -321,18 +297,6 @@ struct WidgetPlayground: View {
       GeometryReader { geometry in
         ScrollView {
           VStack(spacing: 20) {
-            HStack {
-              Text(.WidgetOnboarding.previewSampleRates).font(AppStyle.font(.caption))
-                .foregroundStyle(.secondary)
-              Spacer()
-              if kind.interactive {
-                Button(.WidgetOnboarding.previewReset, systemImage: "arrow.counterclockwise") {
-                  AppHaptics.play(.action)
-                  replay = UUID()
-                }
-                .font(AppStyle.font(.subheadline))
-              }
-            }
             if kind.families.count > 1 {
               Picker(.WidgetOnboarding.previewSize, selection: $family) {
                 ForEach(kind.families, id: \.self) { Text($0.showcaseTitle).tag($0) }
@@ -340,14 +304,21 @@ struct WidgetPlayground: View {
               .pickerStyle(.segmented)
               .onChange(of: family) { _, _ in AppHaptics.play(.transition) }
             }
+            if kind == .icon {
+              Picker("Symbol", selection: $symbol) {
+                ForEach(CurrencySymbol.allCases) { symbol in
+                  Label(symbol.title, systemImage: symbol.rawValue).tag(symbol)
+                }
+              }
+              .pickerStyle(.menu)
+            }
             Spacer(minLength: 0)
-            if kind == .quick {
+            if kind == .icon {
               lockScreenPreview
             } else if kind == .calculator {
               let width = min(380, geometry.size.width - 48)
               AnimatedCalculatorPreview(progress: family == .systemMedium ? 0 : 1, width: width)
                 .animation(reduceMotion ? nil : .easeInOut(duration: 0.8), value: family)
-                .id(replay)
                 .shadow(color: .black.opacity(0.08), radius: 24, y: 12)
             } else if kind == .board {
               AnimatedWidgetFamilyPreview(
@@ -361,7 +332,6 @@ struct WidgetPlayground: View {
                 .animation(
                   reduceMotion ? nil : .spring(response: 0.65, dampingFraction: 0.88), value: family
                 )
-                .id(replay)
                 .frame(
                   maxWidth: family == .systemSmall
                     ? 220
@@ -379,9 +349,12 @@ struct WidgetPlayground: View {
             )
             .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
             .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity)
             if textSize.isAccessibilitySize { actions }
           }
-          .padding(24).frame(minHeight: geometry.size.height)
+          .padding(24)
+          .frame(width: geometry.size.width)
+          .frame(minHeight: geometry.size.height)
         }
         .scrollIndicators(.hidden)
       }
@@ -414,7 +387,7 @@ struct WidgetPlayground: View {
         tutorial = true
       } label: {
         Text(
-          kind == .quick
+          kind == .icon
             ? String(localized: .WidgetOnboarding.guideAddLockScreen)
             : String(localized: .WidgetOnboarding.guideAddHomeScreen)
         )
@@ -422,9 +395,10 @@ struct WidgetPlayground: View {
         .frame(maxWidth: .infinity).padding(.vertical, 8)
       }
       .buttonStyle(.borderedProminent).controlSize(.large)
-      if kind == .quick {
+      if kind == .icon {
         Text(.WidgetOnboarding.quickFollowsApp).font(AppStyle.font(.caption))
-          .foregroundStyle(.secondary).frame(minHeight: 44)
+          .foregroundStyle(.secondary).multilineTextAlignment(.center)
+          .frame(maxWidth: .infinity, minHeight: 44)
       } else {
         Button(.WidgetOnboarding.guideEditWidget) {
           AppHaptics.play(.action); edit = true
@@ -437,21 +411,13 @@ struct WidgetPlayground: View {
   }
   private var lockScreenPreview: some View {
     VStack(spacing: 8) {
-      if family == .accessoryInline {
-        HStack(spacing: 4) {
-          Text(Date.now.formatted(.dateTime.weekday(.abbreviated).day()))
-            .font(.system(size: 13, weight: .medium, design: .rounded)).fixedSize()
-          FittedWidgetPreview(kind: .quick, family: family).frame(height: 28)
-        }
-      } else {
-        Text(Date.now.formatted(.dateTime.weekday(.wide).month(.wide).day()))
-          .font(AppStyle.font(.subheadline))
-      }
+      Text(Date.now.formatted(.dateTime.weekday(.wide).month(.wide).day()))
+        .font(AppStyle.font(.subheadline))
       Text("9:41").font(.system(size: 76, weight: .semibold, design: .rounded))
-      if family == .accessoryRectangular {
-        FittedWidgetPreview(kind: .quick, family: family)
-          .frame(width: 170, height: 76)
-          .frame(maxWidth: .infinity, alignment: .leading)
+      if family == .accessoryCircular {
+        FittedWidgetPreview(kind: .icon, family: family, symbol: symbol)
+          .frame(width: 56, height: 56)
+          .frame(maxWidth: .infinity)
           .padding(.top, 8)
       }
       Spacer(minLength: 8)

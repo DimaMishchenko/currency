@@ -4,6 +4,7 @@ import Foundation
 import LocalCurrency
 import Synchronization
 import Testing
+import UIKit
 import WidgetKit
 import Widgets
 import WidgetsUI
@@ -42,12 +43,15 @@ import WidgetsUI
       kind: "CurrencyBoard", input: app, location: nil, status: .notDetermined)
     let calculator = MultiSettings()
     calculator.list = .synchronized
-    calculator.includeLocal = true
     let calculatorSpec = calculator.specification(
       kind: "CurrencyConverter", input: app, location: nil, status: .notDetermined)
     #expect(boardSpec.codes == ["EUR", "USD", "CZK"])
     #expect(boardSpec.amount == "42")
-    #expect(calculatorSpec.canonicalCodes == ["EUR", "USD", "CZK", "@local"])
+    #expect(calculatorSpec.canonicalCodes == ["EUR", "USD", "CZK"])
+    app.setUsesLocalCurrency(true)
+    let localSpec = calculator.specification(
+      kind: "CurrencyConverter", input: app, location: nil, status: .notDetermined)
+    #expect(localSpec.canonicalCodes == ["EUR", "USD", "CZK", "@local"])
     #expect(calculatorSpec.synchronized)
   }
 
@@ -169,29 +173,34 @@ import WidgetsUI
     #expect(seen.withLock { $0 } == spec.key)
   }
 
-  @Test func quickRateRefreshesAtBoundaryAndRereadsConfirmedInput() async {
-    let now = Date.now
-    let old = RateSnapshot(quotes: rates.quotes, checkedAt: now.addingTimeInterval(-1800))
-    let state = Mutex((input: ConverterState(), snapshot: old, refreshes: 0))
-    let dependencies = WidgetTimelineDependencies(
-      input: { state.withLock { $0.input } }, rates: { state.withLock { $0.snapshot } },
-      location: { nil }, locationStatus: { .notDetermined },
-      widgetInput: { _, codes, amount in WidgetInput(codes: codes, amount: amount) },
-      refreshRates: { force in
-        #expect(!force)
-        return state.withLock {
-          $0.refreshes += 1
-          $0.input.setAmount("17")
-          $0.snapshot = RateSnapshot(quotes: old.quotes, checkedAt: now)
-          return RefreshResult(snapshot: $0.snapshot, warning: nil)
-        }
-      },
-      refreshLocalCurrency: {}, now: { now })
-    let timeline = await CurrencyTimeline(dependencies: dependencies).loadTimeline()
-    #expect(state.withLock { $0.refreshes } == 1)
-    #expect(timeline.entries.first?.input.amount == "17")
-    #expect(timeline.entries.first?.snapshot.checkedAt == now)
-    #expect(timeline.policy == .after(now.addingTimeInterval(1800)))
+  @Test func customBoardPickerPreservesLocalThroughSelectionSearchAndConversion() async throws {
+    let query = BoardCurrencyQuery(readInput: { ConverterState() })
+    let choices = try await query.suggestedEntities()
+    #expect(choices.items.contains { $0.id == WidgetSelection.localID })
+    let localName = String(
+      localized: "localCurrencyChoice", defaultValue: "Local currency", table: "Widgets")
+    let matches = try await query.entities(matching: localName)
+    #expect(matches.items.contains { $0.id == WidgetSelection.localID })
+    let restored = try await query.entities(for: ["USD", WidgetSelection.localID])
+    #expect(restored.map(\.id) == ["USD", WidgetSelection.localID])
+    let settings = BoardSettings()
+    settings.list = .selected
+    settings.currencies = restored
+    let spec = settings.specification(
+      kind: "CurrencyBoard", input: ConverterState(),
+      location: WidgetLocation(country: "CZ", currency: "CZK"), status: .available)
+    #expect(spec.canonicalCodes == ["EUR", "USD", WidgetSelection.localID])
+    #expect(spec.localCode == "CZK")
   }
 
+  @Test func iconChoicesRoundTripAndHaveRenderableSymbols() {
+    let choices = CurrencySymbolChoice.allCases
+    #expect(choices.count == CurrencySymbol.allCases.count)
+    for choice in choices {
+      #expect(UIImage(systemName: choice.symbol.rawValue) != nil)
+      let restored = CurrencySymbolChoice(rawValue: choice.rawValue)
+      #expect(restored?.symbol == choice.symbol)
+      #expect(CurrencySymbolChoice.caseDisplayRepresentations[choice] != nil)
+    }
+  }
 }

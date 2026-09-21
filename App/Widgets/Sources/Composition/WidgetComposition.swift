@@ -54,7 +54,7 @@ enum WidgetComposition {
       rates: { rates.loadRates() },
       apply: { command, key, snapshot in try widgets.apply(command, key: key, snapshot: snapshot) },
       reloadSynchronizedWidgets: {
-        for kind in ["CurrencyConverter", "CurrencyBoard", "CurrencyQuickRate"] {
+        for kind in ["CurrencyConverter", "CurrencyBoard"] {
           WidgetCenter.shared.reloadTimelines(ofKind: kind)
         }
       })

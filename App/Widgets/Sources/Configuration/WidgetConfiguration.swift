@@ -308,15 +308,17 @@ struct BoardCurrencyQuery: EntityStringQuery {
     return WidgetSelection.appCurrencies(readInput()).map(WidgetCurrency.init)
   }
   func entities(for identifiers: [String]) async throws -> [WidgetCurrency] {
-    try await CurrencyQuery(readInput: readInput)
-      .entities(for: WidgetSelection.normalize(identifiers, allowsLocal: false))
+    try await ComparisonCurrencyQuery(readInput: readInput)
+      .entities(for: WidgetSelection.normalize(identifiers, allowsLocal: true))
   }
   func suggestedEntities() async throws -> IntentItemCollection<WidgetCurrency> {
-    currencySections(input: readInput(), excluding: selected, make: WidgetCurrency.init)
+    currencySections(
+      input: readInput(), allowsLocal: true, excluding: selected, make: WidgetCurrency.init)
   }
   func entities(matching string: String) async throws -> IntentItemCollection<WidgetCurrency> {
     IntentItemCollection(
-      items: (try await CurrencyQuery(readInput: readInput).entities(matching: string)).items
+      items: (try await ComparisonCurrencyQuery(readInput: readInput).entities(matching: string))
+        .items
         .filter { !selected.contains($0.id) })
   }
 }
@@ -378,11 +380,6 @@ struct MultiSettings: SuiteConfiguration {
         "Default follows your app currencies. Choose Custom list to edit a separate selection.",
       table: "Widgets"), default: .synchronized)
   var list: CalculatorCurrencyList
-  @Parameter(
-    title: LocalizedStringResource(
-      "includeLocal", defaultValue: "Add local currency to Default", table: "Widgets"),
-    default: false)
-  var includeLocal: Bool
   @Parameter(title: "Calculator", query: CalculatorInstanceQuery())
   var instance: CalculatorInstance?
 
@@ -398,10 +395,10 @@ struct MultiSettings: SuiteConfiguration {
           }
         } otherwise: {
           Summary(
-            "Medium follows the first 4 app currencies. Local uses the last slot when enabled.",
+            "Medium follows the first 4 app currencies, including Local when selected.",
             table: "Widgets"
           ) {
-            \.$list; \.$includeLocal
+            \.$list
           }
         }
       }
@@ -413,10 +410,10 @@ struct MultiSettings: SuiteConfiguration {
           }
         } otherwise: {
           Summary(
-            "Large follows the first 8 app currencies. Local uses the last slot when enabled.",
+            "Large follows the first 8 app currencies, including Local when selected.",
             table: "Widgets"
           ) {
-            \.$list; \.$includeLocal
+            \.$list
           }
         }
       }
@@ -429,7 +426,7 @@ struct MultiSettings: SuiteConfiguration {
     let custom = list == .selected
     let codes = WidgetSelection.calculator(
       app: input,
-      custom: currencies?.map(\.id), usesCustom: custom, includeLocal: includeLocal)
+      custom: currencies?.map(\.id), usesCustom: custom, includeLocal: false)
     var spec = WidgetSpec(
       kind: kind, codes: codes, location: location, instanceID: instance?.id, status: status)
     spec.synchronized = !custom

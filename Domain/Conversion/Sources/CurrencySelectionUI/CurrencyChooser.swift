@@ -81,16 +81,11 @@ public struct CurrencyChooser: View {
           .padding(.vertical, AppStyle.Space.small)
 
         }
-        ScrollViewReader { scroll in
-          currencyList
-            .onChange(of: category) { _, _ in
-              AppHaptics.play(.selection)
-              if let first = filteredCodes.first { scroll.scrollTo(first, anchor: .top) }
-            }
-            .onChange(of: search) { _, _ in
-              if let first = filteredCodes.first { scroll.scrollTo(first, anchor: .top) }
-            }
-        }
+        currencyList
+          // Recreate only the scroll content when filtering; the search field keeps focus.
+          .id("\(category)-\(search)")
+          .onChange(of: category) { _, _ in AppHaptics.play(.selection) }
+
       }
 
       .searchable(text: $search)
@@ -114,46 +109,60 @@ public struct CurrencyChooser: View {
   }
 
   private var currencyList: some View {
-    List {
-      if showsLocalCurrency && localMatchesSearch {
-        Section(.CurrencySelection.location) {
-          localCurrencyRow
-        }
-      }
-      ForEach(filteredCodes, id: \.self) { code in
-        Button {
-          AppHaptics.play(.selection)
-          choose(code)
-          if !allowsMultipleSelection { dismiss() }
-        } label: {
-          HStack(spacing: AppStyle.Space.large) {
-            CurrencyIcon(code)
-            VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
-              Text(code).font(AppStyle.font(.headline))
-              Text(CurrencyDisplay.name(code, locale: locale)).font(AppStyle.font(.caption))
-                .foregroundStyle(.secondary)
-            }
-            Spacer()
-            if selected.contains(code) {
-              Image(systemName: "checkmark").foregroundStyle(.tint)
-            } else if !available.contains(code) {
-              Text(.CurrencySelection.unavailable).font(AppStyle.font(.caption2))
-                .foregroundStyle(.secondary)
-            }
+    ScrollView {
+      LazyVStack(alignment: .leading, spacing: 0) {
+        if showsLocalCurrency && localMatchesSearch {
+          Text(.CurrencySelection.location)
+            .font(AppStyle.font(.subheadline, weight: .semibold)).foregroundStyle(.secondary)
+            .padding(.bottom, 12).accessibilityAddTraits(.isHeader)
+          localCurrencyRow.padding(.vertical, 12)
+          if !filteredCodes.isEmpty {
+            Divider().padding(.top, 8).padding(.bottom, 24)
           }
-          .padding(.vertical, AppStyle.Space.xs)
         }
-        .foregroundStyle(Color.primary)
-        .disabled(
-          (selected.contains(code) && !allowsMultipleSelection)
-            || (requiresAvailableRate && !available.contains(code) && !selected.contains(code))
-        )
-        .accessibilityIdentifier("currency.picker.\(code)")
-        .accessibilityAddTraits(selected.contains(code) ? .isSelected : [])
-        .listRowBackground(Color.clear)
+        if showsLocalCurrency && localMatchesSearch && search.isEmpty && !filteredCodes.isEmpty {
+          Text(category.title)
+            .font(AppStyle.font(.subheadline, weight: .semibold)).foregroundStyle(.secondary)
+            .padding(.bottom, 8).accessibilityAddTraits(.isHeader)
+        }
+        ForEach(filteredCodes, id: \.self) { code in
+          Button {
+            AppHaptics.play(.selection)
+            choose(code)
+            if !allowsMultipleSelection { dismiss() }
+          } label: {
+            HStack(spacing: AppStyle.Space.large) {
+              CurrencyIcon(code)
+              VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
+                Text(code).font(AppStyle.font(.headline))
+                Text(CurrencyDisplay.name(code, locale: locale)).font(AppStyle.font(.caption))
+                  .foregroundStyle(.secondary)
+              }
+              Spacer()
+              if selected.contains(code) {
+                Image(systemName: "checkmark").foregroundStyle(.tint)
+              } else if !available.contains(code) {
+                Text(.CurrencySelection.unavailable).font(AppStyle.font(.caption2))
+                  .foregroundStyle(.secondary)
+              }
+            }
+            .padding(.vertical, AppStyle.Space.xs)
+            .contentShape(Rectangle())
+          }
+          .foregroundStyle(Color.primary)
+          .disabled(
+            (selected.contains(code) && !allowsMultipleSelection)
+              || (requiresAvailableRate && !available.contains(code) && !selected.contains(code))
+          )
+          .accessibilityIdentifier("currency.picker.\(code)")
+          .accessibilityAddTraits(selected.contains(code) ? .isSelected : [])
+          .buttonStyle(.plain)
+          .padding(.vertical, 12)
+          Divider()
+        }
       }
+      .padding(.horizontal, 20).padding(.vertical, 24)
     }
-    .scrollContentBackground(.hidden)
     .overlay {
       if filteredCodes.isEmpty && !(showsLocalCurrency && localMatchesSearch) {
         ContentUnavailableView {
@@ -163,7 +172,6 @@ public struct CurrencyChooser: View {
         }
       }
     }
-    .listStyle(.plain)
     .clipped()
   }
 
@@ -222,6 +230,7 @@ public struct CurrencyChooser: View {
         }
       }
       .padding(.vertical, AppStyle.Space.xs)
+      .contentShape(Rectangle())
     }
     .foregroundStyle(Color.primary)
     .disabled(
@@ -233,11 +242,11 @@ public struct CurrencyChooser: View {
     .accessibilityAddTraits(
       localCurrencySelected ? .isSelected : []
     )
-    .listRowBackground(Color.clear)
+    .buttonStyle(.plain)
   }
 
   private var localMatchesSearch: Bool {
-    guard !search.isEmpty else { return true }
+    guard !search.isEmpty else { return category == .currencies || category == .selected }
     let content = [
       String(localized: .CurrencySelection.localCurrency),
       String(localized: .CurrencySelection.location),

@@ -13,6 +13,6 @@ Select the `WidgetsHarness` scheme and add launch arguments under **Run → Argu
 | `calculator` | Medium and large calculator layouts. |
 | `board` | Large board layout. |
 | `cash` | Cash reference layout. |
-| `quick` | Accessory rectangular quick-rate layout. |
+| `icon` | Configurable Lock Screen currency-symbol layout. |
 | `location` | Calculator layouts with unresolved Local currency. |
 | `unavailable` | Calculator layouts with no rate snapshot. |

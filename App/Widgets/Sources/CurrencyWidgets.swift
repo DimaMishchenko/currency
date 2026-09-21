@@ -8,6 +8,6 @@ import WidgetKit
     PocketRateWidget()
     MentalMathWidget()
     CurrencyBoardWidget()
-    QuickRateWidget()
+    CurrencyIconWidget()
   }
 }

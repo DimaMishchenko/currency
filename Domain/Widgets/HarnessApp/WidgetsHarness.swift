@@ -36,11 +36,8 @@ private struct WidgetHarnessContent: View {
           BoardLayout(family: .systemLarge, entry: entry).frame(height: 364)
         } else if scenario == "cash" {
           CashView(entry: entry).frame(height: 164)
-        } else if scenario == "quick" {
-          QuickRateLayout(
-            input: ConverterState(), snapshot: snapshot, family: .accessoryRectangular
-          )
-          .frame(height: 76)
+        } else if scenario == "icon" {
+          CurrencySymbolLayout(symbol: .euro).frame(width: 76, height: 76)
         } else {
           CalculatorLayout(entry: entry, family: .systemMedium).frame(height: 164)
           CalculatorLayout(entry: entry, family: .systemLarge).frame(height: 364)

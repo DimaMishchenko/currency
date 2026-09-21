@@ -57,8 +57,8 @@ struct ManageCurrencies: View {
         }
       }
       .environment(\.editMode, .constant(.active))
-      .navigationTitle(.Converter.yourCurrencies)
-      .navigationBarTitleDisplayMode(.inline)
+      .navigationTitle(.Converter.manageCurrencies)
+      .navigationBarTitleDisplayMode(.large)
       .toolbar {
         ToolbarItem(placement: .topBarTrailing) {
           Button(.Converter.close, systemImage: "xmark") {
