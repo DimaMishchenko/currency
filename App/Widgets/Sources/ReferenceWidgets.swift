@@ -29,7 +29,6 @@ struct PocketRateWidget: Widget {
     .configurationDisplayName(Text(.Widgets.pocketTitle))
     .description(Text(.Widgets.pocketDescription))
     .supportedFamilies([.systemSmall])
-    .containerBackgroundRemovable(false)
   }
 }
 
@@ -43,6 +42,5 @@ struct MentalMathWidget: Widget {
     .configurationDisplayName(Text(.Widgets.mentalTitle))
     .description(Text(.Widgets.mentalDescription))
     .supportedFamilies([.systemSmall])
-    .containerBackgroundRemovable(false)
   }
 }
