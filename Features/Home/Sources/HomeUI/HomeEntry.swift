@@ -21,21 +21,24 @@ public struct HomeEntry: View {
   private let flowID: UUID
   private let active: Bool
   private let detailsNamespace: Namespace.ID
+  private let widgetsNamespace: Namespace.ID
   private let onOutput: (HomeOutput) -> Void
 
   /// Creates an entry with explicit activity and application-owned output handling.
   public init(
-    flowID: UUID, active: Bool, detailsNamespace: Namespace.ID,
+    flowID: UUID, active: Bool, detailsNamespace: Namespace.ID, widgetsNamespace: Namespace.ID,
     onOutput: @escaping (HomeOutput) -> Void
   ) {
     self.flowID = flowID; self.active = active
-    self.detailsNamespace = detailsNamespace; self.onOutput = onOutput
+    self.detailsNamespace = detailsNamespace; self.widgetsNamespace = widgetsNamespace
+    self.onOutput = onOutput
   }
   /// Resolves required dependencies and constructs the flow host.
   public var body: some View {
     if let dependencies {
       HomeHost(
         dependencies: dependencies, active: active, detailsNamespace: detailsNamespace,
+        widgetsNamespace: widgetsNamespace,
         onOutput: onOutput
       )
       .id(flowID)
@@ -52,21 +55,27 @@ private struct HomeHost: View {
   @State private var model: HomeModel
   let active: Bool
   let detailsNamespace: Namespace.ID
+  let widgetsNamespace: Namespace.ID
   let onOutput: (HomeOutput) -> Void
   init(
     dependencies: HomeDependencies, active: Bool, detailsNamespace: Namespace.ID,
+    widgetsNamespace: Namespace.ID,
     onOutput: @escaping (HomeOutput) -> Void
   ) {
     self.active = active
-    self.detailsNamespace = detailsNamespace; self.onOutput = onOutput
+    self.detailsNamespace = detailsNamespace; self.widgetsNamespace = widgetsNamespace
+    self.onOutput = onOutput
     _model = State(initialValue: HomeModel(dependencies: dependencies))
   }
   var body: some View {
-    HomeScreen(model: model, detailsMotion: detailsNamespace, onOutput: onOutput)
-      .task(id: active) {
-        guard active else { return }
-        await model.observeChanges()
-      }
+    HomeScreen(
+      model: model, detailsMotion: detailsNamespace, widgetsMotion: widgetsNamespace,
+      onOutput: onOutput
+    )
+    .task(id: active) {
+      guard active else { return }
+      await model.observeChanges()
+    }
   }
 }
 

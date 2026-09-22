@@ -74,6 +74,7 @@ private final class HomeHarnessFixture {
 @main
 struct HomeHarnessApp: App {
   @State private var flowID = UUID()
+  @Namespace private var widgets
   @Namespace private var details
   @State private var appearance = AppAppearance(
     theme: .system, accent: .primary, onThemeChange: { _ in }, onAccentChange: { _ in })
@@ -90,7 +91,9 @@ struct HomeHarnessApp: App {
   var body: some Scene {
     WindowGroup {
       NavigationStack {
-        HomeEntry(flowID: flowID, active: true, detailsNamespace: details, onOutput: { _ in })
+        HomeEntry(
+          flowID: flowID, active: true, detailsNamespace: details, widgetsNamespace: widgets,
+          onOutput: { _ in })
       }
       .environment(\.homeDependencies, fixture.dependencies)
       .environment(appearance)

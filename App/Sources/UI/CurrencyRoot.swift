@@ -17,6 +17,7 @@ struct CurrencyRoot: View {
   @State private var scene: CurrencyScene
   @Environment(\.scenePhase) private var scenePhase
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  @Namespace private var widgetsMotion
   @Namespace private var detailsMotion
   init(composition: AppComposition) {
     self.composition = composition
@@ -37,7 +38,8 @@ struct CurrencyRoot: View {
         NavigationStack(path: $scene.path) {
           HomeEntry(
             flowID: scene.homeID, active: !scene.showsOnboarding && scenePhase == .active,
-            detailsNamespace: detailsMotion, onOutput: scene.receive
+            detailsNamespace: detailsMotion, widgetsNamespace: widgetsMotion,
+            onOutput: scene.receive
           )
           .navigationDestination(for: CurrencyScene.Route.self) { route in
             switch route {
@@ -136,7 +138,12 @@ struct CurrencyRoot: View {
   @ViewBuilder private func sheetContent(_ sheet: CurrencyScene.Sheet) -> some View {
     switch sheet.kind {
     case .widgets:
-      WidgetOnboardingEntry(flowID: sheet.id)
+      if reduceMotion {
+        WidgetOnboardingEntry(flowID: sheet.id)
+      } else {
+        WidgetOnboardingEntry(flowID: sheet.id)
+          .navigationTransition(.zoom(sourceID: "widgets", in: widgetsMotion))
+      }
     }
   }
   private func detailsContent(_ detail: CurrencyScene.Details) -> some View {

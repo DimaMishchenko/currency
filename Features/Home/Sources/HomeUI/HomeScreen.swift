@@ -13,6 +13,7 @@ struct HomeScreen: View {
   }
   let model: HomeModel
   let detailsMotion: Namespace.ID
+  let widgetsMotion: Namespace.ID
   let onOutput: (HomeOutput) -> Void
   private var configureLocalCurrency: () -> Void { { onOutput(.locationRequested) } }
   @Environment(\.verticalSizeClass) private var verticalSizeClass
@@ -225,6 +226,7 @@ struct HomeScreen: View {
     }
     .accessibilityLabel(.Converter.widgets)
     .accessibilityIdentifier("converter.widgets")
+    .matchedTransitionSource(id: "widgets", in: widgetsMotion)
   }
 
   private var optionsMenu: some View {
