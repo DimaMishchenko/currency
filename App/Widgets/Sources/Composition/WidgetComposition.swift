@@ -46,6 +46,20 @@ enum WidgetComposition {
       now: { .now })
   }
 
+  static func history() -> HistoryTimelineDependencies {
+    let directory = directory()
+    let conversion = ConversionStore(directory: directory)
+    let local = LocalCurrencyStore(directory: directory)
+    let history = HistoryService(directory: directory, client: NetworkClient(timeout: 10))
+    return HistoryTimelineDependencies(
+      input: { conversion.input() },
+      load: { base, quote, range, now in
+        await history.load(base: base, quote: quote, range: range, now: now, cacheLifetime: 86_400)
+      },
+      now: { .now }, location: { local.widgetLocation() },
+      locationStatus: { local.widgetLocationStatus() })
+  }
+
   static func action() -> WidgetActionDependencies {
     let directory = directory()
     let rates = RateStore(directory: directory)

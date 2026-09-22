@@ -83,6 +83,25 @@ struct WidgetTutorial: View {
         )
       ]
     }
+    if editing && kind == .history {
+      return [
+        .init(
+          title: String(localized: .WidgetOnboarding.guideHoldWidgetTitle),
+          detail: String(localized: .WidgetOnboarding.guideHoldInstalled(kind.title))),
+        .init(
+          title: String(localized: .WidgetOnboarding.guideEditTitle),
+          detail: String(localized: .WidgetOnboarding.guideEditDetail)),
+        .init(
+          title: String(localized: .WidgetOnboarding.guideCurrenciesTitle),
+          detail: String(localized: .WidgetOnboarding.guideHistoryPair)),
+        .init(
+          title: String(localized: .WidgetOnboarding.guideHistoryRangeTitle),
+          detail: String(localized: .WidgetOnboarding.guideHistoryRangeDetail)),
+        .init(
+          title: String(localized: .WidgetOnboarding.guideFinishEditTitle),
+          detail: String(localized: .WidgetOnboarding.guideFinishEditDetail))
+      ]
+    }
     if editing {
       return [
         .init(
@@ -362,7 +381,27 @@ struct WidgetTutorial: View {
       }
     }
   }
-  private var configurationDemo: some View {
+  @ViewBuilder private var configurationDemo: some View {
+    if kind == .history {
+      VStack(alignment: .leading, spacing: 16) {
+        LabeledContent(
+          .WidgetOnboarding.guideBase, value: "EUR")
+        LabeledContent(
+          .WidgetOnboarding.guideComparison,
+          value: "CZK")
+        LabeledContent(
+          .WidgetOnboarding.guideHistoryRangeTitle,
+          value: String(localized: .WidgetOnboarding.historyDefaultRange))
+        Text(.WidgetOnboarding.previewSampleHistory).font(AppStyle.font(.caption))
+          .foregroundStyle(.secondary)
+      }
+      .padding(16).background(.background, in: .rect(cornerRadius: 20))
+    } else {
+      currencyConfigurationDemo
+    }
+  }
+
+  private var currencyConfigurationDemo: some View {
     VStack(alignment: .leading, spacing: 16) {
       if kind == .calculator || kind == .board {
         Picker(.WidgetOnboarding.guideCurrencyList, selection: $custom) {

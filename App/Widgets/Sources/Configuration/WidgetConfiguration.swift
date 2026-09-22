@@ -7,9 +7,9 @@ import LocalCurrency
 import Widgets
 import WidgetsUI
 
-private let localCurrencyID = "@local"
+let localCurrencyID = "@local"
 
-private func currencyRepresentation(_ code: String) -> DisplayRepresentation {
+func currencyRepresentation(_ code: String) -> DisplayRepresentation {
   if code == localCurrencyID {
     return DisplayRepresentation(
       title: LocalizedStringResource(
@@ -28,7 +28,7 @@ private func currencyRepresentation(_ code: String) -> DisplayRepresentation {
     image: .init(systemName: "globe"))
 }
 
-private func currencySections<Entity: AppEntity>(
+func currencySections<Entity: AppEntity>(
   input: ConverterState, allowsLocal: Bool = false, cashOnly: Bool = false,
   excluding: Set<String> = [],
   make: (String) -> Entity

@@ -6,6 +6,7 @@ import WidgetKit
     MultiCurrencyWidget()
     CashWidget()
     PocketRateWidget()
+    HistoryWidget()
     MentalMathWidget()
     CurrencyBoardWidget()
     CurrencyIconWidget()

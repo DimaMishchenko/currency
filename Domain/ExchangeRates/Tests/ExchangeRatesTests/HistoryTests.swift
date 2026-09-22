@@ -41,6 +41,27 @@ private actor HistoryHTTP: HTTPClient {
 }
 
 @Suite struct HistoryTests {
+  @Test func dailyWidgetCacheAvoidsRepeatedFetchesUntilExpiry() async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let client = HistoryHTTP()
+    let service = HistoryService(directory: directory, client: client)
+    let now = Date(timeIntervalSince1970: 1_767_398_400)
+    _ = await service.load(
+      base: "USD", quote: "EUR", range: .month, now: now, cacheLifetime: 86_400)
+    let fresh = await service.load(
+      base: "USD", quote: "EUR", range: .month,
+      now: now.addingTimeInterval(86_399), cacheLifetime: 86_400)
+    #expect(await client.calls == 1)
+    #expect(fresh.issue == nil)
+    let expired = await service.load(
+      base: "USD", quote: "EUR", range: .month,
+      now: now.addingTimeInterval(86_400), cacheLifetime: 86_400)
+    #expect(await client.calls == 2)
+    #expect(expired.issue == .usingCachedSeries)
+    #expect(expired.series?.points.last?.value == 0.9)
+  }
+
   @Test func longHistoryWindowsAndMonthlyCloses() {
     let start = Date(timeIntervalSince1970: 0)
     let end = start.addingTimeInterval(366 * 86400)

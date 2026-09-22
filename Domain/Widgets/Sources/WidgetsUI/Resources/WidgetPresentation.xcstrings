@@ -268,6 +268,210 @@
           }
         }
       }
+    },
+    "historyChange": {
+      "extractionState": "manual",
+      "comment": "History widget: historyChange.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rate change over the selected range"
+          }
+        }
+      }
+    },
+    "historySaved": {
+      "extractionState": "manual",
+      "comment": "History widget: historySaved.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved history"
+          }
+        }
+      }
+    },
+    "historySavedDate": {
+      "extractionState": "manual",
+      "comment": "History widget: historySavedDate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved history · as of %@"
+          }
+        }
+      }
+    },
+    "historyObservedDate": {
+      "extractionState": "manual",
+      "comment": "History widget: historyObservedDate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rate as of %@"
+          }
+        }
+      }
+    },
+    "historyChooseCurrency": {
+      "extractionState": "manual",
+      "comment": "History widget: historyChooseCurrency.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a currency in the app"
+          }
+        }
+      }
+    },
+    "historyUnsupported": {
+      "extractionState": "manual",
+      "comment": "History widget: historyUnsupported.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "History unavailable for this pair"
+          }
+        }
+      }
+    },
+    "historyUnavailable": {
+      "extractionState": "manual",
+      "comment": "History widget: historyUnavailable.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "History unavailable"
+          }
+        }
+      }
+    },
+    "historyWeek": {
+      "extractionState": "manual",
+      "comment": "History widget: historyWeek.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1W"
+          }
+        }
+      }
+    },
+    "historyMonth": {
+      "extractionState": "manual",
+      "comment": "History widget: historyMonth.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1M"
+          }
+        }
+      }
+    },
+    "historyQuarter": {
+      "extractionState": "manual",
+      "comment": "History widget: historyQuarter.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3M"
+          }
+        }
+      }
+    },
+    "historyYear": {
+      "extractionState": "manual",
+      "comment": "History widget: historyYear.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1Y"
+          }
+        }
+      }
+    },
+    "historyAll": {
+      "extractionState": "manual",
+      "comment": "History widget: historyAll.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All"
+          }
+        }
+      }
+    },
+    "historyWeekLong": {
+      "extractionState": "manual",
+      "comment": "History widget: historyWeekLong.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One week"
+          }
+        }
+      }
+    },
+    "historyMonthLong": {
+      "extractionState": "manual",
+      "comment": "History widget: historyMonthLong.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One month"
+          }
+        }
+      }
+    },
+    "historyQuarterLong": {
+      "extractionState": "manual",
+      "comment": "History widget: historyQuarterLong.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Three months"
+          }
+        }
+      }
+    },
+    "historyYearLong": {
+      "extractionState": "manual",
+      "comment": "History widget: historyYearLong.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One year"
+          }
+        }
+      }
+    },
+    "historyAllLong": {
+      "extractionState": "manual",
+      "comment": "History widget: historyAllLong.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All available history"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -350,6 +350,10 @@ struct WidgetPlayground: View {
             .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
             .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity)
+            if kind == .history {
+              Text(.WidgetOnboarding.previewSampleHistory)
+                .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
+            }
             if textSize.isAccessibilitySize { actions }
           }
           .padding(24)

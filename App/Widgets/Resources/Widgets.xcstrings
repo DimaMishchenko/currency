@@ -737,6 +737,126 @@
           }
         }
       }
+    },
+    "historyTitle": {
+      "extractionState": "manual",
+      "comment": "History widget: historyTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "History"
+          }
+        }
+      }
+    },
+    "historyDescription": {
+      "extractionState": "manual",
+      "comment": "History widget: historyDescription.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Two currencies and their exchange-rate history. Refreshes daily."
+          }
+        }
+      }
+    },
+    "historySettings": {
+      "extractionState": "manual",
+      "comment": "History widget: historySettings.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "History settings"
+          }
+        }
+      }
+    },
+    "historyRange": {
+      "extractionState": "manual",
+      "comment": "History widget: historyRange.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Range"
+          }
+        }
+      }
+    },
+    "historyWeek": {
+      "extractionState": "manual",
+      "comment": "History widget: historyWeek.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 week"
+          }
+        }
+      }
+    },
+    "historyMonth": {
+      "extractionState": "manual",
+      "comment": "History widget: historyMonth.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 month"
+          }
+        }
+      }
+    },
+    "historyQuarter": {
+      "extractionState": "manual",
+      "comment": "History widget: historyQuarter.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3 months"
+          }
+        }
+      }
+    },
+    "historyYear": {
+      "extractionState": "manual",
+      "comment": "History widget: historyYear.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 year"
+          }
+        }
+      }
+    },
+    "historyAll": {
+      "extractionState": "manual",
+      "comment": "History widget: historyAll.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All history"
+          }
+        }
+      }
+    },
+    "Refreshes daily. Crypto history requires a USD comparison.": {
+      "extractionState": "manual",
+      "comment": "History widget: Refreshes daily. Crypto history requires a USD comparison..",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refreshes daily. Crypto history requires a USD comparison."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

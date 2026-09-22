@@ -28,7 +28,15 @@ private struct WidgetHarnessContent: View {
       input: scenario == "location" ? WidgetInput(codes: codes, amount: input.amount) : input,
       snapshot: scenario == "unavailable" ? RateSnapshot() : snapshot)
   }
-  var body: some View {
+  @ViewBuilder var body: some View {
+    if scenario.hasPrefix("history") {
+      HistoryWidgetHarness(scenario: scenario)
+    } else {
+      standardWidgets
+    }
+  }
+
+  private var standardWidgets: some View {
     ScrollView {
       VStack(spacing: 24) {
         Text("Production widgets").font(.title)

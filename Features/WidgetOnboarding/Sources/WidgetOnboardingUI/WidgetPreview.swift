@@ -14,6 +14,7 @@ extension WidgetShowcaseKind {
     case .calculator: String(localized: .WidgetOnboarding.widgetCalculatorTitle)
     case .cash: String(localized: .WidgetOnboarding.widgetCashTitle)
     case .pocket: String(localized: .WidgetOnboarding.widgetPocketTitle)
+    case .history: String(localized: .WidgetOnboarding.widgetHistoryTitle)
     case .mental: String(localized: .WidgetOnboarding.widgetMentalTitle)
     case .board: String(localized: .WidgetOnboarding.widgetBoardTitle)
     case .icon: String(localized: .WidgetOnboarding.widgetQuickTitle)
@@ -24,6 +25,7 @@ extension WidgetShowcaseKind {
     case .calculator: String(localized: .WidgetOnboarding.widgetCalculatorDetail)
     case .cash: String(localized: .WidgetOnboarding.widgetCashDetail)
     case .pocket: String(localized: .WidgetOnboarding.widgetPocketDetail)
+    case .history: String(localized: .WidgetOnboarding.widgetHistoryDetail)
     case .mental: String(localized: .WidgetOnboarding.widgetMentalDetail)
     case .board: String(localized: .WidgetOnboarding.widgetBoardDetail)
     case .icon: String(localized: .WidgetOnboarding.widgetQuickDetail)
@@ -34,6 +36,7 @@ extension WidgetShowcaseKind {
     case .calculator: [.systemMedium, .systemLarge]
     case .cash: [.systemMedium]
     case .pocket, .mental: [.systemSmall]
+    case .history: [.systemSmall, .systemMedium]
     case .board: [.systemSmall, .systemMedium, .systemLarge]
     case .icon: [.accessoryCircular]
     }
@@ -146,6 +149,7 @@ struct WidgetPreview: View {
         CalculatorLayout(entry: entry, family: family, previewProgress: calculatorProgress)
       case .cash: CashView(entry: entry)
       case .pocket: AnchorView(entry: entry)
+      case .history: HistoryWidgetView(entry: .preview(date: .now), family: family)
       case .mental: AnchorView(entry: entry, mental: true)
       case .board: BoardLayout(family: family, entry: entry)
       case .icon:
@@ -168,7 +172,7 @@ struct WidgetPreview: View {
         }
       }
     )
-    .padding(kind == .icon || family == .accessoryInline ? 0 : 12)
+    .padding(kind == .icon || kind == .history || family == .accessoryInline ? 0 : 12)
     .frame(
       width: family.previewSize.width,
       height: calculatorProgress.map { CalculatorPreviewTransition(progress: $0).canvasHeight }

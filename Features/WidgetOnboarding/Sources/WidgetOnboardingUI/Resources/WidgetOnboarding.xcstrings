@@ -1422,6 +1422,90 @@
           }
         }
       }
+    },
+    "widgetHistoryTitle": {
+      "extractionState": "manual",
+      "comment": "History widget discovery: widgetHistoryTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "History"
+          }
+        }
+      }
+    },
+    "widgetHistoryDetail": {
+      "extractionState": "manual",
+      "comment": "History widget discovery: widgetHistoryDetail.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Two currencies, with their history at a glance"
+          }
+        }
+      }
+    },
+    "previewSampleHistory": {
+      "extractionState": "manual",
+      "comment": "History widget discovery: previewSampleHistory.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sample history · illustrative rates"
+          }
+        }
+      }
+    },
+    "guideHistoryPair": {
+      "extractionState": "manual",
+      "comment": "History widget discovery: guideHistoryPair.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starts with your app’s base and first currency. Choose either currency here. Crypto history requires a USD comparison."
+          }
+        }
+      }
+    },
+    "guideHistoryRangeTitle": {
+      "extractionState": "manual",
+      "comment": "History widget discovery: guideHistoryRangeTitle.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Range"
+          }
+        }
+      }
+    },
+    "guideHistoryRangeDetail": {
+      "extractionState": "manual",
+      "comment": "History widget discovery: guideHistoryRangeDetail.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose one week, one month, three months, one year, or all history. The widget refreshes daily. Green means the rate increased; red means it decreased."
+          }
+        }
+      }
+    },
+    "historyDefaultRange": {
+      "extractionState": "manual",
+      "comment": "History widget discovery: historyDefaultRange.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 month"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

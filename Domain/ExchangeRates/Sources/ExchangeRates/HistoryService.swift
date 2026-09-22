@@ -20,10 +20,12 @@ public actor HistoryService {
   ///   - quote: Uppercase denomination of the returned values.
   ///   - range: Requested historical interval.
   ///   - now: Evaluation time for date windows and cache freshness; injectable for tests.
+  ///   - cacheLifetime: Optional caller cadence; nil keeps the six-hour (daily for All) policy.
   /// - Returns: A series and an optional recoverable issue. Cancellation returns the saved
   ///   series if available; callers should check cancellation before presenting the result.
   public func load(
-    base: String, quote: String, range: HistoryRange, now: Date = .now
+    base: String, quote: String, range: HistoryRange, now: Date = .now,
+    cacheLifetime: TimeInterval? = nil
   ) async -> HistoryResult {
     let days = range.rawValue
     // Zero denotes all available provider history, not a zero-day interval.
@@ -34,7 +36,7 @@ public actor HistoryService {
     let cached = (try? Data(contentsOf: file))
       .flatMap { try? JSONDecoder().decode(HistorySeries.self, from: $0) }
     if let cached, now >= cached.fetchedAt,
-      now.timeIntervalSince(cached.fetchedAt) < (range == .all ? 86400 : 21600)
+      now.timeIntervalSince(cached.fetchedAt) < (cacheLifetime ?? (range == .all ? 86400 : 21600))
     {
       return HistoryResult(series: cached, issue: nil)
     }
