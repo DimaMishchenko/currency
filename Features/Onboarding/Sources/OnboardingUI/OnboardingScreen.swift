@@ -320,7 +320,7 @@ struct OnboardingScreen<Widgets: View>: View {
       }
       .padding(24).frame(width: textSize.isAccessibilitySize ? 300 : 256)
       .background {
-        OnboardingSurface(radius: 28).opacity(appeared ? 1 : 0)
+        OnboardingSurface(radius: 28, raised: true).opacity(appeared ? 1 : 0)
       }
       .scaleEffect(reduceMotion || appeared ? 1 : 0.94)
       .offset(y: reduceMotion || appeared ? 0 : 10)

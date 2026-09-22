@@ -1,15 +1,19 @@
 import Onboarding
 import SwiftUI
 
-/// An adaptive raised surface that stays distinct from the page in both appearances.
+/// Choices blend into the page; standalone cards can opt into elevation.
 struct OnboardingSurface: View {
   var radius: CGFloat = 24
   var selected = false
+  var raised = false
   @Environment(\.colorScheme) private var colorScheme
 
   var body: some View {
     RoundedRectangle(cornerRadius: radius)
-      .fill(Color(uiColor: colorScheme == .dark ? .secondarySystemBackground : .systemBackground))
+      .fill(
+        Color(
+          uiColor: raised && colorScheme == .dark ? .secondarySystemBackground : .systemBackground)
+      )
       .overlay {
         RoundedRectangle(cornerRadius: radius)
           .strokeBorder(
@@ -18,6 +22,6 @@ struct OnboardingSurface: View {
               : AnyShapeStyle(Color.primary.opacity(colorScheme == .dark ? 0.12 : 0.07)),
             lineWidth: selected ? 1.5 : 1)
       }
-      .shadow(color: .black.opacity(colorScheme == .dark ? 0 : 0.06), radius: 16, y: 6)
+      .shadow(color: .black.opacity(raised && colorScheme == .light ? 0.06 : 0), radius: 16, y: 6)
   }
 }
