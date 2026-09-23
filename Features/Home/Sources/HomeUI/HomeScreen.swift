@@ -254,10 +254,10 @@ struct HomeScreen: View {
   @ViewBuilder
   private var source: some View {
     if verticalSizeClass == .compact {
-      amountEntry
+      sourceAmountRow
     } else {
       VStack(alignment: .leading, spacing: AppStyle.Space.large) {
-        amountEntry
+        sourceAmountRow
         HStack {
           Text(CurrencyDisplay.name(model.input.source, locale: locale))
             .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
@@ -265,6 +265,34 @@ struct HomeScreen: View {
         }
       }
     }
+  }
+
+  private var sourceAmountRow: some View {
+    HStack(spacing: AppStyle.Space.small) {
+      amountEntry
+      Button {
+        AppHaptics.play(.action)
+        dismissAmount(feedback: false)
+        onOutput(
+          .detailsRequested(
+            HomeDetailsRequest(
+              selectionID: model.input.source, code: model.input.source,
+              reference: model.input.source, snapshot: model.snapshot)))
+      } label: {
+        Image(systemName: "chart.xyaxis.line").font(AppStyle.font(.callout))
+          .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+          .foregroundStyle(.secondary)
+          .frame(width: Self.destinationIconColumnWidth, height: 44, alignment: .trailing)
+          .contentShape(Rectangle())
+      }
+      .buttonStyle(.plain)
+      .accessibilityLabel(
+        .Converter.detailsAccessibility(
+          CurrencyDisplay.name(model.input.source, locale: locale))
+      )
+      .accessibilityIdentifier("converter.chart.source")
+    }
+    .matchedTransitionSource(id: model.input.source, in: detailsMotion)
   }
 
   private var sourcePicker: some View {
