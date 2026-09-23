@@ -114,7 +114,7 @@ struct HistorySettings: WidgetConfigurationIntent {
   var range: HistoryWidgetRange
 
   static var parameterSummary: some ParameterSummary {
-    Summary("Refreshes daily. Crypto history requires a USD comparison.", table: "Widgets") {
+    Summary("Refreshes daily. Crypto pairs require USD.", table: "Widgets") {
       \.$base; \.$comparison; \.$range
     }
   }

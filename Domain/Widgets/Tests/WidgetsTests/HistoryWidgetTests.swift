@@ -43,7 +43,25 @@ import Testing
       #expect(!HistoryWidgetPair(app: app, base: base, quote: quote).isSupported)
     }
     #expect(HistoryWidgetPair(app: app, base: "BTC", quote: "USD").isSupported)
+    #expect(HistoryWidgetPair(app: app, base: "USD", quote: "BTC").isSupported)
     #expect(HistoryWidgetPair(app: app, base: "EUR", quote: "CZK").isSupported)
+  }
+
+  @Test func usdToBitcoinInvertsProviderHistoryWithoutChangingDatesOrSource() {
+    let provider = snapshot([50_000, 100_000], issue: .usingCachedSeries).series!
+    let pair = HistoryWidgetPair(app: ConverterState(), base: "USD", quote: "BTC")
+    let shown = HistoryWidgetSnapshot(
+      pair: pair, range: .month,
+      result: HistoryResult(series: provider, issue: .usingCachedSeries))
+    #expect(pair.historyRequest?.base == "BTC")
+    #expect(pair.historyRequest?.quote == "USD")
+    #expect(pair.historyRequest?.inverted == true)
+    #expect(shown.series?.points.map(\.value) == [0.00002, 0.00001])
+    #expect(shown.series?.points.map(\.date) == provider.points.map(\.date))
+    #expect(shown.series?.source == provider.source)
+    #expect(shown.series?.fetchedAt == provider.fetchedAt)
+    #expect(shown.change == -0.5)
+    #expect(shown.issue == .usingCachedSeries)
   }
 
   @Test func changeUsesFirstAndLastHistoricalObservation() {

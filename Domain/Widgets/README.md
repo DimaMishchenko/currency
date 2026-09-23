@@ -6,7 +6,7 @@ Keep canonical selections independent of widget size. Default widgets share app 
 
 ## History widget
 
-`HistoryWidgetPair` follows the app base and first displayed destination unless overridden. `HistoryWidgetSnapshot` derives the value, observation date, and percentage change from one historical series; it never mixes current quotes with historical endpoints. Changes below half a basis point display as neutral. Unsupported or missing history has no synthetic graph. Saved history retains its original observation date and is marked in the layout.
+`HistoryWidgetPair` follows the app base and first displayed destination unless overridden. Crypto history supports BTC/USD and USD/BTC by inverting the same provider series for the latter; other cryptocurrencies follow the same rule. `HistoryWidgetSnapshot` derives the value, observation date, and percentage change from one historical series; it never mixes current quotes with historical endpoints. Changes below half a basis point display as neutral. Unsupported or missing history has no synthetic graph. Saved history retains its original observation date and is marked in the layout.
 
 `HistoryWidgetView` renders small and medium widgets with the shared rounded typography and currency icons. The full-bleed graph adapts to light, dark, increased-contrast, and accented rendering. The harness and widget extension use the same layout.
 
@@ -26,6 +26,7 @@ Select the `WidgetsHarness` scheme and add launch arguments under **Run → Argu
 | `history-down` | Negative rate movement. |
 | `history-flat` | Neutral line and percentage. |
 | `history-tiny` | Small fractional rates retain significant digits. |
+| `history-usd-btc` | USD/BTC history from inverted Coinbase values, including icon alignment. |
 | `history-cached` | Saved-series indicator and original observation date. |
 | `history-unavailable` | No available history; no sample data. |
 | `history-unsupported` | Unsupported cryptocurrency comparison. |

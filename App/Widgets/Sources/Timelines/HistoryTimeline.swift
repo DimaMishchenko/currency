@@ -47,8 +47,8 @@ struct HistoryTimeline: AppIntentTimelineProvider {
     let pair = configuration.pair(input: dependencies.input(), localCurrency: local.localCode)
     let range = configuration.range.range
     let result: HistoryResult
-    if pair.isSupported, let quote = pair.quote {
-      result = await dependencies.load(pair.base, quote, range, now)
+    if let request = pair.historyRequest {
+      result = await dependencies.load(request.base, request.quote, range, now)
     } else {
       result = HistoryResult(series: nil, issue: .unsupportedPair)
     }

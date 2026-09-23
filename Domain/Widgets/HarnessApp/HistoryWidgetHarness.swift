@@ -24,14 +24,20 @@ struct HistoryWidgetHarness: View {
         0.00012, 0.000121, 0.000122, 0.000119, 0.000125, 0.00013, 0.000129, 0.000131, 0.000130,
         0.000132
       ]
+    case "history-usd-btc":
+      values = [
+        62_000, 63_000, 61_500, 64_000, 65_000, 64_500, 66_000, 67_000, 66_500, 68_000
+      ]
     default: values = source.points.map(\.value)
     }
     let local = scenario.hasPrefix("history-local")
     let missing = local || scenario == "history-unavailable" || scenario == "history-unsupported"
     let points = zip(source.points, values).map { HistoryPoint(date: $0.date, value: $1) }
     let pair = HistoryWidgetPair(
-      app: ConverterState(), base: scenario == "history-unsupported" ? "BTC" : "EUR",
-      quote: local ? WidgetSelection.localID : "CZK")
+      app: ConverterState(),
+      base: scenario == "history-unsupported"
+        ? "BTC" : scenario == "history-usd-btc" ? "USD" : "EUR",
+      quote: local ? WidgetSelection.localID : scenario == "history-usd-btc" ? "BTC" : "CZK")
     return HistoryWidgetEntry(
       date: date,
       snapshot: HistoryWidgetSnapshot(

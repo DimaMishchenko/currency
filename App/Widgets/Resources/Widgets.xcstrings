@@ -846,14 +846,14 @@
         }
       }
     },
-    "Refreshes daily. Crypto history requires a USD comparison.": {
+    "Refreshes daily. Crypto pairs require USD.": {
       "extractionState": "manual",
-      "comment": "History widget: Refreshes daily. Crypto history requires a USD comparison..",
+      "comment": "History widget: supported crypto pair configuration.",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Refreshes daily. Crypto history requires a USD comparison."
+            "value": "Refreshes daily. Crypto pairs require USD."
           }
         }
       }

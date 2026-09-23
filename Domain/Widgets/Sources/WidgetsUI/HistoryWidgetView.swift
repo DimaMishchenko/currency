@@ -125,15 +125,17 @@ public struct HistoryWidgetView: View {
   }
 
   private func currencyRow(_ code: String?, value: Double?, prominent: Bool) -> some View {
-    HStack(spacing: compact ? AppStyle.Space.xs : AppStyle.Space.small) {
+    let iconSize: CGFloat = compact ? 16 : 20
+    return HStack(spacing: compact ? AppStyle.Space.xs : AppStyle.Space.small) {
       if code == WidgetSelection.localID {
         Image(systemName: "location.fill")
-          .frame(width: compact ? 16 : 20).accessibilityHidden(true)
+          .frame(width: iconSize, height: iconSize).accessibilityHidden(true)
         Text(.WidgetPresentation.localCurrencyChoice)
           .font(AppStyle.font(.caption, weight: .medium)).foregroundStyle(.secondary)
           .lineLimit(1).minimumScaleFactor(0.7)
       } else if let code {
-        CurrencyIcon(code, size: compact ? 16 : 20).fixedSize().accessibilityHidden(true)
+        CurrencyIcon(code, size: iconSize)
+          .frame(width: iconSize, height: iconSize).accessibilityHidden(true)
         Text(verbatim: code)
           .font(AppStyle.font(.caption, weight: .medium)).foregroundStyle(.secondary).fixedSize()
           .modifier(HistoryLabelContrast())

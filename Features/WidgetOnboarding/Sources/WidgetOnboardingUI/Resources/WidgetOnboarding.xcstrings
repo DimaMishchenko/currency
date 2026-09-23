@@ -1466,7 +1466,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Starts with your app’s base and first currency. Choose either currency here. Crypto history requires a USD comparison."
+            "value": "Starts with your app’s base and first currency. Choose either currency here. For crypto, choose USD as the other currency."
           }
         }
       }

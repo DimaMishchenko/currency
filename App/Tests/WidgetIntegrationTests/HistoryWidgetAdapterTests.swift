@@ -148,6 +148,32 @@ import Widgets
     #expect(timeline.policy == .after(now.addingTimeInterval(82_800)))
   }
 
+  @Test func usdToBitcoinLoadsBitcoinDollarSeriesAndDisplaysReciprocal() async {
+    let now = now
+    let requested = Mutex<[String]>([])
+    let provider = HistoryTimeline(
+      dependencies: HistoryTimelineDependencies(
+        input: { ConverterState() },
+        load: { base, quote, _, _ in
+          requested.withLock { $0 = [base, quote] }
+          return HistoryResult(
+            series: HistorySeries(
+              points: [
+                HistoryPoint(date: now.addingTimeInterval(-86_400), value: 50_000),
+                HistoryPoint(date: now, value: 100_000)
+              ], source: .init(provider: .coinbase), fetchedAt: now), issue: nil)
+        }, now: { now }))
+    let settings = HistorySettings()
+    settings.base = HistoryCurrency("USD")
+    settings.comparison = HistoryCurrency("BTC")
+    let entry = await provider.entry(settings)
+    #expect(requested.withLock { $0 } == ["BTC", "USD"])
+    #expect(entry.snapshot.pair.base == "USD")
+    #expect(entry.snapshot.pair.quote == "BTC")
+    #expect(entry.snapshot.latest?.value == 0.00001)
+    #expect(entry.snapshot.change == -0.5)
+  }
+
   @Test func unsupportedPairSkipsNetworkAndFailedLoadHasNoSampleData() async throws {
     let now = now
     let calls = Mutex(0)

@@ -20,15 +20,24 @@ public struct HistoryWidgetPair: Sendable, Equatable {
     base == WidgetSelection.localID || quote == WidgetSelection.localID
   }
 
-  /// The existing providers offer fiat pairs and cryptocurrency bases quoted in USD.
-  public var isSupported: Bool {
+  /// The source pair and direction supported by the existing history providers.
+  public var historyRequest: (base: String, quote: String, inverted: Bool)? {
     guard let quote, base != quote,
       CurrencyCatalog.codes.contains(base), CurrencyCatalog.codes.contains(quote),
       !WidgetPresets.metals.contains(base), !WidgetPresets.metals.contains(quote),
-      !CurrencyCatalog.crypto.contains(quote)
-    else { return false }
-    return !CurrencyCatalog.crypto.contains(base) || quote == "USD"
+      !(CurrencyCatalog.crypto.contains(base) && CurrencyCatalog.crypto.contains(quote))
+    else { return nil }
+    if CurrencyCatalog.crypto.contains(base) {
+      return quote == "USD" ? (base, quote, false) : nil
+    }
+    if CurrencyCatalog.crypto.contains(quote) {
+      return base == "USD" ? (quote, base, true) : nil
+    }
+    return (base, quote, false)
   }
+
+  /// Whether a historical series can be loaded for the displayed pair.
+  public var isSupported: Bool { historyRequest != nil }
 }
 
 /// Historical observations and their provenance, kept separate from live conversion rates.
@@ -46,12 +55,22 @@ public struct HistoryWidgetSnapshot: Sendable {
   public init(pair: HistoryWidgetPair, range: HistoryRange, result: HistoryResult) {
     self.pair = pair
     self.range = range
-    let points = result.series?.points ?? []
+    let inverted = pair.historyRequest?.inverted == true
+    let points =
+      result.series?.points
+      .map {
+        HistoryPoint(date: $0.date, value: inverted ? 1 / $0.value : $0.value)
+      } ?? []
     let valid =
       pair.isSupported && points.count >= 2
       && points.allSatisfy { $0.value.isFinite && $0.value > 0 }
       && zip(points, points.dropFirst()).allSatisfy { $0.date < $1.date }
-    series = valid ? result.series : nil
+    series =
+      valid
+      ? result.series.map {
+        HistorySeries(points: points, source: $0.source, fetchedAt: $0.fetchedAt)
+      }
+      : nil
     issue = !pair.isSupported ? .unsupportedPair : valid ? result.issue : .unavailable
   }
 
