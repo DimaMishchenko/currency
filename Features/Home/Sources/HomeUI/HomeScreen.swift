@@ -254,10 +254,10 @@ struct HomeScreen: View {
   @ViewBuilder
   private var source: some View {
     if verticalSizeClass == .compact {
-      sourceAmountRow
+      amountEntry
     } else {
       VStack(alignment: .leading, spacing: AppStyle.Space.large) {
-        sourceAmountRow
+        amountEntry
         HStack {
           Text(CurrencyDisplay.name(model.input.source, locale: locale))
             .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
@@ -265,34 +265,6 @@ struct HomeScreen: View {
         }
       }
     }
-  }
-
-  private var sourceAmountRow: some View {
-    HStack(spacing: AppStyle.Space.small) {
-      amountEntry
-      Button {
-        AppHaptics.play(.action)
-        dismissAmount(feedback: false)
-        onOutput(
-          .detailsRequested(
-            HomeDetailsRequest(
-              selectionID: model.input.source, code: model.input.source,
-              reference: model.input.source, snapshot: model.snapshot)))
-      } label: {
-        Image(systemName: "chart.xyaxis.line").font(AppStyle.font(.callout))
-          .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-          .foregroundStyle(.secondary)
-          .frame(width: Self.destinationIconColumnWidth, height: 44, alignment: .trailing)
-          .contentShape(Rectangle())
-      }
-      .buttonStyle(.plain)
-      .accessibilityLabel(
-        .Converter.detailsAccessibility(
-          CurrencyDisplay.name(model.input.source, locale: locale))
-      )
-      .accessibilityIdentifier("converter.chart.source")
-    }
-    .matchedTransitionSource(id: model.input.source, in: detailsMotion)
   }
 
   private var sourcePicker: some View {
@@ -352,127 +324,109 @@ struct HomeScreen: View {
     .buttonStyle(.plain)
     .accessibilityLabel(.Converter.editAmountAccessibility(model.input.source))
     .accessibilityValue(amountLabel)
+    .contextMenu {
+      Button(.Converter.detailsAndHistory, systemImage: "chart.xyaxis.line") {
+        showDetails(code: model.input.source, selectionID: model.input.source)
+      }
+    }
+    .matchedTransitionSource(id: model.input.source, in: detailsMotion)
   }
 
   private func destinationRow(_ row: ConverterState.Destination) -> some View {
     let code = row.code
     let value = model.snapshot.convert(model.input.decimal, from: model.input.source, to: code)
-    return HStack(spacing: 0) {
-      Button {
-        guard value != nil else { return }
+    return Button {
+      if value == nil {
+        showDetails(code: code, selectionID: row.id)
+      } else {
         beginEditing(code, selectionID: row.id)
-      } label: {
-        HStack(spacing: AppStyle.Space.medium) {
-          CurrencyIcon(code, size: 28)
-            .frame(width: Self.destinationIconColumnWidth, alignment: .leading)
-            .matchedGeometryEffect(id: "flag-" + row.id, in: currencyMotion)
-            .accessibilityHidden(true)
-          let rowLayout =
-            dynamicTypeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: AppStyle.Space.small))
-            : AnyLayout(HStackLayout(spacing: AppStyle.Space.medium))
-          rowLayout {
-            VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
-              HStack(spacing: AppStyle.Space.xs) {
-                Text(code).font(AppStyle.font(.body, weight: .medium))
-                  .matchedGeometryEffect(id: row.id, in: currencyMotion)
-                if row.isLocal {
-                  Image(systemName: "location.fill")
-                    .font(AppStyle.font(.caption2))
-                    .foregroundStyle(.secondary)
-                    .accessibilityHidden(true)
-                }
+      }
+    } label: {
+      HStack(spacing: AppStyle.Space.medium) {
+        CurrencyIcon(code, size: 28)
+          .frame(width: Self.destinationIconColumnWidth, alignment: .leading)
+          .matchedGeometryEffect(id: "flag-" + row.id, in: currencyMotion)
+          .accessibilityHidden(true)
+        let rowLayout =
+          dynamicTypeSize.isAccessibilitySize
+          ? AnyLayout(VStackLayout(alignment: .leading, spacing: AppStyle.Space.small))
+          : AnyLayout(HStackLayout(spacing: AppStyle.Space.medium))
+        rowLayout {
+          VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
+            HStack(spacing: AppStyle.Space.xs) {
+              Text(code).font(AppStyle.font(.body, weight: .medium))
+                .matchedGeometryEffect(id: row.id, in: currencyMotion)
+              if row.isLocal {
+                Image(systemName: "location.fill")
+                  .font(AppStyle.font(.caption2))
+                  .foregroundStyle(.secondary)
+                  .accessibilityHidden(true)
               }
-              Text(
-                row.isLocal
-                  ? String(
-                    localized: .Converter.localCurrencyName(
-                      CurrencyDisplay.name(code, locale: locale)))
-                  : CurrencyDisplay.name(code, locale: locale)
-              )
-              .font(AppStyle.font(.caption))
-              .foregroundStyle(.secondary)
-              .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
             }
-            if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: AppStyle.Space.medium) }
             Text(
-              editingAmount && model.editingSelectionID == row.id
-                ? CurrencyDisplay.inputAmount(model.editingText, locale: locale)
-                : CurrencyDisplay.format(value, code: code, locale: locale)
+              row.isLocal
+                ? String(
+                  localized: .Converter.localCurrencyName(
+                    CurrencyDisplay.name(code, locale: locale)))
+                : CurrencyDisplay.name(code, locale: locale)
             )
-            .font(
-              AppStyle.font(
-                .title2,
-                weight: editingAmount && model.editingSelectionID == row.id ? .semibold : .regular)
-            )
-            .monospacedDigit()
-            .lineLimit(1).minimumScaleFactor(0.45).contentTransition(.numericText())
-            .layoutPriority(1)
+            .font(AppStyle.font(.caption))
+            .foregroundStyle(.secondary)
+            .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
           }
+          if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: AppStyle.Space.medium) }
+          Text(
+            editingAmount && model.editingSelectionID == row.id
+              ? CurrencyDisplay.inputAmount(model.editingText, locale: locale)
+              : CurrencyDisplay.format(value, code: code, locale: locale)
+          )
+          .font(
+            AppStyle.font(
+              .title2,
+              weight: editingAmount && model.editingSelectionID == row.id ? .semibold : .regular)
+          )
+          .monospacedDigit()
+          .lineLimit(1).minimumScaleFactor(0.45).contentTransition(.numericText())
+          .layoutPriority(1)
         }
-        .frame(maxWidth: .infinity, minHeight: 70, alignment: .leading).contentShape(Rectangle())
-        .matchedTransitionSource(id: row.id, in: detailsMotion)
       }
-      .buttonStyle(.plain)
-      .accessibilityLabel(
+      .frame(maxWidth: .infinity, minHeight: 70, alignment: .leading).contentShape(Rectangle())
+      .matchedTransitionSource(id: row.id, in: detailsMotion)
+    }
+    .buttonStyle(.plain)
+    .accessibilityLabel(
 
-        .Converter.conversionAccessibility(
-          row.isLocal
-            ? String(
-              localized: .Converter.localCurrencyName(
-                CurrencyDisplay.name(code, locale: locale)))
-            : CurrencyDisplay.name(code, locale: locale),
-          CurrencyDisplay.format(value, code: code, locale: locale))
-      )
-      .accessibilityHint(.Converter.editAmountHint)
-      .accessibilityAddTraits(
-        editingAmount && model.editingSelectionID == row.id ? .isSelected : []
-      )
-      .contextMenu {
-        Button(.Converter.detailsAndHistory, systemImage: "chart.xyaxis.line") {
-          AppHaptics.play(.action)
-          onOutput(
-            .detailsRequested(
-              HomeDetailsRequest(
-                selectionID: row.id, code: code, reference: model.input.source,
-                snapshot: model.snapshot)))
-        }
-        Button(.Converter.copyAmount, systemImage: "doc.on.doc") {
-          UIPasteboard.general.string = CurrencyDisplay.format(value, code: code, locale: locale)
-          AppHaptics.play(.success)
-        }
-        .disabled(value == nil)
-        Text(
-          CurrencyDisplay.details(
-            model.snapshot, from: model.input.source, to: code, locale: locale))
-        Button(.Converter.remove, systemImage: "minus.circle", role: .destructive) {
-          withAnimation(motion) {
-            if model.updateWithFeedback({ $0.removeDestination(row.id) }) {
-              AppHaptics.play(.delete)
-            }
+      .Converter.conversionAccessibility(
+        row.isLocal
+          ? String(
+            localized: .Converter.localCurrencyName(
+              CurrencyDisplay.name(code, locale: locale)))
+          : CurrencyDisplay.name(code, locale: locale),
+        CurrencyDisplay.format(value, code: code, locale: locale))
+    )
+    .accessibilityHint(value == nil ? .Converter.detailsAndHistory : .Converter.editAmountHint)
+    .accessibilityAddTraits(
+      editingAmount && model.editingSelectionID == row.id ? .isSelected : []
+    )
+    .contextMenu {
+      Button(.Converter.detailsAndHistory, systemImage: "chart.xyaxis.line") {
+        showDetails(code: code, selectionID: row.id)
+      }
+      Button(.Converter.copyAmount, systemImage: "doc.on.doc") {
+        UIPasteboard.general.string = CurrencyDisplay.format(value, code: code, locale: locale)
+        AppHaptics.play(.success)
+      }
+      .disabled(value == nil)
+      Text(
+        CurrencyDisplay.details(
+          model.snapshot, from: model.input.source, to: code, locale: locale))
+      Button(.Converter.remove, systemImage: "minus.circle", role: .destructive) {
+        withAnimation(motion) {
+          if model.updateWithFeedback({ $0.removeDestination(row.id) }) {
+            AppHaptics.play(.delete)
           }
         }
       }
-      Button {
-        AppHaptics.play(.action)
-        onOutput(
-          .detailsRequested(
-            HomeDetailsRequest(
-              selectionID: row.id, code: code, reference: model.input.source,
-              snapshot: model.snapshot)))
-      } label: {
-        Image(systemName: "chart.xyaxis.line").font(AppStyle.font(.callout))
-          .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-          .foregroundStyle(.secondary)
-          .frame(width: Self.destinationIconColumnWidth, height: 70, alignment: .trailing)
-          // Plain buttons otherwise hit-test only the small symbol, not its padded frame.
-          .contentShape(Rectangle())
-      }
-      .buttonStyle(.plain)
-      .accessibilityLabel(
-        .Converter.detailsAccessibility(CurrencyDisplay.name(code, locale: locale))
-      )
-      .accessibilityIdentifier("converter.chart.\(row.id)")
     }
   }
 
@@ -487,15 +441,53 @@ struct HomeScreen: View {
       if editingAmount {
         VStack(spacing: AppStyle.Space.xs) {
           Group {
-            HStack(spacing: AppStyle.Space.small) {
-              CurrencyIcon(model.editingCode, size: 14).accessibilityHidden(true)
-              Text(verbatim: model.editingCode)
-              Spacer()
+            HStack(spacing: 0) {
+              Button {
+                showDetails(
+                  code: model.editingCode,
+                  selectionID: model.editingSelectionID ?? model.input.source)
+              } label: {
+                Group {
+                  if verticalSizeClass == .compact {
+                    Image(systemName: "chart.xyaxis.line")
+                  } else if dynamicTypeSize.isAccessibilitySize {
+                    Text(.Converter.history)
+                      .lineLimit(1)
+                      .minimumScaleFactor(0.7)
+                  } else {
+                    Label(.Converter.history, systemImage: "chart.xyaxis.line")
+                  }
+                }
+                .frame(minWidth: 44, minHeight: 44, alignment: .leading)
+                .contentShape(Rectangle())
+              }
+              .frame(maxWidth: .infinity, alignment: .leading)
+              .accessibilityLabel(
+                .Converter.detailsAccessibility(
+                  CurrencyDisplay.name(model.editingCode, locale: locale))
+              )
+              .accessibilityIdentifier("converter.history")
+              HStack(spacing: AppStyle.Space.small) {
+                if !dynamicTypeSize.isAccessibilitySize {
+                  CurrencyIcon(model.editingCode, size: 14).accessibilityHidden(true)
+                }
+                Text(verbatim: model.editingCode)
+              }
+              .frame(maxWidth: .infinity)
+              .lineLimit(1)
+              .accessibilityElement(children: .ignore)
+              .accessibilityLabel(
+                .Converter.editingCurrencyAmount(
+                  CurrencyDisplay.name(model.editingCode, locale: locale))
+              )
               Button {
                 dismissAmount()
               } label: {
-                Image(systemName: "checkmark").frame(width: 44, height: 44)
+                Image(systemName: "checkmark")
+                  .frame(width: 44, height: 44)
+                  .contentShape(Rectangle())
               }
+              .frame(maxWidth: .infinity, alignment: .trailing)
               .accessibilityLabel(.Converter.doneEntering)
             }
             .padding(.horizontal, AppStyle.Space.large)
@@ -606,6 +598,16 @@ struct HomeScreen: View {
     guard model.editor != nil else { return }
     AppHaptics.play(.action)
     withAnimation(motion) { editingAmount = true }
+  }
+
+  private func showDetails(code: String, selectionID: String) {
+    AppHaptics.play(.action)
+    dismissAmount(feedback: false)
+    onOutput(
+      .detailsRequested(
+        HomeDetailsRequest(
+          selectionID: selectionID, code: code, reference: model.input.source,
+          snapshot: model.snapshot)))
   }
 
   private func key(_ key: String) {

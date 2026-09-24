@@ -186,6 +186,30 @@
         }
       }
     },
+    "history": {
+      "extractionState": "manual",
+      "comment": "Keypad action that opens details and rate history for the selected currency.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "History"
+          }
+        }
+      }
+    },
+    "editingCurrencyAmount": {
+      "extractionState": "manual",
+      "comment": "VoiceOver label for the currency currently being edited in the keypad header.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editing %@ amount"
+          }
+        }
+      }
+    },
     "useAsBase": {
       "extractionState": "manual",
       "comment": "Converter interface: useAsBase.",
