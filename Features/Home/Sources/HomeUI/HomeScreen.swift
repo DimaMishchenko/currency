@@ -16,6 +16,7 @@ struct HomeScreen: View {
   let widgetsMotion: Namespace.ID
   let onOutput: (HomeOutput) -> Void
   private var configureLocalCurrency: () -> Void { { onOutput(.locationRequested) } }
+  @Environment(\.horizontalSizeClass) private var horizontalSizeClass
   @Environment(\.verticalSizeClass) private var verticalSizeClass
   @Environment(\.locale) private var locale
   @Environment(AppAppearance.self) private var appearance
@@ -55,7 +56,7 @@ struct HomeScreen: View {
               source.padding(.horizontal, AppStyle.Space.large)
 
               Spacer(minLength: 0)
-              inputDock
+              inputDock(bottomSafeArea: geometry.safeAreaInsets.bottom)
             }
             .frame(width: geometry.size.width * 0.48)
             currencyList
@@ -68,7 +69,7 @@ struct HomeScreen: View {
               .padding(.vertical, AppStyle.Space.large)
               .frame(maxWidth: 580)
             currencyList
-            inputDock
+            inputDock(bottomSafeArea: geometry.safeAreaInsets.bottom)
           }
           .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
@@ -436,7 +437,7 @@ struct HomeScreen: View {
       : [["1", "2", "3"], ["4", "5", "6"], ["7", "8", "9"], [".", "0", "⌫"]]
   }
 
-  private var inputDock: some View {
+  private func inputDock(bottomSafeArea: CGFloat) -> some View {
     GlassEffectContainer(spacing: AppStyle.Space.section) {
       if editingAmount {
         VStack(spacing: AppStyle.Space.xs) {
@@ -526,16 +527,22 @@ struct HomeScreen: View {
               }
             }
           }
-          .padding(.horizontal, AppStyle.Space.large).padding(.bottom, AppStyle.Space.large)
+          .padding(.horizontal, AppStyle.Space.large)
+          .padding(.bottom, AppStyle.Space.small + bottomSafeArea)
           .padding(.top, verticalSizeClass == .compact ? AppStyle.Space.small : 0)
         }
         .contentShape(Rectangle())
         .onTapGesture { /* Keep taps in the keypad's header and gaps inside the pad. */  }
         .glassEffect(
-          .regular, in: .rect(corners: .concentric(minimum: .fixed(32)), isUniform: true)
+          .regular,
+          in: .rect(
+            uniformTopCorners: .fixed(32),
+            uniformBottomCorners: .concentric(minimum: .fixed(32)))
         )
         .glassEffectID("amount-dock", in: keypadMotion)
         .glassEffectTransition(.matchedGeometry)
+        .padding(.bottom, AppStyle.Space.small)
+        .ignoresSafeArea(edges: .bottom)
 
       } else {
         HStack(spacing: 0) {
@@ -574,9 +581,11 @@ struct HomeScreen: View {
         .glassEffectTransition(.matchedGeometry)
       }
     }
-    .padding(.horizontal, AppStyle.Space.small).padding(.top, AppStyle.Space.small)
+    .padding(.horizontal, AppStyle.Space.small)
+    .padding(.top, AppStyle.Space.small)
     .padding(.bottom, editingAmount ? 0 : AppStyle.Space.small)
-    .frame(maxWidth: 540).frame(maxWidth: .infinity)
+    .frame(maxWidth: editingAmount && horizontalSizeClass == .compact ? .infinity : 540)
+    .frame(maxWidth: .infinity)
     .background {
       if editingAmount {
         Color.clear.contentShape(Rectangle()).onTapGesture { dismissAmount() }
