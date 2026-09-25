@@ -7,6 +7,24 @@ trap 'status=$?; rm -rf "$workdir"; exit "$status"' EXIT
 fail() { echo "::error::$*" >&2; exit 1; }
 report() { printf '%s\n' "$*"; printf '%s\n' "$*" >> "$GITHUB_STEP_SUMMARY"; }
 defer() { report "Public beta deferred: $*. The hourly retry will check again."; exit 0; }
+# jq's fromdateiso8601 accepts UTC only. Retain fractions and subtract the offset.
+date_filter='def apple_epoch:
+  (capture("^(?<date>[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2})(?<fraction>\\.[0-9]+)?(?<zone>Z|[+-](?:[01][0-9]|2[0-3]):[0-5][0-9])$")
+    // error("Invalid Apple timestamp")) as $d |
+  ($d.date + "Z" | fromdateiso8601) as $seconds |
+  (if ($seconds | todateiso8601) == ($d.date + "Z") then $seconds
+    else error("Invalid Apple timestamp") end) + ("0" + ($d.fraction // "") | tonumber) -
+  (if $d.zone == "Z" then 0 else
+    (($d.zone[1:3] | tonumber) * 3600 + ($d.zone[4:6] | tonumber) * 60) *
+    (if $d.zone[0:1] == "+" then 1 else -1 end) end);'
+enable_public_link() {
+  local link
+  if [[ $(jq -r '.data.attributes.publicLinkEnabled // false' "$workdir/group.json") != true ]]; then
+    asc testflight groups edit --id "$group_id" --public-link-enabled --output json > "$workdir/group.json" || return 1
+  fi
+  link=$(jq -er '.data.attributes.publicLink | select(length > 0)' "$workdir/group.json") || return 1
+  report "Public beta invitation: $link"
+}
 
 for name in ASC_KEY_ID ASC_ISSUER_ID ASC_PRIVATE_KEY_B64 ASC_APP_ID; do
   [[ -n "${!name:-}" ]] || fail "Missing testflight environment value: $name"
@@ -16,10 +34,40 @@ done
 [[ -f "${1:-}" ]] || fail 'Pass CurrencyBuildId.txt from a successful main TestFlight Publish run.'
 build_id=$(cat "$1")
 [[ "$build_id" =~ ^[A-Za-z0-9-]+$ ]] || fail 'The trusted release artifact contains an invalid build ID.'
+
+# An older approved group build can become available while the latest upload waits.
+asc testflight groups list --app "$ASC_APP_ID" --paginate --output json > "$workdir/groups.json"
+group_count=$(jq -er '[.data[] | select(.attributes.name == "Public Beta" and
+  .attributes.isInternalGroup != true)] | length' "$workdir/groups.json")
+(( group_count <= 1 )) || fail 'Multiple external groups named Public Beta exist. Keep one group with that name.'
+if [[ "$group_count" == 1 ]]; then
+  jq '{data: (.data[] | select(.attributes.name == "Public Beta" and
+    .attributes.isInternalGroup != true))}' "$workdir/groups.json" > "$workdir/group.json"
+  group_id=$(jq -er '.data.id' "$workdir/group.json")
+  if [[ $(jq -r '.data.attributes.publicLinkEnabled // false' "$workdir/group.json") == true ]]; then
+    enable_public_link
+  else
+    asc testflight groups links view --group-id "$group_id" --type builds --paginate \
+      --output json > "$workdir/group-builds.json"
+    asc builds list --app "$ASC_APP_ID" --platform IOS --processing-state VALID --exclude-expired \
+      --include buildBetaDetail --paginate --output json > "$workdir/available-builds.json"
+    approved=$(jq -r --slurpfile members "$workdir/group-builds.json" "$date_filter"'
+      (.included // []) as $details | [.data[] |
+      select(.attributes.processingState == "VALID" and .attributes.expired != true) |
+      select((.attributes.expirationDate | apple_epoch) > now) |
+      select(.id as $id | any($members[0].data[]; .id == $id)) |
+      select(.relationships.buildBetaDetail.data.id as $id | any($details[];
+        .type == "buildBetaDetails" and .id == $id and (.attributes.externalBuildState as $state |
+          ["READY_FOR_BETA_TESTING", "READY_FOR_TESTING", "IN_BETA_TESTING", "BETA_APPROVED"] | index($state) != null))) |
+      .id][0] // empty' "$workdir/available-builds.json")
+    if [[ -n "$approved" ]]; then enable_public_link; fi
+  fi
+fi
+
 asc builds info --build-id "$build_id" --output json > "$workdir/build.json"
-jq -e '.data.attributes | .processingState == "VALID" and .expired != true and
-  ((.expirationDate | sub("\\.[0-9]+"; "") | sub("\\+00:00$"; "Z") | fromdateiso8601) > now)' \
-  "$workdir/build.json" > /dev/null || defer "build $build_id is not valid and unexpired"
+valid=$(jq -r "$date_filter"'.data.attributes | (.expirationDate | apple_epoch) as $expiry |
+  .processingState == "VALID" and .expired != true and $expiry > now' "$workdir/build.json")
+[[ "$valid" == true ]] || defer "build $build_id is not valid and unexpired"
 version=$(jq -er '. as $r | .data.relationships.preReleaseVersion.data.id as $id |
   $r.included[] | select(.type == "preReleaseVersions" and .id == $id) |
   .attributes.version | select(length > 0)' "$workdir/build.json")
@@ -46,10 +94,9 @@ review_blocker() {
   fi
   asc builds list --app "$ASC_APP_ID" --processing-state all \
     --include betaAppReviewSubmission --paginate --output json > "$workdir/reviews.json" || return 1
-  count=$(jq -er '[.included[]? | select(.type == "betaAppReviewSubmissions")] |
+  count=$(jq -er "$date_filter"'[.included[]? | select(.type == "betaAppReviewSubmissions")] |
     unique_by(.id) | [.[] | select(.attributes.submittedDate | type == "string" and length > 0) |
-      select((.attributes.submittedDate |
-      sub("\\.[0-9]+"; "") | sub("\\+00:00$"; "Z") | fromdateiso8601) > now - 86400)] | length' \
+      select((.attributes.submittedDate | apple_epoch) > now - 86400)] | length' \
     "$workdir/reviews.json") || return 1
   if (( count >= 6 )); then printf 'six builds have been submitted within the last 24 hours'; fi
   return 0
@@ -59,29 +106,15 @@ if [[ "$state" == READY_FOR_BETA_SUBMISSION ]]; then
   [[ -z "$blocker" ]] || defer "$blocker"
 fi
 
-asc testflight groups list --app "$ASC_APP_ID" --paginate --output json > "$workdir/groups.json"
 if [[ $(jq -er '[.data[] | select(.attributes.isInternalGroup == true)] | length' "$workdir/groups.json") == 0 ]]; then
   asc testflight groups create --app "$ASC_APP_ID" --name Internal --internal \
     --access-all-builds --output json > /dev/null
 fi
-group_count=$(jq -er '[.data[] | select(.attributes.name == "Public Beta" and
-  .attributes.isInternalGroup != true)] | length' "$workdir/groups.json")
-case "$group_count" in
-  0) asc testflight groups create --app "$ASC_APP_ID" --name 'Public Beta' \
-       --feedback-enabled --output json > "$workdir/group.json" ;;
-  1) jq '{data: (.data[] | select(.attributes.name == "Public Beta" and
-       .attributes.isInternalGroup != true))}' "$workdir/groups.json" > "$workdir/group.json" ;;
-  *) fail 'Multiple external groups named Public Beta exist. Keep one group with that name.' ;;
-esac
+if [[ "$group_count" == 0 ]]; then
+  asc testflight groups create --app "$ASC_APP_ID" --name 'Public Beta' \
+    --feedback-enabled --output json > "$workdir/group.json"
+fi
 group_id=$(jq -er '.data.id' "$workdir/group.json")
-enable_public_link() {
-  local link
-  if [[ $(jq -r '.data.attributes.publicLinkEnabled // false' "$workdir/group.json") != true ]]; then
-    asc testflight groups edit --id "$group_id" --public-link-enabled --output json > "$workdir/group.json" || return 1
-  fi
-  link=$(jq -er '.data.attributes.publicLink | select(length > 0)' "$workdir/group.json") || return 1
-  report "Public beta invitation: $link"
-}
 asc testflight groups list --build-id "$build_id" --output json > "$workdir/membership.json"
 jq -e '.complete == true' "$workdir/membership.json" > /dev/null
 if [[ "$state" != READY_FOR_BETA_SUBMISSION ]] && jq -e --arg id "$group_id" 'any(.groups[]; .id == $id)' "$workdir/membership.json" > /dev/null; then
