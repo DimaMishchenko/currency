@@ -72,13 +72,13 @@ asc profiles list --profile-type IOS_APP_STORE --paginate --output json > "$sign
 
 profile_uuid() {
   local bundle=$1 profile_id=$2 profile_file=$3
-  asc profiles download --id "$profile_id" --output "$profile_file" >/dev/null
-  security cms -D -i "$profile_file" > "$signing_dir/profile.plist"
+  asc profiles download --id "$profile_id" --output "$profile_file" >/dev/null || return 1
+  security cms -D -i "$profile_file" > "$signing_dir/profile.plist" || return 1
   [[ $(/usr/libexec/PlistBuddy -c 'Print :TeamIdentifier:0' "$signing_dir/profile.plist") == "$APPLE_TEAM_ID" ]] || return 1
   [[ $(/usr/libexec/PlistBuddy -c 'Print :Entitlements:application-identifier' "$signing_dir/profile.plist") == "$APPLE_TEAM_ID.$bundle" ]] || return 1
   /usr/libexec/PlistBuddy -c 'Print :Entitlements:com.apple.security.application-groups' \
     "$signing_dir/profile.plist" | grep -Fqx "    $app_group" || return 1
-  asc profiles local install --path "$profile_file" --output json >/dev/null
+  asc profiles local install --path "$profile_file" --output json >/dev/null || return 1
   plutil -extract UUID raw -o - "$signing_dir/profile.plist"
 }
 
@@ -115,7 +115,7 @@ reconcile_profile() {
   fi
   file="$signing_dir/$id.mobileprovision"
   profile_uuid "$bundle" "$id" "$file" \
-    || fail "Profile for $bundle lacks $app_group or has the wrong team. Enable the App Group for this Bundle ID."
+    || fail "Profile for $bundle could not be validated or installed. Check its App Group, team, and Apple Developer access."
 }
 
 app_uuid=$(reconcile_profile "$app_bundle")
