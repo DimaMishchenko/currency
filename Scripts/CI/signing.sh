@@ -15,7 +15,7 @@ printf '%s' "$APPLE_DISTRIBUTION_PRIVATE_KEY_B64" | base64 --decode > "$key_file
 fail() { echo "::error::$*" >&2; exit 1; }
 fresh() {
   jq -en --arg date "$1" --argjson days "${2:-30}" \
-    '($date | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601) > (now + $days * 86400)' >/dev/null
+    '($date | sub("\\.[0-9]+"; "") | sub("\\+00:00$"; "Z") | fromdateiso8601) > (now + $days * 86400)' >/dev/null
 }
 public_hash() {
   openssl pkey -pubin -outform DER | shasum -a 256 | cut -d ' ' -f 1
@@ -101,7 +101,7 @@ reconcile_profile() {
     fi
   done < <(jq -r --argjson days "$profile_fresh_days" '.data[] | select(.attributes.profileType == "IOS_APP_STORE" and
     .attributes.profileState == "ACTIVE") |
-    select((.attributes.expirationDate | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601) > (now + $days * 86400)) |
+    select((.attributes.expirationDate | sub("\\.[0-9]+"; "") | sub("\\+00:00$"; "Z") | fromdateiso8601) > (now + $days * 86400)) |
     .id' "$signing_dir/profiles.json")
 
   name="Currency CI $bundle $(date -u +%Y%m%d) $(openssl rand -hex 4)"
@@ -124,7 +124,8 @@ widget_uuid=$(reconcile_profile "$widget_bundle")
 openssl x509 -inform DER -in "$signing_dir/$cert_id.cer" -out "$signing_dir/distribution.pem"
 openssl rand -hex 32 | tr -d '\n' > "$signing_dir/identity-password"
 openssl rand -hex 32 | tr -d '\n' > "$signing_dir/keychain-password"
-openssl pkcs12 -export -inkey "$key_file" -in "$signing_dir/distribution.pem" \
+# macOS Security.framework rejects OpenSSL 3's default PKCS#12 encryption.
+openssl pkcs12 -export -legacy -inkey "$key_file" -in "$signing_dir/distribution.pem" \
   -out "$signing_dir/distribution.p12" -passout "file:$signing_dir/identity-password"
 asc signing keychain install \
   --identity "$signing_dir/distribution.p12" \
