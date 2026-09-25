@@ -46,7 +46,6 @@ jobs:
     env:
       ASC_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
       ASC_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
-      ASC_APP_ID: ${{ secrets.ASC_APP_ID }}
       APPLE_TEAM_ID: '77X75EH6F4'
       ASC_PRIVATE_KEY_B64: ${{ secrets.ASC_API_CERT }}
       APPLE_DISTRIBUTION_PRIVATE_KEY_B64: ${{ secrets.APPLE_DISTRIBUTION_PRIVATE_KEY_B64 }}
@@ -55,7 +54,7 @@ jobs:
       - uses: actions/checkout@v5
       - name: Check release configuration
         run: |
-          for name in ASC_KEY_ID ASC_ISSUER_ID ASC_APP_ID ASC_PRIVATE_KEY_B64 APPLE_DISTRIBUTION_PRIVATE_KEY_B64; do
+          for name in ASC_KEY_ID ASC_ISSUER_ID ASC_PRIVATE_KEY_B64 APPLE_DISTRIBUTION_PRIVATE_KEY_B64; do
             if [[ -z "${!name}" ]]; then
               echo "::error::Missing testflight environment value: $name"
               exit 1
@@ -63,6 +62,11 @@ jobs:
           done
       - name: Install tools
         run: brew install tuist xcbeautify asc
+      - name: Resolve App Store Connect app
+        run: |
+          asc apps list --bundle-id com.dimasike.currency --output json > "$RUNNER_TEMP/currency-app.json"
+          app_id=$(jq -er 'if (.data | length) == 1 then .data[0].id else error("Expected one Currency app record") end' "$RUNNER_TEMP/currency-app.json")
+          echo "ASC_APP_ID=$app_id" >> "$GITHUB_ENV"
       - name: Allocate build number
         run: bash Scripts/CI/release.sh allocate
       - name: Prepare certificate and profiles

@@ -8,7 +8,7 @@ The workflow uses Xcode 27, Tuist, and [`asc`](https://github.com/rorkai/App-Sto
 
 1. In Apple Developer, accept any pending agreements and confirm the membership is active.
 2. Create explicit iOS Bundle IDs `com.dimasike.currency` and `com.dimasike.currency.widgets`. Register App Group `group.com.dimasike.currency.shared` and enable it on **both** Bundle IDs. CI creates the App Store profiles after this is done.
-3. In App Store Connect, create the Currency app record using `com.dimasike.currency`. Record the numeric Apple app ID. Create an internal TestFlight group and enable automatic distribution for new builds if desired.
+3. In App Store Connect, create the Currency app record using `com.dimasike.currency`. Create an internal TestFlight group and enable automatic distribution for new builds if desired.
 4. In App Store Connect → Users and Access → Integrations → App Store Connect API → **Team Keys**, create an Admin key and download its `.p8` file once. An individual API key cannot access the provisioning endpoints used by this workflow. Record its Key ID and Issuer ID.
 
 The first upload can require Apple account questions such as export compliance, app privacy, or beta information. Resolve any such prompts in App Store Connect. The repository includes the app's required-reason privacy manifest for its app-local `UserDefaults` use; review the separate App Privacy questionnaire against actual data flows before answering it.
@@ -21,9 +21,10 @@ Create a `testflight` environment in repository Settings → Environments and re
 | --- | --- | --- |
 | `ASC_API_KEY_ID` | Secret | Team API Key ID |
 | `ASC_API_ISSUER_ID` | Secret | Team API Issuer ID |
-| `ASC_APP_ID` | Secret | Numeric App Store Connect app ID |
 | `ASC_API_CERT` | Secret | Base64 of the downloaded `.p8` file |
 | `APPLE_DISTRIBUTION_PRIVATE_KEY_B64` | Secret | Base64 of one persistent RSA private key |
+
+CI resolves the numeric App Store Connect app ID from `com.dimasike.currency` on each release.
 
 The initial distribution key for this repository is backed up at `~/.config/currency/signing/distribution.key` with owner-only permissions and is already stored in the GitHub environment secret. Keep that file outside the public repository; CI reuses the same key when Apple's public certificate expires. Do not post the key or its base64 form in an issue or chat. If the key is intentionally rotated, generate a replacement and update the GitHub secret together.
 
