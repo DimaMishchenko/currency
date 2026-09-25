@@ -19,9 +19,9 @@ Create a `testflight` environment in repository Settings → Environments and re
 
 | Name | Type | Value |
 | --- | --- | --- |
-| `ASC_KEY_ID` | Variable | Team API Key ID |
-| `ASC_ISSUER_ID` | Variable | Team API Issuer ID |
-| `ASC_APP_ID` | Variable | Numeric App Store Connect app ID |
+| `ASC_KEY_ID` | Secret | Team API Key ID |
+| `ASC_ISSUER_ID` | Secret | Team API Issuer ID |
+| `ASC_APP_ID` | Secret | Numeric App Store Connect app ID |
 | `ASC_PRIVATE_KEY_B64` | Secret | Base64 of the downloaded `.p8` file |
 | `APPLE_DISTRIBUTION_PRIVATE_KEY_B64` | Secret | Base64 of one persistent RSA private key |
 
