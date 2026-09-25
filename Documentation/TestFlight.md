@@ -11,7 +11,7 @@ The workflow uses Xcode 27, Tuist, and [`asc`](https://github.com/rorkai/App-Sto
 3. In App Store Connect, create the Currency app record using `com.dimasike.currency`. Create an internal TestFlight group and enable automatic distribution for new builds if desired.
 4. In App Store Connect → Users and Access → Integrations → App Store Connect API → **Team Keys**, create an Admin key and download its `.p8` file once. An individual API key cannot access the provisioning endpoints used by this workflow. Record its Key ID and Issuer ID.
 
-The first upload can require Apple account questions such as export compliance, app privacy, or beta information. Resolve any such prompts in App Store Connect. The repository includes the app's required-reason privacy manifest for its app-local `UserDefaults` use; review the separate App Privacy questionnaire against actual data flows before answering it.
+The first upload can require Apple account questions such as export compliance, app privacy, or beta information. Resolve any such prompts in App Store Connect. Currency uses Apple-provided HTTPS and CryptoKit SHA-256 hashing for widget filenames; its generated app Info.plist declares `ITSAppUsesNonExemptEncryption = NO` so later builds do not repeat the exempt-encryption question. Review this declaration if encryption is added. The repository includes the app's required-reason privacy manifest for its app-local `UserDefaults` use; review the separate App Privacy questionnaire against actual data flows before answering it.
 
 ## One-time GitHub setup
 
