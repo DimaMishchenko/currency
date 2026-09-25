@@ -210,7 +210,7 @@ final class AppComposition {
 private enum AppGroup {
   static var directory: URL {
     FileManager.default.containerURL(
-      forSecurityApplicationGroupIdentifier: "group.com.dimasike.currency")
+      forSecurityApplicationGroupIdentifier: "group.com.dimasike.currency.shared")
       ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
       .appendingPathComponent("Currency")
   }
