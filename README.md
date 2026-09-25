@@ -2,6 +2,7 @@
 
 [![iOS Tests](https://github.com/DimaMishchenko/currency/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/DimaMishchenko/currency/actions/workflows/tests.yml)
 [![TestFlight Publish](https://github.com/DimaMishchenko/currency/actions/workflows/publish.yml/badge.svg?branch=main)](https://github.com/DimaMishchenko/currency/actions/workflows/publish.yml)
+[![Public Beta](https://github.com/DimaMishchenko/currency/actions/workflows/public-beta.yml/badge.svg?branch=main)](https://github.com/DimaMishchenko/currency/actions/workflows/public-beta.yml)
 
 A SwiftUI currency converter for iOS 26, with a personal currency list, offline rates, and interactive Home and Lock Screen widgets.
 

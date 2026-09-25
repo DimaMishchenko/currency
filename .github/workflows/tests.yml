@@ -34,4 +34,4 @@ jobs:
             CODE_SIGN_IDENTITY=- \
             2>&1 | xcbeautify
       - name: Check release automation
-        run: bash -n Scripts/CI/signing.sh Scripts/CI/release.sh Scripts/CI/verify_ipa.sh
+        run: bash -n Scripts/CI/signing.sh Scripts/CI/release.sh Scripts/CI/verify_ipa.sh Scripts/CI/public_beta.sh

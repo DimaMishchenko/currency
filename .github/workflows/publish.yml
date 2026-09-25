@@ -79,6 +79,12 @@ jobs:
         run: bash Scripts/CI/verify_ipa.sh "$RUNNER_TEMP/CurrencyExport/Currency.ipa"
       - name: Upload to TestFlight
         run: bash Scripts/CI/release.sh upload "$RUNNER_TEMP/CurrencyExport/Currency.ipa"
+      - name: Record published build
+        uses: actions/upload-artifact@v4
+        with:
+          name: currency-release-build
+          path: ${{ runner.temp }}/CurrencyBuildId.txt
+          if-no-files-found: error
       - name: Remove temporary signing assets
         if: always()
         run: |
