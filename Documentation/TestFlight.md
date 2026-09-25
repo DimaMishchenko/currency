@@ -19,10 +19,10 @@ Create a `testflight` environment in repository Settings → Environments and re
 
 | Name | Type | Value |
 | --- | --- | --- |
-| `ASC_KEY_ID` | Secret | Team API Key ID |
-| `ASC_ISSUER_ID` | Secret | Team API Issuer ID |
+| `ASC_API_KEY_ID` | Secret | Team API Key ID |
+| `ASC_API_ISSUER_ID` | Secret | Team API Issuer ID |
 | `ASC_APP_ID` | Secret | Numeric App Store Connect app ID |
-| `ASC_PRIVATE_KEY_B64` | Secret | Base64 of the downloaded `.p8` file |
+| `ASC_API_CERT` | Secret | Base64 of the downloaded `.p8` file |
 | `APPLE_DISTRIBUTION_PRIVATE_KEY_B64` | Secret | Base64 of one persistent RSA private key |
 
 The initial distribution key for this repository is backed up at `~/.config/currency/signing/distribution.key` with owner-only permissions and is already stored in the GitHub environment secret. Keep that file outside the public repository; CI reuses the same key when Apple's public certificate expires. Do not post the key or its base64 form in an issue or chat. If the key is intentionally rotated, generate a replacement and update the GitHub secret together.
@@ -35,7 +35,7 @@ openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$HOME/.config
 base64 -i "$HOME/.config/currency/signing/distribution-next.key" | pbcopy
 ```
 
-Separately, run `base64 -i AuthKey_XXXXXXXXXX.p8 | pbcopy` and paste that into `ASC_PRIVATE_KEY_B64`. Keep the two keys distinct. The GitHub release runner creates a disposable `.p12` and keychain from the distribution key, then removes them after the job.
+Separately, run `base64 -i AuthKey_XXXXXXXXXX.p8 | pbcopy` and paste that into `ASC_API_CERT`. Keep the two keys distinct. The GitHub release runner creates a disposable `.p12` and keychain from the distribution key, then removes them after the job.
 
 Protect `main` with the `test` job as a required status check before merging. Keep the `testflight` environment limited to `main`; pull request jobs do not receive release secrets.
 

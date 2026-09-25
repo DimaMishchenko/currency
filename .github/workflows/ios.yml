@@ -44,11 +44,11 @@ jobs:
       queue: max
       cancel-in-progress: false
     env:
-      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
       ASC_APP_ID: ${{ secrets.ASC_APP_ID }}
       APPLE_TEAM_ID: '77X75EH6F4'
-      ASC_PRIVATE_KEY_B64: ${{ secrets.ASC_PRIVATE_KEY_B64 }}
+      ASC_PRIVATE_KEY_B64: ${{ secrets.ASC_API_CERT }}
       APPLE_DISTRIBUTION_PRIVATE_KEY_B64: ${{ secrets.APPLE_DISTRIBUTION_PRIVATE_KEY_B64 }}
       ASC_STRICT_AUTH: 'true'
     steps:
