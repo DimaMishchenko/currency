@@ -2,7 +2,8 @@
 set -euo pipefail
 
 check_bundle() {
-  local bundle=$1 expected_id=$2 expected_profile=$3 info=$bundle/Info.plist
+  local bundle=$1 expected_id=$2 expected_profile=$3
+  local info=$bundle/Info.plist
   [[ $(plutil -extract CFBundleIdentifier raw -o - "$info") == "$expected_id" ]] \
     || { echo "Wrong bundle ID: $bundle" >&2; exit 1; }
   [[ $(plutil -extract CFBundleVersion raw -o - "$info") == "$CURRENCY_BUILD_NUMBER" ]] \
@@ -20,7 +21,7 @@ check_bundle() {
 }
 
 workdir=$(mktemp -d "$RUNNER_TEMP/currency-ipa.XXXXXX")
-trap 'rm -rf "$workdir"' EXIT
+trap 'verify_status=$?; rm -rf "$workdir"; exit "$verify_status"' EXIT
 unzip -q "$1" -d "$workdir"
 app=$workdir/Payload/Currency.app
 widget=$app/PlugIns/CurrencyWidgets.appex
