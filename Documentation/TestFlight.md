@@ -24,7 +24,7 @@ Create a `testflight` environment in repository Settings → Environments and re
 | `ASC_API_CERT` | Secret | Base64 of the downloaded `.p8` file |
 | `APPLE_DISTRIBUTION_PRIVATE_KEY_B64` | Secret | Base64 of one persistent RSA private key |
 
-CI resolves the numeric App Store Connect app ID from `com.dimasike.currency` on each release.
+The workflow pins App Store Connect app ID `6816213577`, which belongs to the `com.dimasike.currency` app record. It is public account metadata, not a credential.
 
 The initial distribution key for this repository is backed up at `~/.config/currency/signing/distribution.key` with owner-only permissions and is already stored in the GitHub environment secret. Keep that file outside the public repository; CI reuses the same key when Apple's public certificate expires. Do not post the key or its base64 form in an issue or chat. If the key is intentionally rotated, generate a replacement and update the GitHub secret together.
 
