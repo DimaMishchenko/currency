@@ -1,5 +1,23 @@
 import ProjectDescription
 
+let teamID = "77X75EH6F4"
+let appProfile = Environment.currencyAppProfileUuid.getString(default: "")
+let widgetProfile = Environment.currencyWidgetProfileUuid.getString(default: "")
+
+func releaseSigning(profile: String) -> Settings? {
+  guard !profile.isEmpty else { return nil }
+  return .settings(configurations: [
+    .release(
+      name: "Release",
+      settings: [
+        "CODE_SIGN_STYLE": "Manual",
+        "CODE_SIGN_IDENTITY": "Apple Distribution",
+        "DEVELOPMENT_TEAM": .string(teamID),
+        "PROVISIONING_PROFILE_SPECIFIER": .string(profile)
+      ])
+  ])
+}
+
 let project = Project(
   name: "Currency", organizationName: "dimasike",
   packages: [
@@ -11,7 +29,8 @@ let project = Project(
     .local(path: "Features/WidgetOnboarding")
   ],
   settings: .settings(base: [
-    "CODE_SIGN_STYLE": "Automatic", "SWIFT_VERSION": "6.0",
+    "CODE_SIGN_STYLE": "Automatic", "CURRENT_PROJECT_VERSION": "1",
+    "DEVELOPMENT_TEAM": .string(teamID), "MARKETING_VERSION": "1.0", "SWIFT_VERSION": "6.0",
     "STRING_CATALOG_GENERATE_SYMBOLS": "YES", "SWIFT_EMIT_LOC_STRINGS": "YES",
     "LOCALIZATION_PREFERS_STRING_CATALOGS": "YES", "TARGETED_DEVICE_FAMILY": "1,2"
   ]),
@@ -34,18 +53,38 @@ let project = Project(
     .target(
       name: "CurrencyWidgets", destinations: .iOS, product: .appExtension,
       bundleId: "com.dimasike.currency.widgets", deploymentTargets: .iOS("26.0"),
-      infoPlist: .file(path: "App/Widgets/Info.plist"),
+      infoPlist: .extendingDefault(with: [
+        "CFBundleDisplayName": "Currency Widgets",
+        "CFBundleShortVersionString": "$(MARKETING_VERSION)",
+        "CFBundleVersion": "$(CURRENT_PROJECT_VERSION)",
+        "NSExtension": ["NSExtensionPointIdentifier": "com.apple.widgetkit-extension"],
+        "NSWidgetWantsLocation": true
+      ]),
       buildableFolders: ["App/Widgets/Sources", "App/Widgets/Resources"],
       entitlements: .file(path: "App/Widgets/Currency.entitlements"),
       dependencies: [
         .package(product: "Conversion"), .package(product: "ExchangeRates"),
         .package(product: "ExchangeRatesUI"), .package(product: "LocalCurrency"),
         .package(product: "Widgets"), .package(product: "WidgetsUI")
-      ]),
+      ],
+      settings: releaseSigning(profile: widgetProfile)),
     .target(
       name: "Currency", destinations: .iOS, product: .app,
       bundleId: "com.dimasike.currency", deploymentTargets: .iOS("26.0"),
-      infoPlist: .file(path: "App/Configuration/Info.plist"),
+      infoPlist: .extendingDefault(with: [
+        "CFBundleShortVersionString": "$(MARKETING_VERSION)",
+        "CFBundleVersion": "$(CURRENT_PROJECT_VERSION)",
+        "CFBundleURLTypes": [["CFBundleURLSchemes": ["currency"]]],
+        "NSLocationDefaultAccuracyReduced": true,
+        "NSLocationWhenInUseUsageDescription":
+          "Find your country’s currency and refresh it daily while the app or widgets are in use. Only the country and currency are saved.",
+        "UIApplicationSceneManifest": ["UIApplicationSupportsMultipleScenes": true],
+        "UILaunchScreen": [:],
+        "UISupportedInterfaceOrientations": [
+          "UIInterfaceOrientationPortrait", "UIInterfaceOrientationLandscapeLeft",
+          "UIInterfaceOrientationLandscapeRight"
+        ]
+      ]),
       buildableFolders: ["App/Sources", "App/Resources"],
       entitlements: .file(path: "App/Configuration/Currency.entitlements"),
       dependencies: [
@@ -59,7 +98,8 @@ let project = Project(
         .package(product: "WidgetOnboardingUI"), .target(name: "AppearancePreferences"),
         .target(name: "CurrencyApplication"), .target(name: "ForegroundRefresh"),
         .target(name: "CurrencyWidgets")
-      ]),
+      ],
+      settings: releaseSigning(profile: appProfile)),
     .target(
       name: "DesignSystemPackageTests", destinations: .iOS, product: .unitTests,
       bundleId: "com.dimasike.currency.designsystempackagetests", deploymentTargets: .iOS("26.0"),

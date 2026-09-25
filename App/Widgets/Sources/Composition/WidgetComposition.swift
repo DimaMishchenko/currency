@@ -10,7 +10,7 @@ enum WidgetComposition {
   private static func directory() -> URL {
     guard
       let directory = FileManager.default.containerURL(
-        forSecurityApplicationGroupIdentifier: "group.com.dimasike.currency")
+        forSecurityApplicationGroupIdentifier: "group.com.dimasike.currency.shared")
     else {
       preconditionFailure("CurrencyWidgets requires its configured App Group entitlement.")
     }

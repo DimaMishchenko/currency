@@ -1,0 +1,106 @@
+name: iOS
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: xcode-27
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools
+        run: brew install tuist xcbeautify
+      - name: Generate project
+        run: tuist generate --no-open
+      - name: Test on iOS Simulator
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -workspace Currency.xcworkspace \
+            -scheme CurrencyTests \
+            -configuration Debug \
+            -destination 'platform=iOS Simulator,name=iPhone 18 Pro,OS=27.0' \
+            -derivedDataPath "$RUNNER_TEMP/CurrencyTestsDerivedData" \
+            -parallel-testing-enabled NO \
+            CODE_SIGN_IDENTITY=- \
+            2>&1 | xcbeautify
+      - name: Check release automation
+        run: bash -n Scripts/CI/signing.sh Scripts/CI/release.sh Scripts/CI/verify_ipa.sh
+
+  testflight:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: test
+    runs-on: xcode-27
+    timeout-minutes: 90
+    environment: testflight
+    concurrency:
+      group: currency-testflight-main
+      queue: max
+      cancel-in-progress: false
+    env:
+      ASC_KEY_ID: ${{ vars.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ vars.ASC_ISSUER_ID }}
+      ASC_APP_ID: ${{ vars.ASC_APP_ID }}
+      APPLE_TEAM_ID: '77X75EH6F4'
+      ASC_PRIVATE_KEY_B64: ${{ secrets.ASC_PRIVATE_KEY_B64 }}
+      APPLE_DISTRIBUTION_PRIVATE_KEY_B64: ${{ secrets.APPLE_DISTRIBUTION_PRIVATE_KEY_B64 }}
+      ASC_STRICT_AUTH: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check release configuration
+        run: |
+          for name in ASC_KEY_ID ASC_ISSUER_ID ASC_APP_ID ASC_PRIVATE_KEY_B64 APPLE_DISTRIBUTION_PRIVATE_KEY_B64; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Missing testflight environment value: $name"
+              exit 1
+            fi
+          done
+      - name: Install tools
+        run: brew install tuist xcbeautify asc
+      - name: Allocate build number
+        run: bash Scripts/CI/release.sh allocate
+      - name: Prepare certificate and profiles
+        run: bash Scripts/CI/signing.sh
+      - name: Generate signed project
+        run: |
+          TUIST_CURRENCY_APP_PROFILE_UUID="$CURRENCY_APP_PROFILE_UUID" \
+          TUIST_CURRENCY_WIDGET_PROFILE_UUID="$CURRENCY_WIDGET_PROFILE_UUID" \
+            tuist generate --no-open
+      - name: Archive
+        run: |
+          set -o pipefail
+          xcodebuild archive \
+            -workspace Currency.xcworkspace \
+            -scheme Currency \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/CurrencyReleaseDerivedData" \
+            -archivePath "$RUNNER_TEMP/Currency.xcarchive" \
+            "CURRENT_PROJECT_VERSION=$CURRENCY_BUILD_NUMBER" \
+            2>&1 | xcbeautify
+      - name: Export IPA
+        run: |
+          bash Scripts/CI/release.sh export-options "$RUNNER_TEMP/ExportOptions.plist"
+          set -o pipefail
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/Currency.xcarchive" \
+            -exportPath "$RUNNER_TEMP/CurrencyExport" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            2>&1 | xcbeautify
+      - name: Verify signed IPA
+        run: bash Scripts/CI/verify_ipa.sh "$RUNNER_TEMP/CurrencyExport/Currency.ipa"
+      - name: Upload to TestFlight
+        run: bash Scripts/CI/release.sh upload "$RUNNER_TEMP/CurrencyExport/Currency.ipa"
+      - name: Remove temporary signing assets
+        if: always()
+        run: |
+          if [[ -n "${CURRENCY_SIGNING_DIR:-}" ]]; then
+            security delete-keychain "$CURRENCY_SIGNING_DIR/currency-ci.keychain-db" || true
+            rm -rf "$CURRENCY_SIGNING_DIR"
+          fi

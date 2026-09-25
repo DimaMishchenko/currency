@@ -21,3 +21,5 @@ Keep signing enabled when validating shared App Group storage, including on simu
 Use Xcode-generated string-catalog symbols in the owning UI module. Keep resource and interpolation behavior covered by integration tests.
 
 [Architecture](Architecture.md) describes ownership and dependency rules; [Decisions](Decisions.md) records durable constraints. Module READMEs explain purpose and boundaries. Keep API details in source comments and harness launch options in the owning module README.
+
+[TestFlight](TestFlight.md) describes the GitHub Actions release workflow and one-time Apple/GitHub setup.
