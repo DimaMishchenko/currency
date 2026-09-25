@@ -12,6 +12,9 @@ jobs:
   test:
     runs-on: xcode-27
     timeout-minutes: 60
+    concurrency:
+      group: currency-test-${{ github.event.pull_request.number || github.run_id }}
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v5
       - name: Install tools

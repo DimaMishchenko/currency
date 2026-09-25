@@ -1,6 +1,6 @@
 # GitHub Actions → TestFlight
 
-Every pull request runs `CurrencyTests` on an iOS simulator without Apple credentials. Every push to `main` runs the same tests, then queues a signed archive and TestFlight upload. The release job is serialized with `queue: max`, so normal back-to-back merges do not replace an earlier pending release. GitHub currently caps this queue at 100 pending jobs.
+Every pull request runs `CurrencyTests` on an iOS simulator without Apple credentials. A new commit to the same pull request cancels its older test job. Every push to `main` runs the same tests, then queues a signed archive and TestFlight upload. The release job is serialized with `queue: max`, so normal back-to-back merges do not replace an earlier pending release. GitHub currently caps this queue at 100 pending jobs.
 
 The workflow uses Xcode 27, Tuist, and [`asc`](https://github.com/rorkai/App-Store-Connect-CLI). It creates or renews one Apple Distribution certificate from a persistent RSA private key and separate App Store profiles for the app and widget. It never revokes a team certificate or deletes an Apple profile. Local Tuist generation uses automatic signing with team `77X75EH6F4`; only the release job supplies the two profile UUIDs to Tuist.
 
