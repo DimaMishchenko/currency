@@ -1,0 +1,64 @@
+name: Public Beta
+
+on:
+  workflow_run:
+    workflows: [TestFlight Publish]
+    types: [completed]
+    branches: [main]
+  schedule:
+    - cron: '23 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: currency-public-beta
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name != 'workflow_run' ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'workflow_run' &&
+        github.event.workflow_run.head_branch == 'main' &&
+        github.event.workflow_run.head_repository.full_name == github.repository))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: testflight
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+      ASC_PRIVATE_KEY_B64: ${{ secrets.ASC_API_CERT }}
+      ASC_APP_ID: '6816213577'
+      ASC_STRICT_AUTH: 'true'
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - name: Install ASC
+        run: |
+          mkdir -p "$RUNNER_TEMP/asc-cli"
+          curl --fail --location --retry 3 \
+            https://github.com/rorkai/App-Store-Connect-CLI/releases/download/5.5.0/asc_5.5.0_linux_amd64 \
+            --output "$RUNNER_TEMP/asc-cli/asc"
+          echo "712b29762c7ad8c2624bccc9752a30ff3c1d4c5b4cb689a00680f45081939239  $RUNNER_TEMP/asc-cli/asc" | sha256sum --check
+          chmod +x "$RUNNER_TEMP/asc-cli/asc"
+          echo "$RUNNER_TEMP/asc-cli" >> "$GITHUB_PATH"
+      - name: Resolve successful release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          run_id=$(gh run list --workflow publish.yml --branch main --status success \
+            --event workflow_run --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+          if [[ -z "$run_id" ]]; then
+            echo '::error::No successful main TestFlight Publish run is available.'
+            exit 1
+          fi
+          gh run download "$run_id" --name currency-release-build --dir "$RUNNER_TEMP/currency-release"
+      - name: Promote tested release build
+        run: bash Scripts/CI/public_beta.sh "$RUNNER_TEMP/currency-release/CurrencyBuildId.txt"

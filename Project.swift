@@ -74,6 +74,7 @@ let project = Project(
       infoPlist: .extendingDefault(with: [
         "CFBundleShortVersionString": "$(MARKETING_VERSION)",
         "CFBundleVersion": "$(CURRENT_PROJECT_VERSION)",
+        "ITSAppUsesNonExemptEncryption": false,
         "CFBundleURLTypes": [["CFBundleURLSchemes": ["currency"]]],
         "NSLocationDefaultAccuracyReduced": true,
         "NSLocationWhenInUseUsageDescription":

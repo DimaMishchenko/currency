@@ -1,0 +1,37 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: xcode-27
+    timeout-minutes: 60
+    concurrency:
+      group: currency-test-${{ github.event.pull_request.number || github.run_id }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: brew install tuist xcbeautify
+      - name: Generate project
+        run: tuist generate --no-open
+      - name: Test on iOS Simulator
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -workspace Currency.xcworkspace \
+            -scheme CurrencyTests \
+            -configuration Debug \
+            -destination 'platform=iOS Simulator,name=iPhone 18 Pro,OS=27.0' \
+            -derivedDataPath "$RUNNER_TEMP/CurrencyTestsDerivedData" \
+            -parallel-testing-enabled NO \
+            CODE_SIGN_IDENTITY=- \
+            2>&1 | xcbeautify
+      - name: Check release automation
+        run: bash -n Scripts/CI/signing.sh Scripts/CI/release.sh Scripts/CI/verify_ipa.sh Scripts/CI/public_beta.sh

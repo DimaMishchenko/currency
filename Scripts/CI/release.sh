@@ -45,6 +45,7 @@ EOF
       build_id=$(jq -er '.buildId' "$result")
       jq -e '.processingState == "VALID"' "$result" >/dev/null
     fi
+    printf '%s\n' "$build_id" > "$RUNNER_TEMP/CurrencyBuildId.txt"
     echo "TestFlight processed build ID $build_id"
     ;;
   *) echo "usage: $0 {allocate|export-options PATH|upload IPA}" >&2; exit 2 ;;
