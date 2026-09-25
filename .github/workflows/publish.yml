@@ -2,7 +2,7 @@ name: TestFlight Publish
 
 on:
   workflow_run:
-    workflows: [iOS Tests]
+    workflows: [Tests]
     types: [completed]
     branches: [main]
 
