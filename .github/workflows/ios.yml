@@ -13,7 +13,7 @@ jobs:
     runs-on: xcode-27
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install tools
         run: brew install tuist xcbeautify
       - name: Generate project
@@ -52,7 +52,7 @@ jobs:
       APPLE_DISTRIBUTION_PRIVATE_KEY_B64: ${{ secrets.APPLE_DISTRIBUTION_PRIVATE_KEY_B64 }}
       ASC_STRICT_AUTH: 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Check release configuration
         run: |
           for name in ASC_KEY_ID ASC_ISSUER_ID ASC_APP_ID ASC_PRIVATE_KEY_B64 APPLE_DISTRIBUTION_PRIVATE_KEY_B64; do
