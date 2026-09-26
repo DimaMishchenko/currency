@@ -13,6 +13,8 @@ Keep only unfinished work. Release checks below are unverified or need revalidat
 - [ ] Add the chart widget to onboarding.
 - [ ] Add a tip for the chart button.
 - [ ] Skip TestFlight releases when there are no code changes.
+- [ ] Move TODO items to GitHub Issues.
+- [ ] Create reusable templates for pull requests and issues.
 
 ## Release checks
 
