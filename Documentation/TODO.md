@@ -17,6 +17,7 @@ Keep only unfinished work. Release checks below are unverified or need revalidat
 - [ ] Skip TestFlight releases when there are no code changes.
 - [ ] Move TODO items to GitHub Issues.
 - [ ] Create reusable templates for pull requests and issues.
+- [ ] Review slow Swift type-checking expressions and simplify them.
 
 ## Release checks
 
