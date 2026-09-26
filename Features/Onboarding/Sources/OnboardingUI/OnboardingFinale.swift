@@ -24,6 +24,30 @@ struct OnboardingFinale: View {
   }
 
   var body: some View {
+    animation
+      .accessibilityElement(children: .combine)
+      .accessibilityIdentifier("onboarding.ready")
+      .accessibilityHint(Text(.Onboarding.spinHint))
+      .accessibilityAdjustableAction { direction in
+        AppHaptics.play(.selection)
+        spin.grab(at: clock)
+        spin.turn(by: direction == .decrement ? -.pi / 4 : .pi / 4)
+        spin.release(at: clock, velocity: 0)
+      }
+      .onChange(of: moving) { _, active in
+        if active {
+          started = .now
+        } else {
+          elapsed += Date.now.timeIntervalSince(started)
+          spin.release(at: elapsed, velocity: 0)
+          dragAngle = nil
+          dragTime = nil
+          dragVelocity = 0
+        }
+      }
+  }
+
+  private var animation: some View {
     TimelineView(.animation(minimumInterval: 1 / 30, paused: !moving || reduceMotion)) { context in
       let clock = elapsed + (moving ? context.date.timeIntervalSince(started) : 0)
       let time = reduceMotion ? 3 : clock
@@ -36,14 +60,18 @@ struct OnboardingFinale: View {
             let progress = min(1, max(0, (time - Double(index) * 0.065) / 1.15))
             let settled = 1 - pow(1 - progress, 3)
             let angle = Double(index) * .pi / 4 - .pi / 2 + orbit - (1 - settled) * .pi * 0.7
-            let breathing = reduceMotion ? 0 : sin(time * 1.1 + Double(index) * .pi / 4) * 3
+            let phase = time * 1.1 + Double(index) * .pi / 4
+            let breathing = reduceMotion ? 0 : sin(phase) * 3
             let distance = radius * (1 + (1 - settled) * 0.35) + breathing
-            CurrencyIcon(code, size: 32)
-              .scaleEffect(0.4 + settled * 0.6)
-              .rotationEffect(.degrees(reduceMotion ? 0 : sin(time * 0.8 + Double(index)) * 4))
-              .blur(radius: (1 - settled) * 5)
-              .opacity(min(1, progress * 3))
-              .offset(x: cos(angle) * distance, y: sin(angle) * distance)
+            FinaleCurrencyIcon(
+              code: code,
+              settled: settled,
+              progress: progress,
+              reduceMotion: reduceMotion,
+              time: time,
+              index: index,
+              angle: angle,
+              distance: distance)
           }
           let titleProgress = min(1, max(0, (time - 0.35) / 0.7))
           VStack(spacing: 6) {
@@ -65,26 +93,6 @@ struct OnboardingFinale: View {
         .contentShape(Circle())
         .highPriorityGesture(spinGesture(diameter: diameter))
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-      }
-    }
-    .accessibilityElement(children: .combine)
-    .accessibilityIdentifier("onboarding.ready")
-    .accessibilityHint(Text(.Onboarding.spinHint))
-    .accessibilityAdjustableAction { direction in
-      AppHaptics.play(.selection)
-      spin.grab(at: clock)
-      spin.turn(by: direction == .decrement ? -.pi / 4 : .pi / 4)
-      spin.release(at: clock, velocity: 0)
-    }
-    .onChange(of: moving) { _, active in
-      if active {
-        started = .now
-      } else {
-        elapsed += Date.now.timeIntervalSince(started)
-        spin.release(at: elapsed, velocity: 0)
-        dragAngle = nil
-        dragTime = nil
-        dragVelocity = 0
       }
     }
   }
@@ -123,4 +131,32 @@ struct OnboardingFinale: View {
       }
   }
 
+}
+
+private struct FinaleCurrencyIcon: View {
+  let code: String
+  let settled: Double
+  let progress: Double
+  let reduceMotion: Bool
+  let time: Double
+  let index: Int
+  let angle: Double
+  let distance: Double
+
+  var body: some View {
+    let scale = CGFloat(0.4 + settled * 0.6)
+    let blur = CGFloat((1 - settled) * 5)
+    let opacity = min(1, progress * 3)
+    let offset = CGSize(width: cos(angle) * distance, height: sin(angle) * distance)
+    return CurrencyIcon(code, size: 32)
+      .scaleEffect(scale)
+      .rotationEffect(.degrees(rotationDegrees))
+      .blur(radius: blur)
+      .opacity(opacity)
+      .offset(offset)
+  }
+
+  private var rotationDegrees: Double {
+    reduceMotion ? 0 : sin(time * 0.8 + Double(index)) * 4
+  }
 }

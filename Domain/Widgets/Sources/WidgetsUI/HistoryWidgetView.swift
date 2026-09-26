@@ -53,6 +53,9 @@ public struct HistoryWidgetView: View {
   private let family: WidgetFamily
   private var snapshot: HistoryWidgetSnapshot { entry.snapshot }
   private var compact: Bool { family == .systemSmall }
+  private var changeFormat: FloatingPointFormatStyle<Double>.Percent {
+    .percent.precision(.fractionLength(2)).sign(strategy: .always(includingZero: false))
+  }
 
   /// Uses the same supplied entry and layout for installed widgets and previews.
   public init(entry: HistoryWidgetEntry, family: WidgetFamily) {
@@ -71,17 +74,14 @@ public struct HistoryWidgetView: View {
           VStack(alignment: .leading, spacing: AppStyle.Space.xxs) {
             Text(
               change,
-              format: .percent.precision(.fractionLength(2))
-                .sign(strategy: .always(includingZero: false))
+              format: changeFormat
             )
             .font(AppStyle.font(.headline)).monospacedDigit()
             .foregroundStyle(.primary)
             .modifier(HistoryLabelContrast())
             .accessibilityLabel(.WidgetPresentation.historyChange)
             .accessibilityValue(
-              change.formatted(
-                .percent.precision(.fractionLength(2)).sign(strategy: .always(includingZero: false))
-                  .locale(locale)))
+              change.formatted(changeFormat.locale(locale)))
             HStack(spacing: AppStyle.Space.xs) {
               if snapshot.issue == .usingCachedSeries {
                 Image(systemName: "clock.arrow.circlepath")

@@ -245,36 +245,7 @@ struct CurrencyTile: View {
       LocalCurrencySetup(status: entry.spec.locationStatus)
     } else {
       WidgetPresentationButton(command: WidgetCommand("select:" + code, spec: entry.spec)) {
-        CurrencyTileArrangement(
-          stacked: previewSpread.map { 1 - $0 } ?? (stacked ? 1 : 0),
-          codeVisibility: codeVisibility
-        ) {
-          WidgetCurrencyIcon(
-            code: displayCode,
-            size: previewSpread.map { 16 + (previewDense ? 0 : 6) * $0 } ?? (compact ? 16 : 22),
-            isLocal: WidgetSelection.isLocal(code)
-          )
-          currencyCode.opacity(codeVisibility)
-          amount.font(AppStyle.font(stacked && !compact ? .title : .title2, weight: .medium))
-        }
-        .padding(
-          .horizontal,
-          previewSpread.map { 4 + (previewDense ? 0 : 4) * $0 }
-            ?? (compact ? AppStyle.Space.xs : AppStyle.Space.small)
-        )
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(
-          .primary.opacity(selected ? AppStyle.Widget.selectedFill : AppStyle.Widget.tileFill),
-          in: .rect(cornerRadius: compact ? AppStyle.Widget.keyRadius : AppStyle.Widget.tileRadius)
-        )
-        .overlay {
-          RoundedRectangle(
-            cornerRadius: compact ? AppStyle.Widget.keyRadius : AppStyle.Widget.tileRadius
-          )
-          .strokeBorder(
-            .primary.opacity(selected ? AppStyle.Widget.selectedBorder : 0), lineWidth: 1.2)
-        }
-        .contentShape(.rect)
+        tileContent
       }
       .buttonStyle(WidgetButtonStyle())
       .accessibilityLabel(
@@ -295,6 +266,39 @@ struct CurrencyTile: View {
       .accessibilityHint(.WidgetPresentation.selectCurrencyHint)
       .accessibilityAddTraits(selected ? .isSelected : [])
     }
+  }
+
+  private var tileContent: some View {
+    CurrencyTileArrangement(
+      stacked: previewSpread.map { 1 - $0 } ?? (stacked ? 1 : 0),
+      codeVisibility: codeVisibility
+    ) {
+      WidgetCurrencyIcon(
+        code: displayCode,
+        size: previewSpread.map { 16 + (previewDense ? 0 : 6) * $0 } ?? (compact ? 16 : 22),
+        isLocal: WidgetSelection.isLocal(code)
+      )
+      currencyCode.opacity(codeVisibility)
+      amount.font(AppStyle.font(stacked && !compact ? .title : .title2, weight: .medium))
+    }
+    .padding(
+      .horizontal,
+      previewSpread.map { 4 + (previewDense ? 0 : 4) * $0 }
+        ?? (compact ? AppStyle.Space.xs : AppStyle.Space.small)
+    )
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .background(
+      .primary.opacity(selected ? AppStyle.Widget.selectedFill : AppStyle.Widget.tileFill),
+      in: .rect(cornerRadius: compact ? AppStyle.Widget.keyRadius : AppStyle.Widget.tileRadius)
+    )
+    .overlay {
+      RoundedRectangle(
+        cornerRadius: compact ? AppStyle.Widget.keyRadius : AppStyle.Widget.tileRadius
+      )
+      .strokeBorder(
+        .primary.opacity(selected ? AppStyle.Widget.selectedBorder : 0), lineWidth: 1.2)
+    }
+    .contentShape(.rect)
   }
 
   private var currencyCode: some View {

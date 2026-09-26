@@ -203,11 +203,37 @@ private struct CurrencyOrbit: View {
   @State private var dragAngle: Double?
   @State private var dragTime: Date?
   @State private var dragVelocity: Double = 0
+  private var drift: Double { running ? (active ? 1.0 / 6 : 1.0 / 18) : 0 }
   private var running: Bool { !reduceMotion && scenePhase == .active }
   private var clock: TimeInterval {
     elapsed + (running ? Date.now.timeIntervalSince(started) : 0)
   }
   var body: some View {
+    animation
+      .accessibilityElement(children: .ignore)
+      .accessibilityLabel(Text(.LocalCurrency.orbitLabel))
+      .accessibilityHint(Text(.LocalCurrency.orbitHint))
+      .accessibilityIdentifier("location.currencyOrbit")
+      .accessibilityAdjustableAction { direction in
+        spin.grab(at: clock)
+        spin.turn(by: direction == .decrement ? -.pi / 6 : .pi / 6)
+        spin.release(at: clock, velocity: 0)
+        AppHaptics.play(.selection)
+      }
+      .onAppear { spin.setDrift(drift, at: clock) }
+      .onChange(of: active) { _, _ in
+        spin.setDrift(drift, at: clock)
+      }
+      .onChange(of: running) { wasRunning, _ in
+        if wasRunning { elapsed += Date.now.timeIntervalSince(started) }
+        started = .now
+        cancelDrag(at: elapsed)
+        spin.setDrift(drift, at: elapsed)
+      }
+      .onDisappear { cancelDrag(at: clock) }
+  }
+
+  private var animation: some View {
     TimelineView(.animation(minimumInterval: 1 / 60, paused: !running)) { context in
       let time = elapsed + (running ? context.date.timeIntervalSince(started) : 0)
       let phase = spin.angle(at: time)
@@ -215,59 +241,42 @@ private struct CurrencyOrbit: View {
         let center = CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2)
         let radius = min(geometry.size.width, geometry.size.height) * 0.36
         let scale = min(1, geometry.size.height / 256)
-        ZStack {
-          Circle().strokeBorder(.primary.opacity(0.05), lineWidth: 1)
-            .frame(width: radius * 2.5, height: radius * 2.5)
-          Circle().strokeBorder(.primary.opacity(0.10), lineWidth: 1)
-            .frame(width: radius * 2, height: radius * 2)
-          Circle().fill(.background).frame(width: 88 * scale, height: 88 * scale)
-            .shadow(color: .black.opacity(0.05), radius: 16, y: 8)
-            .overlay {
-              if let code {
-                Text(code).font(.system(size: 22 * scale, weight: .medium, design: .rounded))
-              } else {
-                Image(systemName: "location").font(.system(size: 32 * scale, weight: .light))
-              }
-            }
-          ForEach(Array(["€", "$", "£", "¥", "₩", "₹"].enumerated()), id: \.offset) {
-            index, symbol in
-            let angle = Double(index) * .pi / 3 + phase
-            Text(symbol).font(.system(size: 24 * scale, weight: .light, design: .rounded))
-              .frame(width: 48 * scale, height: 48 * scale).background(.background, in: .circle)
-              .overlay { Circle().strokeBorder(.primary.opacity(0.06), lineWidth: 1) }
-              .offset(x: cos(angle) * radius, y: sin(angle) * radius)
+        artwork(radius: radius, scale: scale, phase: phase)
+          .position(center)
+          .frame(width: geometry.size.width, height: geometry.size.height)
+          .contentShape(Rectangle())
+          .highPriorityGesture(spinGesture(center: center, deadZone: 44 * scale))
+          .onChange(of: Int(floor(phase / (.pi / 24)))) { _, _ in
+            if spin.hasUserMomentum(at: time) { AppHaptics.play(.rotaryTick) }
           }
-        }
-        .position(center)
-        .frame(width: geometry.size.width, height: geometry.size.height)
-        .contentShape(Rectangle())
-        .highPriorityGesture(spinGesture(center: center, deadZone: 44 * scale))
-        .onChange(of: Int(floor(phase / (.pi / 24)))) { _, _ in
-          if spin.hasUserMomentum(at: time) { AppHaptics.play(.rotaryTick) }
-        }
       }
     }
-    .accessibilityElement(children: .ignore)
-    .accessibilityLabel(Text(.LocalCurrency.orbitLabel))
-    .accessibilityHint(Text(.LocalCurrency.orbitHint))
-    .accessibilityIdentifier("location.currencyOrbit")
-    .accessibilityAdjustableAction { direction in
-      spin.grab(at: clock)
-      spin.turn(by: direction == .decrement ? -.pi / 6 : .pi / 6)
-      spin.release(at: clock, velocity: 0)
-      AppHaptics.play(.selection)
+  }
+
+  private func artwork(radius: CGFloat, scale: CGFloat, phase: Double) -> some View {
+    ZStack {
+      Circle().strokeBorder(.primary.opacity(0.05), lineWidth: 1)
+        .frame(width: radius * 2.5, height: radius * 2.5)
+      Circle().strokeBorder(.primary.opacity(0.10), lineWidth: 1)
+        .frame(width: radius * 2, height: radius * 2)
+      Circle().fill(.background).frame(width: 88 * scale, height: 88 * scale)
+        .shadow(color: .black.opacity(0.05), radius: 16, y: 8)
+        .overlay {
+          if let code {
+            Text(code).font(.system(size: 22 * scale, weight: .medium, design: .rounded))
+          } else {
+            Image(systemName: "location").font(.system(size: 32 * scale, weight: .light))
+          }
+        }
+      ForEach(Array(["€", "$", "£", "¥", "₩", "₹"].enumerated()), id: \.offset) {
+        index, symbol in
+        let angle: Double = Double(index) * .pi / 3 + phase
+        Text(symbol).font(.system(size: 24 * scale, weight: .light, design: .rounded))
+          .frame(width: 48 * scale, height: 48 * scale).background(.background, in: .circle)
+          .overlay { Circle().strokeBorder(.primary.opacity(0.06), lineWidth: 1) }
+          .offset(x: cos(angle) * radius, y: sin(angle) * radius)
+      }
     }
-    .onAppear { spin.setDrift(running ? (active ? 1 / 6 : 1 / 18) : 0, at: clock) }
-    .onChange(of: active) { _, value in
-      spin.setDrift(running ? (value ? 1 / 6 : 1 / 18) : 0, at: clock)
-    }
-    .onChange(of: running) { wasRunning, nowRunning in
-      if wasRunning { elapsed += Date.now.timeIntervalSince(started) }
-      started = .now
-      cancelDrag(at: elapsed)
-      spin.setDrift(nowRunning ? (active ? 1 / 6 : 1 / 18) : 0, at: elapsed)
-    }
-    .onDisappear { cancelDrag(at: clock) }
   }
 
   private func cancelDrag(at time: TimeInterval) {

@@ -34,39 +34,7 @@ struct SettingsScreen: View {
       } footer: {
         Text(.Settings.locationSettingsExplanation)
       }
-      Section(.Settings.aboutRates) {
-        NavigationLink {
-          rateInformation
-        } label: {
-          Label {
-            Text(.Settings.rates).foregroundStyle(Color.primary)
-          } icon: {
-            Image(systemName: "arrow.triangle.2.circlepath").foregroundStyle(.tint)
-          }
-        }
-        NavigationLink {
-          List { sourceInformation }
-            .navigationTitle(.Settings.sources)
-            .navigationBarTitleDisplayMode(.inline)
-        } label: {
-          Label {
-            Text(.Settings.sources).foregroundStyle(Color.primary)
-          } icon: {
-            Image(systemName: "network").foregroundStyle(.tint)
-          }
-        }
-        NavigationLink {
-          List { acknowledgements }
-            .navigationTitle(.Settings.acknowledgements)
-            .navigationBarTitleDisplayMode(.inline)
-        } label: {
-          Label {
-            Text(.Settings.acknowledgements).foregroundStyle(Color.primary)
-          } icon: {
-            Image(systemName: "heart").foregroundStyle(.tint)
-          }
-        }
-      }
+      aboutRates
       if model.allowsReplay {
         Section {
           Button(.Settings.replayOnboarding, systemImage: "sparkles.rectangle.stack") {
@@ -105,9 +73,50 @@ struct SettingsScreen: View {
     }
   }
 
+  private var aboutRates: some View {
+    Section(.Settings.aboutRates) {
+      NavigationLink {
+        rateInformation
+      } label: {
+        Label {
+          Text(.Settings.rates).foregroundStyle(Color.primary)
+        } icon: {
+          Image(systemName: "arrow.triangle.2.circlepath").foregroundStyle(.tint)
+        }
+      }
+      NavigationLink {
+        List { sourceInformation }
+          .navigationTitle(.Settings.sources)
+          .navigationBarTitleDisplayMode(.inline)
+      } label: {
+        Label {
+          Text(.Settings.sources).foregroundStyle(Color.primary)
+        } icon: {
+          Image(systemName: "network").foregroundStyle(.tint)
+        }
+      }
+      NavigationLink {
+        List { acknowledgements }
+          .navigationTitle(.Settings.acknowledgements)
+          .navigationBarTitleDisplayMode(.inline)
+      } label: {
+        Label {
+          Text(.Settings.acknowledgements).foregroundStyle(Color.primary)
+        } icon: {
+          Image(systemName: "heart").foregroundStyle(.tint)
+        }
+      }
+    }
+  }
+
   private var appearanceControls: some View {
     Section(.Settings.appearance) {
-      Picker(selection: Binding(get: { model.preferences.theme }, set: model.setTheme)) {
+      Picker(
+        selection: Binding(
+          get: { model.preferences.theme },
+          set: { value in model.setTheme(value) }
+        )
+      ) {
         ForEach(SettingsTheme.allCases) { theme in
           Text(theme.title).tag(theme)
         }
@@ -120,49 +129,56 @@ struct SettingsScreen: View {
       }
       .pickerStyle(.menu)
       .accessibilityIdentifier("settings.theme")
-      adaptiveLayout {
-        Label {
-          Text(.Settings.accentColor).foregroundStyle(Color.primary)
-        } icon: {
-          Image(systemName: "paintpalette").foregroundStyle(.tint)
-        }
-        if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: AppStyle.Space.medium) }
-        Menu {
-          Picker(
-            .Settings.accentColor,
-            selection: Binding(get: { model.preferences.accent }, set: model.setAccent)
-          ) {
-            ForEach(SettingsAccent.allCases) { accent in
-              Label {
-                Text(accent.title)
-              } icon: {
-                if let symbol = UIImage(systemName: "circle.fill") {
-                  Image(
-                    uiImage: symbol.withTintColor(
-                      UIColor(accent.color), renderingMode: .alwaysOriginal)
-                  )
-                  .renderingMode(.original)
-                }
-              }
-              .tag(accent)
-            }
-          }
-          .pickerStyle(.inline)
-        } label: {
-          HStack(spacing: AppStyle.Space.small) {
-            Circle().fill(model.preferences.accent.color).frame(width: 18, height: 18)
-            Text(model.preferences.accent.title)
-            Image(systemName: "chevron.up.chevron.down")
-              .font(AppStyle.font(.caption, weight: .semibold))
-          }
-          .foregroundStyle(.tint)
-          .contentShape(Rectangle())
-        }
-        .accessibilityLabel(.Settings.accentColor)
-        .accessibilityIdentifier("settings.accent")
-        .accessibilityValue(Text(model.preferences.accent.title))
-        .onChange(of: model.preferences.accent) { _, _ in AppHaptics.play(.selection) }
+      accentControl
+    }
+  }
+
+  private var accentControl: some View {
+    adaptiveLayout {
+      Label {
+        Text(.Settings.accentColor).foregroundStyle(Color.primary)
+      } icon: {
+        Image(systemName: "paintpalette").foregroundStyle(.tint)
       }
+      if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: AppStyle.Space.medium) }
+      Menu {
+        Picker(
+          .Settings.accentColor,
+          selection: Binding(
+            get: { model.preferences.accent },
+            set: { value in model.setAccent(value) }
+          )
+        ) {
+          ForEach(SettingsAccent.allCases) { accent in
+            Label {
+              Text(accent.title)
+            } icon: {
+              if let symbol = UIImage(systemName: "circle.fill") {
+                Image(
+                  uiImage: symbol.withTintColor(
+                    UIColor(accent.color), renderingMode: .alwaysOriginal)
+                )
+                .renderingMode(.original)
+              }
+            }
+            .tag(accent)
+          }
+        }
+        .pickerStyle(.inline)
+      } label: {
+        HStack(spacing: AppStyle.Space.small) {
+          Circle().fill(model.preferences.accent.color).frame(width: 18, height: 18)
+          Text(model.preferences.accent.title)
+          Image(systemName: "chevron.up.chevron.down")
+            .font(AppStyle.font(.caption, weight: .semibold))
+        }
+        .foregroundStyle(.tint)
+        .contentShape(Rectangle())
+      }
+      .accessibilityLabel(.Settings.accentColor)
+      .accessibilityIdentifier("settings.accent")
+      .accessibilityValue(Text(model.preferences.accent.title))
+      .onChange(of: model.preferences.accent) { _, _ in AppHaptics.play(.selection) }
     }
   }
 
@@ -240,39 +256,43 @@ struct SettingsScreen: View {
       }
       Section(.Settings.quoteInformation) {
         ForEach(codes, id: \.self) { code in
-          HStack(alignment: .top, spacing: AppStyle.Space.medium) {
-            CurrencyIcon(code, size: 24).accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
-              Text(verbatim: code).font(AppStyle.font(.body, weight: .medium))
-              if let rate = snapshot.quotes[code] {
-                Text(RateMessages.providerDescription(rate.source, locale: locale))
-                  .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
-                Group {
-                  if let observed = rate.observedAt {
-                    Text(.Settings.observedAt(timestamp(observed)))
-                  } else if let retrieved = rate.retrievedAt {
-                    Text(.Settings.quoteRetrieved(timestamp(retrieved)))
-                  } else {
-                    Text(
-                      .Settings.publishedAt(
-                        CurrencyDisplay.publicationDate(rate.published, locale: locale)))
-                  }
-                }
-                .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
-              } else {
-                Text(.Settings.notDownloaded)
-                  .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
-              }
-            }
-          }
-          .padding(.vertical, AppStyle.Space.xs)
-          .accessibilityElement(children: .combine)
+          quoteRow(code)
 
         }
       }
     }
     .navigationTitle(.Settings.rates)
     .navigationBarTitleDisplayMode(.inline)
+  }
+
+  private func quoteRow(_ code: String) -> some View {
+    HStack(alignment: .top, spacing: AppStyle.Space.medium) {
+      CurrencyIcon(code, size: 24).accessibilityHidden(true)
+      VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
+        Text(verbatim: code).font(AppStyle.font(.body, weight: .medium))
+        if let rate = snapshot.quotes[code] {
+          Text(RateMessages.providerDescription(rate.source, locale: locale))
+            .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
+          Group {
+            if let observed = rate.observedAt {
+              Text(.Settings.observedAt(timestamp(observed)))
+            } else if let retrieved = rate.retrievedAt {
+              Text(.Settings.quoteRetrieved(timestamp(retrieved)))
+            } else {
+              Text(
+                .Settings.publishedAt(
+                  CurrencyDisplay.publicationDate(rate.published, locale: locale)))
+            }
+          }
+          .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
+        } else {
+          Text(.Settings.notDownloaded)
+            .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
+        }
+      }
+    }
+    .padding(.vertical, AppStyle.Space.xs)
+    .accessibilityElement(children: .combine)
   }
 
   private var sourceInformation: some View {

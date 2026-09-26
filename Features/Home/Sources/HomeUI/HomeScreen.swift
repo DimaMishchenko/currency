@@ -333,6 +333,60 @@ struct HomeScreen: View {
     .matchedTransitionSource(id: model.input.source, in: detailsMotion)
   }
 
+  private func destinationLabel(_ row: ConverterState.Destination, value: Decimal?) -> some View {
+    let code = row.code
+    return HStack(spacing: AppStyle.Space.medium) {
+      CurrencyIcon(code, size: 28)
+        .frame(width: Self.destinationIconColumnWidth, alignment: .leading)
+        .matchedGeometryEffect(id: "flag-" + row.id, in: currencyMotion)
+        .accessibilityHidden(true)
+      let rowLayout =
+        dynamicTypeSize.isAccessibilitySize
+        ? AnyLayout(VStackLayout(alignment: .leading, spacing: AppStyle.Space.small))
+        : AnyLayout(HStackLayout(spacing: AppStyle.Space.medium))
+      rowLayout {
+        VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
+          HStack(spacing: AppStyle.Space.xs) {
+            Text(code).font(AppStyle.font(.body, weight: .medium))
+              .matchedGeometryEffect(id: row.id, in: currencyMotion)
+            if row.isLocal {
+              Image(systemName: "location.fill")
+                .font(AppStyle.font(.caption2))
+                .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
+            }
+          }
+          Text(
+            row.isLocal
+              ? String(
+                localized: .Converter.localCurrencyName(
+                  CurrencyDisplay.name(code, locale: locale)))
+              : CurrencyDisplay.name(code, locale: locale)
+          )
+          .font(AppStyle.font(.caption))
+          .foregroundStyle(.secondary)
+          .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
+        }
+        if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: AppStyle.Space.medium) }
+        Text(
+          editingAmount && model.editingSelectionID == row.id
+            ? CurrencyDisplay.inputAmount(model.editingText, locale: locale)
+            : CurrencyDisplay.format(value, code: code, locale: locale)
+        )
+        .font(
+          AppStyle.font(
+            .title2,
+            weight: editingAmount && model.editingSelectionID == row.id ? .semibold : .regular)
+        )
+        .monospacedDigit()
+        .lineLimit(1).minimumScaleFactor(0.45).contentTransition(.numericText())
+        .layoutPriority(1)
+      }
+    }
+    .frame(maxWidth: .infinity, minHeight: 70, alignment: .leading).contentShape(Rectangle())
+    .matchedTransitionSource(id: row.id, in: detailsMotion)
+  }
+
   private func destinationRow(_ row: ConverterState.Destination) -> some View {
     let code = row.code
     let value = model.snapshot.convert(model.input.decimal, from: model.input.source, to: code)
@@ -343,56 +397,7 @@ struct HomeScreen: View {
         beginEditing(code, selectionID: row.id)
       }
     } label: {
-      HStack(spacing: AppStyle.Space.medium) {
-        CurrencyIcon(code, size: 28)
-          .frame(width: Self.destinationIconColumnWidth, alignment: .leading)
-          .matchedGeometryEffect(id: "flag-" + row.id, in: currencyMotion)
-          .accessibilityHidden(true)
-        let rowLayout =
-          dynamicTypeSize.isAccessibilitySize
-          ? AnyLayout(VStackLayout(alignment: .leading, spacing: AppStyle.Space.small))
-          : AnyLayout(HStackLayout(spacing: AppStyle.Space.medium))
-        rowLayout {
-          VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
-            HStack(spacing: AppStyle.Space.xs) {
-              Text(code).font(AppStyle.font(.body, weight: .medium))
-                .matchedGeometryEffect(id: row.id, in: currencyMotion)
-              if row.isLocal {
-                Image(systemName: "location.fill")
-                  .font(AppStyle.font(.caption2))
-                  .foregroundStyle(.secondary)
-                  .accessibilityHidden(true)
-              }
-            }
-            Text(
-              row.isLocal
-                ? String(
-                  localized: .Converter.localCurrencyName(
-                    CurrencyDisplay.name(code, locale: locale)))
-                : CurrencyDisplay.name(code, locale: locale)
-            )
-            .font(AppStyle.font(.caption))
-            .foregroundStyle(.secondary)
-            .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
-          }
-          if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: AppStyle.Space.medium) }
-          Text(
-            editingAmount && model.editingSelectionID == row.id
-              ? CurrencyDisplay.inputAmount(model.editingText, locale: locale)
-              : CurrencyDisplay.format(value, code: code, locale: locale)
-          )
-          .font(
-            AppStyle.font(
-              .title2,
-              weight: editingAmount && model.editingSelectionID == row.id ? .semibold : .regular)
-          )
-          .monospacedDigit()
-          .lineLimit(1).minimumScaleFactor(0.45).contentTransition(.numericText())
-          .layoutPriority(1)
-        }
-      }
-      .frame(maxWidth: .infinity, minHeight: 70, alignment: .leading).contentShape(Rectangle())
-      .matchedTransitionSource(id: row.id, in: detailsMotion)
+      destinationLabel(row, value: value)
     }
     .buttonStyle(.plain)
     .accessibilityLabel(
@@ -410,22 +415,28 @@ struct HomeScreen: View {
       editingAmount && model.editingSelectionID == row.id ? .isSelected : []
     )
     .contextMenu {
-      Button(.Converter.detailsAndHistory, systemImage: "chart.xyaxis.line") {
-        showDetails(code: code, selectionID: row.id)
-      }
-      Button(.Converter.copyAmount, systemImage: "doc.on.doc") {
-        UIPasteboard.general.string = CurrencyDisplay.format(value, code: code, locale: locale)
-        AppHaptics.play(.success)
-      }
-      .disabled(value == nil)
-      Text(
-        CurrencyDisplay.details(
-          model.snapshot, from: model.input.source, to: code, locale: locale))
-      Button(.Converter.remove, systemImage: "minus.circle", role: .destructive) {
-        withAnimation(motion) {
-          if model.updateWithFeedback({ $0.removeDestination(row.id) }) {
-            AppHaptics.play(.delete)
-          }
+      destinationActions(row, value: value)
+    }
+  }
+
+  @ViewBuilder
+  private func destinationActions(_ row: ConverterState.Destination, value: Decimal?) -> some View {
+    let code = row.code
+    Button(.Converter.detailsAndHistory, systemImage: "chart.xyaxis.line") {
+      showDetails(code: code, selectionID: row.id)
+    }
+    Button(.Converter.copyAmount, systemImage: "doc.on.doc") {
+      UIPasteboard.general.string = CurrencyDisplay.format(value, code: code, locale: locale)
+      AppHaptics.play(.success)
+    }
+    .disabled(value == nil)
+    Text(
+      CurrencyDisplay.details(
+        model.snapshot, from: model.input.source, to: code, locale: locale))
+    Button(.Converter.remove, systemImage: "minus.circle", role: .destructive) {
+      withAnimation(motion) {
+        if model.updateWithFeedback({ $0.removeDestination(row.id) }) {
+          AppHaptics.play(.delete)
         }
       }
     }
