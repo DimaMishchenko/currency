@@ -1,4 +1,6 @@
+import AppIntents
 import AppearancePreferences
+import CoreSpotlight
 import CurrencyApplication
 import CurrencyDetails
 import CurrencyDetailsUI
@@ -39,6 +41,14 @@ struct CurrencyRoot: View {
           HomeEntry(
             flowID: scene.homeID, active: !scene.showsOnboarding && scenePhase == .active,
             detailsNamespace: detailsMotion, widgetsNamespace: widgetsMotion,
+            currencyDecoration: { id, content in
+              let visible =
+                !scene.showsOnboarding && scene.detail == nil && scene.sheet == nil
+                && scene.location == nil && scene.path.isEmpty
+              return visible
+                ? AnyView(content.appEntityIdentifier(EntityIdentifier(for: CurrencyEntity(id))))
+                : content
+            },
             onOutput: scene.receive
           )
           .navigationDestination(for: CurrencyScene.Route.self) { route in
@@ -70,7 +80,7 @@ struct CurrencyRoot: View {
       value: scene.showsOnboarding
     )
     .sheet(item: $scene.detail) { detail in
-      if reduceMotion {
+      if reduceMotion || !detail.usesZoom {
         detailsContent(detail)
       } else {
         detailsContent(detail)
@@ -108,8 +118,20 @@ struct CurrencyRoot: View {
     .tint(appearance.accent)
     .preferredColorScheme(appearance.theme.colorScheme)
     .onOpenURL(perform: scene.open)
+    .onContinueUserActivity(CSSearchableItemActionType) { activity in
+      if let url = activity.webpageURL { scene.open(url); return }
+      if let identifier = activity.userInfo?[CSSearchableItemActivityIdentifier] as? String,
+        let entity = EntityIdentifier(activityIdentifier: identifier),
+        entity.entityType == CurrencyEntity.self
+      {
+        if let url = CurrencyApplication.CurrencyRoute.currency(entity.identifier).url {
+          scene.open(url)
+        }
+      }
+    }
     .onChange(of: scenePhase, initial: true) { _, phase in
       AppHaptics.configure(sceneID: scene.id, active: phase == .active, reducedMotion: reduceMotion)
+      if phase == .active { composition.searchIndex.reconcile() }
       composition.foreground.setActive(
         phase == .active && !scene.showsOnboarding, sceneID: scene.id)
     }

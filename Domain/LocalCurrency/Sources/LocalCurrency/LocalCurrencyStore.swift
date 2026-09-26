@@ -154,6 +154,12 @@ public struct LocalCurrencyStore: Sendable {
     (try? readRecord().status) ?? .notDetermined
   }
 
+  /// Reads observation and authorization from the same coordinated record.
+  public func snapshot() -> (WidgetLocation?, WidgetLocationStatus) {
+    guard let record = try? readRecord() else { return (nil, .notDetermined) }
+    return (record.location, record.status ?? .notDetermined)
+  }
+
   /// Changes status while preserving the observation and any active lookup generation.
   public func saveWidgetLocationStatus(_ status: WidgetLocationStatus) throws {
     try mutate { $0.status = status }

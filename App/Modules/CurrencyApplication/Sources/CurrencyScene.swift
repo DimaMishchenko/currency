@@ -12,6 +12,8 @@ public final class CurrencyScene {
     public let id: UUID
     /// Feature-owned currency and reference values supplied by Home.
     public let request: HomeDetailsRequest
+    /// External navigation has no mounted zoom source.
+    public var usesZoom: Bool = true
     /// Compares flow identity rather than changing quote data.
     public static func == (lhs: Self, rhs: Self) -> Bool { lhs.id == rhs.id }
     /// Hashes the stable flow identity used by navigation.
@@ -57,10 +59,16 @@ public final class CurrencyScene {
   public var sheet: Sheet?
   /// The active location flow and its correlation identity.
   public var location: Location?
+  private var pendingRoute: CurrencyRoute?
+  private let openCurrency: (String) -> HomeDetailsRequest?
   private let replay: () throws -> Void
   /// Starts a scene from already-loaded completion state and an explicit replay commit.
-  public init(completed: Bool, replay: @escaping () throws -> Void) {
+  public init(
+    completed: Bool, replay: @escaping () throws -> Void,
+    openCurrency: @escaping (String) -> HomeDetailsRequest? = { _ in nil }
+  ) {
     showsOnboarding = !completed; preloadsHome = completed; self.replay = replay
+    self.openCurrency = openCurrency
   }
   /// Interprets synchronous requests from this scene's Home feature.
   public func receive(_ output: HomeOutput) {
@@ -76,13 +84,15 @@ public final class CurrencyScene {
     guard flowID == onboardingID else { return }
     switch output {
     case .finalePresented: preloadsHome = true
-    case .completed: preloadsHome = true; showsOnboarding = false
+    case .completed:
+      preloadsHome = true; showsOnboarding = false
+      if let route = pendingRoute { pendingRoute = nil; present(route) }
     }
   }
   /// Commits replay before replacing any visible route or feature identity.
   public func restartOnboarding() throws {
     try replay()
-    path = []; detail = nil; sheet = nil; location = nil
+    path = []; detail = nil; sheet = nil; location = nil; pendingRoute = nil
     onboardingID = UUID(); homeID = UUID(); preloadsHome = false; showsOnboarding = true
   }
   /// Starts one location flow without replacing an already active request.
@@ -103,6 +113,17 @@ public final class CurrencyScene {
   /// Interprets supported application URLs without changing unrelated routes.
   public func open(_ url: URL) {
     guard url.scheme == "currency" else { return }
-    if url.host == "local-currency" { requestLocation(addsToApp: false) }
+    if url.host == "local-currency" { requestLocation(addsToApp: false); return }
+    guard let route = CurrencyRoute(url: url) else { return }
+    if showsOnboarding { pendingRoute = route } else { present(route) }
+  }
+
+  private func present(_ route: CurrencyRoute) {
+    switch route {
+    case .currency(let id):
+      guard let request = openCurrency(id) else { return }
+      path = []; detail = nil; sheet = nil; location = nil
+      detail = Details(id: UUID(), request: request, usesZoom: false)
+    }
   }
 }

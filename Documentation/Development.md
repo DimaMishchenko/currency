@@ -9,10 +9,13 @@ Run `tuist generate --no-open` after changing manifests or dependencies, then op
 - `Currency` builds the app and widget extension.
 - `CurrencyTests` builds the shipping app and extension and runs the combined test suite; `swift test` runs the standalone rate-core tests.
 - `CurrencyHarnesses` builds the isolated development apps. Module READMEs list their harness launch arguments.
+- `NativeIntentTests` runs iOS 27 AppIntentsTesting against the installed Currency executable. It launches the app in setup; unlike unit adapter tests, this exercises extracted metadata and cross-process intent execution.
 
 For command-line Xcode builds, use `set -o pipefail` and pipe combined output through `xcbeautify`. Use a separate simulator and derived-data directory for parallel work.
 
 Before delivery, run the relevant tests, check affected UI, and verify formatting with `swift format lint --recursive --strict App Domain Features DesignSystem Infrastructure` and `git diff --check`. Outstanding device and release checks live in [GitHub Issues](https://github.com/DimaMishchenko/currency/issues?q=is%3Aissue+is%3Aopen+label%3Averification).
+
+Run native intent tests with `xcodebuild test -workspace Currency.xcworkspace -scheme NativeIntentTests -destination 'platform=iOS Simulator,id=<owned-UDID>' -derivedDataPath <isolated-directory>`, using the output formatting above. CI runs this scheme separately from the unit suite. AppIntentsTesting verifies structured outputs, decimal coercion, chaining, entity disambiguation, and destination order. Physical Siri speech, locked-device behavior, Action Button assignment, system discovery, and onscreen-context resolution need separate native acceptance; metadata extraction and builds do not establish those behaviors.
 
 ## Conventions
 

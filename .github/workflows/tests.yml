@@ -72,6 +72,19 @@ jobs:
             -parallel-testing-enabled NO \
             CODE_SIGN_IDENTITY=- \
             2>&1 | xcbeautify
+      - name: Test extracted App Intents
+        if: needs.changes.outputs.xcode == 'true'
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -workspace Currency.xcworkspace \
+            -scheme NativeIntentTests \
+            -configuration Debug \
+            -destination 'platform=iOS Simulator,name=iPhone 18 Pro,OS=27.0' \
+            -derivedDataPath "$RUNNER_TEMP/CurrencyTestsDerivedData" \
+            -parallel-testing-enabled NO \
+            CODE_SIGN_IDENTITY=- \
+            2>&1 | xcbeautify
       - name: Build feature harnesses
         if: needs.changes.outputs.xcode == 'true'
         run: |

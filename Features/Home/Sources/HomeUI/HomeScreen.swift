@@ -14,6 +14,7 @@ struct HomeScreen: View {
   let model: HomeModel
   let detailsMotion: Namespace.ID
   let widgetsMotion: Namespace.ID
+  var currencyDecoration: (String, AnyView) -> AnyView = { _, content in content }
   let onOutput: (HomeOutput) -> Void
   private var configureLocalCurrency: () -> Void {
     {
@@ -58,7 +59,8 @@ struct HomeScreen: View {
         if verticalSizeClass == .compact {
           HStack(spacing: AppStyle.Space.large) {
             VStack(spacing: AppStyle.Space.small) {
-              source.padding(.horizontal, AppStyle.Space.large)
+              decoratedCurrency(model.input.source, content: AnyView(source))
+                .padding(.horizontal, AppStyle.Space.large)
 
               Spacer(minLength: 0)
               inputDock(bottomSafeArea: geometry.safeAreaInsets.bottom)
@@ -70,7 +72,7 @@ struct HomeScreen: View {
           .ignoresSafeArea(.container, edges: editingAmount ? .bottom : [])
         } else {
           VStack(spacing: 0) {
-            source
+            decoratedCurrency(model.input.source, content: AnyView(source))
               .padding(.horizontal, AppStyle.Space.large)
               .padding(.vertical, AppStyle.Space.large)
               .frame(maxWidth: 580)
@@ -145,6 +147,10 @@ struct HomeScreen: View {
     }
   }
 
+  private func decoratedCurrency(_ id: String, content: AnyView) -> AnyView {
+    picker == nil && !showManage ? currencyDecoration(id, content) : content
+  }
+
   private func currencyList(bottomSafeArea: CGFloat) -> some View {
     GeometryReader { viewport in
       ScrollView {
@@ -152,7 +158,7 @@ struct HomeScreen: View {
         VStack(spacing: 0) {
           ForEach(model.input.destinationRows) { row in
             VStack(spacing: 0) {
-              destinationRow(row)
+              decoratedCurrency(row.id, content: AnyView(destinationRow(row)))
               Divider().padding(.leading, Self.destinationTextInset)
             }
             .id(row.id)

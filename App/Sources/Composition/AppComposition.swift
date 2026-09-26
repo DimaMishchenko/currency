@@ -1,3 +1,4 @@
+import AppIntents
 import AppearancePreferences
 import Conversion
 import CoreLocation
@@ -25,6 +26,8 @@ final class AppComposition {
   let history: HistoryService
   let service = RateService()
   let appearance: AppearancePreferences
+  let systemActions: SystemActionComposition
+  lazy var searchIndex = CurrencySearchIndex.live(composition: systemActions)
   private var observers: [UUID: AsyncStream<Void>.Continuation] = [:]
   private(set) var warning: RefreshWarning?
   private var rateIssue: HomeIssue?
@@ -43,15 +46,34 @@ final class AppComposition {
     local = LocalCurrencyStore(directory: directory)
     progress = OnboardingProgressStore(directory: directory)
     history = HistoryService(directory: directory)
+    systemActions = SystemActionComposition(directory: directory, service: service)
+    let actions = systemActions
+    AppDependencyManager.shared.add(dependency: actions)
+    let index = searchIndex
+    AppDependencyManager.shared.add(dependency: index)
   }
   func makeScene() -> CurrencyScene {
     CurrencyScene(
       completed: progress.load().map { $0.version == 1 && $0.completed } == true,
       replay: { [self] in
         try progress.restart(input: conversion.input())
+      },
+      openCurrency: { [self] id in
+        let input = conversion.input()
+        guard CurrencySelection.appConfiguration(input).contains(id) else { return nil }
+        let (location, status) = systemActions.readLocal()
+        let resolved = ResolvedCurrencySelection(codes: [id], location: location, status: status)
+        guard let code = id == CurrencySelection.localID ? resolved.localCode : id else {
+          return nil
+        }
+        return HomeDetailsRequest(
+          selectionID: id, code: code, reference: input.source, snapshot: rates.loadRates())
       })
   }
-  func changed() { for observer in observers.values { observer.yield(()) } }
+  func changed() {
+    for observer in observers.values { observer.yield(()) }
+    searchIndex.reconcile()
+  }
   func changes() -> AsyncStream<Void> {
     let id = UUID()
     return AsyncStream { continuation in
