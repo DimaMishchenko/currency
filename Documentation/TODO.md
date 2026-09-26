@@ -9,6 +9,15 @@ Keep only unfinished work. Release checks below are unverified or need revalidat
 - [ ] Add author/support information and connect the feedback placeholder to a real support destination.
 - [ ] Add privacy policy and terms links in Settings.
 - [ ] Add a historical exchange-rate chart widget.
+- [ ] Adjust the light-mode background.
+- [ ] Add the chart widget to onboarding.
+- [ ] Add a tip for the chart button.
+- [ ] Add Siri Intents support.
+- [ ] Update the UI for iPhone Duo and iPad layouts.
+- [ ] Skip TestFlight releases when there are no code changes.
+- [ ] Move TODO items to GitHub Issues.
+- [ ] Create reusable templates for pull requests and issues.
+- [ ] Review slow Swift type-checking expressions and simplify them.
 
 ## Release checks
 
