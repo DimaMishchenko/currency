@@ -199,7 +199,7 @@ struct HomeEditingTests {
     for _ in 0..<100 where !model.refreshing { await Task.yield() }
     #expect(model.manuallyRefreshing)
     task.cancel()
-    await task.value
+    #expect(await task.value == .cancelled)
     #expect(!model.refreshing)
     #expect(!model.manuallyRefreshing)
     #expect(model.warning == nil)

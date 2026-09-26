@@ -71,7 +71,8 @@ struct SettingsFlowLifetimeTests {
   @Test func releasingEntryTokenCancelsRefreshAndRejectsItsLateResult() async throws {
     let fixture = SettingsLifetimeFixture()
     var lifetime: SettingsFlowLifetime? = SettingsFlowLifetime(dependencies: fixture.dependencies)
-    weak var released = lifetime
+    weak var released: SettingsFlowLifetime?
+    released = lifetime
     let model = try #require(lifetime?.model)
     lifetime?.start()
     await waitForSettings { fixture.subscriptions == 1 }

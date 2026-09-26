@@ -227,37 +227,7 @@ private struct WidgetCollection: View {
               AppHaptics.play(.action)
               selection = kind
             } label: {
-              VStack(alignment: .leading, spacing: 16) {
-                ZStack {
-                  RoundedRectangle(cornerRadius: 32).fill(.quaternary.opacity(0.5))
-                  if kind == .icon {
-                    VStack(spacing: 8) {
-                      Text(Date.now.formatted(.dateTime.weekday(.wide).month(.wide).day()))
-                        .font(AppStyle.font(.caption))
-                      Text("9:41").font(.system(size: 56, weight: .semibold, design: .rounded))
-                      FittedWidgetPreview(kind: kind, family: .accessoryCircular)
-                        .frame(width: 44, height: 44)
-                        .frame(maxWidth: .infinity)
-                    }
-                    .padding(32)
-                  } else {
-                    FittedWidgetPreview(kind: kind, family: kind.families[0])
-                      .frame(maxWidth: kind.families[0] == .systemSmall ? 172 : 320)
-                      .padding(24)
-                      .shadow(color: .black.opacity(0.08), radius: 16, y: 8)
-                  }
-                }
-                .frame(minHeight: 212).contentShape(.rect)
-                HStack(alignment: .center) {
-                  VStack(alignment: .leading, spacing: 4) {
-                    Text(kind.title).font(AppStyle.font(.title3, weight: .semibold))
-                    Text(kind.detail).font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
-                  }
-                  Spacer(minLength: 8)
-                  Image(systemName: "chevron.right").font(.body)
-                    .foregroundStyle(.secondary)
-                }
-              }
+              cardLabel(kind)
             }
             .buttonStyle(.plain).accessibilityElement(children: .ignore)
             .accessibilityLabel(kind.title).accessibilityHint(kind.detail)
@@ -276,6 +246,40 @@ private struct WidgetCollection: View {
         }
       }
       .sheet(item: $selection) { WidgetPlayground(kind: $0) }
+    }
+  }
+
+  private func cardLabel(_ kind: WidgetShowcaseKind) -> some View {
+    VStack(alignment: .leading, spacing: 16) {
+      ZStack {
+        RoundedRectangle(cornerRadius: 32).fill(.quaternary.opacity(0.5))
+        if kind == .icon {
+          VStack(spacing: 8) {
+            Text(Date.now.formatted(.dateTime.weekday(.wide).month(.wide).day()))
+              .font(AppStyle.font(.caption))
+            Text("9:41").font(.system(size: 56, weight: .semibold, design: .rounded))
+            FittedWidgetPreview(kind: kind, family: .accessoryCircular)
+              .frame(width: 44, height: 44)
+              .frame(maxWidth: .infinity)
+          }
+          .padding(32)
+        } else {
+          FittedWidgetPreview(kind: kind, family: kind.families[0])
+            .frame(maxWidth: kind.families[0] == .systemSmall ? 172 : 320)
+            .padding(24)
+            .shadow(color: .black.opacity(0.08), radius: 16, y: 8)
+        }
+      }
+      .frame(minHeight: 212).contentShape(.rect)
+      HStack(alignment: .center) {
+        VStack(alignment: .leading, spacing: 4) {
+          Text(kind.title).font(AppStyle.font(.title3, weight: .semibold))
+          Text(kind.detail).font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
+        }
+        Spacer(minLength: 8)
+        Image(systemName: "chevron.right").font(.body)
+          .foregroundStyle(.secondary)
+      }
     }
   }
 }
