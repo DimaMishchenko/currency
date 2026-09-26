@@ -14,7 +14,6 @@ Keep only unfinished work. Release checks below are unverified or need revalidat
 - [ ] Add a tip for the chart button.
 - [ ] Add Siri Intents support.
 - [ ] Update the UI for iPhone Duo and iPad layouts.
-- [ ] Skip TestFlight releases when there are no code changes.
 - [ ] Move TODO items to GitHub Issues.
 - [ ] Create reusable templates for pull requests and issues.
 - [ ] Review slow Swift type-checking expressions and simplify them.
