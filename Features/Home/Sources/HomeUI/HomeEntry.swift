@@ -89,8 +89,8 @@ extension HomeModel {
     }
   }
   @discardableResult
-  func updateWithFeedback(_ mutation: (inout Conversion.ConverterState) throws -> Void) -> Bool {
-    let saved = updateInput(mutation)
+  func withFeedback(_ action: () -> Bool) -> Bool {
+    let saved = action()
     if !saved { AppHaptics.play(.error) }
     return saved
   }

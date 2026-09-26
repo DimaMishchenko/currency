@@ -1,130 +1,161 @@
+import CoordinatedFiles
 import Foundation
 
-private struct LocalCurrencyRefreshRecord: Codable {
+/// The existing refresh filename remains the cross-process lock and now holds the whole record.
+private struct LocalCurrencyRecord: Codable {
+  var version: Int?
   var attemptedAt: Date?
   var generation: UUID?
+  var location: WidgetLocation?
+  var status: WidgetLocationStatus?
 }
 
-/// Coordinated persistence for localcurrencystore records shared by app and widget processes.
+/// Coordinates permission, coarse observation, and lookup generations as one atomic record.
 public struct LocalCurrencyStore: Sendable {
   /// Explicit directory supplied by the executable or an isolated test.
   public let directory: URL
+  private let writeRecord: @Sendable (Data, URL) throws -> Void
+  private let removeLegacy: @Sendable (URL) throws -> Void
   /// Creates a store without discovering a global container.
-  public init(directory: URL) { self.directory = directory }
-  /// Claims a shared refresh opportunity so multiple app/widget processes do not duplicate work.
-  public func claimLocalCurrencyRefresh(now: Date = .now) throws -> Bool {
-    try coordinate("widget-location-refresh.json") {
-      if widgetLocationStatus() == .removed { return false }
-      if widgetLocationStatus() == .available, widgetLocation()?.isFresh(now: now) == true {
-        return false
+  public init(directory: URL) {
+    self.init(directory: directory, writeRecord: { try $0.write(to: $1, options: .atomic) })
+  }
+  /// Commit seam used to exercise a failed atomic write without changing filesystem permissions.
+  init(
+    directory: URL, writeRecord: @escaping @Sendable (Data, URL) throws -> Void,
+    removeLegacy: @escaping @Sendable (URL) throws -> Void = {
+      try FileManager.default.removeItem(at: $0)
+    }
+  ) {
+    self.directory = directory
+    self.writeRecord = writeRecord
+    self.removeLegacy = removeLegacy
+  }
+  private var recordURL: URL { directory.appendingPathComponent("widget-location-refresh.json") }
+
+  private func readRecord() throws -> LocalCurrencyRecord {
+    let data = try FileCoordination.dataIfPresent(at: recordURL)
+    var record =
+      try data.map { try JSONDecoder().decode(LocalCurrencyRecord.self, from: $0) }
+      ?? LocalCurrencyRecord()
+    if let version = record.version {
+      guard version == 1, record.status != nil else { throw CocoaError(.coderReadCorrupt) }
+      return record
+    }
+    if let data {
+      let fields = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+      guard fields?["location"] == nil, fields?["status"] == nil else {
+        throw CocoaError(.coderReadCorrupt)
       }
-      var record = localRefreshRecord()
+    }
+    // Only the original refresh format (no version) imports legacy observation/status files.
+    if let data = try FileCoordination.dataIfPresent(
+      at: directory.appendingPathComponent("widget-location.json"))
+    {
+      record.location = try JSONDecoder().decode(WidgetLocation.self, from: data)
+    }
+    if let data = try FileCoordination.dataIfPresent(
+      at: directory.appendingPathComponent("widget-location-status.json"))
+    {
+      record.status = try JSONDecoder().decode(WidgetLocationStatus.self, from: data)
+    } else {
+      record.status = record.location == nil ? .notDetermined : .available
+    }
+    return record
+  }
+
+  private func save(_ record: LocalCurrencyRecord) throws {
+    try writeRecord(JSONEncoder().encode(record), recordURL)
+  }
+
+  private func mutate<Value>(_ action: (inout LocalCurrencyRecord) throws -> Value) throws -> Value
+  {
+    try FileCoordination.write(at: recordURL) {
+      var record = try readRecord()
+      if record.version == nil {
+        // Preserve the complete legacy state before erasing its separate files. If cleanup fails,
+        // the requested transition has not happened and a later mutation retries the cleanup.
+        record.version = 1
+        try save(record)
+      }
+      for filename in ["widget-location.json", "widget-location-status.json"] {
+        let url = directory.appendingPathComponent(filename)
+        do { try removeLegacy(url) } catch let error as CocoaError {
+          if error.code != .fileNoSuchFile { throw error }
+        }
+      }
+      let value = try action(&record)
+      try save(record)
+      return value
+    }
+  }
+
+  /// Claims a shared refresh opportunity, keeping hourly failure retries and daily success reuse.
+  public func claimLocalCurrencyRefresh(now: Date = .now) throws -> Bool {
+    try mutate { record in
+      if record.status == .removed { return false }
+      if record.status == .available, record.location?.isFresh(now: now) == true { return false }
       if let attempted = record.attemptedAt,
         now >= attempted, now.timeIntervalSince(attempted) < 3600
       {
         return false
       }
       record.attemptedAt = now
-      try saveLocalRefreshRecord(record)
       return true
     }
-  }
-  private func localRefreshRecord() -> LocalCurrencyRefreshRecord {
-    guard
-      let data = try? Data(
-        contentsOf: directory.appendingPathComponent("widget-location-refresh.json")),
-      let record = try? JSONDecoder().decode(LocalCurrencyRefreshRecord.self, from: data)
-    else { return LocalCurrencyRefreshRecord() }
-    return record
-  }
-
-  private func saveLocalRefreshRecord(_ record: LocalCurrencyRefreshRecord) throws {
-    try JSONEncoder().encode(record)
-      .write(
-        to: directory.appendingPathComponent("widget-location-refresh.json"), options: .atomic)
   }
 
   /// Begins a lookup generation that supersedes older callbacks across processes.
   public func beginLocalCurrencyLookup() throws -> UUID {
-    try coordinate("widget-location-refresh.json") {
-      var record = localRefreshRecord()
+    try mutate { record in
       let generation = UUID()
       record.generation = generation
-      try saveLocalRefreshRecord(record)
       return generation
     }
   }
 
-  /// Only the newest lookup may change the observation or mark it failed.
+  /// Commits observation and outcome together; only the newest pending lookup may complete.
   public func completeLocalCurrencyLookup(
     _ generation: UUID, location: WidgetLocation?
   ) throws -> Bool {
-    try coordinate("widget-location-refresh.json") {
-      guard localRefreshRecord().generation == generation else { return false }
-      if let location { try saveWidgetLocation(location) }
-      try saveWidgetLocationStatus(location == nil ? .failed : .available)
+    try mutate { record in
+      guard record.generation == generation else { return false }
+      if let location { record.location = location }
+      record.status = location == nil ? .failed : .available
+      record.generation = nil
       return true
     }
   }
 
-  /// Invalidates pending generations before clearing the saved observation.
+  /// Erases the coarse observation and invalidates callbacks in the same atomic commit.
   public func clearLocalCurrency(outcome: WidgetLocationStatus) throws {
-    try coordinate("widget-location-refresh.json") {
-      var record = localRefreshRecord()
+    try mutate { record in
       record.generation = nil
-      try saveLocalRefreshRecord(record)
-      try saveWidgetLocationStatus(outcome)
-      try saveWidgetLocation(nil)
+      record.attemptedAt = nil
+      record.status = outcome
+      record.location = nil
     }
   }
 
-  /// Loads the coarse location observation; freshness is evaluated by the consumer.
-  public func widgetLocation() -> WidgetLocation? {
-    guard let data = try? Data(contentsOf: directory.appendingPathComponent("widget-location.json"))
-    else { return nil }
-    return try? JSONDecoder().decode(WidgetLocation.self, from: data)
-  }
+  /// Loads only the coarse observation; corrupt records are never replaced during rendering.
+  public func widgetLocation() -> WidgetLocation? { try? readRecord().location }
 
-  /// Atomically saves or removes the opt-in coarse location cache.
+  /// Saves a coarse observation without superseding an active lookup generation.
   public func saveWidgetLocation(_ location: WidgetLocation?) throws {
-    try coordinate("widget-location.json") {
-      let url = directory.appendingPathComponent("widget-location.json")
-      if let location {
-        try JSONEncoder().encode(location).write(to: url, options: .atomic)
-      } else if FileManager.default.fileExists(atPath: url.path) {
-        try FileManager.default.removeItem(at: url)
-      }
+    try mutate { record in
+      record.location = location
+      if record.status == .notDetermined, location != nil { record.status = .available }
+      if record.status == .available, location == nil { record.status = .notDetermined }
     }
-  }
-  /// Loads saved permission status, inferring legacy observation availability.
-  public func widgetLocationStatus() -> WidgetLocationStatus {
-    guard
-      let data = try? Data(
-        contentsOf: directory.appendingPathComponent("widget-location-status.json")),
-      let status = try? JSONDecoder().decode(WidgetLocationStatus.self, from: data)
-    else { return widgetLocation() == nil ? .notDetermined : .available }
-    return status
   }
 
-  /// Atomically persists the latest permission or lookup outcome.
-  public func saveWidgetLocationStatus(_ status: WidgetLocationStatus) throws {
-    try coordinate("widget-location-status.json") {
-      try JSONEncoder().encode(status)
-        .write(
-          to: directory.appendingPathComponent("widget-location-status.json"), options: .atomic)
-    }
+  /// Loads saved authorization or lookup outcome, inferring availability only for legacy records.
+  public func widgetLocationStatus() -> WidgetLocationStatus {
+    (try? readRecord().status) ?? .notDetermined
   }
-  func coordinate<Value>(_ filename: String, action: () throws -> Value) throws -> Value {
-    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-    var coordinationError: NSError?
-    var result: Result<Value, Error>?
-    NSFileCoordinator()
-      .coordinate(
-        writingItemAt: directory.appendingPathComponent(filename), options: .forMerging,
-        error: &coordinationError
-      ) { _ in result = Result { try action() } }
-    if let coordinationError { throw coordinationError }
-    guard let result else { throw CocoaError(.fileWriteUnknown) }
-    return try result.get()
+
+  /// Changes status while preserving the observation and any active lookup generation.
+  public func saveWidgetLocationStatus(_ status: WidgetLocationStatus) throws {
+    try mutate { $0.status = status }
   }
 }

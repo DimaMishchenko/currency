@@ -38,7 +38,7 @@
         let manager = LocationManager()
         let controller = LocalCurrencyController(
           manager: manager, store: store, servicesEnabled: { true }, reloadWidgets: {})
-        #expect(controller.phase == .introduction)
+        #expect(controller.phase == .idle)
         #expect(controller.region == nil)
         #expect(controller.resolved == nil)
         #expect(manager.prompts == 0)
@@ -80,7 +80,7 @@
         try store.saveWidgetLocationStatus(.failed)
         let failed = LocalCurrencyController(
           manager: manager, store: store, servicesEnabled: { true }, reloadWidgets: {})
-        #expect(failed.phase == .introduction)
+        #expect(failed.phase == .idle)
         #expect(failed.region == nil)
         #expect(failed.resolved == nil)
         try store.saveWidgetLocationStatus(.available)
@@ -125,7 +125,7 @@
         enabled = true
         controller.reconcileAuthorization()
         #expect(!controller.servicesDisabled)
-        #expect(controller.phase == .introduction)
+        #expect(controller.phase == .idle)
         #expect(manager.lookups == 0)
         controller.update()
         #expect(manager.lookups == 1)
@@ -200,7 +200,7 @@
         controller.reconcileAuthorization()
         try await Task.sleep(for: .milliseconds(50))
         #expect(store.widgetLocation() == nil)
-        #expect(controller.phase == .introduction)
+        #expect(controller.phase == .idle)
       }
     }
 

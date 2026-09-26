@@ -1,4 +1,5 @@
 import CoreHaptics
+import Foundation
 import UIKit
 
 /// Shared tactile vocabulary. Only explicit actions and visible outcomes should call this.
@@ -16,10 +17,18 @@ public enum AppHaptics {
   }
 
   private static let driver = Driver()
+  private static var scenes = HapticSceneActivity()
 
   /// Called by the app scene, never by a widget extension.
-  public static func configure(active: Bool, reducedMotion: Bool) {
-    driver.configure(active: active, reducedMotion: reducedMotion)
+  public static func configure(sceneID: UUID, active: Bool, reducedMotion: Bool) {
+    scenes.configure(sceneID: sceneID, active: active, reducedMotion: reducedMotion)
+    driver.configure(active: scenes.active, reducedMotion: scenes.reducedMotion)
+  }
+
+  /// Removes a scene at teardown without disabling feedback in another active scene.
+  public static func removeScene(_ sceneID: UUID) {
+    scenes.remove(sceneID: sceneID)
+    driver.configure(active: scenes.active, reducedMotion: scenes.reducedMotion)
   }
 
   /// Plays a cue when the app is active, respecting the current motion preference.

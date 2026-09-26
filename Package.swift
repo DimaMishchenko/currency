@@ -11,9 +11,12 @@ let package = Package(
     .library(name: "ExchangeRates", targets: ["ExchangeRates"]),
     .library(name: "ExchangeRatesDynamic", type: .dynamic, targets: ["ExchangeRates"])
   ],
+  dependencies: [.package(path: "Infrastructure/CoordinatedFiles")],
   targets: [
     .target(
-      name: "ExchangeRates", path: "Domain/ExchangeRates/Sources/ExchangeRates",
+      name: "ExchangeRates",
+      dependencies: [.product(name: "CoordinatedFiles", package: "CoordinatedFiles")],
+      path: "Domain/ExchangeRates/Sources/ExchangeRates",
       exclude: ["README.md"]),
     .testTarget(
       name: "ExchangeRatesTests", dependencies: ["ExchangeRates"],

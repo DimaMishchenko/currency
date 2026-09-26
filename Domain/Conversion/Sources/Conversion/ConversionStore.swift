@@ -1,3 +1,4 @@
+import CoordinatedFiles
 import Foundation
 import LocalCurrency
 
@@ -10,13 +11,18 @@ public struct ConversionStore: Sendable {
   private var local: LocalCurrencyStore { LocalCurrencyStore(directory: directory) }
   /// Loads the shared converter input.
   public func input() -> ConverterState {
-    guard let data = try? Data(contentsOf: directory.appendingPathComponent("input.json")),
-      var input = try? JSONDecoder().decode(ConverterState.self, from: data)
-    else {
-      var input = ConverterState()
-      input.resolveLocalCurrency(local.widgetLocation(), status: local.widgetLocationStatus())
-      return input
-    }
+    (try? readInput()) ?? resolved(ConverterState())
+  }
+
+  private func readInput() throws -> ConverterState {
+    let data = try FileCoordination.dataIfPresent(
+      at: directory.appendingPathComponent("input.json"))
+    let input = try data.map { try JSONDecoder().decode(ConverterState.self, from: $0) }
+    return resolved(input ?? ConverterState())
+  }
+
+  private func resolved(_ value: ConverterState) -> ConverterState {
+    var input = value
     input.resolveLocalCurrency(local.widgetLocation(), status: local.widgetLocationStatus())
     return input
   }
@@ -27,7 +33,7 @@ public struct ConversionStore: Sendable {
     _ mutation: (inout ConverterState) throws -> Void
   ) throws -> ConverterState {
     try coordinate("input.json") {
-      var state = input()
+      var state = try readInput()
       try mutation(&state)
       try JSONEncoder().encode(state)
         .write(to: directory.appendingPathComponent("input.json"), options: .atomic)
@@ -41,16 +47,6 @@ public struct ConversionStore: Sendable {
   }
 
   func coordinate<Value>(_ filename: String, action: () throws -> Value) throws -> Value {
-    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-    var coordinationError: NSError?
-    var result: Result<Value, Error>?
-    NSFileCoordinator()
-      .coordinate(
-        writingItemAt: directory.appendingPathComponent(filename), options: .forMerging,
-        error: &coordinationError
-      ) { _ in result = Result { try action() } }
-    if let coordinationError { throw coordinationError }
-    guard let result else { throw CocoaError(.fileWriteUnknown) }
-    return try result.get()
+    try FileCoordination.write(at: directory.appendingPathComponent(filename), action)
   }
 }

@@ -21,19 +21,10 @@ public struct LocationMapRegion: Sendable, Equatable {
 
 /// An owned projection of permission, lookup progress, and coarse location.
 public struct LocationSnapshot: Sendable {
-  /// Mutually exclusive stages of a location lookup.
-  public enum Phase: Sendable, Equatable {
-    case introduction, requestingPermission, locating, ready, unavailable
-  }
-  /// Resource-independent lookup outcome or recovery reason.
-  public enum Message: Sendable, Equatable {
-    case initial, finding, saved, removed, permissionDenied, permissionRestricted
-    case servicesDisabled, unavailable, unsupported, removeFailed, updateFailed
-  }
-  /// Current location lookup stage.
-  public var phase: Phase
-  /// Current lookup outcome or recovery reason.
-  public var message: Message
+  /// Current progress from the reusable domain lookup operation.
+  public var phase: LocalCurrencyLookupPhase
+  /// Domain outcome or recovery reason, localized by this feature's UI.
+  public var outcome: LocalCurrencyLookupOutcome
   /// Coarse country and currency observation, when available.
   public var resolved: WidgetLocation?
   /// Optional coarse map region; never raw device coordinates.
@@ -50,12 +41,13 @@ public struct LocationSnapshot: Sendable {
   public var servicesDisabled: Bool
   /// Creates the owned value or model with explicit host inputs and operations.
   public init(
-    phase: Phase = .introduction, message: Message = .initial, resolved: WidgetLocation? = nil,
+    phase: LocalCurrencyLookupPhase = .idle, outcome: LocalCurrencyLookupOutcome = .none,
+    resolved: WidgetLocation? = nil,
     region: LocationMapRegion? = nil, isUpdating: Bool = false,
     permissionDenied: Bool = false, permissionRestricted: Bool = false,
     permissionAuthorized: Bool = false, servicesDisabled: Bool = false
   ) {
-    self.phase = phase; self.message = message; self.resolved = resolved; self.region = region
+    self.phase = phase; self.outcome = outcome; self.resolved = resolved; self.region = region
     self.isUpdating = isUpdating; self.permissionDenied = permissionDenied
     self.permissionRestricted = permissionRestricted;
     self.permissionAuthorized = permissionAuthorized

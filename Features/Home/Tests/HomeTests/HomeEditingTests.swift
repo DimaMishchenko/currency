@@ -23,12 +23,15 @@ struct HomeEditingTests {
       $0.setDestinations(["USD"]); $0.setUsesLocalCurrency(true)
     }
     try store.saveWidgetLocation(WidgetLocation(country: "CZ", currency: "CZK"))
-    let model = makeHomeModel(store: store, service: RateService())
-    model.snapshot = RateSnapshot(quotes: [
-      "EUR": ExchangeRate(1, published: "2026-09-19", source: .init(provider: .custom("test"))),
-      "USD": ExchangeRate(2, published: "2026-09-19", source: .init(provider: .custom("test"))),
-      "CZK": ExchangeRate(25, published: "2026-09-19", source: .init(provider: .custom("test")))
-    ])
+    let model = makeHomeModel(
+      store: store, service: RateService(),
+      readRates: {
+        RateSnapshot(quotes: [
+          "EUR": ExchangeRate(1, published: "2026-09-19", source: .init(provider: .custom("test"))),
+          "USD": ExchangeRate(2, published: "2026-09-19", source: .init(provider: .custom("test"))),
+          "CZK": ExchangeRate(25, published: "2026-09-19", source: .init(provider: .custom("test")))
+        ])
+      })
     model.beginEditing("USD")
     model.reloadInput(preservingEditor: true)
     #expect(model.editor != nil)
@@ -48,11 +51,14 @@ struct HomeEditingTests {
       $0.setDestinations(["CZK"]); $0.setUsesLocalCurrency(true)
     }
     try store.saveWidgetLocation(WidgetLocation(country: "CZ", currency: "CZK"))
-    let model = makeHomeModel(store: store, service: RateService())
-    model.snapshot = RateSnapshot(quotes: [
-      "EUR": ExchangeRate(1, published: "2026-09-19", source: .init(provider: .custom("test"))),
-      "CZK": ExchangeRate(25, published: "2026-09-19", source: .init(provider: .custom("test")))
-    ])
+    let model = makeHomeModel(
+      store: store, service: RateService(),
+      readRates: {
+        RateSnapshot(quotes: [
+          "EUR": ExchangeRate(1, published: "2026-09-19", source: .init(provider: .custom("test"))),
+          "CZK": ExchangeRate(25, published: "2026-09-19", source: .init(provider: .custom("test")))
+        ])
+      })
     model.beginEditing("CZK", selectionID: CurrencySelection.localID)
     #expect(model.editingSelectionID == CurrencySelection.localID)
     #expect(model.press("2"))
@@ -65,15 +71,15 @@ struct HomeEditingTests {
     model.reloadInput(preservingEditor: true)
     #expect(model.editor != nil)
     #expect(model.editingSelectionID == "CZK")
-    #expect(model.updateInput { $0.removeDestination("CZK") })
+    #expect(model.removeDestinations(["CZK"]))
     #expect(model.editor == nil)
     #expect(model.input.usesLocalCurrency)
-    #expect(model.updateInput { $0.changeSource("CZK") })
+    #expect(model.changeSource("CZK"))
     model.beginEditing("CZK", selectionID: CurrencySelection.localID)
     #expect(model.editor != nil)
     #expect(model.editingSelectionID == CurrencySelection.localID)
     #expect(model.press("3"))
-    #expect(model.updateInput { $0.removeDestination(CurrencySelection.localID) })
+    #expect(model.removeDestinations([CurrencySelection.localID]))
     #expect(model.editor == nil)
     #expect(model.input.source == "CZK")
   }
@@ -82,12 +88,15 @@ struct HomeEditingTests {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }
     let store = HomeTestStore(directory: directory)
-    let model = makeHomeModel(store: store, service: RateService())
-    model.snapshot = RateSnapshot(quotes: [
-      "EUR": ExchangeRate(1, published: "2026-09-19", source: .init(provider: .custom("test"))),
-      "USD": ExchangeRate(2, published: "2026-09-19", source: .init(provider: .custom("test"))),
-      "GBP": ExchangeRate(4, published: "2026-09-19", source: .init(provider: .custom("test")))
-    ])
+    let model = makeHomeModel(
+      store: store, service: RateService(),
+      readRates: {
+        RateSnapshot(quotes: [
+          "EUR": ExchangeRate(1, published: "2026-09-19", source: .init(provider: .custom("test"))),
+          "USD": ExchangeRate(2, published: "2026-09-19", source: .init(provider: .custom("test"))),
+          "GBP": ExchangeRate(4, published: "2026-09-19", source: .init(provider: .custom("test")))
+        ])
+      })
     let order = model.input.destinations
     let original = model.input
     model.beginEditing("USD")
@@ -117,12 +126,15 @@ struct HomeEditingTests {
   @Test func switchingRowsPreservesRepeatingDecimalConversion() throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }
-    let model = makeHomeModel(store: HomeTestStore(directory: directory), service: RateService())
-    model.snapshot = RateSnapshot(quotes: [
-      "EUR": ExchangeRate(1, published: "2026-09-19", source: .init(provider: .custom("test"))),
-      "USD": ExchangeRate(3, published: "2026-09-19", source: .init(provider: .custom("test"))),
-      "GBP": ExchangeRate(6, published: "2026-09-19", source: .init(provider: .custom("test")))
-    ])
+    let model = makeHomeModel(
+      store: HomeTestStore(directory: directory), service: RateService(),
+      readRates: {
+        RateSnapshot(quotes: [
+          "EUR": ExchangeRate(1, published: "2026-09-19", source: .init(provider: .custom("test"))),
+          "USD": ExchangeRate(3, published: "2026-09-19", source: .init(provider: .custom("test"))),
+          "GBP": ExchangeRate(6, published: "2026-09-19", source: .init(provider: .custom("test")))
+        ])
+      })
     model.beginEditing("USD")
     #expect(model.press("1"))
     #expect(model.input.amount.count > 30)
@@ -134,14 +146,17 @@ struct HomeEditingTests {
   @Test func removingActiveCurrencyClosesEditor() throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }
-    let model = makeHomeModel(store: HomeTestStore(directory: directory), service: RateService())
-    model.snapshot = RateSnapshot(quotes: [
-      "EUR": ExchangeRate(1, published: "2026-09-19", source: .init(provider: .custom("test"))),
-      "USD": ExchangeRate(2, published: "2026-09-19", source: .init(provider: .custom("test")))
-    ])
+    let model = makeHomeModel(
+      store: HomeTestStore(directory: directory), service: RateService(),
+      readRates: {
+        RateSnapshot(quotes: [
+          "EUR": ExchangeRate(1, published: "2026-09-19", source: .init(provider: .custom("test"))),
+          "USD": ExchangeRate(2, published: "2026-09-19", source: .init(provider: .custom("test")))
+        ])
+      })
     model.beginEditing("USD")
     #expect(model.editor != nil)
-    #expect(model.updateInput { $0.setDestinations($0.destinations.filter { $0 != "USD" }) })
+    #expect(model.removeDestinations(["USD"]))
     #expect(model.editor == nil)
     let saved = model.input
     #expect(!model.press("7"))
@@ -152,12 +167,15 @@ struct HomeEditingTests {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }
     let store = HomeTestStore(directory: directory)
-    let model = makeHomeModel(store: store, service: RateService())
-    model.snapshot = RateSnapshot(quotes: [
-      "EUR": ExchangeRate(1, published: "2026-09-19", source: .init(provider: .custom("test"))),
-      "USD": ExchangeRate(2, published: "2026-09-19", source: .init(provider: .custom("test"))),
-      "GBP": ExchangeRate(4, published: "2026-09-19", source: .init(provider: .custom("test")))
-    ])
+    let model = makeHomeModel(
+      store: store, service: RateService(),
+      readRates: {
+        RateSnapshot(quotes: [
+          "EUR": ExchangeRate(1, published: "2026-09-19", source: .init(provider: .custom("test"))),
+          "USD": ExchangeRate(2, published: "2026-09-19", source: .init(provider: .custom("test"))),
+          "GBP": ExchangeRate(4, published: "2026-09-19", source: .init(provider: .custom("test")))
+        ])
+      })
     model.beginEditing("USD")
     try store.updateInput { $0.changeSource("GBP") }
     #expect(model.press("5"))
@@ -174,11 +192,14 @@ struct HomeEditingTests {
     let file = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     try Data().write(to: file)
     defer { try? FileManager.default.removeItem(at: file) }
-    let model = makeHomeModel(store: HomeTestStore(directory: file), service: RateService())
-    model.snapshot = RateSnapshot(quotes: [
-      "EUR": ExchangeRate(1, published: "2026-09-19", source: .init(provider: .custom("test"))),
-      "USD": ExchangeRate(2, published: "2026-09-19", source: .init(provider: .custom("test")))
-    ])
+    let model = makeHomeModel(
+      store: HomeTestStore(directory: file), service: RateService(),
+      readRates: {
+        RateSnapshot(quotes: [
+          "EUR": ExchangeRate(1, published: "2026-09-19", source: .init(provider: .custom("test"))),
+          "USD": ExchangeRate(2, published: "2026-09-19", source: .init(provider: .custom("test")))
+        ])
+      })
     model.beginEditing("USD")
     #expect(model.editor != nil)
     let before = model.editor
@@ -211,7 +232,7 @@ struct HomeEditingTests {
     defer { try? FileManager.default.removeItem(at: file) }
     let model = makeHomeModel(store: HomeTestStore(directory: file), service: RateService())
     let original = model.input
-    #expect(!model.updateInput { $0.press("7") })
+    #expect(!model.addDestination("PLN"))
     #expect(model.input == original)
     #expect(model.warning != nil)
   }

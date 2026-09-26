@@ -21,7 +21,8 @@ func releaseSigning(profile: String) -> Settings? {
 let project = Project(
   name: "Currency", organizationName: "dimasike",
   packages: [
-    .local(path: "DesignSystem"), .local(path: "Domain/ExchangeRates"),
+    .local(path: "Infrastructure/CoordinatedFiles"), .local(path: "DesignSystem"),
+    .local(path: "Domain/ExchangeRates"),
     .local(path: "Domain/LocalCurrency"), .local(path: "Domain/Conversion"),
     .local(path: "Domain/Widgets"), .local(path: "Features/Home"),
     .local(path: "Features/Onboarding"), .local(path: "Features/CurrencyDetails"),
@@ -281,14 +282,20 @@ let project = Project(
       infoPlist: .default,
       sources: [
         "App/Tests/ApplicationIntegrationTests/**.swift",
-        "App/Sources/Composition/LocationPermissionRouting.swift"
+        "App/Sources/Composition/**.swift"
       ],
       dependencies: [
         .package(product: "CurrencyDetailsUI"), .package(product: "CurrencySelectionUI"),
         .package(product: "ExchangeRates"), .package(product: "ExchangeRatesUI"),
         .package(product: "HomeUI"), .package(product: "LocationOnboardingUI"),
         .package(product: "OnboardingUI"), .package(product: "SettingsUI"),
-        .package(product: "WidgetOnboardingUI"), .package(product: "WidgetsUI")
+        .package(product: "WidgetOnboardingUI"), .package(product: "WidgetsUI"),
+        .package(product: "Conversion"), .package(product: "Home"),
+        .package(product: "CurrencyDetails"), .package(product: "LocalCurrency"),
+        .package(product: "LocationOnboarding"),
+        .package(product: "Onboarding"), .package(product: "Settings"),
+        .target(name: "AppearancePreferences"), .target(name: "CurrencyApplication"),
+        .target(name: "ForegroundRefresh")
       ])
   ],
   schemes: [
@@ -301,6 +308,7 @@ let project = Project(
     .scheme(
       name: "CurrencyTests", shared: true,
       buildAction: .buildAction(targets: [
+        "Currency", "CurrencyWidgets",
         "DesignSystemPackageTests", "ExchangeRatesPackageTests", "LocalCurrencyPackageTests",
         "ConversionPackageTests", "WidgetsPackageTests", "HomePackageTests",
         "OnboardingPackageTests", "CurrencyDetailsPackageTests", "SettingsPackageTests",

@@ -10,13 +10,13 @@ public final class HomeModel {
   /// Latest confirmed converter input.
   public private(set) var input: ConverterState
   /// Rates used for current rendering and editing.
-  public var snapshot: RateSnapshot
+  public private(set) var snapshot: RateSnapshot
   /// Whether a manual refresh currently owns the model.
-  public var refreshing = false
+  public private(set) var refreshing = false
   /// Whether the owned refresh was explicitly forced.
-  public var manuallyRefreshing = false
+  public private(set) var manuallyRefreshing = false
   /// Typed issue from a failed edit or refresh.
-  public var warning: HomeIssue?
+  public private(set) var warning: HomeIssue?
   @ObservationIgnored private let dependencies: HomeDependencies
   @ObservationIgnored private var refreshIdentity: UUID?
 
@@ -50,8 +50,9 @@ public final class HomeModel {
 
   /// Reconciles input and rates after an authoritative shared-state notification.
   public func reloadSharedState() {
-    reloadInput(preservingEditor: true)
     snapshot = dependencies.readRates()
+    reloadInput(preservingEditor: true)
+    reconcileEditor()
     // A background rate or input notification must not hide a failed selection commit.
     if warning != .selectionSaveFailed { warning = dependencies.readRateIssue() }
   }
@@ -80,6 +81,16 @@ public final class HomeModel {
     next.preset(rounded)
     editor = next
     editingSelectionID = id
+  }
+
+  private func reconcileEditor() {
+    guard let editor else { return }
+    if !canEdit(editor.active, selectionID: editingSelectionID, in: input)
+      || snapshot.convert(editor.decimal, from: editor.active, to: input.source) == nil
+    {
+      self.editor = nil
+      editingSelectionID = nil
+    }
   }
 
   private func canEdit(_ code: String, selectionID: String?, in state: ConverterState) -> Bool {
@@ -115,17 +126,52 @@ public final class HomeModel {
 
   /// Commits a selection mutation and keeps the last valid state on failure.
   @discardableResult
-  public func updateInput(_ mutation: (inout ConverterState) throws -> Void) -> Bool {
+  private func updateInput(_ mutation: (inout ConverterState) throws -> Void) -> Bool {
     do {
       input = try dependencies.editInput(mutation)
+      if warning == .selectionSaveFailed { warning = dependencies.readRateIssue() }
       if let editor, !canEdit(editor.active, selectionID: editingSelectionID, in: input) {
         self.editor = nil
       }
       return true
+    } catch EditingError.unavailableCurrency {
+      editor = nil
+      editingSelectionID = nil
+      input = dependencies.readInput()
+      return false
     } catch {
       warning = .selectionSaveFailed
       return false
     }
+  }
+
+  /// Changes the base currency using freshly read confirmed input.
+  @discardableResult public func changeSource(_ code: String) -> Bool {
+    updateInput { $0.changeSource(code) }
+  }
+
+  /// Adds a fixed destination or opts into the dynamic Local selection.
+  @discardableResult public func addDestination(_ code: String) -> Bool {
+    updateInput {
+      if code == CurrencySelection.localID {
+        $0.setUsesLocalCurrency(true)
+      } else {
+        $0.setDestinations($0.manualDestinations + [code])
+      }
+    }
+  }
+
+  /// Removes identified rows without losing edits committed by another host.
+  @discardableResult public func removeDestinations(_ codes: [String]) -> Bool {
+    updateInput { state in
+      for code in codes { state.removeDestination(code) }
+    }
+  }
+
+  /// Moves identified destinations relative to a stable row rather than stale indices.
+  @discardableResult public func moveDestinations(_ codes: [String], before anchor: String?) -> Bool
+  {
+    updateInput { $0.moveDestinations(codes, before: anchor) }
   }
 
   /// Ignores repeated actions and rejects cancelled or superseded operation results.
@@ -146,6 +192,7 @@ public final class HomeModel {
       }
       guard !Task.isCancelled, refreshIdentity == identity else { return .cancelled }
       snapshot = result.snapshot
+      reconcileEditor()
       warning = result.warning.map(HomeIssue.rateWarning)
       return result.warning == nil ? .refreshed : .warning
     } catch is CancellationError {

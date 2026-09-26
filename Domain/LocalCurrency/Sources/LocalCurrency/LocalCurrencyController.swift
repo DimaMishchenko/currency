@@ -6,32 +6,23 @@
   /// One-shot coarse location shared by app setup, foreground refresh, and widget timelines.
   @MainActor @Observable
   public final class LocalCurrencyController: NSObject, @preconcurrency CLLocationManagerDelegate {
-    /// The current setup or refresh phase.
-    public enum Phase: Equatable {
-      case introduction, requestingPermission, locating, ready, unavailable
-    }
-    /// Resource-independent result, localized by the feature presenting it.
-    public enum Message: Equatable {
-      case initial, finding, saved, removed, permissionDenied, permissionRestricted
-      case servicesDisabled, unavailable, unsupported, removeFailed, updateFailed
-    }
-    /// The current phase.
-    public var phase: Phase = .introduction
+    /// Current domain operation progress; onboarding presentation belongs to the feature.
+    public private(set) var phase: LocalCurrencyLookupPhase = .idle
     /// A successfully resolved observation.
-    public var resolved: WidgetLocation?
+    public private(set) var resolved: WidgetLocation?
     /// A broad map region exists only after a fresh, authorized lookup succeeds.
-    public var region: MKCoordinateRegion?
+    public private(set) var region: MKCoordinateRegion?
     /// Whether system location services are disabled.
-    public var servicesDisabled = false
+    public private(set) var servicesDisabled = false
     private let servicesEnabled: (() -> Bool)?
     private var availability: Task<Void, Never>?
     private var mayRequestLocation = false
     private let countryLookup: (@MainActor (CLLocation) async throws -> String?)?
     private let reloadWidgets: () -> Void
     /// The current result or recovery reason.
-    public var message: Message = .initial
+    public private(set) var outcome: LocalCurrencyLookupOutcome = .none
     /// Whether permission or location work is in flight.
-    public var isUpdating = false
+    public private(set) var isUpdating = false
     private let manager: CLLocationManager
     private let store: LocalCurrencyStore
     private var request: MKReverseGeocodingRequest?
@@ -59,7 +50,7 @@
       if store.widgetLocationStatus() == .available,
         let location = store.widgetLocation(), location.isFresh()
       {
-        message = .saved
+        outcome = .saved
         if manager.authorizationStatus == .authorizedWhenInUse
           || manager.authorizationStatus == .authorizedAlways
         {
@@ -91,14 +82,14 @@
       isUpdating = true
       mayRequestLocation = false
       phase = manager.authorizationStatus == .notDetermined ? .requestingPermission : .locating
-      message = .finding
+      outcome = .none
       checkServices { [weak self] enabled in
         guard let self, self.isUpdating else { return }
         self.servicesDisabled = !enabled
         guard enabled else {
           self.isUpdating = false
           self.phase = .unavailable
-          self.message = .servicesDisabled
+          self.outcome = .servicesDisabled
           return
         }
         self.mayRequestLocation = true
@@ -150,7 +141,7 @@
 
     /// Clears the observation and cancels outstanding callbacks.
     public func clear(
-      status message: Message = .removed,
+      status reason: LocalCurrencyLookupOutcome = .removed,
       outcome: WidgetLocationStatus = .removed
     ) {
       availability?.cancel()
@@ -164,12 +155,12 @@
       mayRequestLocation = false
       resolved = nil
       region = nil
-      phase = outcome == .denied || outcome == .restricted ? .unavailable : .introduction
+      phase = outcome == .denied || outcome == .restricted ? .unavailable : .idle
       do {
         try store.clearLocalCurrency(outcome: outcome)
-        self.message = message
+        self.outcome = reason
         reloadWidgets()
-      } catch { self.message = .removeFailed }
+      } catch { self.outcome = .removeFailed }
     }
 
     /// Reconciles permission callbacks and resumes an explicitly started request.
@@ -195,7 +186,7 @@
         do { generation = try store.beginLocalCurrencyLookup() } catch {
           isUpdating = false
           phase = .unavailable
-          message = .updateFailed
+          outcome = .updateFailed
           return
         }
         phase = .locating
@@ -214,7 +205,7 @@
       }
     }
 
-    private var permissionStatus: Message {
+    private var permissionStatus: LocalCurrencyLookupOutcome {
       manager.authorizationStatus == .restricted
         ? .permissionRestricted : .permissionDenied
     }
@@ -284,7 +275,7 @@
       finish(.unavailable)
     }
 
-    private func finish(_ message: Message, succeeded: Bool = false) {
+    private func finish(_ outcome: LocalCurrencyLookupOutcome, succeeded: Bool = false) {
       timeout?.cancel()
       timeout = nil
       availability?.cancel()
@@ -294,7 +285,7 @@
       manager.stopUpdatingLocation()
       isUpdating = false
       mayRequestLocation = false
-      self.message = message
+      self.outcome = outcome
       phase = succeeded ? .ready : .unavailable
       if !succeeded {
         do {
@@ -302,7 +293,7 @@
             adoptSavedObservation()
           }
         } catch {
-          self.message = .updateFailed
+          self.outcome = .updateFailed
         }
         reloadWidgets()
       }
@@ -315,7 +306,7 @@
       if saved != resolved { region = nil }
       resolved = saved
       phase = .ready
-      message = .saved
+      outcome = .saved
     }
 
     /// Dismissing the flow cancels pending work; a late geocoder cannot save a result.
@@ -325,8 +316,8 @@
       timeout?.cancel(); timeout = nil
       manager.stopUpdatingLocation()
       if isUpdating {
-        phase = .introduction
-        message = .initial
+        phase = .idle
+        outcome = .none
       }
       isUpdating = false
       mayRequestLocation = false
@@ -342,12 +333,12 @@
       } else if manager.authorizationStatus == .notDetermined {
         if isUpdating && timeout == nil && request == nil { return }
         if store.widgetLocationStatus() != .removed {
-          clear(status: .initial, outcome: .notDetermined)
+          clear(status: .none, outcome: .notDetermined)
         }
       } else if [.denied, .restricted].contains(store.widgetLocationStatus()) {
         try? store.saveWidgetLocationStatus(.notDetermined)
-        message = .initial
-        phase = .introduction
+        outcome = .none
+        phase = .idle
         reloadWidgets()
       }
       guard !isUpdating else { return }
@@ -358,13 +349,13 @@
         self.servicesDisabled = !enabled
         if !enabled {
           self.phase = .unavailable
-          self.message = .servicesDisabled
+          self.outcome = .servicesDisabled
           self.resolved = nil
           self.region = nil
         }
         if wasDisabled && enabled && self.permissionAuthorized {
-          self.phase = .introduction
-          self.message = .initial
+          self.phase = .idle
+          self.outcome = .none
         }
       }
     }

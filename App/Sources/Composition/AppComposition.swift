@@ -24,7 +24,7 @@ final class AppComposition {
   let progress: OnboardingProgressStore
   let history: HistoryService
   let service = RateService()
-  let appearance = AppearancePreferences(defaults: .standard)
+  let appearance: AppearancePreferences
   private var observers: [UUID: AsyncStream<Void>.Continuation] = [:]
   private(set) var warning: RefreshWarning?
   private var rateIssue: HomeIssue?
@@ -36,7 +36,8 @@ final class AppComposition {
       refreshLocalCurrency: { [weak self] in await self?.foregroundLocation.refreshIfNeeded() },
       changed: { [weak self] in self?.changed() }))
 
-  init(directory: URL = AppGroup.directory) {
+  init(directory: URL = AppGroup.directory, appearance: AppearancePreferences? = nil) {
+    self.appearance = appearance ?? AppearancePreferences(defaults: .standard)
     rates = RateStore(directory: directory)
     conversion = ConversionStore(directory: directory)
     local = LocalCurrencyStore(directory: directory)
@@ -154,7 +155,7 @@ final class AppComposition {
     LocationOnboardingDependencies(
       readSnapshot: {
         LocationSnapshot(
-          phase: Self.phase(controller.phase), message: Self.message(controller.message),
+          phase: controller.phase, outcome: controller.outcome,
           resolved: controller.resolved,
           region: controller.region.map {
             .init(
@@ -180,38 +181,21 @@ final class AppComposition {
     guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
     UIApplication.shared.open(url)
   }
-  private static func phase(_ value: LocalCurrencyController.Phase) -> LocationSnapshot.Phase {
-    switch value {
-    case .introduction: .introduction
-    case .requestingPermission: .requestingPermission
-    case .locating: .locating
-    case .ready: .ready
-    case .unavailable: .unavailable
-    }
-  }
-  private static func message(_ value: LocalCurrencyController.Message) -> LocationSnapshot.Message
-  {
-    switch value {
-    case .initial: .initial
-    case .finding: .finding
-    case .saved: .saved
-    case .removed: .removed
-    case .permissionDenied: .permissionDenied
-    case .permissionRestricted: .permissionRestricted
-    case .servicesDisabled: .servicesDisabled
-    case .unavailable: .unavailable
-    case .unsupported: .unsupported
-    case .removeFailed: .removeFailed
-    case .updateFailed: .updateFailed
-    }
-  }
+
 }
 
-private enum AppGroup {
+/// Required shared-container resolution is testable without triggering a process precondition.
+enum AppGroup {
+  enum ResolutionError: Error, Equatable { case missingEntitlement }
+  static func resolve(using container: (String) -> URL?) throws -> URL {
+    guard let directory = container("group.com.dimasike.currency.shared") else {
+      throw ResolutionError.missingEntitlement
+    }
+    return directory
+  }
   static var directory: URL {
-    FileManager.default.containerURL(
-      forSecurityApplicationGroupIdentifier: "group.com.dimasike.currency.shared")
-      ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-      .appendingPathComponent("Currency")
+    do { return try resolve(using: FileManager.default.containerURL) } catch {
+      preconditionFailure("Currency requires its configured App Group entitlement: \(error)")
+    }
   }
 }

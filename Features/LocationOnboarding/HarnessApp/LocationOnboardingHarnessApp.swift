@@ -12,14 +12,14 @@ import SwiftUI
     let args = ProcessInfo.processInfo.arguments
     if args.contains("ready") {
       snapshot = LocationSnapshot(
-        phase: .ready, message: .saved,
+        phase: .ready, outcome: .saved,
         resolved: WidgetLocation(country: "CZ", currency: "CZK"),
         region: LocationMapRegion(
           latitude: 50.08, longitude: 14.43, latitudeDelta: 0.3, longitudeDelta: 0.3),
         permissionAuthorized: true)
     } else if args.contains("failure") {
       snapshot = LocationSnapshot(
-        phase: .unavailable, message: .permissionDenied, permissionDenied: true)
+        phase: .unavailable, outcome: .permissionDenied, permissionDenied: true)
     } else {
       snapshot = LocationSnapshot()
     }
@@ -43,7 +43,7 @@ import SwiftUI
             readSnapshot: { state.snapshot }, reconcile: {},
             update: { _ in
               state.snapshot = LocationSnapshot(
-                phase: .ready, message: .saved,
+                phase: .ready, outcome: .saved,
                 resolved: WidgetLocation(country: "CZ", currency: "CZK"), permissionAuthorized: true
               )
             }, cancel: {},

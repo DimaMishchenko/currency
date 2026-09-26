@@ -1,3 +1,4 @@
+import CoordinatedFiles
 import CryptoKit
 import Foundation
 
@@ -16,11 +17,16 @@ public struct WidgetStore: Sendable {
   public func widgetInput(
     key: String, codes: [String], amount: String = "1"
   ) -> WidgetInput {
-    guard
-      let data = try? Data(
-        contentsOf: directory.appendingPathComponent(widgetFilename(key))),
-      var input = try? JSONDecoder().decode(WidgetInput.self, from: data)
-    else { return WidgetInput(codes: codes, amount: amount) }
+    (try? readWidgetInput(key: key, codes: codes, amount: amount))
+      ?? WidgetInput(codes: codes, amount: amount)
+  }
+
+  private func readWidgetInput(key: String, codes: [String], amount: String) throws -> WidgetInput {
+    let data = try FileCoordination.dataIfPresent(
+      at: directory.appendingPathComponent(widgetFilename(key)))
+    var input =
+      try data.map { try JSONDecoder().decode(WidgetInput.self, from: $0) }
+      ?? WidgetInput(codes: codes, amount: amount)
     input.reconcile(codes: codes)
     return input
   }
@@ -33,7 +39,7 @@ public struct WidgetStore: Sendable {
   ) throws -> WidgetInput {
     let filename = widgetFilename(key)
     return try coordinate(filename) {
-      var state = widgetInput(key: key, codes: codes, amount: amount)
+      var state = try readWidgetInput(key: key, codes: codes, amount: amount)
       mutation(&state)
       try JSONEncoder().encode(state)
         .write(to: directory.appendingPathComponent(filename), options: .atomic)
@@ -42,16 +48,6 @@ public struct WidgetStore: Sendable {
   }
 
   func coordinate<Value>(_ filename: String, action: () throws -> Value) throws -> Value {
-    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-    var coordinationError: NSError?
-    var result: Result<Value, Error>?
-    NSFileCoordinator()
-      .coordinate(
-        writingItemAt: directory.appendingPathComponent(filename), options: .forMerging,
-        error: &coordinationError
-      ) { _ in result = Result { try action() } }
-    if let coordinationError { throw coordinationError }
-    guard let result else { throw CocoaError(.fileWriteUnknown) }
-    return try result.get()
+    try FileCoordination.write(at: directory.appendingPathComponent(filename), action)
   }
 }
