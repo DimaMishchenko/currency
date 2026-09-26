@@ -30,7 +30,7 @@
       #expect(!controller.isUpdating)
       #expect(store.widgetLocation() == nil)
       #expect(
-        controller.message == .permissionDenied)
+        controller.outcome == .permissionDenied)
       #expect(manager.locationRequests == 0)
       #expect(manager.authorizationRequests == 0)
     }
@@ -127,7 +127,7 @@
       controller.locationManagerDidChangeAuthorization(manager)
       #expect(!controller.isUpdating)
       #expect(
-        controller.message == .permissionDenied)
+        controller.outcome == .permissionDenied)
     }
 
     @Test func restrictedPermissionAndLateCallbacksDoNotReportSuccessfulRemoval() {
@@ -141,12 +141,12 @@
         servicesEnabled: { true }, reloadWidgets: {})
       controller.update()
       #expect(
-        controller.message == .permissionRestricted)
+        controller.outcome == .permissionRestricted)
       controller.clear()
       controller.locationManager(manager, didUpdateLocations: [])
       controller.locationManager(manager, didFailWithError: CLError(.locationUnknown))
       #expect(!controller.isUpdating)
-      #expect(controller.message == .removed)
+      #expect(controller.outcome == .removed)
     }
 
     @Test func automaticRefreshNeverPromptsAndSkipsFreshObservation() async throws {

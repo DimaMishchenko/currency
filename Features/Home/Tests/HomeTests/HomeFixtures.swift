@@ -19,11 +19,13 @@ struct HomeTestStore {
 }
 
 @MainActor
-func makeHomeModel(store: HomeTestStore, service: RateService) -> HomeModel {
+func makeHomeModel(
+  store: HomeTestStore, service: RateService, readRates: (() -> RateSnapshot)? = nil
+) -> HomeModel {
   HomeModel(
     dependencies: HomeDependencies(
       readInput: { store.input() },
-      readRates: { store.rates.loadRates() },
+      readRates: readRates ?? { store.rates.loadRates() },
       readRateIssue: { nil },
       readLocalCurrency: {
         (store.location.widgetLocation(), store.location.widgetLocationStatus())

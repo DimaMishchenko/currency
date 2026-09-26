@@ -76,7 +76,7 @@ struct HomeRefreshTests {
     let fixture = HomeRefreshFixture()
     fixture.rejectsInput = true
     let model = HomeModel(dependencies: fixture.dependencies)
-    #expect(!model.updateInput { $0.setAmount("42") })
+    #expect(!model.addDestination("PLN"))
     #expect(model.warning == .selectionSaveFailed)
     fixture.rateIssue = .rateWarning(.partialCryptoFallback)
     model.reloadSharedState()
@@ -96,6 +96,37 @@ struct HomeRefreshTests {
     fixture.rateIssue = .rateWarning(.partialCryptoFallback)
     let model = HomeModel(dependencies: fixture.dependencies)
     #expect(model.warning == .rateWarning(.partialCryptoFallback))
+  }
+
+  @Test(arguments: [nil, .rateWarning(.partialCryptoFallback), .rateSaveFailed] as [HomeIssue?])
+  func successfulEditRetryReplacesSaveFailureWithCurrentRateIssue(rateIssue: HomeIssue?) {
+    let fixture = HomeRefreshFixture()
+    fixture.snapshot = RateSnapshot(quotes: [
+      "EUR": ExchangeRate(1, published: "2026-09-19", source: .init(provider: .ecb))
+    ])
+    fixture.rejectsInput = true
+    let model = HomeModel(dependencies: fixture.dependencies)
+    model.beginEditing("EUR")
+    #expect(!model.press("7"))
+    #expect(model.input.amount == "1")
+    #expect(model.editingText == "1")
+    #expect(model.warning == .selectionSaveFailed)
+
+    fixture.rateIssue = rateIssue
+    fixture.rejectsInput = false
+    #expect(model.press("7"))
+    #expect(model.input.amount == "7")
+    #expect(model.editingText == "7")
+    #expect(fixture.input == model.input)
+    #expect(model.warning == rateIssue)
+  }
+
+  @Test func successfulSelectionEditPreservesExistingRateFailure() {
+    let fixture = HomeRefreshFixture()
+    fixture.rateIssue = .rateSaveFailed
+    let model = HomeModel(dependencies: fixture.dependencies)
+    #expect(model.addDestination("PLN"))
+    #expect(model.warning == .rateSaveFailed)
   }
 
   @Test func repeatedManualRequestIsIgnoredWithoutStartingAnotherOperation() async {
@@ -165,4 +196,47 @@ struct HomeRefreshTests {
     observation.cancel()
     await observation.value
   }
+  @Test(arguments: [false, true])
+  func missingRatePairClosesEditorWithoutMisreportingSaveFailure(manualRefresh: Bool) async {
+    let fixture = HomeRefreshFixture()
+    fixture.snapshot = RateSnapshot(quotes: [
+      "EUR": ExchangeRate(1, published: "2026-09-19", source: .init(provider: .ecb)),
+      "USD": ExchangeRate(2, published: "2026-09-19", source: .init(provider: .ecb))
+    ])
+    let model = HomeModel(dependencies: fixture.dependencies)
+    model.beginEditing("USD")
+    #expect(model.editor != nil)
+    let original = fixture.input
+    fixture.snapshot = RateSnapshot()
+    if manualRefresh {
+      let refresh = Task { await model.refresh(force: true) }
+      await waitForHome { fixture.count == 1 }
+      fixture.succeed(1)
+      #expect(await refresh.value == .refreshed)
+    } else {
+      model.reloadSharedState()
+    }
+    #expect(model.editor == nil)
+    #expect(!model.press("7"))
+    #expect(fixture.input == original)
+    #expect(model.warning == nil)
+  }
+
+  @Test func concurrentlyRemovedEditingRowEndsEditingWithoutSaveError() {
+    let fixture = HomeRefreshFixture()
+    fixture.snapshot = RateSnapshot(quotes: [
+      "EUR": ExchangeRate(1, published: "2026-09-19", source: .init(provider: .ecb)),
+      "USD": ExchangeRate(2, published: "2026-09-19", source: .init(provider: .ecb))
+    ])
+    let model = HomeModel(dependencies: fixture.dependencies)
+    model.beginEditing("USD")
+    fixture.input.removeDestination("USD")
+    let saved = fixture.input
+    #expect(!model.press("7"))
+    #expect(model.editor == nil)
+    #expect(model.input == saved)
+    #expect(fixture.input == saved)
+    #expect(model.warning == nil)
+  }
+
 }

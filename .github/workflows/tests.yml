@@ -50,6 +50,12 @@ jobs:
       - name: Install tools
         if: needs.changes.outputs.xcode == 'true'
         run: brew install tuist xcbeautify
+      - name: Check Swift formatting
+        if: needs.changes.outputs.xcode == 'true'
+        run: swift format lint --recursive --strict App Domain Features DesignSystem Infrastructure
+      - name: Test standalone rate core
+        if: needs.changes.outputs.xcode == 'true'
+        run: swift test
       - name: Generate project
         if: needs.changes.outputs.xcode == 'true'
         run: tuist generate --no-open
@@ -64,5 +70,17 @@ jobs:
             -destination 'platform=iOS Simulator,name=iPhone 18 Pro,OS=27.0' \
             -derivedDataPath "$RUNNER_TEMP/CurrencyTestsDerivedData" \
             -parallel-testing-enabled NO \
+            CODE_SIGN_IDENTITY=- \
+            2>&1 | xcbeautify
+      - name: Build feature harnesses
+        if: needs.changes.outputs.xcode == 'true'
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -workspace Currency.xcworkspace \
+            -scheme CurrencyHarnesses \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/CurrencyTestsDerivedData" \
             CODE_SIGN_IDENTITY=- \
             2>&1 | xcbeautify

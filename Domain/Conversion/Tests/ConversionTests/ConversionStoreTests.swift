@@ -21,4 +21,34 @@ import Testing
     #expect(widget.input().destinations.contains("PLN"))
   }
 
+  @Test(arguments: [Data("invalid".utf8), Data("{\"source\":[]}".utf8)])
+  func incompatibleRecordIsPreservedAndMutationNeverRuns(_ original: Data) throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    let url = directory.appendingPathComponent("input.json")
+    try original.write(to: url)
+    let store = ConversionStore(directory: directory)
+    var invoked = false
+    #expect(throws: (any Error).self) {
+      try store.updateInput { _ in invoked = true }
+    }
+    #expect(!invoked)
+    #expect(try Data(contentsOf: url) == original)
+    #expect(store.input() == ConverterState())
+  }
+
+  @Test func unreadableRecordDoesNotBecomeFreshInput() throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let url = directory.appendingPathComponent("input.json")
+    try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+    var invoked = false
+    #expect(throws: (any Error).self) {
+      try ConversionStore(directory: directory).updateInput { _ in invoked = true }
+    }
+    #expect(!invoked)
+    #expect(try url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory == true)
+  }
+
 }

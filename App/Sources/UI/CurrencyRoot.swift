@@ -109,7 +109,7 @@ struct CurrencyRoot: View {
     .preferredColorScheme(appearance.theme.colorScheme)
     .onOpenURL(perform: scene.open)
     .onChange(of: scenePhase, initial: true) { _, phase in
-      AppHaptics.configure(active: phase == .active, reducedMotion: reduceMotion)
+      AppHaptics.configure(sceneID: scene.id, active: phase == .active, reducedMotion: reduceMotion)
       composition.foreground.setActive(
         phase == .active && !scene.showsOnboarding, sceneID: scene.id)
     }
@@ -117,9 +117,12 @@ struct CurrencyRoot: View {
       composition.foreground.setActive(scenePhase == .active && !shows, sceneID: scene.id)
     }
     .onChange(of: reduceMotion) { _, value in
-      AppHaptics.configure(active: scenePhase == .active, reducedMotion: value)
+      AppHaptics.configure(sceneID: scene.id, active: scenePhase == .active, reducedMotion: value)
     }
-    .onDisappear { composition.foreground.setActive(false, sceneID: scene.id) }
+    .onDisappear {
+      AppHaptics.removeScene(scene.id)
+      composition.foreground.setActive(false, sceneID: scene.id)
+    }
   }
   private var rootLocation: Binding<CurrencyScene.Location?> {
     Binding(

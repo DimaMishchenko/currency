@@ -54,6 +54,12 @@ A successful UI outcome follows a successful commit. Onboarding drafts and widge
 
 Keep canonical widget configuration independent of the visible layout. Resizing must not discard hidden selections or input. Preserve the distinction between default synchronized widgets and custom independent input, and between a fixed currency and dynamic Local intent. Further persistence, privacy, and rate-provenance constraints live in [Decisions](Decisions.md).
 
+`Infrastructure/CoordinatedFiles` contains only Foundation file coordination and an absent-file read primitive used by the four domain stores and onboarding progress. Record formats, recovery, and lock ordering stay with each domain; this is not a repository abstraction or a place for business services.
+
+Display reads may fall back when a record cannot be read, but mutation reads default only for absent files. Unreadable or incompatible input is preserved and reported as a failed save. Local currency stores permission, observation, throttle, and generation in one versioned atomic record; migration retains the old state until legacy observation/status files are removed successfully.
+
+Local lookup progress and outcomes are domain values shared by consumers. The onboarding feature owns its confirmation flow, presentation, and localization; composition only adapts platform region values.
+
 ## Validation at the owning boundary
 
 Keep behavior tests beside their logic or UI owner and test cross-feature sequencing at the application boundary. Use fresh controlled dependencies. UI packages own their resources; test resource lookup in the executable and harness contexts that consume them.

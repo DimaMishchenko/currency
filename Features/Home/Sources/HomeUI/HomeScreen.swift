@@ -98,15 +98,9 @@ struct HomeScreen: View {
         ) { code in
           withAnimation(motion) {
             if purpose == .source {
-              model.updateWithFeedback { $0.changeSource(code) }
+              model.withFeedback { model.changeSource(code) }
             } else {
-              model.updateWithFeedback {
-                if code == CurrencySelection.localID {
-                  $0.setUsesLocalCurrency(true)
-                } else {
-                  $0.setDestinations($0.manualDestinations + [code])
-                }
-              }
+              model.withFeedback { model.addDestination(code) }
             }
           }
         }
@@ -435,7 +429,7 @@ struct HomeScreen: View {
         model.snapshot, from: model.input.source, to: code, locale: locale))
     Button(.Converter.remove, systemImage: "minus.circle", role: .destructive) {
       withAnimation(motion) {
-        if model.updateWithFeedback({ $0.removeDestination(row.id) }) {
+        if model.withFeedback({ model.removeDestinations([row.id]) }) {
           AppHaptics.play(.delete)
         }
       }

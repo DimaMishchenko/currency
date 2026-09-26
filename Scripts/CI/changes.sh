@@ -23,9 +23,9 @@ else
       continue
     fi
     case "$file" in
-      Documentation/*|README.md|LICENSE|.gitignore|.swift-format)
+      Documentation/*|README.md|LICENSE|.gitignore)
         ;;
-      .github/workflows/tests.yml)
+      .swift-format|.github/workflows/tests.yml)
         xcode=true ;;
       .github/workflows/publish.yml|Scripts/CI/signing.sh|Scripts/CI/release.sh|Scripts/CI/verify_ipa.sh)
         xcode=true; publish=true ;;

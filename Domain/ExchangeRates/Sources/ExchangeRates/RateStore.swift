@@ -1,3 +1,4 @@
+import CoordinatedFiles
 import Foundation
 
 /// Coordinated rate persistence shared by independent app and widget processes.
@@ -38,17 +39,7 @@ public struct RateStore: Sendable {
   }
 
   func coordinate<Value>(_ filename: String, action: () throws -> Value) throws -> Value {
-    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-    var coordinationError: NSError?
-    var result: Result<Value, Error>?
-    NSFileCoordinator()
-      .coordinate(
-        writingItemAt: directory.appendingPathComponent(filename), options: .forMerging,
-        error: &coordinationError
-      ) { _ in result = Result { try action() } }
-    if let coordinationError { throw coordinationError }
-    guard let result else { throw CocoaError(.fileWriteUnknown) }
-    return try result.get()
+    try FileCoordination.write(at: directory.appendingPathComponent(filename), action)
   }
   /// Atomically merges a progressive refresh with quotes committed by another host.
   public func saveBootstrapRates(_ snapshot: RateSnapshot, now: Date = .now) throws -> RateSnapshot

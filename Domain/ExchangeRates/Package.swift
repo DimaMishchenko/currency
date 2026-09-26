@@ -7,9 +7,15 @@ let package = Package(
     .library(name: "ExchangeRates", targets: ["ExchangeRates"]),
     .library(name: "ExchangeRatesDynamic", type: .dynamic, targets: ["ExchangeRates"]),
     .library(name: "ExchangeRatesUI", targets: ["ExchangeRatesUI"])
-  ], dependencies: [.package(path: "../../DesignSystem")],
+  ],
+  dependencies: [
+    .package(path: "../../DesignSystem"), .package(path: "../../Infrastructure/CoordinatedFiles")
+  ],
   targets: [
-    .target(name: "ExchangeRates", exclude: ["README.md"]),
+    .target(
+      name: "ExchangeRates",
+      dependencies: [.product(name: "CoordinatedFiles", package: "CoordinatedFiles")],
+      exclude: ["README.md"]),
     .target(
       name: "ExchangeRatesUI",
       dependencies: ["ExchangeRates", .product(name: "DesignSystem", package: "DesignSystem")],

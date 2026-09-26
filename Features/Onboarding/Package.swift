@@ -10,6 +10,7 @@ let package = Package(
     .library(name: "OnboardingUI", targets: ["OnboardingUI"])
   ],
   dependencies: [
+    .package(path: "../../Infrastructure/CoordinatedFiles"),
     .package(path: "../../Domain/ExchangeRates"), .package(path: "../../DesignSystem"),
     .package(path: "../../Domain/Conversion")
   ],
@@ -17,6 +18,7 @@ let package = Package(
     .target(
       name: "Onboarding",
       dependencies: [
+        .product(name: "CoordinatedFiles", package: "CoordinatedFiles"),
         .product(name: "ExchangeRates", package: "ExchangeRates"),
         .product(name: "Conversion", package: "Conversion")
       ]),

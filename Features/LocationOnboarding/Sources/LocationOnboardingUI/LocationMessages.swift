@@ -3,9 +3,8 @@ import LocationOnboarding
 
 extension LocationSnapshot {
   var status: LocalizedStringResource {
-    switch message {
-    case .initial: .LocalCurrency.localInitial
-    case .finding: .LocalCurrency.localFinding
+    switch outcome {
+    case .none: .LocalCurrency.localInitial
     case .saved: .LocalCurrency.localSaved(resolved?.currency ?? "", resolved?.country ?? "")
     case .removed: .LocalCurrency.localRemoved
     case .permissionDenied: .LocalCurrency.localPermissionDenied

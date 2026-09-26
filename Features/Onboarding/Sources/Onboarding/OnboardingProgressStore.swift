@@ -1,4 +1,5 @@
 import Conversion
+import CoordinatedFiles
 import Foundation
 
 /// Coordinates the existing onboarding.json record independently of confirmed converter input.
@@ -18,21 +19,10 @@ public struct OnboardingProgressStore: Sendable {
 
   /// Saves progress atomically under the same cross-process file coordination as prior versions.
   public func save(_ progress: OnboardingProgress) throws {
-    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     let file = directory.appendingPathComponent("onboarding.json")
-    var coordinationError: NSError?
-    var result: Result<Void, Error>?
-    NSFileCoordinator()
-      .coordinate(
-        writingItemAt: file, options: .forMerging, error: &coordinationError
-      ) { _ in
-        result = Result {
-          try JSONEncoder().encode(progress).write(to: file, options: .atomic)
-        }
-      }
-    if let coordinationError { throw coordinationError }
-    guard let result else { throw CocoaError(.fileWriteUnknown) }
-    try result.get()
+    try FileCoordination.write(at: file) {
+      try JSONEncoder().encode(progress).write(to: file, options: .atomic)
+    }
   }
 
   /// Starts replay from current choices only after the new draft has been committed.

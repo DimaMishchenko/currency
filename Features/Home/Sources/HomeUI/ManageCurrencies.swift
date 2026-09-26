@@ -21,9 +21,7 @@ struct ManageCurrencies: View {
           }
           .onDelete { offsets in
             let removed = offsets.map { model.input.manualDestinations[$0] }
-            if model.updateWithFeedback({
-              $0.setDestinations($0.manualDestinations.filter { !removed.contains($0) })
-            }) {
+            if model.withFeedback({ model.removeDestinations(removed) }) {
               AppHaptics.play(.delete)
             }
           }
@@ -31,7 +29,7 @@ struct ManageCurrencies: View {
             let list = model.input.manualDestinations
             let moved = source.map { list[$0] }
             let anchor = list.dropFirst(destination).first { !moved.contains($0) }
-            if model.updateWithFeedback({ $0.moveDestinations(moved, before: anchor) }) {
+            if model.withFeedback({ model.moveDestinations(moved, before: anchor) }) {
               AppHaptics.play(.selection)
             }
           }
@@ -44,7 +42,7 @@ struct ManageCurrencies: View {
               Label(.Converter.localCurrency, systemImage: "location")
             }
             .onDelete { _ in
-              if model.updateWithFeedback({ $0.setUsesLocalCurrency(false) }) {
+              if model.withFeedback({ model.removeDestinations([CurrencySelection.localID]) }) {
                 AppHaptics.play(.delete)
               }
             }
