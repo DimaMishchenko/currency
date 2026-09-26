@@ -15,7 +15,12 @@ struct HomeScreen: View {
   let detailsMotion: Namespace.ID
   let widgetsMotion: Namespace.ID
   let onOutput: (HomeOutput) -> Void
-  private var configureLocalCurrency: () -> Void { { onOutput(.locationRequested) } }
+  private var configureLocalCurrency: () -> Void {
+    {
+      dismissAmount(feedback: false)
+      onOutput(.locationRequested)
+    }
+  }
   @Environment(\.horizontalSizeClass) private var horizontalSizeClass
   @Environment(\.verticalSizeClass) private var verticalSizeClass
   @Environment(\.locale) private var locale
@@ -59,20 +64,24 @@ struct HomeScreen: View {
               inputDock(bottomSafeArea: geometry.safeAreaInsets.bottom)
             }
             .frame(width: geometry.size.width * 0.48)
-            currencyList
+            currencyList(bottomSafeArea: geometry.safeAreaInsets.bottom)
           }
           .padding(.top, AppStyle.Space.small)
+          .ignoresSafeArea(.container, edges: editingAmount ? .bottom : [])
         } else {
           VStack(spacing: 0) {
             source
               .padding(.horizontal, AppStyle.Space.large)
               .padding(.vertical, AppStyle.Space.large)
               .frame(maxWidth: 580)
-            currencyList
-            inputDock(bottomSafeArea: geometry.safeAreaInsets.bottom)
+            currencyList(bottomSafeArea: geometry.safeAreaInsets.bottom)
           }
           .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+          .ignoresSafeArea(.container, edges: editingAmount ? .bottom : [])
         }
+      }
+      .background {
+        ToolbarTapDismissal(enabled: editingAmount) { dismissAmount(feedback: false) }
       }
       .background { outsideDismissal.accessibilityHidden(true) }
       .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
@@ -127,6 +136,7 @@ struct HomeScreen: View {
   private var outsideDismissal: some View {
     if editingAmount {
       Color.clear.contentShape(Rectangle())
+        .ignoresSafeArea(.container)
         .onTapGesture { dismissAmount() }
         .accessibilityElement()
         .accessibilityLabel(.Converter.doneEntering)
@@ -135,67 +145,78 @@ struct HomeScreen: View {
     }
   }
 
-  private var currencyList: some View {
-    VStack(spacing: 0) {
-      GeometryReader { viewport in
-        ScrollView {
-          // Keep the first row mounted while UIKit collapses the pull-to-refresh inset.
-          VStack(spacing: 0) {
-            ForEach(model.input.destinationRows) { row in
-              VStack(spacing: 0) {
-                destinationRow(row)
-                Divider().padding(.leading, Self.destinationTextInset)
-              }
-              .id(row.id)
+  private func currencyList(bottomSafeArea: CGFloat) -> some View {
+    GeometryReader { viewport in
+      ScrollView {
+        // Keep the first row mounted while UIKit collapses the pull-to-refresh inset.
+        VStack(spacing: 0) {
+          ForEach(model.input.destinationRows) { row in
+            VStack(spacing: 0) {
+              destinationRow(row)
+              Divider().padding(.leading, Self.destinationTextInset)
             }
-            if model.input.usesLocalCurrency
-              && (model.input.localCurrencyCode == nil || model.input.localCurrencyIsStale)
-            {
-              Button(action: configureLocalCurrency) {
-                Label {
-                  Text(
-                    model.input.localCurrencyCode == nil
-                      ? .Converter.localUnavailable
-                      : .Converter.localLastKnown)
-                } icon: {
-                  Image(systemName: "location")
-                }
-                .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 12)
-              }
-              .buttonStyle(.plain)
-            }
+            .id(row.id)
           }
-          .scrollTargetLayout()
-          .frame(maxWidth: 580).frame(maxWidth: .infinity)
-          .background {
-            if !editingAmount {
-              CurrencyRefreshAttachment(refreshing: model.manuallyRefreshing, enabled: true) {
-                await refresh()
+          if model.input.usesLocalCurrency
+            && (model.input.localCurrencyCode == nil || model.input.localCurrencyIsStale)
+          {
+            Button(action: configureLocalCurrency) {
+              Label {
+                Text(
+                  model.input.localCurrencyCode == nil
+                    ? .Converter.localUnavailable
+                    : .Converter.localLastKnown)
+              } icon: {
+                Image(systemName: "location")
               }
+              .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
+              .frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 12)
             }
+            .buttonStyle(.plain)
           }
         }
-        .accessibilityAction(named: Text(.Converter.refreshRates)) {
-          if !model.refreshing { refreshRequest = UUID() }
-        }
-        .scrollBounceBehavior(.always)
-        .scrollPosition($listPosition)
-        .padding(.horizontal, AppStyle.Space.large)
-        .task(id: "\(editingAmount)-\(model.editingSelectionID ?? "")-\(viewport.size)") {
-          // Wait for the keypad's layout transaction before resolving the row's scroll position.
-          do { try await Task.sleep(for: .milliseconds(100)) } catch { return }
-          guard editingAmount, model.editingSelectionID != model.input.source else { return }
-          if model.editingSelectionID == model.input.destinationRows.last?.id {
-            listPosition.scrollTo(edge: .bottom)
-          } else {
-            listPosition.scrollTo(id: model.editingSelectionID, anchor: .center)
+        .scrollTargetLayout()
+        .frame(maxWidth: 580).frame(maxWidth: .infinity)
+        .background {
+          if !editingAmount {
+            CurrencyRefreshAttachment(refreshing: model.manuallyRefreshing, enabled: true) {
+              await refresh()
+            }
           }
         }
       }
-      if let warning = model.warningText {
-        Text(warning).font(AppStyle.font(.caption)).foregroundStyle(.secondary)
-          .multilineTextAlignment(.center).padding(.horizontal, AppStyle.Space.large)
+      .accessibilityAction(named: Text(.Converter.refreshRates)) {
+        if !model.refreshing { refreshRequest = UUID() }
+      }
+      .scrollBounceBehavior(.always)
+      .scrollPosition($listPosition)
+      .contentShape(Rectangle())
+      .gesture(
+        TapGesture().onEnded { dismissAmount() },
+        including: editingAmount ? .all : .subviews
+      )
+      .padding(.horizontal, AppStyle.Space.large)
+      // Inset the scroll content while keeping its backdrop behind the floating glass shape.
+      .safeAreaInset(edge: .bottom, spacing: 0) {
+        VStack(spacing: 0) {
+          if let warning = model.warningText {
+            Text(warning).font(AppStyle.font(.caption)).foregroundStyle(.secondary)
+              .multilineTextAlignment(.center).padding(.horizontal, AppStyle.Space.large)
+          }
+          if verticalSizeClass != .compact {
+            inputDock(bottomSafeArea: bottomSafeArea)
+          }
+        }
+      }
+      .task(id: "\(editingAmount)-\(model.editingSelectionID ?? "")-\(viewport.size)") {
+        // Wait for the keypad's layout transaction before resolving the row's scroll position.
+        do { try await Task.sleep(for: .milliseconds(100)) } catch { return }
+        guard editingAmount, model.editingSelectionID != model.input.source else { return }
+        if model.editingSelectionID == model.input.destinationRows.last?.id {
+          listPosition.scrollTo(edge: .bottom)
+        } else {
+          listPosition.scrollTo(id: model.editingSelectionID, anchor: .center)
+        }
       }
     }
   }
@@ -259,6 +280,11 @@ struct HomeScreen: View {
           Spacer()
         }
       }
+      .contentShape(Rectangle())
+      .gesture(
+        TapGesture().onEnded { dismissAmount() },
+        including: editingAmount ? .all : .subviews
+      )
     }
   }
 
@@ -288,7 +314,11 @@ struct HomeScreen: View {
 
   private var amountEntry: some View {
     Button {
-      beginEditing(model.input.source)
+      if editingAmount {
+        dismissAmount()
+      } else {
+        beginEditing(model.input.source)
+      }
     } label: {
       HStack(alignment: .firstTextBaseline, spacing: AppStyle.Space.small) {
         Text(amountLabel)
@@ -319,6 +349,7 @@ struct HomeScreen: View {
     .buttonStyle(.plain)
     .accessibilityLabel(.Converter.editAmountAccessibility(model.input.source))
     .accessibilityValue(amountLabel)
+    .accessibilityHint(editingAmount ? .Converter.doneEntering : .Converter.enterAmount)
     .contextMenu {
       Button(.Converter.detailsAndHistory, systemImage: "chart.xyaxis.line") {
         showDetails(code: model.input.source, selectionID: model.input.source)
@@ -385,7 +416,9 @@ struct HomeScreen: View {
     let code = row.code
     let value = model.snapshot.convert(model.input.decimal, from: model.input.source, to: code)
     return Button {
-      if value == nil {
+      if editingAmount {
+        dismissAmount()
+      } else if value == nil {
         showDetails(code: code, selectionID: row.id)
       } else {
         beginEditing(code, selectionID: row.id)
@@ -404,7 +437,11 @@ struct HomeScreen: View {
           : CurrencyDisplay.name(code, locale: locale),
         CurrencyDisplay.format(value, code: code, locale: locale))
     )
-    .accessibilityHint(value == nil ? .Converter.detailsAndHistory : .Converter.editAmountHint)
+    .accessibilityHint(
+      editingAmount
+        ? .Converter.doneEntering
+        : value == nil ? .Converter.detailsAndHistory : .Converter.editAmountHint
+    )
     .accessibilityAddTraits(
       editingAmount && model.editingSelectionID == row.id ? .isSelected : []
     )
@@ -440,6 +477,16 @@ struct HomeScreen: View {
     verticalSizeClass == .compact
       ? [["1", "2", "3", "⌫"], ["4", "5", "6", "."], ["7", "8", "9", "0"]]
       : [["1", "2", "3"], ["4", "5", "6"], ["7", "8", "9"], [".", "0", "⌫"]]
+  }
+
+  private var keypadShape: UnevenRoundedRectangle {
+    let bottomRadius: CGFloat =
+      horizontalSizeClass == .compact && verticalSizeClass != .compact ? 64 : 32
+    return .rect(
+      topLeadingRadius: 32,
+      bottomLeadingRadius: bottomRadius,
+      bottomTrailingRadius: bottomRadius,
+      topTrailingRadius: 32)
   }
 
   private func inputDock(bottomSafeArea: CGFloat) -> some View {
@@ -536,18 +583,18 @@ struct HomeScreen: View {
           .padding(.bottom, AppStyle.Space.small + bottomSafeArea)
           .padding(.top, verticalSizeClass == .compact ? AppStyle.Space.small : 0)
         }
-        .contentShape(Rectangle())
+        .contentShape(keypadShape)
         .onTapGesture { /* Keep taps in the keypad's header and gaps inside the pad. */  }
-        .glassEffect(
-          .regular,
-          in: .rect(
-            uniformTopCorners: .fixed(32),
-            uniformBottomCorners: .concentric(minimum: .fixed(32)))
-        )
+        .glassEffect(.regular, in: keypadShape)
+        .overlay {
+          // Consume corner taps before UIKit expands a nearby button's touch target.
+          Color.clear.contentShape(Rectangle().subtracting(keypadShape))
+            .onTapGesture { dismissAmount() }
+            .accessibilityHidden(true)
+        }
         .glassEffectID("amount-dock", in: keypadMotion)
         .glassEffectTransition(.matchedGeometry)
         .padding(.bottom, AppStyle.Space.small)
-        .ignoresSafeArea(edges: .bottom)
 
       } else {
         HStack(spacing: 0) {
