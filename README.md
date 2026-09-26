@@ -34,5 +34,5 @@ Build the `CurrencyHarnesses` scheme for all seven harness apps, and run `Curren
 - [Project.swift](Project.swift) defines modules and dependencies; public API comments describe integration contracts.
 - [Decisions](Documentation/Decisions.md): rationale, boundaries, and platform limits.
 - [Development](Documentation/Development.md): essential commands and pitfalls.
-- [To-do](Documentation/TODO.md): unfinished features and release checks.
+- [Issues](https://github.com/DimaMishchenko/currency/issues): unfinished features, maintenance, and release checks.
 - [Third-party assets](Documentation/ThirdPartyAssets.md): provenance and licenses.
