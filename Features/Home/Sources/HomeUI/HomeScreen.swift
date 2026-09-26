@@ -75,7 +75,7 @@ struct HomeScreen: View {
         }
       }
       .background { outsideDismissal.accessibilityHidden(true) }
-      .background(Color(uiColor: .systemBackground).ignoresSafeArea())
+      .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
       .toolbarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .topBarLeading) { sourcePicker.tint(nil) }
