@@ -9,19 +9,52 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      xcode: ${{ steps.changes.outputs.xcode }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Classify changes
+        id: changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: bash Scripts/CI/changes.sh "$BASE_SHA"
+      - name: Check release automation
+        run: for script in Scripts/CI/*.sh; do bash -n "$script"; done
+      - name: Test CI skip rules
+        run: python3 Scripts/CI/test_skip_rules.py
+      - name: Record release decision
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: currency-release-request
+          path: ${{ runner.temp }}/ShouldPublish.txt
+          if-no-files-found: error
   test:
-    runs-on: xcode-27
+    needs: changes
+    if: always()
+    runs-on: ${{ needs.changes.outputs.xcode == 'true' && 'xcode-27' || 'ubuntu-latest' }}
     timeout-minutes: 60
     concurrency:
       group: currency-test-${{ github.event.pull_request.number || github.run_id }}
       cancel-in-progress: true
     steps:
+      - name: Require successful change checks
+        if: needs.changes.result != 'success'
+        run: exit 1
       - uses: actions/checkout@v5
+        if: needs.changes.outputs.xcode == 'true'
       - name: Install tools
+        if: needs.changes.outputs.xcode == 'true'
         run: brew install tuist xcbeautify
       - name: Generate project
+        if: needs.changes.outputs.xcode == 'true'
         run: tuist generate --no-open
       - name: Test on iOS Simulator
+        if: needs.changes.outputs.xcode == 'true'
         run: |
           set -o pipefail
           xcodebuild test \
@@ -33,5 +66,3 @@ jobs:
             -parallel-testing-enabled NO \
             CODE_SIGN_IDENTITY=- \
             2>&1 | xcbeautify
-      - name: Check release automation
-        run: bash -n Scripts/CI/signing.sh Scripts/CI/release.sh Scripts/CI/verify_ipa.sh Scripts/CI/public_beta.sh
