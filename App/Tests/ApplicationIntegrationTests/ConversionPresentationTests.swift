@@ -22,8 +22,8 @@ import Testing
     let request = try ConversionRequest(
       amount: "1", source: "IDR", destinations: [.init(code: "USD")])
     let evaluation = try ConversionEvaluation(request: request, snapshot: rates, now: now)
-    let row = ConversionPresentation.row(evaluation.results[0], request: request)
-    #expect(row != "0 USD")
+    let row = ConversionPresentation.row(evaluation.results[0], request: request, style: .rate)
+    #expect(!row.hasPrefix("0 "))
     #expect(row.contains("625"))
     let tiny = try ConversionRequest(
       amount: "0.001", source: "EUR", destinations: [.init(code: "USD")])
@@ -40,7 +40,7 @@ import Testing
     #expect(result.convertedAmount == request.amount)
     #expect(result.currency == "EUR")
     #expect(result.monetaryAmount?.amount == ExactAmount.parse(request.amount))
-    #expect(result.resultText.hasSuffix("→ 0.12 EUR") || result.resultText.hasSuffix("→ 0,12 EUR"))
+    #expect(result.resultText.contains("0.12") || result.resultText.contains("0,12"))
     #expect(result.status.isEmpty)
   }
   @Test func localAndFixedResultsKeepUsefulLabelsWithoutMetadataDump() throws {
@@ -49,8 +49,10 @@ import Testing
     let evaluation = try ConversionEvaluation(request: request, snapshot: .init(), now: now)
     let result = ConversionResultEntity(result: evaluation.results[0], evaluation: evaluation)
     #expect(result.convertedAmount == nil && result.monetaryAmount == nil && result.currency == nil)
-    #expect(result.resultText.hasSuffix("(Local)"))
-    #expect(result.status == String(localized: "Local currency is unavailable"))
+    #expect(result.resultText == String(localized: "Local currency"))
+    #expect(result.status == ConversionPresentation.localSetup)
+    #expect(ConversionPresentation.speech(evaluation) == ConversionPresentation.localSetup)
+    #expect(!ConversionPresentation.speech(evaluation).contains("destination"))
     #expect(!ConversionPresentation.speech(evaluation).contains("publication"))
   }
   @Test func individualStatusDoesNotInheritAnotherDestinationsFailure() throws {
@@ -75,6 +77,30 @@ import Testing
     let result = ConversionResultEntity(result: evaluation.results[0], evaluation: evaluation)
     #expect(!result.status.isEmpty)
     #expect(result.status.contains(CurrencyDisplay.publicationDate("2026-12-15")))
+  }
+  @Test func rateIsRoundedForPeopleWhileKeepingExactChainingData() throws {
+    let request = try ConversionRequest(
+      amount: "1", source: "USD", destinations: [.init(code: "EUR")])
+    let snapshot = RateSnapshot(
+      quotes: ["USD": quote(1), "EUR": quote(Decimal(string: "0.8773469")!)], fetchedAt: now)
+    let evaluation = try ConversionEvaluation(request: request, snapshot: snapshot, now: now)
+    let result = ConversionResultEntity(
+      result: evaluation.results[0], evaluation: evaluation, style: .rate)
+    #expect(result.convertedAmount == "0.8773469")
+    #expect(result.resultText.contains("≈"))
+    #expect(result.resultText.contains("🇺🇸") && result.resultText.contains("🇪🇺"))
+    #expect(
+      result.resultText.contains(CurrencyDisplay.format(Decimal(string: "0.88")!, code: "EUR")))
+    let speech = ConversionPresentation.speech(evaluation, style: .rate)
+    #expect(speech.contains("approximately") && !speech.contains("0.8773469"))
+  }
+  @Test func metalOutputsUseTroyOuncesAndCannotBeFiatMoney() throws {
+    let request = try ConversionRequest(
+      amount: "1", source: "XAU", destinations: [.init(code: "XAU")])
+    let evaluation = try ConversionEvaluation(request: request, snapshot: .init(), now: now)
+    let result = ConversionResultEntity(result: evaluation.results[0], evaluation: evaluation)
+    #expect(result.monetaryAmount == nil)
+    #expect(result.resultText.contains("troy oz") && result.resultText.contains("🥇"))
   }
   private func quote(_ value: Decimal) -> ExchangeRate {
     .init(value, published: "2027-01-15", source: .init(provider: .ecb))

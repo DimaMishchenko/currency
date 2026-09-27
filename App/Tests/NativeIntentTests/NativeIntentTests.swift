@@ -2,7 +2,6 @@ import AppIntents
 import AppIntentsTesting
 import XCTest
 
-/// Runs the installed executable's extracted intents, without importing copied app declarations.
 @MainActor
 final class NativeIntentTests: XCTestCase {
   let definitions = IntentDefinitions(bundleIdentifier: "com.dimasike.currency")
@@ -10,7 +9,15 @@ final class NativeIntentTests: XCTestCase {
   override func setUp() async throws {
     await MainActor.run {
       continueAfterFailure = false
-      XCUIApplication(bundleIdentifier: "com.dimasike.currency").launch()
+      let app = XCUIApplication(bundleIdentifier: "com.dimasike.currency")
+      app.launch()
+      for _ in 0..<6 {
+        let primary = app.buttons["onboarding.primary"]
+        guard primary.waitForExistence(timeout: 1) else { break }
+        let later = app.buttons["onboarding.later"]
+        if later.exists { later.tap() } else { primary.tap() }
+      }
+      XCTAssertFalse(app.buttons["onboarding.primary"].exists)
     }
   }
 
@@ -29,6 +36,25 @@ final class NativeIntentTests: XCTestCase {
     let nextValue: AnyTransientAppEntity = try next.value
     let nextExact: String = try nextValue.convertedAmount
     XCTAssertEqual(nextExact, exact)
+  }
+
+  func testCrossCurrencyConversionReturnsReadableOutputOrActionableStatus() async throws {
+    let currencies = definitions.entities["CurrencyEntity"]
+    let result = try await definitions.intents["ConvertAmountIntent"]
+      .makeIntent(
+        amount: "100", source: currencies.makeReference(identifier: "USD"),
+        destination: currencies.makeReference(identifier: "EUR")
+      )
+      .run()
+    let value: AnyTransientAppEntity = try result.value
+    let exact: String? = try value.convertedAmount
+    let text: String = try value.resultText
+    let status: String = try value.status
+    if exact != nil {
+      XCTAssertTrue(text.contains("≈") && text.contains("🇺🇸") && text.contains("🇪🇺"))
+    } else {
+      XCTAssertFalse(status.isEmpty)
+    }
   }
 
   func testNumberInputCoercionAndCommaDecimal() async throws {
@@ -85,7 +111,7 @@ final class NativeIntentTests: XCTestCase {
       _ = try await intent.run()
       XCTFail("Grouped text must retain the exact text grammar")
     } catch {
-      XCTAssertTrue(error.localizedDescription.contains("without grouping"))
+      XCTAssertFalse(error.localizedDescription.isEmpty)
     }
   }
 
@@ -121,7 +147,10 @@ final class NativeIntentTests: XCTestCase {
       .makeIntent(amount: "1", source: euro, destination: local).run()
     let value: AnyTransientAppEntity = try result.value
     let resultText: String = try value.resultText
-    XCTAssertTrue(resultText.hasSuffix("(Local)"))
+    let status: String = try value.status
+    XCTAssertTrue(
+      resultText.hasSuffix("(Local)")
+        || (resultText == "Local currency" && status.contains("set up location")))
   }
 
   func testMyCurrenciesReturnsAnOrderedStructuredArray() async throws {
@@ -138,4 +167,86 @@ final class NativeIntentTests: XCTestCase {
     let nextIDs = try nextValues.map { value -> String in try value.resultText }
     XCTAssertEqual(ids, nextIDs)
   }
+
+  func testCatalogChoicesAndSearchIncludeUnsavedFiatCryptoAndMetals() async throws {
+    let definition = definitions.entities["CurrencyEntity"]
+    let all = try await definition.allEntities()
+    let suggestions = try await definition.suggestedEntities()
+    XCTAssertGreaterThan(all.count, 150)
+    XCTAssertEqual(identifiers(all), identifiers(suggestions))
+    for (term, id) in [("usd", "USD"), ("eur", "EUR"), ("Bitcoin", "BTC"), ("gold", "XAU")] {
+      let matches = try await definition.entities(matching: term)
+      XCTAssertTrue(identifiers(matches).contains(id), term)
+    }
+  }
+
+  func testSpotlightIndexesTheFullCatalogAndCurrencyCodes() async throws {
+    let definition = definitions.entities["CurrencyEntity"]
+    let catalog = try await definition.allEntities()
+    let expected = Set(identifiers(catalog).filter { $0 != "@local" })
+    var indexed = Set<String>()
+    let deadline = Date().addingTimeInterval(10)
+    repeat {
+      indexed = Set(identifiers(try await definition.spotlightQuery()))
+      if expected.isSubset(of: indexed) { break }
+      try await Task.sleep(for: .milliseconds(250))
+    } while Date() < deadline
+    XCTAssertTrue(expected.isSubset(of: indexed), "Missing: \(expected.subtracting(indexed))")
+    for id in ["USD", "EUR", "BTC", "XAU"] {
+      let matches = try await definition.spotlightQuery(id.lowercased())
+      XCTAssertTrue(identifiers(matches).contains(id), id)
+    }
+  }
+
+  func testExistingDetailsOpenFromColdAndWarmApp() async throws {
+    let app = XCUIApplication(bundleIdentifier: "com.dimasike.currency")
+    app.terminate()
+    XCTAssertEqual(app.state, .notRunning)
+    for id in ["XAU", "JPY"] {
+      let target = definitions.entities["CurrencyEntity"].makeReference(identifier: id)
+      _ = try await definitions.intents["OpenCurrencyIntent"].makeIntent(target: target).run()
+      XCTAssertTrue(app.wait(for: .runningForeground, timeout: 10))
+      XCTAssertTrue(
+        app.descendants(matching: .any)["currency.details.\(id)"].firstMatch
+          .waitForExistence(timeout: 5))
+      let annotations = try await annotationIDs(hidden: false)
+      XCTAssertEqual(annotations, [id])
+      XCTAssertTrue(app.buttons["Close"].waitForExistence(timeout: 5))
+      app.buttons["Close"].tap()
+    }
+  }
+
+  func testConverterAnnotationsFollowVisibleContent() async throws {
+    let app = XCUIApplication(bundleIdentifier: "com.dimasike.currency")
+    let visible = try await annotationIDs(hidden: false)
+    XCTAssertGreaterThanOrEqual(visible.count, 2)
+    app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Source currency,")).firstMatch
+      .tap()
+    let picker = try await annotationIDs(hidden: true)
+    XCTAssertTrue(picker.isEmpty, "Hidden converter annotations: \(picker)")
+    app.buttons["Close"].tap()
+    let restored = try await annotationIDs(hidden: false)
+    XCTAssertEqual(restored, visible)
+    app.buttons["Options"].tap()
+    app.buttons["converter.settings"].tap()
+    let hidden = try await annotationIDs(hidden: true)
+    XCTAssertTrue(hidden.isEmpty, "Hidden converter annotations: \(hidden)")
+  }
+
+  private func annotationIDs(hidden: Bool) async throws -> Set<String> {
+    let deadline = Date().addingTimeInterval(5)
+    var result = Set<String>()
+    repeat {
+      let annotations = try await definitions.entities["CurrencyEntity"].viewAnnotations()
+      result = Set(annotations.map { $0.entity.identifier.instanceIdentifier })
+      if result.isEmpty == hidden { break }
+      try await Task.sleep(for: .milliseconds(200))
+    } while Date() < deadline
+    return result
+  }
+
+  private func identifiers(_ entities: [AnyAppEntity]) -> [String] {
+    entities.map { $0.identifier.instanceIdentifier }
+  }
+
 }

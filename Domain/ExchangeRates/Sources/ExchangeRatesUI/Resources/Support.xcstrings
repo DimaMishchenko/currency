@@ -1,14 +1,244 @@
 {
   "sourceLanguage": "en",
   "strings": {
-    "dailyUnavailable": {
+    "Aave": {
       "extractionState": "manual",
-      "comment": "Support interface: dailyUnavailable.",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Can’t update daily rates. Showing saved rates."
+            "value": "Aave"
+          }
+        }
+      }
+    },
+    "Algorand": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Algorand"
+          }
+        }
+      }
+    },
+    "Avalanche": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avalanche"
+          }
+        }
+      }
+    },
+    "Bitcoin": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bitcoin"
+          }
+        }
+      }
+    },
+    "Bitcoin Cash": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bitcoin Cash"
+          }
+        }
+      }
+    },
+    "Cardano": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cardano"
+          }
+        }
+      }
+    },
+    "Chainlink": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chainlink"
+          }
+        }
+      }
+    },
+    "Cosmos": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cosmos"
+          }
+        }
+      }
+    },
+    "Dogecoin": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dogecoin"
+          }
+        }
+      }
+    },
+    "Ethereum": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ethereum"
+          }
+        }
+      }
+    },
+    "Ethereum Classic": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ethereum Classic"
+          }
+        }
+      }
+    },
+    "Filecoin": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filecoin"
+          }
+        }
+      }
+    },
+    "Internet Computer": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Internet Computer"
+          }
+        }
+      }
+    },
+    "Litecoin": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Litecoin"
+          }
+        }
+      }
+    },
+    "Polkadot": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Polkadot"
+          }
+        }
+      }
+    },
+    "Shiba Inu": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shiba Inu"
+          }
+        }
+      }
+    },
+    "Solana": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solana"
+          }
+        }
+      }
+    },
+    "Stellar": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stellar"
+          }
+        }
+      }
+    },
+    "Tether": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tether"
+          }
+        }
+      }
+    },
+    "USD Coin": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "USD Coin"
+          }
+        }
+      }
+    },
+    "Uniswap": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uniswap"
+          }
+        }
+      }
+    },
+    "XRP": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "XRP"
           }
         }
       }
@@ -25,50 +255,14 @@
         }
       }
     },
-    "historyUnsupported": {
+    "dailyCloses": {
       "extractionState": "manual",
-      "comment": "Support interface: historyUnsupported.",
+      "comment": "Provider provenance template; arguments contain provider or timezone data.",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "History is unavailable for this pair."
-          }
-        }
-      }
-    },
-    "historyUnavailable": {
-      "extractionState": "manual",
-      "comment": "Support interface: historyUnavailable.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "History is unavailable. Your converter still works with saved rates."
-          }
-        }
-      }
-    },
-    "historyCached": {
-      "extractionState": "manual",
-      "comment": "Support interface: historyCached.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Can’t update history. Showing the saved chart."
-          }
-        }
-      }
-    },
-    "historySaveFailed": {
-      "extractionState": "manual",
-      "comment": "Support interface: historySaveFailed.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "History loaded, but couldn’t be saved offline."
+            "value": "%@ · daily closes"
           }
         }
       }
@@ -97,26 +291,62 @@
         }
       }
     },
-    "monthlyReference": {
+    "dailyUnavailable": {
       "extractionState": "manual",
-      "comment": "Provider provenance template; arguments contain provider or timezone data.",
+      "comment": "Support interface: dailyUnavailable.",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ · monthly reference rates"
+            "value": "Can’t update daily rates. Showing saved rates."
           }
         }
       }
     },
-    "dailyCloses": {
+    "historyCached": {
       "extractionState": "manual",
-      "comment": "Provider provenance template; arguments contain provider or timezone data.",
+      "comment": "Support interface: historyCached.",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ · daily closes"
+            "value": "Can’t update history. Showing the saved chart."
+          }
+        }
+      }
+    },
+    "historySaveFailed": {
+      "extractionState": "manual",
+      "comment": "Support interface: historySaveFailed.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "History loaded, but couldn’t be saved offline."
+          }
+        }
+      }
+    },
+    "historyUnavailable": {
+      "extractionState": "manual",
+      "comment": "Support interface: historyUnavailable.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "History is unavailable. Your converter still works with saved rates."
+          }
+        }
+      }
+    },
+    "historyUnsupported": {
+      "extractionState": "manual",
+      "comment": "Support interface: historyUnsupported.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "History is unavailable for this pair."
           }
         }
       }
@@ -133,14 +363,14 @@
         }
       }
     },
-    "sourceWithTimeZone": {
+    "monthlyReference": {
       "extractionState": "manual",
       "comment": "Provider provenance template; arguments contain provider or timezone data.",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ · %2$@"
+            "value": "%@ · monthly reference rates"
           }
         }
       }
@@ -153,6 +383,18 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ · retrieved"
+          }
+        }
+      }
+    },
+    "sourceWithTimeZone": {
+      "extractionState": "manual",
+      "comment": "Provider provenance template; arguments contain provider or timezone data.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$@"
           }
         }
       }

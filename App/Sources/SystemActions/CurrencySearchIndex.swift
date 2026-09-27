@@ -1,10 +1,12 @@
 import AppIntents
+import Conversion
 import CoreSpotlight
+import CurrencyApplication
+import ExchangeRates
 import Foundation
 import LocalCurrency
 import OSLog
 
-/// Owns only Currency's selected-content index; failed work retries on the next reconciliation.
 @MainActor
 final class CurrencySearchIndex: NSObject, CSSearchableIndexDelegate {
   struct State: Equatable {
@@ -15,7 +17,8 @@ final class CurrencySearchIndex: NSObject, CSSearchableIndexDelegate {
     var preferredLanguages = Locale.preferredLanguages
     var entities: [CurrencyEntity] {
       let permitted = status.allowsCache && observation?.isUsable == true ? observation : nil
-      return ids.map { CurrencyEntity($0, local: $0 == "@local" ? permitted : nil) }
+      return ids.filter { $0 != CurrencySelection.localID || permitted != nil }
+        .map { CurrencyEntity($0, local: $0 == CurrencySelection.localID ? permitted : nil) }
     }
   }
   struct Dependencies {
@@ -25,7 +28,24 @@ final class CurrencySearchIndex: NSObject, CSSearchableIndexDelegate {
   }
   private let dependencies: Dependencies
   private let index: CSSearchableIndex?
-  private static let domain = "Currency.SelectedCurrencies"
+  private static let domain = "Currency.Catalog"
+  static let indexName = "Currency.SelectedCurrencies"
+  static let cleanupDomains = [indexName, domain]
+  static let converterID = "Currency.Converter"
+  static var converterItem: CSSearchableItem {
+    let attributes = CSSearchableItemAttributeSet(contentType: .content)
+    attributes.title = String(localized: "Currency")
+    attributes.contentDescription = String(localized: "Convert currencies, crypto and metals")
+    attributes.keywords = [
+      String(localized: "currency"), String(localized: "convert"), String(localized: "exchange"),
+      String(localized: "currency converter"), String(localized: "exchange rate"),
+      String(localized: "money"), String(localized: "crypto"), String(localized: "metals")
+    ]
+    attributes.textContent = attributes.keywords?.joined(separator: " ")
+    attributes.contentURL = CurrencyRoute.converter.url
+    return CSSearchableItem(
+      uniqueIdentifier: converterID, domainIdentifier: domain, attributeSet: attributes)
+  }
   private var worker: Task<Void, Never>?
   private var dirty = false
   private var forceRebuild = false
@@ -40,26 +60,29 @@ final class CurrencySearchIndex: NSObject, CSSearchableIndexDelegate {
     index?.indexDelegate = self
   }
   static func live(composition: SystemActionComposition) -> CurrencySearchIndex {
-    let index = CSSearchableIndex(name: domain)
+    let index = CSSearchableIndex(name: indexName)
     let dependencies = Dependencies(
       readState: {
         let (observation, status) = composition.readLocal()
-        return State(ids: composition.readSelected(), observation: observation, status: status)
+        return State(
+          ids: CurrencyCatalog.codes + [CurrencySelection.localID], observation: observation,
+          status: status)
       },
       delete: {
         try await withCheckedThrowingContinuation {
           (continuation: CheckedContinuation<Void, Error>) in
-          index.deleteSearchableItems(withDomainIdentifiers: [domain]) { error in
+          index.deleteSearchableItems(withDomainIdentifiers: cleanupDomains) { error in
             if let error { continuation.resume(throwing: error) } else { continuation.resume() }
           }
         }
       },
       publish: { entities in
-        let items = entities.map { entity in
-          let item = CSSearchableItem(appEntity: entity)
-          item.domainIdentifier = domain
-          return item
-        }
+        let items =
+          entities.map { entity in
+            let item = CSSearchableItem(appEntity: entity)
+            item.domainIdentifier = domain
+            return item
+          } + [converterItem]
         try await withCheckedThrowingContinuation {
           (continuation: CheckedContinuation<Void, Error>) in
           index.indexSearchableItems(items) { error in
@@ -88,9 +111,7 @@ final class CurrencySearchIndex: NSObject, CSSearchableIndexDelegate {
           continue
         }
         do {
-          // A full rebuild handles upgrades and removes stale identities without another store.
           try await dependencies.delete()
-          // Authorization and selection may change during deletion. Never publish its old snapshot.
           let state = dependencies.readState()
           try await dependencies.publish(state.entities)
           lastPublishedState = state
@@ -104,7 +125,7 @@ final class CurrencySearchIndex: NSObject, CSSearchableIndexDelegate {
           cleanupNeeded = true
           Logger(subsystem: "com.dimasike.currency", category: "Spotlight")
             .error(
-              "Selected currency indexing failed: \(error.localizedDescription, privacy: .public)")
+              "Currency indexing failed: \(error.localizedDescription, privacy: .public)")
           break
         }
       }
@@ -144,7 +165,6 @@ final class CurrencySearchIndex: NSObject, CSSearchableIndexDelegate {
   }
 }
 
-/// Core Spotlight acknowledgements may be delivered on any queue; invoke once after reconciliation.
 private final class IndexAcknowledgement: @unchecked Sendable {
   private let handler: () -> Void
   init(_ handler: @escaping () -> Void) { self.handler = handler }

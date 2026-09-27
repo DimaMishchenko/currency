@@ -7,8 +7,8 @@ import Onboarding
 import Testing
 
 @MainActor @Suite struct CurrencyRouteTests {
-  @Test(arguments: ["EUR", "USD", "@local"])
-  func selectedContentRouteRoundTrip(_ id: String) throws {
+  @Test(arguments: ["EUR", "USD", "BTC", "XAU", "@local"])
+  func catalogContentRouteRoundTrip(_ id: String) throws {
     let route = CurrencyRoute.currency(id)
     #expect(CurrencyRoute(url: try #require(route.url)) == route)
   }
@@ -16,10 +16,22 @@ import Testing
     "currency://currency?id=USD", "currency://currency?v=2&id=USD",
     "currency://currency?v=1&id=WRONG", "currency://currency?v=1&id=USD&id=EUR",
     "currency://conversion?v=1&request=garbage", "https://currency?v=1&id=USD",
-    "currency://currency/path?v=1&id=USD"
+    "currency://currency/path?v=1&id=USD", "currency://converter?v=2",
+    "currency://converter?v=1&id=USD"
   ])
   func invalidURLsFailClosed(_ text: String) throws {
     #expect(CurrencyRoute(url: try #require(URL(string: text))) == nil)
+  }
+  @Test func converterRouteOpensHomeAndDismissesOtherContent() throws {
+    let route = CurrencyRoute.converter
+    #expect(CurrencyRoute(url: try #require(route.url)) == route)
+    let scene = CurrencyScene(completed: true, replay: {})
+    scene.path = [.settings(UUID())]
+    scene.receive(HomeOutput.widgetsRequested)
+    scene.requestLocation(addsToApp: false)
+    scene.open(route)
+    #expect(
+      scene.path.isEmpty && scene.detail == nil && scene.sheet == nil && scene.location == nil)
   }
   @Test func latestRouteWaitsForItsSceneOnboardingAndOpensWithoutZoom() throws {
     let first = CurrencyScene(
@@ -37,7 +49,7 @@ import Testing
     #expect(first.detail?.request.code == "GBP" && first.detail?.usesZoom == false)
     #expect(second.detail == nil)
   }
-  @Test func removedSelectionDoesNotOpenOrChangeExistingNavigation() throws {
+  @Test func unavailableContentDoesNotChangeExistingNavigation() throws {
     let scene = CurrencyScene(completed: true, replay: {}, openCurrency: { _ in nil })
     scene.path = [.settings(UUID())]
     let original = scene.path

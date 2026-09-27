@@ -118,10 +118,19 @@ struct CurrencyRoot: View {
     .tint(appearance.accent)
     .preferredColorScheme(appearance.theme.colorScheme)
     .onOpenURL(perform: scene.open)
+    .handlesExternalEvents(preferring: ["OpenCurrencyIntent"], allowing: ["*"])
+    .onAppIntentExecution(OpenCurrencyIntent.self) { intent in
+      scene.open(.currency(intent.target.id))
+    }
     .onContinueUserActivity(CSSearchableItemActionType) { activity in
       if let url = activity.webpageURL { scene.open(url); return }
-      if let identifier = activity.userInfo?[CSSearchableItemActivityIdentifier] as? String,
-        let entity = EntityIdentifier(activityIdentifier: identifier),
+      guard let identifier = activity.userInfo?[CSSearchableItemActivityIdentifier] as? String
+      else {
+        return
+      }
+      if identifier == CurrencySearchIndex.converterID {
+        scene.open(.converter)
+      } else if let entity = EntityIdentifier(activityIdentifier: identifier),
         entity.entityType == CurrencyEntity.self
       {
         if let url = CurrencyApplication.CurrencyRoute.currency(entity.identifier).url {
@@ -176,7 +185,10 @@ struct CurrencyRoot: View {
       flowID: detail.id,
       input: CurrencyDetailsInput(
         code: detail.request.code, reference: detail.request.reference,
-        snapshot: detail.request.snapshot))
+        snapshot: detail.request.snapshot)
+    )
+    .accessibilityIdentifier("currency.details.\(detail.request.code)")
+    .appEntityIdentifier(EntityIdentifier(for: CurrencyEntity(detail.request.code)))
   }
   private func locationContent(_ location: CurrencyScene.Location) -> some View {
     LocationHost(composition: composition, scene: scene, location: location).id(location.id)
@@ -204,7 +216,6 @@ private struct LocationHost: View {
   }
 }
 
-/// Lives at the requesting widget modal level so a location sheet can stack above it.
 private struct WidgetLocationPresenter: View {
   let composition: AppComposition
   let scene: CurrencyScene

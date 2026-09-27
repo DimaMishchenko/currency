@@ -112,14 +112,20 @@ public final class CurrencyScene {
   }
   /// Interprets supported application URLs without changing unrelated routes.
   public func open(_ url: URL) {
-    guard url.scheme == "currency" else { return }
+    guard url.scheme == CurrencyRoute.scheme else { return }
     if url.host == "local-currency" { requestLocation(addsToApp: false); return }
     guard let route = CurrencyRoute(url: url) else { return }
+    open(route)
+  }
+  /// Opens existing content, deferring navigation until this scene finishes onboarding.
+  public func open(_ route: CurrencyRoute) {
     if showsOnboarding { pendingRoute = route } else { present(route) }
   }
 
   private func present(_ route: CurrencyRoute) {
     switch route {
+    case .converter:
+      path = []; detail = nil; sheet = nil; location = nil
     case .currency(let id):
       guard let request = openCurrency(id) else { return }
       path = []; detail = nil; sheet = nil; location = nil

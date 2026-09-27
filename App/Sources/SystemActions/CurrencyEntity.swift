@@ -8,7 +8,6 @@ import Foundation
 import LocalCurrency
 import UniformTypeIdentifiers
 
-/// App-owned currency content and calculation parameters; widget entities remain unchanged.
 struct CurrencyEntity: IndexedEntity {
   static let typeDisplayRepresentation: TypeDisplayRepresentation = "Currency"
   static let defaultQuery = CurrencyEntityQuery()
@@ -23,13 +22,13 @@ struct CurrencyEntity: IndexedEntity {
   }
   var displayRepresentation: DisplayRepresentation {
     DisplayRepresentation(
-      title: "\(name)",
+      title: "\(id == CurrencySelection.localID ? name : id + " · " + name)",
       subtitle: "\(resolvedLocalCode ?? (id == CurrencySelection.localID ? "" : id))",
-      image: .init(
-        systemName: id == CurrencySelection.localID ? "location.fill" : "dollarsign.circle"))
+      image: Self.image(for: id),
+      synonyms: Self.aliases(id).map { LocalizedStringResource("\($0)") })
   }
   var attributeSet: CSSearchableItemAttributeSet {
-    let attributes = CSSearchableItemAttributeSet(contentType: .content)
+    let attributes = defaultAttributeSet
     attributes.title = id == CurrencySelection.localID ? name : "\(id) · \(name)"
     attributes.contentDescription = String(localized: "Open currency details in Currency")
     attributes.keywords =
@@ -37,39 +36,47 @@ struct CurrencyEntity: IndexedEntity {
       + (id == CurrencySelection.localID
         ? [resolvedLocalCode, localCountry].compactMap { $0 }
         : [id] + Self.aliases(id))
+    attributes.displayName = attributes.title
+    attributes.alternateNames = [name, id, id.lowercased()] + Self.aliases(id)
+    attributes.textContent = ([id, id.lowercased(), name] + Self.aliases(id)).joined(separator: " ")
+    attributes.thumbnailData = CurrencyIcon.pickerImageData(resolvedLocalCode ?? id)
     attributes.contentURL = CurrencyRoute.currency(id).url
     return attributes
   }
+  static func image(for id: String) -> DisplayRepresentation.Image? {
+    if id == CurrencySelection.localID { return .init(systemName: "location.fill") }
+    guard let data = CurrencyIcon.pickerImageData(id) else { return nil }
+    return .init(data: data, isTemplate: false)
+  }
   static func aliases(_ code: String) -> [String] {
-    switch code {
-    case "USD": ["US dollar", "American dollar", "dollar", "$"]
-    case "CAD": ["Canadian dollar", "dollar", "$"]
-    case "AUD": ["Australian dollar", "dollar", "$"]
-    case "NZD": ["New Zealand dollar", "dollar", "$"]
-    case "EUR": ["euro", "€"]
-    case "GBP": ["pound", "sterling", "£"]
-    case "JPY": ["yen", "¥"]
-    case "CNY": ["yuan", "renminbi", "¥"]
+    switch CurrencyCode(rawValue: code) {
+    case .usd:
+      [
+        String(localized: "US dollar"), String(localized: "American dollar"),
+        String(localized: "dollar"), "$"
+      ]
+    case .cad: [String(localized: "Canadian dollar"), String(localized: "dollar"), "$"]
+    case .aud: [String(localized: "Australian dollar"), String(localized: "dollar"), "$"]
+    case .nzd: [String(localized: "New Zealand dollar"), String(localized: "dollar"), "$"]
+    case .eur: [String(localized: "euro"), "€"]
+    case .gbp: [String(localized: "pound"), String(localized: "sterling"), "£"]
+    case .jpy: [String(localized: "yen"), "¥"]
+    case .cny: [String(localized: "yuan"), String(localized: "renminbi"), "¥"]
     default: []
     }
   }
 }
 
-struct CurrencyEntityQuery: EntityStringQuery {
+struct CurrencyEntityQuery: EntityStringQuery, EnumerableEntityQuery {
   @AppDependency private var composition: SystemActionComposition
   @AppDependency private var searchIndex: CurrencySearchIndex
   let allowsLocal: Bool
-  let selectedOnly: Bool
-  init() { self.init(allowsLocal: true, selectedOnly: false) }
-  init(allowsLocal: Bool = true, selectedOnly: Bool = false) {
-    self.allowsLocal = allowsLocal; self.selectedOnly = selectedOnly
-  }
+  init() { self.init(allowsLocal: true) }
+  init(allowsLocal: Bool) { self.allowsLocal = allowsLocal }
   private var allowed: [String] {
     let selected = composition.readSelected()
     let catalog =
-      selectedOnly
-      ? selected
-      : selected + CurrencyCatalog.codes.sorted() + (allowsLocal ? [CurrencySelection.localID] : [])
+      selected + CurrencyCatalog.codes + (allowsLocal ? [CurrencySelection.localID] : [])
     var seen = Set<String>()
     return catalog.filter {
       (allowsLocal || $0 != CurrencySelection.localID) && seen.insert($0).inserted
@@ -86,8 +93,9 @@ struct CurrencyEntityQuery: EntityStringQuery {
     return identifiers.filter(allowed.contains).map(make)
   }
   func suggestedEntities() async throws -> [CurrencyEntity] {
-    composition.readSelected().filter { allowsLocal || $0 != CurrencySelection.localID }.map(make)
+    allowed.map(make)
   }
+  func allEntities() async throws -> [CurrencyEntity] { allowed.map(make) }
   func entities(matching string: String) async throws -> [CurrencyEntity] {
     let text = string.trimmingCharacters(in: .whitespacesAndNewlines)
       .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)

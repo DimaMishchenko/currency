@@ -3,6 +3,13 @@ import LocalCurrency
 import Testing
 
 @MainActor @Suite struct CurrencySearchIndexTests {
+  @Test func upgradePreservesNamedIndexAndCleansBothCatalogGenerations() {
+    #expect(CurrencySearchIndex.indexName == "Currency.SelectedCurrencies")
+    #expect(
+      Set(CurrencySearchIndex.cleanupDomains) == [
+        "Currency.SelectedCurrencies", "Currency.Catalog"
+      ])
+  }
   @Test func unchangedOrdinaryReconciliationSkipsWorkButSystemAndLocaleRebuild() async {
     var state = CurrencySearchIndex.State(ids: ["EUR"], observation: nil, status: .denied)
     var deletes = 0
@@ -34,9 +41,7 @@ import Testing
     )
     await index.rebuild()
     #expect(published.count == 1)
-    #expect(published[0].last?.id == "@local")
-    #expect(published[0].last?.resolvedLocalCode == nil)
-    #expect(published[0].last?.localCountry == nil)
+    #expect(published[0].map(\.id) == ["EUR"])
     #expect(!index.cleanupNeeded)
   }
   @Test func selectionChangedDuringPublicationConvergesBeforeAcknowledging() async {

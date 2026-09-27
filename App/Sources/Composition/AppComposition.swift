@@ -16,7 +16,6 @@ import Settings
 import UIKit
 import WidgetKit
 
-/// Live capabilities are assembled once for this executable; scenes retain their own flow state.
 @MainActor
 final class AppComposition {
   let rates: RateStore
@@ -60,7 +59,9 @@ final class AppComposition {
       },
       openCurrency: { [self] id in
         let input = conversion.input()
-        guard CurrencySelection.appConfiguration(input).contains(id) else { return nil }
+        guard id == CurrencySelection.localID || CurrencyCode(rawValue: id) != nil else {
+          return nil
+        }
         let (location, status) = systemActions.readLocal()
         let resolved = ResolvedCurrencySelection(codes: [id], location: location, status: status)
         guard let code = id == CurrencySelection.localID ? resolved.localCode : id else {
@@ -206,7 +207,6 @@ final class AppComposition {
 
 }
 
-/// Required shared-container resolution is testable without triggering a process precondition.
 enum AppGroup {
   enum ResolutionError: Error, Equatable { case missingEntitlement }
   static func resolve(using container: (String) -> URL?) throws -> URL {
