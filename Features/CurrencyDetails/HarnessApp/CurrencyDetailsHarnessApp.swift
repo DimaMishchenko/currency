@@ -17,11 +17,14 @@ struct CurrencyDetailsHarnessApp: App {
     return arguments[index + 1]
   }
 
+  private var code: String { name == "crypto" ? "BTC" : "EUR" }
+
   private var snapshot: RateSnapshot {
     RateSnapshot(
       quotes: [
         "EUR": ExchangeRate(1, published: "2026-09-19", source: .init(provider: .ecb)),
-        "USD": ExchangeRate(1.08, published: "2026-09-19", source: .init(provider: .ecb))
+        "USD": ExchangeRate(1.08, published: "2026-09-19", source: .init(provider: .ecb)),
+        "BTC": ExchangeRate(0.000018, published: "2026-09-19", source: .init(provider: .coinbase))
       ], fetchedAt: .now)
   }
 
@@ -34,15 +37,41 @@ struct CurrencyDetailsHarnessApp: App {
       }
       if name == "empty" { return HistoryResult(series: nil, issue: .unsupportedPair) }
       if name == "failure" { return HistoryResult(series: nil, issue: .unavailable) }
-      let count = range == .week ? 7 : 30
+      if range == .day && code != "BTC" {
+        return HistoryResult(series: nil, issue: .intradayUnavailable)
+      }
+      let count: Int
+      let interval: TimeInterval
+      switch range {
+      case .day: count = 24; interval = 3600
+      case .week: count = 7; interval = 86_400
+      case .month: count = 30; interval = 86_400
+      case .quarter: count = 90; interval = 86_400
+      case .year: count = 365; interval = 86_400
+      case .yearToDate:
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = .gmt
+        let start = calendar.dateInterval(of: .year, for: .now)?.start ?? .now
+        count = max(0, calendar.dateComponents([.day], from: start, to: .now).day ?? 0)
+        interval = 86_400
+      case .all: count = 120; interval = 30 * 86_400
+      }
+      let isCrypto = code == "BTC"
       let points = (0..<count)
         .map {
           HistoryPoint(
-            date: Date.now.addingTimeInterval(Double($0 - count) * 86_400),
-            value: 1.08 + sin(Double($0) / 4) * 0.03)
+            date: Date.now.addingTimeInterval(Double($0 - count) * interval),
+            value: isCrypto
+              ? 60_000 + sin(Double($0) / 4) * 1200 : 1.08 + sin(Double($0) / 4) * 0.03)
         }
       return HistoryResult(
-        series: HistorySeries(points: points, source: .init(provider: .ecb), fetchedAt: .now),
+        series: HistorySeries(
+          points: points,
+          source: .init(
+            provider: isCrypto ? .coinbase : .frankfurter,
+            observation: isCrypto
+              ? (range == .day ? .hourlyClose : .dailyClose) : .dailyReference,
+            timeZone: .gmt), fetchedAt: .now),
         issue: name == "cached" ? .usingCachedSeries : nil)
     }
   }
@@ -50,7 +79,7 @@ struct CurrencyDetailsHarnessApp: App {
   var body: some Scene {
     WindowGroup {
       CurrencyDetailsEntry(
-        flowID: flowID, input: .init(code: "EUR", reference: "USD", snapshot: snapshot)
+        flowID: flowID, input: .init(code: code, reference: "USD", snapshot: snapshot)
       )
       .environment(\.currencyDetailsDependencies, dependencies)
       .environment(appearance)

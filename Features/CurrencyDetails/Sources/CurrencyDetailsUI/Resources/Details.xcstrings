@@ -308,6 +308,61 @@
           }
         }
       }
+    },
+    "day": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1D"
+          }
+        }
+      }
+    },
+    "dayAccessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One day"
+          }
+        }
+      }
+    },
+    "yearToDate": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YTD"
+          }
+        }
+      }
+    },
+    "yearToDateAccessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Year to date"
+          }
+        }
+      }
+    },
+    "intradayExplanation": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fiat history uses daily reference rates. Choose 1W or a longer range."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

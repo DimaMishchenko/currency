@@ -156,6 +156,28 @@
           }
         }
       }
+    },
+    "historyIntradayUnavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "24-hour history is unavailable for fiat currencies. Choose 1W or a longer range."
+          }
+        }
+      }
+    },
+    "hourlyCloses": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · hourly closes"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

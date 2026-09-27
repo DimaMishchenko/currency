@@ -92,8 +92,8 @@ struct RateDetailsScreen: View {
             Text(.Details.historyHeading).font(AppStyle.font(.caption2, weight: .semibold))
               .tracking(2)
             Picker(.Details.historyRange, selection: $model.range) {
-              ForEach(HistoryRange.allCases, id: \.self) { range in
-                Text(range.title).tag(range)
+              ForEach(model.availableRanges, id: \.self) { range in
+                Text(range.title).accessibilityLabel(range.accessibilityTitle).tag(range)
               }
             }
             .pickerStyle(.segmented)
@@ -190,7 +190,9 @@ struct RateDetailsScreen: View {
         } else {
           ContentUnavailableView(
             .Details.noHistory, systemImage: "chart.xyaxis.line",
-            description: Text(.Details.tryAnotherRange)
+            description: Text(
+              model.issue == .intradayUnavailable
+                ? .Details.intradayExplanation : .Details.tryAnotherRange)
           )
           .fixedSize(horizontal: false, vertical: true)
         }
@@ -274,15 +276,22 @@ struct RateDetailsScreen: View {
     AxisGridLine()
     AxisValueLabel {
       if let date = value.as(Date.self) {
-        Text(
-          date.formatted(
-            range == .all
-              ? .dateTime.year().locale(locale)
-              : .dateTime.day().month(.abbreviated).locale(locale))
-        )
-        .font(AppStyle.font(.caption2)).fixedSize()
+        Text(date.formatted(historyAxisFormat))
+          .font(AppStyle.font(.caption2)).fixedSize()
       }
     }
+  }
+
+  private var historyAxisFormat: Date.FormatStyle {
+    var format: Date.FormatStyle =
+      switch range {
+      case .day: .dateTime.hour().minute()
+      case .all: .dateTime.year()
+      default: .dateTime.day().month(.abbreviated)
+      }
+    format.locale = locale
+    format.timeZone = .gmt
+    return format
   }
 
   private var historyFooter: some View {
@@ -306,7 +315,7 @@ struct RateDetailsScreen: View {
           CurrencyCatalog.crypto.contains(code)
             ? .Details.cryptoExplanation : .Details.fiatExplanation)
       }
-      if let message {
+      if let message, model.issue != .intradayUnavailable {
         Label {
           Text(message)
         } icon: {
@@ -332,7 +341,7 @@ struct RateDetailsScreen: View {
     let formatter = DateFormatter()
     formatter.locale = locale
     formatter.dateStyle = .medium
-    formatter.timeStyle = .none
+    formatter.timeStyle = range == .day ? .short : .none
     formatter.timeZone = TimeZone(secondsFromGMT: 0)
     return formatter.string(from: date)
   }
