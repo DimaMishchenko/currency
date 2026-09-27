@@ -29,6 +29,7 @@ final class CurrencySearchIndex: NSObject, CSSearchableIndexDelegate {
   private let dependencies: Dependencies
   private let index: CSSearchableIndex?
   private static let domain = "Currency.Catalog"
+  private static let logger = Logger(subsystem: "com.dimasike.currency", category: "Spotlight")
   static let indexName = "Currency.SelectedCurrencies"
   static let cleanupDomains = [indexName, domain]
   static let converterID = "Currency.Converter"
@@ -114,6 +115,7 @@ final class CurrencySearchIndex: NSObject, CSSearchableIndexDelegate {
           try await dependencies.delete()
           let state = dependencies.readState()
           try await dependencies.publish(state.entities)
+          Self.logger.info("Indexed \(state.entities.count, privacy: .public) currency entities")
           lastPublishedState = state
           cleanupNeeded = false
           retryAttempt = 0
@@ -123,9 +125,8 @@ final class CurrencySearchIndex: NSObject, CSSearchableIndexDelegate {
           }
         } catch {
           cleanupNeeded = true
-          Logger(subsystem: "com.dimasike.currency", category: "Spotlight")
-            .error(
-              "Currency indexing failed: \(error.localizedDescription, privacy: .public)")
+          Self.logger.error(
+            "Currency indexing failed: \(error.localizedDescription, privacy: .public)")
           break
         }
       }
