@@ -8,7 +8,7 @@ import UniformTypeIdentifiers
 /// DOGE: https://github.com/spothq/cryptocurrency-icons (CC0; CryptocurrencyIcons-LICENSE.txt).
 /// Other crypto artwork: https://github.com/0xa3k5/web3icons (MIT; see Web3Icons-LICENSE.txt).
 public struct CurrencyIcon: View {
-  /// The same bundled artwork for system-owned currency pickers.
+  /// PNG artwork for system-owned currency pickers and search results.
   nonisolated public static func pickerImageData(_ code: String) -> Data? { pickerImages[code] }
 
   nonisolated private static let pickerImages: [String: Data] = {
@@ -26,16 +26,15 @@ public struct CurrencyIcon: View {
     return images
   }()
 
-  /// Core Text and a private bitmap context avoid UI/main-actor rendering in entity queries.
   nonisolated private static func flagImage(_ flag: String) -> Data? {
-    let side = 72
+    let side = 216
     guard
       let context = CGContext(
         data: nil, width: side, height: side, bitsPerComponent: 8,
         bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
         bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
     else { return nil }
-    let font = CTFontCreateWithName("AppleColorEmoji" as CFString, 52, nil)
+    let font = CTFontCreateWithName("AppleColorEmoji" as CFString, 156, nil)
     let string = NSAttributedString(
       string: flag,
       attributes: [
@@ -44,8 +43,8 @@ public struct CurrencyIcon: View {
     let line = CTLineCreateWithAttributedString(string)
     let bounds = CTLineGetBoundsWithOptions(line, .useGlyphPathBounds)
     context.textPosition = CGPoint(
-      x: (72 - bounds.width) / 2 - bounds.minX,
-      y: (72 - bounds.height) / 2 - bounds.minY)
+      x: (CGFloat(side) - bounds.width) / 2 - bounds.minX,
+      y: (CGFloat(side) - bounds.height) / 2 - bounds.minY)
     CTLineDraw(line, context)
     guard let image = context.makeImage() else { return nil }
     let data = NSMutableData()

@@ -59,6 +59,11 @@ struct AppCompositionTests {
     #expect(flow.readSnapshot().outcome == controller.outcome)
     try flow.addResolvedCurrency()
     #expect(other.input().usesLocalCurrency)
+    let beforeOpening = other.input()
+    scene.open(.currency(CurrencyCode.jpy.rawValue))
+    scene.receive(.completed, flowID: scene.onboardingID)
+    #expect(scene.detail?.request.code == CurrencyCode.jpy.rawValue)
+    #expect(other.input() == beforeOpening)
     controller.cancel()
   }
 }

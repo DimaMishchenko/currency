@@ -82,6 +82,16 @@ jobs:
         if: needs.changes.outputs.xcode == 'true'
         run: |
           tuist generate --no-open || tuist generate --no-open --cache-profile none
+      - name: Create test simulator
+        if: needs.changes.outputs.xcode == 'true'
+        run: |
+          simulator=$(xcrun simctl create \
+            "Currency CI $GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" \
+            com.apple.CoreSimulator.SimDeviceType.iPhone-18-Pro \
+            com.apple.CoreSimulator.SimRuntime.iOS-27-0)
+          echo "CURRENCY_TEST_SIMULATOR=$simulator" >> "$GITHUB_ENV"
+          xcrun simctl boot "$simulator"
+          xcrun simctl bootstatus "$simulator" -b
       - name: Test on iOS Simulator
         if: needs.changes.outputs.xcode == 'true'
         run: |
@@ -90,11 +100,28 @@ jobs:
             -workspace Currency.xcworkspace \
             -scheme CurrencyTests \
             -configuration Debug \
-            -destination 'platform=iOS Simulator,name=iPhone 18 Pro,OS=27.0' \
+            -destination "platform=iOS Simulator,id=$CURRENCY_TEST_SIMULATOR" \
             -derivedDataPath "$RUNNER_TEMP/CurrencyTestsDerivedData" \
             -parallel-testing-enabled NO \
             CODE_SIGN_IDENTITY=- \
             2>&1 | xcbeautify
+      - name: Test extracted App Intents
+        if: needs.changes.outputs.xcode == 'true'
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -workspace Currency.xcworkspace \
+            -scheme NativeIntentTests \
+            -configuration Debug \
+            -destination "platform=iOS Simulator,id=$CURRENCY_TEST_SIMULATOR" \
+            -derivedDataPath "$RUNNER_TEMP/CurrencyTestsDerivedData" \
+            -resultBundlePath "$RUNNER_TEMP/CurrencyNativeIntents.xcresult" \
+            -parallel-testing-enabled NO \
+            -test-timeouts-enabled YES \
+            -default-test-execution-time-allowance 120 \
+            -maximum-test-execution-time-allowance 120 \
+            CODE_SIGN_IDENTITY=- \
+            2>&1 | tee "$RUNNER_TEMP/CurrencyNativeIntents.log" | xcbeautify
       - name: Build feature harnesses
         if: needs.changes.outputs.xcode == 'true'
         run: |
@@ -107,6 +134,29 @@ jobs:
             -derivedDataPath "$RUNNER_TEMP/CurrencyTestsDerivedData" \
             CODE_SIGN_IDENTITY=- \
             2>&1 | xcbeautify
+      - name: Capture indexing diagnostics
+        if: failure() && env.CURRENCY_TEST_SIMULATOR != ''
+        run: |
+          xcrun simctl spawn "$CURRENCY_TEST_SIMULATOR" log show \
+            --last 30m --style compact --info --debug \
+            --predicate 'subsystem CONTAINS[c] "spotlight" OR (subsystem == "com.dimasike.currency" AND category == "Spotlight")' \
+            > "$RUNNER_TEMP/CurrencySpotlight.log" 2>&1 || true
+      - name: Upload native test diagnostics
+        if: failure() && needs.changes.outputs.xcode == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: native-intent-diagnostics
+          path: |
+            ${{ runner.temp }}/CurrencyNativeIntents.log
+            ${{ runner.temp }}/CurrencyNativeIntents.xcresult
+            ${{ runner.temp }}/CurrencySpotlight.log
+          retention-days: 7
+          if-no-files-found: warn
+      - name: Remove test simulator
+        if: always() && env.CURRENCY_TEST_SIMULATOR != ''
+        run: |
+          xcrun simctl shutdown "$CURRENCY_TEST_SIMULATOR" || true
+          xcrun simctl delete "$CURRENCY_TEST_SIMULATOR"
       - name: Remove Tuist CI credentials
         if: always() && needs.changes.outputs.xcode == 'true'
         run: |

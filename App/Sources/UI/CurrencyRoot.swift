@@ -1,4 +1,6 @@
+import AppIntents
 import AppearancePreferences
+import CoreSpotlight
 import CurrencyApplication
 import CurrencyDetails
 import CurrencyDetailsUI
@@ -39,6 +41,14 @@ struct CurrencyRoot: View {
           HomeEntry(
             flowID: scene.homeID, active: !scene.showsOnboarding && scenePhase == .active,
             detailsNamespace: detailsMotion, widgetsNamespace: widgetsMotion,
+            currencyDecoration: { id, content in
+              let visible =
+                !scene.showsOnboarding && scene.detail == nil && scene.sheet == nil
+                && scene.location == nil && scene.path.isEmpty
+              return visible
+                ? AnyView(content.appEntityIdentifier(EntityIdentifier(for: CurrencyEntity(id))))
+                : content
+            },
             onOutput: scene.receive
           )
           .navigationDestination(for: CurrencyScene.Route.self) { route in
@@ -70,7 +80,7 @@ struct CurrencyRoot: View {
       value: scene.showsOnboarding
     )
     .sheet(item: $scene.detail) { detail in
-      if reduceMotion {
+      if reduceMotion || !detail.usesZoom {
         detailsContent(detail)
       } else {
         detailsContent(detail)
@@ -108,8 +118,29 @@ struct CurrencyRoot: View {
     .tint(appearance.accent)
     .preferredColorScheme(appearance.theme.colorScheme)
     .onOpenURL(perform: scene.open)
+    .handlesExternalEvents(preferring: ["OpenCurrencyIntent"], allowing: ["*"])
+    .onAppIntentExecution(OpenCurrencyIntent.self) { intent in
+      scene.open(.currency(intent.target.id))
+    }
+    .onContinueUserActivity(CSSearchableItemActionType) { activity in
+      if let url = activity.webpageURL { scene.open(url); return }
+      guard let identifier = activity.userInfo?[CSSearchableItemActivityIdentifier] as? String
+      else {
+        return
+      }
+      if identifier == CurrencySearchIndex.converterID {
+        scene.open(.converter)
+      } else if let entity = EntityIdentifier(activityIdentifier: identifier),
+        entity.entityType == CurrencyEntity.self
+      {
+        if let url = CurrencyApplication.CurrencyRoute.currency(entity.identifier).url {
+          scene.open(url)
+        }
+      }
+    }
     .onChange(of: scenePhase, initial: true) { _, phase in
       AppHaptics.configure(sceneID: scene.id, active: phase == .active, reducedMotion: reduceMotion)
+      if phase == .active { composition.searchIndex.reconcile() }
       composition.foreground.setActive(
         phase == .active && !scene.showsOnboarding, sceneID: scene.id)
     }
@@ -154,7 +185,10 @@ struct CurrencyRoot: View {
       flowID: detail.id,
       input: CurrencyDetailsInput(
         code: detail.request.code, reference: detail.request.reference,
-        snapshot: detail.request.snapshot))
+        snapshot: detail.request.snapshot)
+    )
+    .accessibilityIdentifier("currency.details.\(detail.request.code)")
+    .appEntityIdentifier(EntityIdentifier(for: CurrencyEntity(detail.request.code)))
   }
   private func locationContent(_ location: CurrencyScene.Location) -> some View {
     LocationHost(composition: composition, scene: scene, location: location).id(location.id)
@@ -182,7 +216,6 @@ private struct LocationHost: View {
   }
 }
 
-/// Lives at the requesting widget modal level so a location sheet can stack above it.
 private struct WidgetLocationPresenter: View {
   let composition: AppComposition
   let scene: CurrencyScene

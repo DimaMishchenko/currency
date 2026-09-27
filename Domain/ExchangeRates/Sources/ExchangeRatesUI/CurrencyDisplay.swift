@@ -56,28 +56,28 @@ extension CurrencyDisplay {
 private extension CurrencyCode {
   var assetName: String? {
     switch self {
-    case .btc: "Bitcoin"
-    case .eth: "Ethereum"
-    case .sol: "Solana"
-    case .doge: "Dogecoin"
-    case .ltc: "Litecoin"
-    case .usdc: "USD Coin"
-    case .usdt: "Tether"
-    case .xrp: "XRP"
-    case .ada: "Cardano"
-    case .avax: "Avalanche"
-    case .link: "Chainlink"
-    case .dot: "Polkadot"
-    case .bch: "Bitcoin Cash"
-    case .xlm: "Stellar"
-    case .atom: "Cosmos"
-    case .uni: "Uniswap"
-    case .etc: "Ethereum Classic"
-    case .fil: "Filecoin"
-    case .aave: "Aave"
-    case .algo: "Algorand"
-    case .shib: "Shiba Inu"
-    case .icp: "Internet Computer"
+    case .btc: String(localized: "Bitcoin", table: "Support", bundle: .module)
+    case .eth: String(localized: "Ethereum", table: "Support", bundle: .module)
+    case .sol: String(localized: "Solana", table: "Support", bundle: .module)
+    case .doge: String(localized: "Dogecoin", table: "Support", bundle: .module)
+    case .ltc: String(localized: "Litecoin", table: "Support", bundle: .module)
+    case .usdc: String(localized: "USD Coin", table: "Support", bundle: .module)
+    case .usdt: String(localized: "Tether", table: "Support", bundle: .module)
+    case .xrp: String(localized: "XRP", table: "Support", bundle: .module)
+    case .ada: String(localized: "Cardano", table: "Support", bundle: .module)
+    case .avax: String(localized: "Avalanche", table: "Support", bundle: .module)
+    case .link: String(localized: "Chainlink", table: "Support", bundle: .module)
+    case .dot: String(localized: "Polkadot", table: "Support", bundle: .module)
+    case .bch: String(localized: "Bitcoin Cash", table: "Support", bundle: .module)
+    case .xlm: String(localized: "Stellar", table: "Support", bundle: .module)
+    case .atom: String(localized: "Cosmos", table: "Support", bundle: .module)
+    case .uni: String(localized: "Uniswap", table: "Support", bundle: .module)
+    case .etc: String(localized: "Ethereum Classic", table: "Support", bundle: .module)
+    case .fil: String(localized: "Filecoin", table: "Support", bundle: .module)
+    case .aave: String(localized: "Aave", table: "Support", bundle: .module)
+    case .algo: String(localized: "Algorand", table: "Support", bundle: .module)
+    case .shib: String(localized: "Shiba Inu", table: "Support", bundle: .module)
+    case .icp: String(localized: "Internet Computer", table: "Support", bundle: .module)
     default: nil
     }
   }

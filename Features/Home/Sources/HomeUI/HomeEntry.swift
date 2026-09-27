@@ -23,15 +23,18 @@ public struct HomeEntry: View {
   private let detailsNamespace: Namespace.ID
   private let widgetsNamespace: Namespace.ID
   private let onOutput: (HomeOutput) -> Void
+  private let currencyDecoration: (String, AnyView) -> AnyView
 
   /// Creates an entry with explicit activity and application-owned output handling.
   public init(
     flowID: UUID, active: Bool, detailsNamespace: Namespace.ID, widgetsNamespace: Namespace.ID,
+    currencyDecoration: @escaping (String, AnyView) -> AnyView = { _, content in content },
     onOutput: @escaping (HomeOutput) -> Void
   ) {
     self.flowID = flowID; self.active = active
     self.detailsNamespace = detailsNamespace; self.widgetsNamespace = widgetsNamespace
     self.onOutput = onOutput
+    self.currencyDecoration = currencyDecoration
   }
   /// Resolves required dependencies and constructs the flow host.
   public var body: some View {
@@ -39,6 +42,7 @@ public struct HomeEntry: View {
       HomeHost(
         dependencies: dependencies, active: active, detailsNamespace: detailsNamespace,
         widgetsNamespace: widgetsNamespace,
+        currencyDecoration: currencyDecoration,
         onOutput: onOutput
       )
       .id(flowID)
@@ -57,19 +61,23 @@ private struct HomeHost: View {
   let detailsNamespace: Namespace.ID
   let widgetsNamespace: Namespace.ID
   let onOutput: (HomeOutput) -> Void
+  let currencyDecoration: (String, AnyView) -> AnyView
   init(
     dependencies: HomeDependencies, active: Bool, detailsNamespace: Namespace.ID,
     widgetsNamespace: Namespace.ID,
+    currencyDecoration: @escaping (String, AnyView) -> AnyView,
     onOutput: @escaping (HomeOutput) -> Void
   ) {
     self.active = active
     self.detailsNamespace = detailsNamespace; self.widgetsNamespace = widgetsNamespace
     self.onOutput = onOutput
+    self.currencyDecoration = currencyDecoration
     _model = State(initialValue: HomeModel(dependencies: dependencies))
   }
   var body: some View {
     HomeScreen(
       model: model, detailsMotion: detailsNamespace, widgetsMotion: widgetsNamespace,
+      currencyDecoration: currencyDecoration,
       onOutput: onOutput
     )
     .task(id: active) {

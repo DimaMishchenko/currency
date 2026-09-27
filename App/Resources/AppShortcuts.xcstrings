@@ -1,0 +1,60 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "Check an exchange rate with ${applicationName}": {
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Check an exchange rate with ${applicationName}",
+              "Check the rate for ${source} with ${applicationName}"
+            ]
+          }
+        }
+      }
+    },
+    "Convert money with ${applicationName}": {
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Convert money with ${applicationName}",
+              "Convert ${source} with ${applicationName}"
+            ]
+          }
+        }
+      }
+    },
+    "Convert to Local currency with ${applicationName}": {
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Convert to Local currency with ${applicationName}"
+            ]
+          }
+        }
+      }
+    },
+    "Convert to my currencies with ${applicationName}": {
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Convert to my currencies with ${applicationName}"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

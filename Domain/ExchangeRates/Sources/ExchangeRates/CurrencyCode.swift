@@ -389,4 +389,11 @@ public enum CurrencyCode: String, Codable, CaseIterable, Sendable {
     default: false
     }
   }
+  /// Whether this code represents a precious metal quoted in troy ounces.
+  public var isMetal: Bool {
+    switch self {
+    case .xau, .xag, .xpt, .xpd: true
+    default: false
+    }
+  }
 }

@@ -1,0 +1,856 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@"
+          }
+        }
+      }
+    },
+    "%@ %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %@"
+          }
+        }
+      }
+    },
+    "%@ %@ is %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %@ is %@."
+          }
+        }
+      }
+    },
+    "%@ %@ is approximately %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %@ is approximately %@."
+          }
+        }
+      }
+    },
+    "%@ %@ troy oz": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %@ troy oz"
+          }
+        }
+      }
+    },
+    "%@ %@ → %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %@ → %@"
+          }
+        }
+      }
+    },
+    "%@ %@ → ≈ %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %@ → ≈ %@"
+          }
+        }
+      }
+    },
+    "%@ (Local)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ (Local)"
+          }
+        }
+      }
+    },
+    "%@: unavailable": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@: unavailable"
+          }
+        }
+      }
+    },
+    "%lld more results are available.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld more results are available."
+          }
+        }
+      }
+    },
+    "American dollar": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "American dollar"
+          }
+        }
+      }
+    },
+    "Amount": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Amount"
+          }
+        }
+      }
+    },
+    "Australian dollar": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Australian dollar"
+          }
+        }
+      }
+    },
+    "Canadian dollar": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canadian dollar"
+          }
+        }
+      }
+    },
+    "Check a rate": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check a rate"
+          }
+        }
+      }
+    },
+    "Check exchange rate": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check exchange rate"
+          }
+        }
+      }
+    },
+    "Check the rate from ${source} to ${destination}": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check the rate from ${source} to ${destination}"
+          }
+        }
+      }
+    },
+    "Choose a supported currency.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a supported currency."
+          }
+        }
+      }
+    },
+    "Conversion result": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conversion result"
+          }
+        }
+      }
+    },
+    "Convert ${amount} from ${source} to ${destination}": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Convert ${amount} from ${source} to ${destination}"
+          }
+        }
+      }
+    },
+    "Convert ${amount} from ${source} to Local currency": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Convert ${amount} from ${source} to Local currency"
+          }
+        }
+      }
+    },
+    "Convert ${amount} from ${source} to my currencies": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Convert ${amount} from ${source} to my currencies"
+          }
+        }
+      }
+    },
+    "Convert amount": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Convert amount"
+          }
+        }
+      }
+    },
+    "Convert an amount between currencies, crypto or metals.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Convert an amount between currencies, crypto or metals."
+          }
+        }
+      }
+    },
+    "Convert an amount to the currencies you’ve chosen in Currency.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Convert an amount to the currencies you’ve chosen in Currency."
+          }
+        }
+      }
+    },
+    "Convert an amount to the currency for your location.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Convert an amount to the currency for your location."
+          }
+        }
+      }
+    },
+    "Convert currencies, crypto and metals": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Convert currencies, crypto and metals"
+          }
+        }
+      }
+    },
+    "Convert to Local": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Convert to Local"
+          }
+        }
+      }
+    },
+    "Convert to Local currency": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Convert to Local currency"
+          }
+        }
+      }
+    },
+    "Convert to my currencies": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Convert to my currencies"
+          }
+        }
+      }
+    },
+    "Converted amount": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Converted amount"
+          }
+        }
+      }
+    },
+    "Currency": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Currency"
+          }
+        }
+      }
+    },
+    "Daily cryptocurrency rates": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Daily cryptocurrency rates"
+          }
+        }
+      }
+    },
+    "Enter an amount without grouping, such as 100 or 12.50.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter an amount without grouping, such as 100 or 12.50."
+          }
+        }
+      }
+    },
+    "Exchange rates are unavailable": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exchange rates are unavailable"
+          }
+        }
+      }
+    },
+    "Exchange rates are unavailable. Open Currency to update them.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exchange rates are unavailable. Open Currency to update them."
+          }
+        }
+      }
+    },
+    "From": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "From"
+          }
+        }
+      }
+    },
+    "Includes rates from %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Includes rates from %@"
+          }
+        }
+      }
+    },
+    "Last known Local currency": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last known Local currency"
+          }
+        }
+      }
+    },
+    "Less than %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Less than %@"
+          }
+        }
+      }
+    },
+    "Local currency": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local currency"
+          }
+        }
+      }
+    },
+    "Monetary amount": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Monetary amount"
+          }
+        }
+      }
+    },
+    "My currencies": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My currencies"
+          }
+        }
+      }
+    },
+    "New Zealand dollar": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New Zealand dollar"
+          }
+        }
+      }
+    },
+    "One more result is available.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One more result is available."
+          }
+        }
+      }
+    },
+    "Open currency details": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open currency details"
+          }
+        }
+      }
+    },
+    "Open currency details in Currency": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open currency details in Currency"
+          }
+        }
+      }
+    },
+    "Open details for ${target}": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open details for ${target}"
+          }
+        }
+      }
+    },
+    "Result": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Result"
+          }
+        }
+      }
+    },
+    "See a currency’s exchange rate and history in Currency.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "See a currency’s exchange rate and history in Currency."
+          }
+        }
+      }
+    },
+    "See how much one unit is worth in another currency.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "See how much one unit is worth in another currency."
+          }
+        }
+      }
+    },
+    "Select destination currencies in Currency first.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select destination currencies in Currency first."
+          }
+        }
+      }
+    },
+    "Some conversions are unavailable.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Some conversions are unavailable."
+          }
+        }
+      }
+    },
+    "Some rates could not be refreshed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Some rates could not be refreshed"
+          }
+        }
+      }
+    },
+    "Status": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Status"
+          }
+        }
+      }
+    },
+    "The amount to convert.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The amount to convert."
+          }
+        }
+      }
+    },
+    "The required exchange rates are unavailable.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The required exchange rates are unavailable."
+          }
+        }
+      }
+    },
+    "This amount is too large to convert. Try a smaller amount.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This amount is too large to convert. Try a smaller amount."
+          }
+        }
+      }
+    },
+    "This calculation exceeds decimal precision": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This calculation exceeds decimal precision"
+          }
+        }
+      }
+    },
+    "This calculation exceeds decimal precision.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This calculation exceeds decimal precision."
+          }
+        }
+      }
+    },
+    "To": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To"
+          }
+        }
+      }
+    },
+    "To use Local currency, open Currency and set up location.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To use Local currency, open Currency and set up location."
+          }
+        }
+      }
+    },
+    "US dollar": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "US dollar"
+          }
+        }
+      }
+    },
+    "Using cached rates": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Using cached rates"
+          }
+        }
+      }
+    },
+    "What amount would you like to convert?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What amount would you like to convert?"
+          }
+        }
+      }
+    },
+    "Which currency are you converting from?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Which currency are you converting from?"
+          }
+        }
+      }
+    },
+    "Which currency are you converting to?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Which currency are you converting to?"
+          }
+        }
+      }
+    },
+    "Which currency would you like to open?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Which currency would you like to open?"
+          }
+        }
+      }
+    },
+    "Which destination currency did you mean?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Which destination currency did you mean?"
+          }
+        }
+      }
+    },
+    "Which source currency did you mean?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Which source currency did you mean?"
+          }
+        }
+      }
+    },
+    "convert": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "convert"
+          }
+        }
+      }
+    },
+    "crypto": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "crypto"
+          }
+        }
+      }
+    },
+    "currency": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "currency"
+          }
+        }
+      }
+    },
+    "currency converter": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "currency converter"
+          }
+        }
+      }
+    },
+    "dollar": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "dollar"
+          }
+        }
+      }
+    },
+    "euro": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "euro"
+          }
+        }
+      }
+    },
+    "exchange": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "exchange"
+          }
+        }
+      }
+    },
+    "exchange rate": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "exchange rate"
+          }
+        }
+      }
+    },
+    "metals": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "metals"
+          }
+        }
+      }
+    },
+    "money": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "money"
+          }
+        }
+      }
+    },
+    "pound": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "pound"
+          }
+        }
+      }
+    },
+    "renminbi": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "renminbi"
+          }
+        }
+      }
+    },
+    "sterling": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "sterling"
+          }
+        }
+      }
+    },
+    "yen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "yen"
+          }
+        }
+      }
+    },
+    "yuan": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "yuan"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

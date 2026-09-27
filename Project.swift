@@ -28,10 +28,22 @@ let project = Project(
   ]),
   targets: [
     .target(
+      name: "NativeIntentTests", destinations: .iOS, product: .uiTests,
+      bundleId: "com.dimasike.currency.nativeintenttests", deploymentTargets: .iOS("27.0"),
+      infoPlist: .default, buildableFolders: ["App/Tests/NativeIntentTests"],
+      dependencies: [.target(name: "Currency")],
+      settings: .settings(base: [
+        "FRAMEWORK_SEARCH_PATHS": "$(inherited) $(PLATFORM_DIR)/Developer/Library/Frameworks"
+      ])),
+    .target(
       name: "CurrencyApplication", destinations: .iOS, product: .staticFramework,
       bundleId: "com.dimasike.currency.currencyapplication", deploymentTargets: .iOS("26.0"),
       infoPlist: .default, buildableFolders: ["App/Modules/CurrencyApplication/Sources"],
-      dependencies: [.external(name: "Home"), .external(name: "Onboarding")]),
+      dependencies: [
+        .external(name: "Home"), .external(name: "Onboarding"),
+        .external(name: "Conversion"), .external(name: "ExchangeRates"),
+        .external(name: "LocalCurrency")
+      ]),
     .target(
       name: "ForegroundRefresh", destinations: .iOS, product: .staticFramework,
       bundleId: "com.dimasike.currency.foregroundrefresh", deploymentTargets: .iOS("26.0"),
@@ -83,7 +95,8 @@ let project = Project(
       dependencies: [
         .external(name: "Conversion"), .external(name: "CurrencyDetails"),
         .external(name: "CurrencyDetailsUI"), .external(name: "DesignSystem"),
-        .external(name: "ExchangeRates"), .external(name: "Home"), .external(name: "HomeUI"),
+        .external(name: "ExchangeRates"), .external(name: "ExchangeRatesUI"),
+        .external(name: "Home"), .external(name: "HomeUI"),
         .external(name: "LocalCurrency"), .external(name: "LocationOnboarding"),
         .external(name: "LocationOnboardingUI"), .external(name: "Onboarding"),
         .external(name: "OnboardingUI"), .external(name: "Settings"),
@@ -172,6 +185,7 @@ let project = Project(
       bundleId: "com.dimasike.currency.currencyapplicationtests", deploymentTargets: .iOS("26.0"),
       infoPlist: .default, buildableFolders: ["App/Modules/CurrencyApplication/Tests"],
       dependencies: [
+        .external(name: "Conversion"), .external(name: "LocalCurrency"),
         .external(name: "ExchangeRates"), .external(name: "Home"),
         .external(name: "Onboarding"), .target(name: "CurrencyApplication")
       ]),
@@ -273,7 +287,7 @@ let project = Project(
       infoPlist: .default,
       sources: [
         "App/Tests/ApplicationIntegrationTests/**.swift",
-        "App/Sources/Composition/**.swift"
+        "App/Sources/Composition/**.swift", "App/Sources/SystemActions/**.swift"
       ],
       dependencies: [
         .external(name: "CurrencyDetailsUI"), .external(name: "CurrencySelectionUI"),
@@ -290,6 +304,10 @@ let project = Project(
       ])
   ],
   schemes: [
+    .scheme(
+      name: "NativeIntentTests", shared: true,
+      buildAction: .buildAction(targets: ["Currency", "NativeIntentTests"]),
+      testAction: .targets(["NativeIntentTests"], expandVariableFromTarget: "Currency")),
     .scheme(
       name: "CurrencyHarnesses", shared: true,
       buildAction: .buildAction(targets: [
