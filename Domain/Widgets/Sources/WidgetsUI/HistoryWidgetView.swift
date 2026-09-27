@@ -167,20 +167,24 @@ public struct HistoryWidgetView: View {
 
   private var rangeTitle: LocalizedStringResource {
     switch snapshot.range {
+    case .day: .WidgetPresentation.historyDay
     case .week: .WidgetPresentation.historyWeek
     case .month: .WidgetPresentation.historyMonth
     case .quarter: .WidgetPresentation.historyQuarter
     case .year: .WidgetPresentation.historyYear
+    case .yearToDate: .WidgetPresentation.historyYearToDate
     case .all: .WidgetPresentation.historyAll
     }
   }
 
   private var rangeAccessibilityTitle: LocalizedStringResource {
     switch snapshot.range {
+    case .day: .WidgetPresentation.historyDayLong
     case .week: .WidgetPresentation.historyWeekLong
     case .month: .WidgetPresentation.historyMonthLong
     case .quarter: .WidgetPresentation.historyQuarterLong
     case .year: .WidgetPresentation.historyYearLong
+    case .yearToDate: .WidgetPresentation.historyYearToDateLong
     case .all: .WidgetPresentation.historyAllLong
     }
   }

@@ -34,6 +34,16 @@ public struct CurrencyDetailsDependencies {
 /// Owns quote policy and cancellable history state independently of chart presentation.
 @MainActor @Observable
 public final class CurrencyDetailsModel {
+  /// Ranges offered by the details chart, ordered from short to long intervals.
+  public nonisolated static let ranges: [HistoryRange] = [
+    .day, .week, .month, .quarter, .yearToDate, .year, .all
+  ]
+
+  /// Fiat providers publish daily reference rates without intraday observations.
+  public var availableRanges: [HistoryRange] {
+    Self.ranges.filter { $0 != .day || CurrencyCatalog.crypto.contains(input.code) }
+  }
+
   /// Mutually exclusive history request phases.
   public enum Phase: Sendable {
     case idle, loading, loaded

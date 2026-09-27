@@ -28,6 +28,8 @@ public enum RateObservation: String, Codable, Sendable {
   case dailyReference
   /// A historical monthly reference rate.
   case monthlyReference
+  /// A completed hourly closing price.
+  case hourlyClose
   /// A completed daily closing price.
   case dailyClose
   /// The last available daily close in each month.

@@ -16,6 +16,7 @@ public enum RateMessages {
   public static func history(_ issue: HistoryIssue?) -> LocalizedStringResource? {
     switch issue {
     case .unsupportedPair: .Support.historyUnsupported
+    case .intradayUnavailable: .Support.historyIntradayUnavailable
     case .unavailable: .Support.historyUnavailable
     case .usingCachedSeries: .Support.historyCached
     case .cacheWriteFailed: .Support.historySaveFailed
@@ -42,6 +43,7 @@ public enum RateMessages {
     case .dailyReference: resource = .Support.dailyReference(provider)
     case .monthlyReference: resource = .Support.monthlyReference(provider)
     case .dailyClose: resource = .Support.dailyCloses(provider)
+    case .hourlyClose: resource = .Support.hourlyCloses(provider)
     case .monthlyLastClose: resource = .Support.monthlyLastClose(provider)
     }
     resource.locale = locale

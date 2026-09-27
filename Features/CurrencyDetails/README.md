@@ -11,6 +11,7 @@ Select the `CurrencyDetailsHarness` scheme and add launch arguments under **Run 
 | Case | Behavior |
 | --- | --- |
 | `normal` | Available history; changing the range changes the series. |
+| `crypto` | BTC/USD history, including hourly observations for 1D. |
 | `empty` | Unsupported pair with no series. |
 | `failure` | History unavailable. |
 | `cached` | History with a cached-series warning. |
