@@ -21,7 +21,7 @@ jobs:
     outputs:
       publish: ${{ steps.decision.outputs.publish }}
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v8
         with:
           name: currency-release-request
           path: ${{ runner.temp }}/currency-release-request
@@ -55,7 +55,7 @@ jobs:
       APPLE_DISTRIBUTION_PRIVATE_KEY_B64: ${{ secrets.APPLE_DISTRIBUTION_PRIVATE_KEY_B64 }}
       ASC_STRICT_AUTH: 'true'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
       - name: Check release configuration
