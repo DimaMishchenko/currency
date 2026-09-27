@@ -25,11 +25,21 @@ mise exec -- tuist cache --cache-profile only-external --configuration Debug --n
 mise exec -- tuist generate --no-open
 ```
 
-To upload newly built binaries, authenticate before warming and omit `--no-upload`; binaries already warmed locally are not uploaded again. Main and same-repository PR checks authenticate with GitHub OIDC and warm the shared cache; fork PRs receive no Tuist writer credentials. Warming is optional and CI continues if it fails. See [Tuist's module cache guide](https://tuist.dev/en/docs/guides/features/cache/module-cache).
+To upload newly built binaries, authenticate before warming and omit `--no-upload`; binaries already warmed locally are not uploaded again. Main and same-repository PR checks authenticate with GitHub OIDC and warm the shared cache, except Dependabot PRs. Fork and Dependabot PRs receive no Tuist writer credentials. Warming is optional and CI continues if it fails. See [Tuist's module cache guide](https://tuist.dev/en/docs/guides/features/cache/module-cache).
 
 Use `tuist generate --no-open --cache-profile none` to keep dependencies as source. Signed release archives always use this mode.
 
 Before delivery, run the relevant tests, check affected UI, and verify formatting with `swift format lint --recursive --strict App Domain Features DesignSystem Infrastructure` and `git diff --check`. Outstanding device and release checks live in [GitHub Issues](https://github.com/DimaMishchenko/currency/issues?q=is%3Aissue+is%3Aopen+label%3Averification).
+
+## Dependency updates
+
+[Dependabot](../.github/dependabot.yml) checks GitHub Actions in all `.github/workflows` files weekly, including Tests, TestFlight Publish, and Public Beta. Minor and patch updates share one group; major updates get separate PRs. At most five version-update PRs can be open at once.
+
+Update PRs run the existing Tests workflow and its required `test` check. Changes to Tests or TestFlight Publish run simulator tests; Public Beta changes run the lightweight CI checks. Dependabot PRs skip authenticated Tuist cache warming and can build from source without Actions secrets. Signing and release secrets stay in the main-only release workflows.
+
+Swift packages currently use only local path dependencies. Add a `swift` ecosystem entry for each manifest directory that introduces an external Swift package, including `/Tuist` if `Tuist/Package.swift` owns it. Dependabot does not cover the Tuist pin in `.mise.toml` or tools installed by Homebrew or download scripts; review those separately.
+
+After landing a configuration change, check the first [Dependabot update job](https://github.com/DimaMishchenko/currency/actions/workflows/dependabot/dependabot-updates) for successful discovery and review the CI results on its update PRs. Use Insights → Dependency graph → Dependabot → Check for updates to request another check.
 
 ## Conventions
 
