@@ -57,6 +57,29 @@ final class NativeIntentTests: XCTestCase {
     }
   }
 
+  func testConversionsResolveAndRunAfterAppTerminationWithoutOpeningUI() async throws {
+    let app = XCUIApplication(bundleIdentifier: "com.dimasike.currency")
+    let currencies = definitions.entities["CurrencyEntity"]
+    let euro = currencies.makeReference(identifier: "EUR")
+    let dollar = currencies.makeReference(identifier: "USD")
+    app.terminate()
+    XCTAssertEqual(app.state, .notRunning)
+    let choices = try await currencies.entities(matching: "eur")
+    XCTAssertTrue(identifiers(choices).contains("EUR"))
+    let converted = try await definitions.intents["ConvertAmountIntent"]
+      .makeIntent(amount: "100", source: euro, destination: dollar).run()
+    let value: AnyTransientAppEntity = try converted.value
+    let code: String = try value.currency
+    XCTAssertEqual(code, "USD")
+    XCTAssertNotEqual(app.state, .runningForeground)
+    app.terminate()
+    let mine = try await definitions.intents["ConvertToMyCurrenciesIntent"]
+      .makeIntent(amount: "100", source: euro).run()
+    let values: [AnyTransientAppEntity] = try mine.value
+    XCTAssertFalse(values.isEmpty)
+    XCTAssertNotEqual(app.state, .runningForeground)
+  }
+
   func testNumberInputCoercionAndCommaDecimal() async throws {
     let euro = definitions.entities["CurrencyEntity"].makeReference(identifier: "EUR")
     let number = definitions.intents["ConvertAmountIntent"]
