@@ -28,7 +28,7 @@ jobs:
         run: python3 Scripts/CI/test_skip_rules.py
       - name: Record release decision
         if: github.event_name == 'push'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: currency-release-request
           path: ${{ runner.temp }}/ShouldPublish.txt
@@ -143,7 +143,7 @@ jobs:
             > "$RUNNER_TEMP/CurrencySpotlight.log" 2>&1 || true
       - name: Upload native test diagnostics
         if: failure() && needs.changes.outputs.xcode == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: native-intent-diagnostics
           path: |
