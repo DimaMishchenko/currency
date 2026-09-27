@@ -38,6 +38,9 @@ jobs:
     if: always()
     runs-on: ${{ needs.changes.outputs.xcode == 'true' && 'xcode-27' || 'ubuntu-latest' }}
     timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
     concurrency:
       group: currency-test-${{ github.event.pull_request.number || github.run_id }}
       cancel-in-progress: true
@@ -47,18 +50,36 @@ jobs:
         run: exit 1
       - uses: actions/checkout@v5
         if: needs.changes.outputs.xcode == 'true'
-      - name: Install tools
+      - name: Isolate Tuist credentials
         if: needs.changes.outputs.xcode == 'true'
-        run: brew install tuist xcbeautify
+        run: |
+          config=$(mktemp -d "$RUNNER_TEMP/currency-tuist.XXXXXX")
+          echo "TUIST_XDG_CONFIG_HOME=$config" >> "$GITHUB_ENV"
+      - uses: jdx/mise-action@v4
+        if: needs.changes.outputs.xcode == 'true'
+      - name: Install build formatter
+        if: needs.changes.outputs.xcode == 'true'
+        run: brew install xcbeautify
       - name: Check Swift formatting
         if: needs.changes.outputs.xcode == 'true'
         run: swift format lint --recursive --strict App Domain Features DesignSystem Infrastructure
-      - name: Test standalone rate core
+      - name: Install Tuist dependencies
         if: needs.changes.outputs.xcode == 'true'
-        run: swift test
+        run: tuist install
+      - name: Warm dependency cache
+        if: >-
+          needs.changes.outputs.xcode == 'true' &&
+          ((github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+          (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository))
+        continue-on-error: true
+        run: |
+          tuist auth login
+          tuist cache --cache-profile only-external --configuration Debug
+      # Warming creates a cache-build workspace; always regenerate before validation.
       - name: Generate project
         if: needs.changes.outputs.xcode == 'true'
-        run: tuist generate --no-open
+        run: |
+          tuist generate --no-open || tuist generate --no-open --cache-profile none
       - name: Create test simulator
         if: needs.changes.outputs.xcode == 'true'
         run: |
@@ -134,3 +155,9 @@ jobs:
         run: |
           xcrun simctl shutdown "$CURRENCY_TEST_SIMULATOR" || true
           xcrun simctl delete "$CURRENCY_TEST_SIMULATOR"
+      - name: Remove Tuist CI credentials
+        if: always() && needs.changes.outputs.xcode == 'true'
+        run: |
+          if [[ -n "${TUIST_XDG_CONFIG_HOME:-}" ]] && command -v tuist >/dev/null 2>&1; then
+            tuist auth logout || true
+          fi

@@ -66,8 +66,11 @@ jobs:
               exit 1
             fi
           done
+      - uses: jdx/mise-action@v4
       - name: Install tools
-        run: brew install tuist xcbeautify asc
+        run: brew install xcbeautify asc
+      - name: Install Tuist dependencies
+        run: tuist install
       - name: Allocate build number
         run: bash Scripts/CI/release.sh allocate
       - name: Prepare certificate and profiles
@@ -76,7 +79,7 @@ jobs:
         run: |
           TUIST_CURRENCY_APP_PROFILE_UUID="$CURRENCY_APP_PROFILE_UUID" \
           TUIST_CURRENCY_WIDGET_PROFILE_UUID="$CURRENCY_WIDGET_PROFILE_UUID" \
-            tuist generate --no-open
+            tuist generate --no-open --cache-profile none
       - name: Archive
         run: |
           set -o pipefail

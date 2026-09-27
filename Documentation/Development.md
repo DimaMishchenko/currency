@@ -2,16 +2,33 @@
 
 ## Working locally
 
-Use Xcode and Tuist. Toolchain and deployment requirements live in the manifests.
+Use Xcode and the Tuist version pinned in `.mise.toml`. With [mise](https://mise.jdx.dev/), run `mise install` and use `mise exec --` before Tuist commands, or activate mise in your shell. Toolchain and deployment requirements live in the manifests.
 
-Run `tuist generate --no-open` after changing manifests or dependencies, then open `Currency.xcworkspace`. Changes inside existing buildable folders do not require regeneration.
+Run `tuist install` after changing package dependencies, then `tuist generate` to open `Currency.xcworkspace`. Regenerate after changing manifests or package sources so Tuist can update dependency cache hashes. Changes inside existing app buildable folders do not require regeneration.
 
 - `Currency` builds the app and widget extension.
-- `CurrencyTests` builds the shipping app and extension and runs the combined test suite; `swift test` runs the standalone rate-core tests.
+- `CurrencyTests` builds the shipping app and extension and runs the combined test suite, including rate-core tests.
 - `CurrencyHarnesses` builds the isolated development apps. Module READMEs list their harness launch arguments.
 - `NativeIntentTests` is a UI-test target for iOS 27 AppIntentsTesting against the installed Currency executable. It completes onboarding in setup and exercises extracted metadata and cross-process execution. Domain and adapter tests stay in existing unit targets; this adds no production module.
 
 For command-line Xcode builds, use `set -o pipefail` and pipe combined output through `xcbeautify`. Use a separate simulator and derived-data directory for parallel work.
+
+## Dependency cache
+
+Tuist integrates local Swift packages through `Tuist/Package.swift` and automatically substitutes available cached dependencies during generation. Normal development does not require authentication or custom build scripts.
+
+Without authentication, Tuist reuses locally cached binaries; downloading shared binaries requires login. `tuist cache` creates binaries; ordinary Xcode builds only consume them.
+
+To warm dependencies on your machine without uploading:
+
+```sh
+mise exec -- tuist cache --cache-profile only-external --configuration Debug --no-upload
+mise exec -- tuist generate --no-open
+```
+
+To upload newly built binaries, authenticate before warming and omit `--no-upload`; binaries already warmed locally are not uploaded again. Main and same-repository PR checks authenticate with GitHub OIDC and warm the shared cache; fork PRs receive no Tuist writer credentials. Warming is optional and CI continues if it fails. See [Tuist's module cache guide](https://tuist.dev/en/docs/guides/features/cache/module-cache).
+
+Use `tuist generate --no-open --cache-profile none` to keep dependencies as source. Signed release archives always use this mode.
 
 Before delivery, run the relevant tests, check affected UI, and verify formatting with `swift format lint --recursive --strict App Domain Features DesignSystem Infrastructure` and `git diff --check`. Outstanding device and release checks live in [GitHub Issues](https://github.com/DimaMishchenko/currency/issues?q=is%3Aissue+is%3Aopen+label%3Averification).
 

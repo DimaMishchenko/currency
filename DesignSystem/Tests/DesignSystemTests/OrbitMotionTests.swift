@@ -4,7 +4,6 @@ import Testing
 
 @Suite struct OrbitMotionTests {
   @Test func changingOrbitSpeedPreservesPositionAndUserMomentum() {
-    guard #available(iOS 26.0, *) else { return }
     var orbit = CurrencyOrbitMotion(drift: 1 / 18)
     orbit.grab(at: 1)
     orbit.turn(by: 0.8)
@@ -24,7 +23,6 @@ import Testing
   }
 
   @Test func tactileMomentumEndsBeforeDecorativeDrift() {
-    guard #available(iOS 26.0, *) else { return }
     var orbit = CurrencyOrbitMotion()
     #expect(!orbit.hasUserMomentum(at: 20))
     orbit.grab(at: 20)
@@ -38,7 +36,6 @@ import Testing
   }
 
   @Test func crossingAngleBoundaryKeepsDragContinuous() {
-    guard #available(iOS 26.0, *) else { return }
     let turn = CurrencyOrbitMotion.shortestTurn(from: .pi - 0.02, to: -.pi + 0.02)
     #expect(abs(turn - 0.04) < 0.000001)
     #expect(
@@ -46,7 +43,6 @@ import Testing
   }
 
   @Test func grabbingMovingOrbitDoesNotJumpAndStopsDriftWhileHeld() {
-    guard #available(iOS 26.0, *) else { return }
     var orbit = CurrencyOrbitMotion()
     let before = orbit.angle(at: 10)
     orbit.grab(at: 10)
@@ -59,7 +55,6 @@ import Testing
   }
 
   @Test func flickWorksInBothDirectionsAndDecaysToAmbientSpeed() {
-    guard #available(iOS 26.0, *) else { return }
     for direction in [-1.0, 1.0] {
       var orbit = CurrencyOrbitMotion()
       orbit.grab(at: 0)
@@ -72,7 +67,6 @@ import Testing
   }
 
   @Test func grabbingDuringMomentumContinuesFromRenderedPosition() {
-    guard #available(iOS 26.0, *) else { return }
     var orbit = CurrencyOrbitMotion()
     orbit.grab(at: 0)
     orbit.release(at: 0, velocity: 12)

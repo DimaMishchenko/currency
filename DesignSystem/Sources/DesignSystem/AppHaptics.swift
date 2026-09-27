@@ -4,7 +4,6 @@ import UIKit
 
 /// Shared tactile vocabulary. Only explicit actions and visible outcomes should call this.
 @MainActor
-@available(iOS 26.0, *)
 public enum AppHaptics {
   /// Semantic feedback for user actions and their outcomes.
   public enum Cue {
