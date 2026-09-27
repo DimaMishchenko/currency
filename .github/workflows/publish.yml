@@ -106,7 +106,7 @@ jobs:
       - name: Upload to TestFlight
         run: bash Scripts/CI/release.sh upload "$RUNNER_TEMP/CurrencyExport/Currency.ipa"
       - name: Record published build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: currency-release-build
           path: ${{ runner.temp }}/CurrencyBuildId.txt
