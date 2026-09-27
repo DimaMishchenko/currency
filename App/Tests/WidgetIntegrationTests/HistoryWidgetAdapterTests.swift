@@ -52,7 +52,7 @@ import Widgets
     input.setDestinations(["JPY"])
     #expect(settings.pair(input: input).base == "USD")
     #expect(settings.pair(input: input).quote == "EUR")
-    #expect(HistoryWidgetRange.allCases.map(\.range) == HistoryRange.allCases)
+    #expect(HistoryWidgetRange.allCases.map(\.range) == [.week, .month, .quarter, .year, .all])
   }
 
   @Test func sharedPickerIncludesLocalAndResolvesItForHistory() async throws {

@@ -1,12 +1,14 @@
 import Foundation
 
 extension HistoryService {
-  static func candleWindows(start: Date, end: Date) -> [(start: Date, end: Date)] {
+  static func candleWindows(
+    start: Date, end: Date, granularity: CandleGranularity = .day
+  ) -> [(start: Date, end: Date)] {
     var windows: [(Date, Date)] = []
     var cursor = start
-    // 299 days leaves room for Coinbase's inclusive boundary candle (300 maximum).
+    // 299 buckets leaves room for Coinbase's inclusive boundary candle (300 maximum).
     while cursor < end {
-      let next = min(cursor.addingTimeInterval(299 * 86400), end)
+      let next = min(cursor.addingTimeInterval(299 * Double(granularity.rawValue)), end)
       windows.append((cursor, next))
       cursor = next
     }
@@ -43,7 +45,9 @@ extension HistoryService {
   }
 
   /// Decodes completed Coinbase candles within a date range.
-  static func decodeCandles(_ data: Data, start: Date, end: Date) throws -> [HistoryPoint] {
+  static func decodeCandles(
+    _ data: Data, start: Date, end: Date, granularity: CandleGranularity = .day
+  ) throws -> [HistoryPoint] {
     let rows = try JSONDecoder().decode([[Double]].self, from: data)
     var values: [Date: Double] = [:]
     for row in rows {
@@ -51,8 +55,10 @@ extension HistoryService {
         throw RateError.invalidData
       }
       let date = Date(timeIntervalSince1970: row[0])
-      // Exclude unfinished daily candles and any extra buckets before the requested range.
-      if date >= start && date.addingTimeInterval(86400) <= end { values[date] = row[4] }
+      // Exclude unfinished candles and any extra buckets before the requested range.
+      if date >= start && date.addingTimeInterval(Double(granularity.rawValue)) <= end {
+        values[date] = row[4]
+      }
     }
     return values.map { HistoryPoint(date: $0.key, value: $0.value) }.sorted { $0.date < $1.date }
   }

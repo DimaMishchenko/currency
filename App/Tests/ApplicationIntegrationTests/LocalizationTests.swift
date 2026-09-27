@@ -71,6 +71,17 @@ import Testing
       String(localized: .Settings.quoteRetrieved("today"))
         == "Retrieved today")
     #expect(String(localized: .Details.loadingHistory) == "Loading history…")
+    #expect(String(localized: HistoryRange.day.title) == "1D")
+    #expect(String(localized: HistoryRange.yearToDate.title) == "YTD")
+    #expect(String(localized: HistoryRange.day.accessibilityTitle) == "One day")
+    #expect(String(localized: HistoryRange.yearToDate.accessibilityTitle) == "Year to date")
+    #expect(
+      String(localized: RateMessages.history(.intradayUnavailable)!)
+        == "24-hour history is unavailable for fiat currencies. Choose 1W or a longer range.")
+    #expect(
+      RateMessages.providerDescription(
+        .init(provider: .coinbase, observation: .hourlyClose, timeZone: .gmt),
+        locale: Locale(identifier: "en_US")) == "Coinbase · hourly closes · GMT")
   }
 
   @Test func customProviderUsesLocalizedObservationTemplate() {

@@ -2,6 +2,8 @@
 public enum HistoryIssue: Sendable, Equatable {
   /// The provider cannot serve the requested pair.
   case unsupportedPair
+  /// The provider publishes daily reference rates without intraday observations.
+  case intradayUnavailable
   /// No usable series is available from the network or cache.
   case unavailable
   /// Refresh failed and a previously saved series is returned.

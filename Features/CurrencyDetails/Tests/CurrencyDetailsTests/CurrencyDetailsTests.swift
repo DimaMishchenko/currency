@@ -28,7 +28,8 @@ struct CurrencyDetailsTests {
     }
   }
 
-  @Test func historyCapabilityReceivesBaseThenQuote() async {
+  @Test(arguments: CurrencyDetailsModel.ranges)
+  func historyCapabilityReceivesBaseThenQuote(range: HistoryRange) async {
     var requestedBase: String?
     var requestedQuote: String?
     var requestedRange: HistoryRange?
@@ -40,11 +41,23 @@ struct CurrencyDetailsTests {
         requestedRange = range
         return HistoryResult(series: nil, issue: .unavailable)
       })
-    model.range = .quarter
+    model.range = range
     await model.load()
     #expect(requestedBase == "GBP")
     #expect(requestedQuote == "CZK")
-    #expect(requestedRange == .quarter)
+    #expect(requestedRange == range)
+  }
+
+  @Test(arguments: [("BTC", true), ("ETH", true), ("EUR", false), ("USD", false)])
+  func chartOffersIntradayOnlyForCrypto(code: String, supportsIntraday: Bool) {
+    let model = CurrencyDetailsModel(
+      input: .init(code: code, reference: "USD", snapshot: RateSnapshot()),
+      dependencies: .init { _, _, _ in HistoryResult(series: nil, issue: .unavailable) })
+    #expect(model.availableRanges.contains(.day) == supportsIntraday)
+    #expect(model.availableRanges.contains(.quarter))
+    #expect(model.availableRanges.contains(.yearToDate))
+    #expect(
+      CurrencyDetailsModel.ranges == [.day, .week, .month, .quarter, .yearToDate, .year, .all])
   }
 
   @Test func supersededNoncooperatingRequestCannotReplaceNewerRange() async {
