@@ -55,7 +55,7 @@ jobs:
       APPLE_DISTRIBUTION_PRIVATE_KEY_B64: ${{ secrets.APPLE_DISTRIBUTION_PRIVATE_KEY_B64 }}
       ASC_STRICT_AUTH: 'true'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
       - name: Check release configuration
