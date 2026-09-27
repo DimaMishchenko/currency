@@ -2,7 +2,6 @@ import ExchangeRates
 import Foundation
 
 /// App-facing descriptions of recoverable rate-service conditions.
-@available(iOS 26.0, *)
 public enum RateMessages {
   /// Returns a localized-app warning for a rate refresh, or nil on success.
   public static func refresh(_ warning: RefreshWarning?) -> LocalizedStringResource? {

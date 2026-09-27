@@ -2,10 +2,9 @@
 import PackageDescription
 
 let package = Package(
-  name: "ExchangeRates", defaultLocalization: "en", platforms: [.macOS(.v14), .iOS("16.0")],
+  name: "ExchangeRates", defaultLocalization: "en", platforms: [.macOS(.v14), .iOS("26.0")],
   products: [
     .library(name: "ExchangeRates", targets: ["ExchangeRates"]),
-    .library(name: "ExchangeRatesDynamic", type: .dynamic, targets: ["ExchangeRates"]),
     .library(name: "ExchangeRatesUI", targets: ["ExchangeRatesUI"])
   ],
   dependencies: [

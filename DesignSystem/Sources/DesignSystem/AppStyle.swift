@@ -3,7 +3,6 @@ import SwiftUI
 
 /// Presentation values supplied by the host. Widgets retain their system appearance.
 @MainActor @Observable
-@available(iOS 26.0, *)
 public final class AppAppearance {
   /// Preferred app color scheme; System follows the device.
   public enum Theme: String, CaseIterable, Identifiable, Sendable {
@@ -96,7 +95,6 @@ public final class AppAppearance {
 }
 
 /// Shared styles for custom content. Native controls keep their platform defaults.
-@available(iOS 26.0, *)
 public enum AppStyle {
   /// Shared spacing scale in points.
   public enum Space {

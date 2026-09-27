@@ -7,7 +7,6 @@ import os
 
 @MainActor @Suite struct AppAppearanceTests {
   @Test func prominentLabelsHaveReadableContrastForEveryAccentAndAppearance() throws {
-    guard #available(iOS 26.0, *) else { return }
     let appearance = AppAppearance(
       theme: .system, accent: .primary, onThemeChange: { _ in }, onAccentChange: { _ in })
     for accent in AppAppearance.Accent.allCases {
@@ -32,7 +31,6 @@ import os
   }
 
   @Test func brightAndDarkFillsChooseOppositeLabelColors() {
-    guard #available(iOS 26.0, *) else { return }
     let light = UITraitCollection(userInterfaceStyle: .light)
     let dark = UITraitCollection(userInterfaceStyle: .dark)
     #expect(AppAppearance.Accent.orange.foregroundColor.resolvedColor(with: light) == .black)
@@ -56,7 +54,6 @@ import os
   }
 
   @Test func changingAccentInvalidatesConsumers() {
-    guard #available(iOS 26.0, *) else { return }
     let appearance = AppAppearance(
       theme: .system, accent: .primary, onThemeChange: { _ in }, onAccentChange: { _ in })
     let changed = ChangeFlag()

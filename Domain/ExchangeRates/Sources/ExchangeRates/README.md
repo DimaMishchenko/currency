@@ -1,8 +1,6 @@
 # ExchangeRates
 
-A standalone Swift package for Decimal currency conversion, current fiat/crypto quotes, offline snapshots, and historical series. Requires Swift 6.2+, iOS 16+ or macOS 14+. No third-party dependencies, app identifiers, UI frameworks, or credentials.
-
-Add this repository as a Swift package dependency and link the `ExchangeRates` product. Other repositories can reference this repository URL directly.
+Currency's rate core for Decimal currency conversion, current fiat/crypto quotes, offline snapshots, and historical series. No third-party dependencies, app identifiers, UI frameworks, or credentials.
 
 ```swift
 import ExchangeRates
@@ -22,6 +20,4 @@ The default service combines Frankfurter with ECB fallback, Fawaz daily rates, a
 
 Crypto history uses USD-denominated completed candles. Use `.week`, `.month`, `.quarter`, `.year`, or `.all`; all-history requests may take longer and support task cancellation. Failed requests retain saved history.
 
-Run `swift test` from the repository root. Public API reference is available through Xcode’s Build Documentation action and the included DocC catalog.
-
-The `ExchangeRatesDynamic` product exposes the same module with explicit dynamic linking for apps that share it between frameworks. Choose one product per executable; the default `ExchangeRates` product lets SwiftPM choose linkage.
+Run `ExchangeRatesPackageTests` in the `CurrencyTests` scheme. API reference is available through Xcode’s Build Documentation action and the included DocC catalog.

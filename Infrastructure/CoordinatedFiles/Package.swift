@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-  name: "CoordinatedFiles", platforms: [.macOS(.v14), .iOS(.v16)],
+  name: "CoordinatedFiles", platforms: [.macOS(.v14), .iOS(.v26)],
   products: [.library(name: "CoordinatedFiles", targets: ["CoordinatedFiles"])],
   targets: [.target(name: "CoordinatedFiles")]
 )

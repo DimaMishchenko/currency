@@ -20,15 +20,6 @@ func releaseSigning(profile: String) -> Settings? {
 
 let project = Project(
   name: "Currency", organizationName: "dimasike",
-  packages: [
-    .local(path: "Infrastructure/CoordinatedFiles"), .local(path: "DesignSystem"),
-    .local(path: "Domain/ExchangeRates"),
-    .local(path: "Domain/LocalCurrency"), .local(path: "Domain/Conversion"),
-    .local(path: "Domain/Widgets"), .local(path: "Features/Home"),
-    .local(path: "Features/Onboarding"), .local(path: "Features/CurrencyDetails"),
-    .local(path: "Features/Settings"), .local(path: "Features/LocationOnboarding"),
-    .local(path: "Features/WidgetOnboarding")
-  ],
   settings: .settings(base: [
     "CODE_SIGN_STYLE": "Automatic", "CURRENT_PROJECT_VERSION": "1",
     "DEVELOPMENT_TEAM": .string(teamID), "MARKETING_VERSION": "1.0", "SWIFT_VERSION": "6.0",
@@ -40,7 +31,7 @@ let project = Project(
       name: "CurrencyApplication", destinations: .iOS, product: .staticFramework,
       bundleId: "com.dimasike.currency.currencyapplication", deploymentTargets: .iOS("26.0"),
       infoPlist: .default, buildableFolders: ["App/Modules/CurrencyApplication/Sources"],
-      dependencies: [.package(product: "Home"), .package(product: "Onboarding")]),
+      dependencies: [.external(name: "Home"), .external(name: "Onboarding")]),
     .target(
       name: "ForegroundRefresh", destinations: .iOS, product: .staticFramework,
       bundleId: "com.dimasike.currency.foregroundrefresh", deploymentTargets: .iOS("26.0"),
@@ -64,9 +55,9 @@ let project = Project(
       buildableFolders: ["App/Widgets/Sources", "App/Widgets/Resources"],
       entitlements: .file(path: "App/Widgets/Currency.entitlements"),
       dependencies: [
-        .package(product: "Conversion"), .package(product: "ExchangeRates"),
-        .package(product: "ExchangeRatesUI"), .package(product: "LocalCurrency"),
-        .package(product: "Widgets"), .package(product: "WidgetsUI")
+        .external(name: "Conversion"), .external(name: "ExchangeRates"),
+        .external(name: "ExchangeRatesUI"), .external(name: "LocalCurrency"),
+        .external(name: "Widgets"), .external(name: "WidgetsUI")
       ],
       settings: releaseSigning(profile: widgetProfile)),
     .target(
@@ -90,14 +81,14 @@ let project = Project(
       buildableFolders: ["App/Sources", "App/Resources"],
       entitlements: .file(path: "App/Configuration/Currency.entitlements"),
       dependencies: [
-        .package(product: "Conversion"), .package(product: "CurrencyDetails"),
-        .package(product: "CurrencyDetailsUI"), .package(product: "DesignSystem"),
-        .package(product: "ExchangeRates"), .package(product: "Home"), .package(product: "HomeUI"),
-        .package(product: "LocalCurrency"), .package(product: "LocationOnboarding"),
-        .package(product: "LocationOnboardingUI"), .package(product: "Onboarding"),
-        .package(product: "OnboardingUI"), .package(product: "Settings"),
-        .package(product: "SettingsUI"), .package(product: "WidgetOnboarding"),
-        .package(product: "WidgetOnboardingUI"), .target(name: "AppearancePreferences"),
+        .external(name: "Conversion"), .external(name: "CurrencyDetails"),
+        .external(name: "CurrencyDetailsUI"), .external(name: "DesignSystem"),
+        .external(name: "ExchangeRates"), .external(name: "Home"), .external(name: "HomeUI"),
+        .external(name: "LocalCurrency"), .external(name: "LocationOnboarding"),
+        .external(name: "LocationOnboardingUI"), .external(name: "Onboarding"),
+        .external(name: "OnboardingUI"), .external(name: "Settings"),
+        .external(name: "SettingsUI"), .external(name: "WidgetOnboarding"),
+        .external(name: "WidgetOnboardingUI"), .target(name: "AppearancePreferences"),
         .target(name: "CurrencyApplication"), .target(name: "ForegroundRefresh"),
         .target(name: "CurrencyWidgets")
       ],
@@ -106,83 +97,83 @@ let project = Project(
       name: "DesignSystemPackageTests", destinations: .iOS, product: .unitTests,
       bundleId: "com.dimasike.currency.designsystempackagetests", deploymentTargets: .iOS("26.0"),
       infoPlist: .default, buildableFolders: ["DesignSystem/Tests"],
-      dependencies: [.package(product: "DesignSystem")]),
+      dependencies: [.external(name: "DesignSystem")]),
     .target(
       name: "ExchangeRatesPackageTests", destinations: .iOS, product: .unitTests,
       bundleId: "com.dimasike.currency.exchangeratespackagetests", deploymentTargets: .iOS("26.0"),
       infoPlist: .default, buildableFolders: ["Domain/ExchangeRates/Tests"],
-      dependencies: [.package(product: "ExchangeRates"), .package(product: "ExchangeRatesUI")]),
+      dependencies: [.external(name: "ExchangeRates"), .external(name: "ExchangeRatesUI")]),
     .target(
       name: "LocalCurrencyPackageTests", destinations: .iOS, product: .unitTests,
       bundleId: "com.dimasike.currency.localcurrencypackagetests", deploymentTargets: .iOS("26.0"),
       infoPlist: .default, buildableFolders: ["Domain/LocalCurrency/Tests"],
-      dependencies: [.package(product: "LocalCurrency")]),
+      dependencies: [.external(name: "LocalCurrency")]),
     .target(
       name: "ConversionPackageTests", destinations: .iOS, product: .unitTests,
       bundleId: "com.dimasike.currency.conversionpackagetests", deploymentTargets: .iOS("26.0"),
       infoPlist: .default, buildableFolders: ["Domain/Conversion/Tests"],
       dependencies: [
-        .package(product: "Conversion"), .package(product: "ExchangeRates"),
-        .package(product: "LocalCurrency")
+        .external(name: "Conversion"), .external(name: "ExchangeRates"),
+        .external(name: "LocalCurrency")
       ]),
     .target(
       name: "WidgetsPackageTests", destinations: .iOS, product: .unitTests,
       bundleId: "com.dimasike.currency.widgetspackagetests", deploymentTargets: .iOS("26.0"),
       infoPlist: .default, buildableFolders: ["Domain/Widgets/Tests"],
       dependencies: [
-        .package(product: "Conversion"), .package(product: "ExchangeRates"),
-        .package(product: "LocalCurrency"), .package(product: "Widgets")
+        .external(name: "Conversion"), .external(name: "ExchangeRates"),
+        .external(name: "LocalCurrency"), .external(name: "Widgets")
       ]),
     .target(
       name: "HomePackageTests", destinations: .iOS, product: .unitTests,
       bundleId: "com.dimasike.currency.homepackagetests", deploymentTargets: .iOS("26.0"),
       infoPlist: .default, buildableFolders: ["Features/Home/Tests"],
       dependencies: [
-        .package(product: "Conversion"), .package(product: "ExchangeRates"),
-        .package(product: "Home"), .package(product: "HomeUI"), .package(product: "LocalCurrency")
+        .external(name: "Conversion"), .external(name: "ExchangeRates"),
+        .external(name: "Home"), .external(name: "HomeUI"), .external(name: "LocalCurrency")
       ]),
     .target(
       name: "OnboardingPackageTests", destinations: .iOS, product: .unitTests,
       bundleId: "com.dimasike.currency.onboardingpackagetests", deploymentTargets: .iOS("26.0"),
       infoPlist: .default, buildableFolders: ["Features/Onboarding/Tests"],
       dependencies: [
-        .package(product: "Conversion"), .package(product: "ExchangeRates"),
-        .package(product: "Onboarding")
+        .external(name: "Conversion"), .external(name: "ExchangeRates"),
+        .external(name: "Onboarding")
       ]),
     .target(
       name: "CurrencyDetailsPackageTests", destinations: .iOS, product: .unitTests,
       bundleId: "com.dimasike.currency.currencydetailspackagetests",
       deploymentTargets: .iOS("26.0"),
       infoPlist: .default, buildableFolders: ["Features/CurrencyDetails/Tests"],
-      dependencies: [.package(product: "CurrencyDetails"), .package(product: "ExchangeRates")]),
+      dependencies: [.external(name: "CurrencyDetails"), .external(name: "ExchangeRates")]),
     .target(
       name: "SettingsPackageTests", destinations: .iOS, product: .unitTests,
       bundleId: "com.dimasike.currency.settingspackagetests", deploymentTargets: .iOS("26.0"),
       infoPlist: .default, buildableFolders: ["Features/Settings/Tests"],
-      dependencies: [.package(product: "ExchangeRates"), .package(product: "Settings")]),
+      dependencies: [.external(name: "ExchangeRates"), .external(name: "Settings")]),
     .target(
       name: "LocationOnboardingPackageTests", destinations: .iOS, product: .unitTests,
       bundleId: "com.dimasike.currency.locationonboardingpackagetests",
       deploymentTargets: .iOS("26.0"),
       infoPlist: .default, buildableFolders: ["Features/LocationOnboarding/Tests"],
-      dependencies: [.package(product: "LocalCurrency"), .package(product: "LocationOnboarding")]),
+      dependencies: [.external(name: "LocalCurrency"), .external(name: "LocationOnboarding")]),
     .target(
       name: "WidgetOnboardingPackageTests", destinations: .iOS, product: .unitTests,
       bundleId: "com.dimasike.currency.widgetonboardingpackagetests",
       deploymentTargets: .iOS("26.0"),
       infoPlist: .default, buildableFolders: ["Features/WidgetOnboarding/Tests"],
       dependencies: [
-        .package(product: "Conversion"), .package(product: "ExchangeRates"),
-        .package(product: "WidgetOnboarding"), .package(product: "WidgetOnboardingUI"),
-        .package(product: "Widgets"), .package(product: "WidgetsUI")
+        .external(name: "Conversion"), .external(name: "ExchangeRates"),
+        .external(name: "WidgetOnboarding"), .external(name: "WidgetOnboardingUI"),
+        .external(name: "Widgets"), .external(name: "WidgetsUI")
       ]),
     .target(
       name: "CurrencyApplicationTests", destinations: .iOS, product: .unitTests,
       bundleId: "com.dimasike.currency.currencyapplicationtests", deploymentTargets: .iOS("26.0"),
       infoPlist: .default, buildableFolders: ["App/Modules/CurrencyApplication/Tests"],
       dependencies: [
-        .package(product: "ExchangeRates"), .package(product: "Home"),
-        .package(product: "Onboarding"), .target(name: "CurrencyApplication")
+        .external(name: "ExchangeRates"), .external(name: "Home"),
+        .external(name: "Onboarding"), .target(name: "CurrencyApplication")
       ]),
     .target(
       name: "ForegroundRefreshTests", destinations: .iOS, product: .unitTests,
@@ -204,9 +195,9 @@ let project = Project(
         "App/Widgets/Sources/Timelines/**.swift"
       ],
       dependencies: [
-        .package(product: "Conversion"), .package(product: "ExchangeRates"),
-        .package(product: "ExchangeRatesUI"), .package(product: "LocalCurrency"),
-        .package(product: "Widgets"), .package(product: "WidgetsUI")
+        .external(name: "Conversion"), .external(name: "ExchangeRates"),
+        .external(name: "ExchangeRatesUI"), .external(name: "LocalCurrency"),
+        .external(name: "Widgets"), .external(name: "WidgetsUI")
       ]),
     .target(
       name: "WidgetsHarness", destinations: .iOS, product: .app,
@@ -214,9 +205,9 @@ let project = Project(
       infoPlist: .extendingDefault(with: ["UILaunchScreen": [:]]),
       buildableFolders: ["Domain/Widgets/HarnessApp"],
       dependencies: [
-        .package(product: "Conversion"), .package(product: "ExchangeRates"),
-        .package(product: "LocalCurrency"), .package(product: "Widgets"),
-        .package(product: "WidgetsUI")
+        .external(name: "Conversion"), .external(name: "ExchangeRates"),
+        .external(name: "LocalCurrency"), .external(name: "Widgets"),
+        .external(name: "WidgetsUI")
       ]),
     .target(
       name: "HomeHarness", destinations: .iOS, product: .app,
@@ -224,9 +215,9 @@ let project = Project(
       infoPlist: .extendingDefault(with: ["UILaunchScreen": [:]]),
       buildableFolders: ["Features/Home/HarnessApp"],
       dependencies: [
-        .package(product: "Conversion"), .package(product: "DesignSystem"),
-        .package(product: "ExchangeRates"), .package(product: "Home"), .package(product: "HomeUI"),
-        .package(product: "LocalCurrency")
+        .external(name: "Conversion"), .external(name: "DesignSystem"),
+        .external(name: "ExchangeRates"), .external(name: "Home"), .external(name: "HomeUI"),
+        .external(name: "LocalCurrency")
       ]),
     .target(
       name: "OnboardingHarness", destinations: .iOS, product: .app,
@@ -234,10 +225,10 @@ let project = Project(
       infoPlist: .extendingDefault(with: ["UILaunchScreen": [:]]),
       buildableFolders: ["Features/Onboarding/HarnessApp"],
       dependencies: [
-        .package(product: "Conversion"), .package(product: "DesignSystem"),
-        .package(product: "ExchangeRates"), .package(product: "Onboarding"),
-        .package(product: "OnboardingUI"), .package(product: "WidgetOnboarding"),
-        .package(product: "WidgetOnboardingUI")
+        .external(name: "Conversion"), .external(name: "DesignSystem"),
+        .external(name: "ExchangeRates"), .external(name: "Onboarding"),
+        .external(name: "OnboardingUI"), .external(name: "WidgetOnboarding"),
+        .external(name: "WidgetOnboardingUI")
       ]),
     .target(
       name: "CurrencyDetailsHarness", destinations: .iOS, product: .app,
@@ -245,8 +236,8 @@ let project = Project(
       infoPlist: .extendingDefault(with: ["UILaunchScreen": [:]]),
       buildableFolders: ["Features/CurrencyDetails/HarnessApp"],
       dependencies: [
-        .package(product: "CurrencyDetails"), .package(product: "CurrencyDetailsUI"),
-        .package(product: "DesignSystem"), .package(product: "ExchangeRates")
+        .external(name: "CurrencyDetails"), .external(name: "CurrencyDetailsUI"),
+        .external(name: "DesignSystem"), .external(name: "ExchangeRates")
       ]),
     .target(
       name: "SettingsHarness", destinations: .iOS, product: .app,
@@ -254,8 +245,8 @@ let project = Project(
       infoPlist: .extendingDefault(with: ["UILaunchScreen": [:]]),
       buildableFolders: ["Features/Settings/HarnessApp"],
       dependencies: [
-        .package(product: "DesignSystem"), .package(product: "ExchangeRates"),
-        .package(product: "Settings"), .package(product: "SettingsUI")
+        .external(name: "DesignSystem"), .external(name: "ExchangeRates"),
+        .external(name: "Settings"), .external(name: "SettingsUI")
       ]),
     .target(
       name: "LocationOnboardingHarness", destinations: .iOS, product: .app,
@@ -263,8 +254,8 @@ let project = Project(
       infoPlist: .extendingDefault(with: ["UILaunchScreen": [:]]),
       buildableFolders: ["Features/LocationOnboarding/HarnessApp"],
       dependencies: [
-        .package(product: "DesignSystem"), .package(product: "LocalCurrency"),
-        .package(product: "LocationOnboarding"), .package(product: "LocationOnboardingUI")
+        .external(name: "DesignSystem"), .external(name: "LocalCurrency"),
+        .external(name: "LocationOnboarding"), .external(name: "LocationOnboardingUI")
       ]),
     .target(
       name: "WidgetOnboardingHarness", destinations: .iOS, product: .app,
@@ -272,8 +263,8 @@ let project = Project(
       infoPlist: .extendingDefault(with: ["UILaunchScreen": [:]]),
       buildableFolders: ["Features/WidgetOnboarding/HarnessApp"],
       dependencies: [
-        .package(product: "Conversion"), .package(product: "DesignSystem"),
-        .package(product: "WidgetOnboarding"), .package(product: "WidgetOnboardingUI")
+        .external(name: "Conversion"), .external(name: "DesignSystem"),
+        .external(name: "WidgetOnboarding"), .external(name: "WidgetOnboardingUI")
       ]),
     .target(
       name: "ApplicationIntegrationTests", destinations: .iOS, product: .unitTests,
@@ -285,15 +276,15 @@ let project = Project(
         "App/Sources/Composition/**.swift"
       ],
       dependencies: [
-        .package(product: "CurrencyDetailsUI"), .package(product: "CurrencySelectionUI"),
-        .package(product: "ExchangeRates"), .package(product: "ExchangeRatesUI"),
-        .package(product: "HomeUI"), .package(product: "LocationOnboardingUI"),
-        .package(product: "OnboardingUI"), .package(product: "SettingsUI"),
-        .package(product: "WidgetOnboardingUI"), .package(product: "WidgetsUI"),
-        .package(product: "Conversion"), .package(product: "Home"),
-        .package(product: "CurrencyDetails"), .package(product: "LocalCurrency"),
-        .package(product: "LocationOnboarding"),
-        .package(product: "Onboarding"), .package(product: "Settings"),
+        .external(name: "CurrencyDetailsUI"), .external(name: "CurrencySelectionUI"),
+        .external(name: "ExchangeRates"), .external(name: "ExchangeRatesUI"),
+        .external(name: "HomeUI"), .external(name: "LocationOnboardingUI"),
+        .external(name: "OnboardingUI"), .external(name: "SettingsUI"),
+        .external(name: "WidgetOnboardingUI"), .external(name: "WidgetsUI"),
+        .external(name: "Conversion"), .external(name: "Home"),
+        .external(name: "CurrencyDetails"), .external(name: "LocalCurrency"),
+        .external(name: "LocationOnboarding"),
+        .external(name: "Onboarding"), .external(name: "Settings"),
         .target(name: "AppearancePreferences"), .target(name: "CurrencyApplication"),
         .target(name: "ForegroundRefresh")
       ])
