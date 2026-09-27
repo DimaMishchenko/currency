@@ -68,6 +68,8 @@ struct CurrencyEntity: IndexedEntity {
 }
 
 struct CurrencyEntityQuery: EntityStringQuery, EnumerableEntityQuery {
+  static let findIntentDescription: IntentDescription? = IntentDescription(
+    "Find currencies to use in another action.")
   @AppDependency private var composition: SystemActionComposition
   @AppDependency private var searchIndex: CurrencySearchIndex
   let allowsLocal: Bool
