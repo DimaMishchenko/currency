@@ -193,10 +193,8 @@ final class NativeIntentTests: XCTestCase {
 
   func testCatalogChoicesAndSearchIncludeUnsavedFiatCryptoAndMetals() async throws {
     let definition = definitions.entities["CurrencyEntity"]
-    let all = try await definition.allEntities()
     let suggestions = try await definition.suggestedEntities()
-    XCTAssertGreaterThan(all.count, 150)
-    XCTAssertEqual(identifiers(all), identifiers(suggestions))
+    XCTAssertGreaterThan(suggestions.count, 150)
     for (term, id) in [("usd", "USD"), ("eur", "EUR"), ("Bitcoin", "BTC"), ("gold", "XAU")] {
       let matches = try await definition.entities(matching: term)
       XCTAssertTrue(identifiers(matches).contains(id), term)
@@ -205,7 +203,7 @@ final class NativeIntentTests: XCTestCase {
 
   func testSpotlightIndexesTheFullCatalogAndCurrencyCodes() async throws {
     let definition = definitions.entities["CurrencyEntity"]
-    let catalog = try await definition.allEntities()
+    let catalog = try await definition.suggestedEntities()
     let expected = Set(identifiers(catalog).filter { $0 != "@local" })
     var indexed = Set<String>()
     let deadline = Date().addingTimeInterval(10)
@@ -216,8 +214,13 @@ final class NativeIntentTests: XCTestCase {
     } while Date() < deadline
     XCTAssertTrue(expected.isSubset(of: indexed), "Missing: \(expected.subtracting(indexed))")
     for id in ["USD", "EUR", "BTC", "XAU"] {
-      let matches = try await definition.spotlightQuery(id.lowercased())
-      XCTAssertTrue(identifiers(matches).contains(id), id)
+      var matches = Set<String>()
+      repeat {
+        matches = Set(identifiers(try await definition.spotlightQuery(id.lowercased())))
+        if matches.contains(id) { break }
+        try await Task.sleep(for: .milliseconds(250))
+      } while Date() < deadline
+      XCTAssertTrue(matches.contains(id), id)
     }
   }
 

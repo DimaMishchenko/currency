@@ -361,16 +361,6 @@
         }
       }
     },
-    "Find currencies to use in another action.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Find currencies to use in another action."
-          }
-        }
-      }
-    },
     "From": {
       "localizations": {
         "en": {

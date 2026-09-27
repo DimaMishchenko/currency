@@ -67,9 +67,7 @@ struct CurrencyEntity: IndexedEntity {
   }
 }
 
-struct CurrencyEntityQuery: EntityStringQuery, EnumerableEntityQuery {
-  static let findIntentDescription: IntentDescription? = IntentDescription(
-    "Find currencies to use in another action.")
+struct CurrencyEntityQuery: EntityStringQuery {
   @AppDependency private var composition: SystemActionComposition
   @AppDependency private var searchIndex: CurrencySearchIndex
   let allowsLocal: Bool
@@ -97,7 +95,6 @@ struct CurrencyEntityQuery: EntityStringQuery, EnumerableEntityQuery {
   func suggestedEntities() async throws -> [CurrencyEntity] {
     allowed.map(make)
   }
-  func allEntities() async throws -> [CurrencyEntity] { allowed.map(make) }
   func entities(matching string: String) async throws -> [CurrencyEntity] {
     let text = string.trimmingCharacters(in: .whitespacesAndNewlines)
       .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
