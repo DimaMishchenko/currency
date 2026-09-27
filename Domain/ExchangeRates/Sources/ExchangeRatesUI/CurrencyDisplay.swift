@@ -2,7 +2,6 @@ import ExchangeRates
 import Foundation
 
 /// Localized names, symbols, and amount formatting for Currency screens and widgets.
-@available(iOS 26.0, *)
 public enum CurrencyDisplay {
   /// Returns a localized display name for a currency code.
   public static func name(_ code: String, locale: Locale = .current) -> String {
@@ -21,7 +20,6 @@ public enum CurrencyDisplay {
   }
 }
 
-@available(iOS 26.0, *)
 extension CurrencyDisplay {
   /// Returns the display precision for a currency code.
   public static func fractionDigits(_ code: String) -> Int {
@@ -55,7 +53,6 @@ extension CurrencyDisplay {
   }
 }
 
-@available(iOS 26.0, *)
 private extension CurrencyCode {
   var assetName: String? {
     switch self {
@@ -86,7 +83,6 @@ private extension CurrencyCode {
   }
 }
 
-@available(iOS 26.0, *)
 extension CurrencyDisplay {
   /// Groups the integer and localizes editable digits without losing fractional precision or zeros.
   /// A separator without a following digit stays hidden until the fraction begins.

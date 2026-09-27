@@ -5,7 +5,6 @@ import Testing
 
 @Suite struct CurrencyDisplayTests {
   @Test func formattingFollowsLocaleWithoutChangingEditablePrecision() {
-    guard #available(iOS 26.0, *) else { return }
     let german = Locale(identifier: "de_DE")
     #expect(CurrencyDisplay.inputAmount("12.00", locale: german) == "12,00")
     #expect(CurrencyDisplay.inputAmount("12.", locale: german) == "12")
@@ -16,14 +15,12 @@ import Testing
   }
 
   @Test func flagDerivationHandlesRegionsSharedCurrenciesAndUnknownCodes() {
-    guard #available(iOS 26.0, *) else { return }
     #expect(CurrencyDisplay.flag("UAH") == "🇺🇦")
     #expect(CurrencyDisplay.flag("XAF") == "🌍")
     #expect(CurrencyDisplay.flag("not-a-code") == "🪙")
   }
 
   @Test func keypadLabelsPreserveDecimalAndMultiZeroCommands() {
-    guard #available(iOS 26.0, *) else { return }
     let german = Locale(identifier: "de_DE")
     #expect(CurrencyDisplay.keypadLabel(".", locale: german) == ",")
     #expect(CurrencyDisplay.keypadLabel("00", locale: german) == "00")
@@ -32,7 +29,6 @@ import Testing
   }
 
   @Test func editableAmountsGroupImmediatelyAndPreserveEveryFractionDigit() {
-    guard #available(iOS 26.0, *) else { return }
     let english = Locale(identifier: "en_US")
     #expect(CurrencyDisplay.inputAmount("100000", locale: english) == "100,000")
     #expect(CurrencyDisplay.inputAmount("1234567.00", locale: english) == "1,234,567.00")

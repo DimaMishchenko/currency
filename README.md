@@ -8,16 +8,17 @@ A SwiftUI currency converter for iOS 26, with a personal currency list, offline 
 
 ## Run
 
-With Xcode 26 or later and Tuist installed:
+With Xcode 26 or later and the Tuist version from `.mise.toml` installed:
 
 ```sh
-tuist generate --no-open
-open Currency.xcworkspace
+mise install
+mise exec -- tuist install
+mise exec -- tuist generate
 ```
 
 Select the `Currency` scheme and an iOS 26+ simulator. For device signing and validation, see [Development](Documentation/Development.md).
 
-The reusable [ExchangeRates package](Domain/ExchangeRates/README.md) can also be consumed independently on iOS 16+ and macOS 14+. The root `Package.swift` preserves repository-URL consumers; the app uses the nested `Domain/ExchangeRates` package. Choose one core product per executable.
+Tuist automatically uses cached dependencies when available. No account is required to build; see [Development](Documentation/Development.md#dependency-cache) for optional cache warming and source-only generation.
 
 ## Source layout
 

@@ -5,7 +5,6 @@ import Testing
 
 @Suite struct ResourceTests {
   @Test func provenanceInterpolationUsesTheOwningCatalog() {
-    guard #available(iOS 26.0, *) else { return }
     #expect(
       RateMessages.providerDescription(
         RateSource(provider: .coinbase, observation: .dailyClose, timeZone: .gmt),
@@ -16,7 +15,6 @@ import Testing
         locale: Locale(identifier: "en_US")) == "Example · retrieved")
   }
   @Test func systemPickerArtworkResolvesFromResourceBundle() {
-    guard #available(iOS 26.0, *) else { return }
     #expect(CurrencyIcon.pickerImageData("BTC") != nil)
     #expect(CurrencyIcon.pickerImageData("XAU") != nil)
     #expect(CurrencyIcon.pickerImageData("EUR") != nil)

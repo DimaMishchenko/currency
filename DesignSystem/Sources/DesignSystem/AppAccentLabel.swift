@@ -1,7 +1,6 @@
 import SwiftUI
 
 /// Contrasting text or symbols placed directly inside a solid accent-colored button's label.
-@available(iOS 26.0, *)
 public struct AppAccentLabel: ViewModifier {
   @Environment(AppAppearance.self) private var appearance
   @Environment(\.colorScheme) private var colorScheme

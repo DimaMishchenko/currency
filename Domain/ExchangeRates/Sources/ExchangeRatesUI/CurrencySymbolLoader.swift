@@ -1,7 +1,6 @@
 import SwiftUI
 
 /// One fixed optical box; the supported symbol replacement has a standard fallback.
-@available(iOS 26.0, *)
 public struct CurrencySymbolLoader: View {
   private let requestedMotion: Bool
   private let animateImmediately: Bool

@@ -1,7 +1,6 @@
 import Foundation
 
 /// Analytic deceleration keeps momentum independent of rendering frequency.
-@available(iOS 26.0, *)
 public struct CurrencyOrbitMotion {
   private var offset: Double = 0
   private var releasedAt: TimeInterval = 0

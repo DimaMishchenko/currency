@@ -1,7 +1,6 @@
 import SwiftUI
 
 /// Original app artwork. A static satin finish keeps small badges legible in widgets.
-@available(iOS 26.0, *)
 struct MetalBadge: View {
   let metal: Metal
   let size: CGFloat
@@ -38,7 +37,6 @@ struct MetalBadge: View {
   }
 }
 
-@available(iOS 26.0, *)
 enum Metal: String {
   case gold = "XAU", silver = "XAG", platinum = "XPT", palladium = "XPD"
 

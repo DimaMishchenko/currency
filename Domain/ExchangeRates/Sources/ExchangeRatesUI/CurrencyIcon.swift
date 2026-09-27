@@ -7,7 +7,6 @@ import UniformTypeIdentifiers
 /// A bundled crypto badge, original metal badge, or native fiat flag emoji.
 /// DOGE: https://github.com/spothq/cryptocurrency-icons (CC0; CryptocurrencyIcons-LICENSE.txt).
 /// Other crypto artwork: https://github.com/0xa3k5/web3icons (MIT; see Web3Icons-LICENSE.txt).
-@available(iOS 26.0, *)
 public struct CurrencyIcon: View {
   /// The same bundled artwork for system-owned currency pickers.
   nonisolated public static func pickerImageData(_ code: String) -> Data? { pickerImages[code] }
