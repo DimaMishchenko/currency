@@ -50,6 +50,7 @@ class SkipRulesTests(unittest.TestCase):
             "App/Modules/CurrencyApplication/README.md": (False, False),
             ".swift-format": (True, False),
             ".github/ISSUE_TEMPLATE/bug.yml": (False, False),
+            ".github/dependabot.yml": (False, False),
             ".github/workflows/public-beta.yml": (False, False),
             "Scripts/CI/public_beta.sh": (False, False),
             "App/Tests/Integration.swift": (True, False),
