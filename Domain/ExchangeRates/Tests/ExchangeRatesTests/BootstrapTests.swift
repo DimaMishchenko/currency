@@ -44,18 +44,18 @@ private func bootstrapQuotes(_ usd: Decimal = 2) -> [String: ExchangeRate] {
 
 @Suite struct BootstrapTests {
   @Test func fiatDeliveredWithoutWaitingForSlowCrypto() async {
+    let daily = PendingBootstrapProvider(quotes: [:])
+    let crypto = PendingBootstrapProvider(quotes: [:])
     let service = RateService(
       fiat: BootstrapProvider(quotes: bootstrapQuotes()),
-      daily: BootstrapProvider(delay: .seconds(30)),
-      crypto: BootstrapProvider(delay: .seconds(30)))
-    let began = ContinuousClock.now
-    let stream = await service.bootstrap(previous: RateSnapshot())
-    for await update in stream {
-      #expect(began.duration(to: .now) < .seconds(2))
-      #expect(update.snapshot.hasUsablePair(from: "EUR", to: "USD"))
-      #expect(!update.isFinal)
-      break
-    }
+      daily: daily, crypto: crypto)
+    var updates = await service.bootstrap(previous: RateSnapshot()).makeAsyncIterator()
+    let first = await updates.next()
+    #expect(first?.snapshot.hasUsablePair(from: "EUR", to: "USD") == true)
+    #expect(first?.isFinal == false)
+    await daily.finish()
+    await crypto.finish()
+    while await updates.next() != nil {}
   }
 
   @Test func completionOrderDoesNotChangePrimaryPrecedence() async {

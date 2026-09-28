@@ -7,15 +7,25 @@ private actor SlowCandles: HTTPClient {
   private(set) var active = 0
   private(set) var maximum = 0
   private(set) var calls = 0
-  let delay: Duration
-  init(delay: Duration = .milliseconds(400)) { self.delay = delay }
+  private let delay: Duration?
+  private var firstRequest: CheckedContinuation<Void, Never>?
+
+  init(delay: Duration? = nil) { self.delay = delay }
 
   func get(_ url: URL) async throws -> Data {
     calls += 1
+    let call = calls
     active += 1
     maximum = max(maximum, active)
     defer { active -= 1 }
-    try await Task.sleep(for: delay)
+    if let delay {
+      try await Task.sleep(for: delay)
+    } else if call == 1 {
+      await withCheckedContinuation { firstRequest = $0 }
+    } else if call == 2 {
+      firstRequest?.resume()
+      firstRequest = nil
+    }
     let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems
     let startString = try #require(query?.first { $0.name == "start" }?.value)
     let endString = try #require(query?.first { $0.name == "end" }?.value)

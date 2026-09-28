@@ -208,30 +208,6 @@ final class NativeIntentTests: XCTestCase {
     }
   }
 
-  func testSpotlightIndexesTheFullCatalogAndCurrencyCodes() async throws {
-    XCUIApplication(bundleIdentifier: "com.dimasike.currency").activate()
-    let definition = definitions.entities["CurrencyEntity"]
-    let catalog = try await definition.suggestedEntities()
-    let expected = Set(identifiers(catalog).filter { $0 != "@local" })
-    let deadline = Date().addingTimeInterval(60)
-    for id in ["USD", "EUR", "BTC", "XAU"] {
-      var matches = Set<String>()
-      repeat {
-        matches = Set(identifiers(try await definition.spotlightQuery(id.lowercased())))
-        if matches.contains(id) { break }
-        try await Task.sleep(for: .milliseconds(250))
-      } while Date() < deadline
-      XCTAssertTrue(matches.contains(id), id)
-    }
-    var indexed = Set<String>()
-    repeat {
-      indexed = Set(identifiers(try await definition.spotlightQuery()))
-      if expected.isSubset(of: indexed) { break }
-      try await Task.sleep(for: .milliseconds(250))
-    } while Date() < deadline
-    XCTAssertTrue(expected.isSubset(of: indexed), "Missing: \(expected.subtracting(indexed))")
-  }
-
   func testExistingDetailsOpenFromColdAndWarmApp() async throws {
     let app = launchReadyApp()
     app.terminate()

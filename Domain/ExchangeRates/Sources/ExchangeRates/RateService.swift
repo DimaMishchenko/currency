@@ -19,6 +19,7 @@ public actor RateService {
   private let daily: any RateProvider
 
   private let crypto: (any RateProvider)?
+  private let sleep: @Sendable (Duration) async throws -> Void
   /// Creates a rate service from its providers.
   public init(
     fiat: any RateProvider = FallbackRateProvider(), daily: any RateProvider = FawazProvider(),
@@ -27,6 +28,17 @@ public actor RateService {
     self.fiat = fiat
     self.daily = daily
     self.crypto = crypto
+    self.sleep = { try await Task.sleep(for: $0) }
+  }
+
+  init(
+    fiat: any RateProvider, daily: any RateProvider, crypto: (any RateProvider)?,
+    sleep: @escaping @Sendable (Duration) async throws -> Void
+  ) {
+    self.fiat = fiat
+    self.daily = daily
+    self.crypto = crypto
+    self.sleep = sleep
   }
 
   /// Refreshes providers and merges their EUR-normalized quotes with saved daily fallbacks.
@@ -172,10 +184,11 @@ public actor RateService {
   ) async -> [String: ExchangeRate]? {
     guard let provider else { return nil }
     guard let timeout else { return try? await provider.fetch() }
+    let sleep = self.sleep
     return await withTaskGroup(of: [String: ExchangeRate]?.self) { group in
       group.addTask { try? await provider.fetch() }
       group.addTask {
-        try? await Task.sleep(for: timeout)
+        try? await sleep(timeout)
         return nil
       }
       let quotes = await group.next() ?? nil
