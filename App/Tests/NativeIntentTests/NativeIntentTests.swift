@@ -4,20 +4,27 @@ import XCTest
 
 @MainActor
 final class NativeIntentTests: XCTestCase {
+  private static var didInitializeApp = false
   let definitions = IntentDefinitions(bundleIdentifier: "com.dimasike.currency")
 
   override func setUp() async throws {
-    await MainActor.run {
-      continueAfterFailure = false
-      let app = XCUIApplication(bundleIdentifier: "com.dimasike.currency")
-      app.launch()
-      for _ in 0..<6 {
-        let primary = app.buttons["onboarding.primary"]
-        guard primary.waitForExistence(timeout: 1) else { break }
-        let later = app.buttons["onboarding.later"]
-        if later.exists { later.tap() } else { primary.tap() }
+    continueAfterFailure = false
+    if !Self.didInitializeApp {
+      _ = launchReadyApp()
+      let deadline = Date().addingTimeInterval(15)
+      while true {
+        do {
+          _ = try await definitions.entities["CurrencyEntity"].suggestedEntities()
+          break
+        } catch {
+          let metadataError = error as NSError
+          guard metadataError.domain == "AppIntentsServicesMetadataErrorDomain",
+            metadataError.code == 400, Date() < deadline
+          else { throw error }
+          try await Task.sleep(for: .milliseconds(250))
+        }
       }
-      XCTAssertFalse(app.buttons["onboarding.primary"].exists)
+      Self.didInitializeApp = true
     }
   }
 
@@ -58,7 +65,7 @@ final class NativeIntentTests: XCTestCase {
   }
 
   func testConversionsResolveAndRunAfterAppTerminationWithoutOpeningUI() async throws {
-    let app = XCUIApplication(bundleIdentifier: "com.dimasike.currency")
+    let app = launchReadyApp()
     let currencies = definitions.entities["CurrencyEntity"]
     let euro = currencies.makeReference(identifier: "EUR")
     let dollar = currencies.makeReference(identifier: "USD")
@@ -202,17 +209,11 @@ final class NativeIntentTests: XCTestCase {
   }
 
   func testSpotlightIndexesTheFullCatalogAndCurrencyCodes() async throws {
+    XCUIApplication(bundleIdentifier: "com.dimasike.currency").activate()
     let definition = definitions.entities["CurrencyEntity"]
     let catalog = try await definition.suggestedEntities()
     let expected = Set(identifiers(catalog).filter { $0 != "@local" })
-    var indexed = Set<String>()
-    let deadline = Date().addingTimeInterval(10)
-    repeat {
-      indexed = Set(identifiers(try await definition.spotlightQuery()))
-      if expected.isSubset(of: indexed) { break }
-      try await Task.sleep(for: .milliseconds(250))
-    } while Date() < deadline
-    XCTAssertTrue(expected.isSubset(of: indexed), "Missing: \(expected.subtracting(indexed))")
+    let deadline = Date().addingTimeInterval(60)
     for id in ["USD", "EUR", "BTC", "XAU"] {
       var matches = Set<String>()
       repeat {
@@ -222,10 +223,17 @@ final class NativeIntentTests: XCTestCase {
       } while Date() < deadline
       XCTAssertTrue(matches.contains(id), id)
     }
+    var indexed = Set<String>()
+    repeat {
+      indexed = Set(identifiers(try await definition.spotlightQuery()))
+      if expected.isSubset(of: indexed) { break }
+      try await Task.sleep(for: .milliseconds(250))
+    } while Date() < deadline
+    XCTAssertTrue(expected.isSubset(of: indexed), "Missing: \(expected.subtracting(indexed))")
   }
 
   func testExistingDetailsOpenFromColdAndWarmApp() async throws {
-    let app = XCUIApplication(bundleIdentifier: "com.dimasike.currency")
+    let app = launchReadyApp()
     app.terminate()
     XCTAssertEqual(app.state, .notRunning)
     for id in ["XAU", "JPY"] {
@@ -243,7 +251,7 @@ final class NativeIntentTests: XCTestCase {
   }
 
   func testConverterAnnotationsFollowVisibleContent() async throws {
-    let app = XCUIApplication(bundleIdentifier: "com.dimasike.currency")
+    let app = launchReadyApp()
     let visible = try await annotationIDs(hidden: false)
     XCTAssertGreaterThanOrEqual(visible.count, 2)
     app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Source currency,")).firstMatch
@@ -269,6 +277,19 @@ final class NativeIntentTests: XCTestCase {
       try await Task.sleep(for: .milliseconds(200))
     } while Date() < deadline
     return result
+  }
+
+  private func launchReadyApp() -> XCUIApplication {
+    let app = XCUIApplication(bundleIdentifier: "com.dimasike.currency")
+    app.launch()
+    for _ in 0..<6 {
+      let primary = app.buttons["onboarding.primary"]
+      guard primary.waitForExistence(timeout: 1) else { break }
+      let later = app.buttons["onboarding.later"]
+      if later.exists { later.tap() } else { primary.tap() }
+    }
+    XCTAssertFalse(app.buttons["onboarding.primary"].exists)
+    return app
   }
 
   private func identifiers(_ entities: [AnyAppEntity]) -> [String] {

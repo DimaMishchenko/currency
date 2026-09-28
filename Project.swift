@@ -3,6 +3,14 @@ import ProjectDescription
 let teamID = "77X75EH6F4"
 let appProfile = Environment.currencyAppProfileUuid.getString(default: "")
 let widgetProfile = Environment.currencyWidgetProfileUuid.getString(default: "")
+let currencyUnitTestTargets: [TargetReference] = [
+  "DesignSystemPackageTests", "ExchangeRatesPackageTests", "LocalCurrencyPackageTests",
+  "ConversionPackageTests", "WidgetsPackageTests", "HomePackageTests",
+  "OnboardingPackageTests", "CurrencyDetailsPackageTests", "SettingsPackageTests",
+  "LocationOnboardingPackageTests", "WidgetOnboardingPackageTests",
+  "CurrencyApplicationTests", "ForegroundRefreshTests", "AppearancePreferencesTests",
+  "WidgetIntegrationTests", "ApplicationIntegrationTests"
+]
 
 func releaseSigning(profile: String) -> Settings? {
   guard !profile.isEmpty else { return nil }
@@ -316,23 +324,11 @@ let project = Project(
       ])),
     .scheme(
       name: "CurrencyTests", shared: true,
-      buildAction: .buildAction(targets: [
-        "Currency", "CurrencyWidgets",
-        "DesignSystemPackageTests", "ExchangeRatesPackageTests", "LocalCurrencyPackageTests",
-        "ConversionPackageTests", "WidgetsPackageTests", "HomePackageTests",
-        "OnboardingPackageTests", "CurrencyDetailsPackageTests", "SettingsPackageTests",
-        "LocationOnboardingPackageTests", "WidgetOnboardingPackageTests",
-        "CurrencyApplicationTests", "ForegroundRefreshTests", "AppearancePreferencesTests",
-        "WidgetIntegrationTests", "ApplicationIntegrationTests"
-      ]),
-      testAction: .targets([
-        "DesignSystemPackageTests", "ExchangeRatesPackageTests", "LocalCurrencyPackageTests",
-        "ConversionPackageTests", "WidgetsPackageTests", "HomePackageTests",
-        "OnboardingPackageTests", "CurrencyDetailsPackageTests", "SettingsPackageTests",
-        "LocationOnboardingPackageTests", "WidgetOnboardingPackageTests",
-        "CurrencyApplicationTests", "ForegroundRefreshTests", "AppearancePreferencesTests",
-        "WidgetIntegrationTests", "ApplicationIntegrationTests"
-      ]))
+      buildAction: .buildAction(targets: ["Currency", "CurrencyWidgets"] + currencyUnitTestTargets),
+      testAction: .targets(
+        currencyUnitTestTargets.map {
+          .testableTarget(target: $0, parallelization: .swiftTestingOnly)
+        }))
   ],
   additionalFiles: ["README.md", "Documentation/**"]
 )

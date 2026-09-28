@@ -102,9 +102,15 @@ jobs:
             -configuration Debug \
             -destination "platform=iOS Simulator,id=$CURRENCY_TEST_SIMULATOR" \
             -derivedDataPath "$RUNNER_TEMP/CurrencyTestsDerivedData" \
-            -parallel-testing-enabled NO \
+            -collect-test-diagnostics never \
             CODE_SIGN_IDENTITY=- \
             2>&1 | xcbeautify
+      - name: Reset app before native tests
+        if: needs.changes.outputs.xcode == 'true'
+        run: |
+          if xcrun simctl get_app_container "$CURRENCY_TEST_SIMULATOR" com.dimasike.currency app >/dev/null 2>&1; then
+            xcrun simctl uninstall "$CURRENCY_TEST_SIMULATOR" com.dimasike.currency
+          fi
       - name: Test extracted App Intents
         if: needs.changes.outputs.xcode == 'true'
         run: |
@@ -116,6 +122,7 @@ jobs:
             -destination "platform=iOS Simulator,id=$CURRENCY_TEST_SIMULATOR" \
             -derivedDataPath "$RUNNER_TEMP/CurrencyTestsDerivedData" \
             -resultBundlePath "$RUNNER_TEMP/CurrencyNativeIntents.xcresult" \
+            -collect-test-diagnostics never \
             -parallel-testing-enabled NO \
             -test-timeouts-enabled YES \
             -default-test-execution-time-allowance 120 \

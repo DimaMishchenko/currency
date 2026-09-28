@@ -1,14 +1,31 @@
+import CoreSpotlight
+import ExchangeRates
 import Foundation
 import LocalCurrency
 import Testing
 
 @MainActor @Suite struct CurrencySearchIndexTests {
-  @Test func upgradePreservesNamedIndexAndCleansBothCatalogGenerations() {
+  @Test func upgradePreservesNamedIndexAndOnlyCleansLegacyDomain() {
     #expect(CurrencySearchIndex.indexName == "Currency.SelectedCurrencies")
+    #expect(CurrencySearchIndex.cleanupDomains == ["Currency.SelectedCurrencies"])
+  }
+  @Test func localItemIdentifierSurvivesPermissionChanges() {
+    let resolved = CurrencyEntity(
+      "@local", local: .init(country: "CZ", currency: "CZK"))
+    let unavailable = CurrencyEntity("@local")
     #expect(
-      Set(CurrencySearchIndex.cleanupDomains) == [
-        "Currency.SelectedCurrencies", "Currency.Catalog"
-      ])
+      CSSearchableItem(appEntity: resolved).uniqueIdentifier
+        == CSSearchableItem(appEntity: unavailable).uniqueIdentifier)
+  }
+  @Test func fullCatalogReconciliationPublishesEverySupportedCode() async {
+    let state = CurrencySearchIndex.State(
+      ids: CurrencyCatalog.codes, observation: nil, status: .denied)
+    var published: [CurrencyEntity] = []
+    let index = CurrencySearchIndex(
+      dependencies: .init(
+        readState: { state }, delete: {}, publish: { published = $0 }))
+    await index.rebuild()
+    #expect(Set(published.map(\.id)) == Set(CurrencyCatalog.codes))
   }
   @Test func unchangedOrdinaryReconciliationSkipsWorkButSystemAndLocaleRebuild() async {
     var state = CurrencySearchIndex.State(ids: ["EUR"], observation: nil, status: .denied)
