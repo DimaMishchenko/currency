@@ -71,7 +71,10 @@
         manager: manager, store: store, timeoutDuration: .milliseconds(10),
         servicesEnabled: { true }, reloadWidgets: {})
       controller.update()
-      try await Task.sleep(for: .milliseconds(100))
+      let deadline = ContinuousClock.now.advanced(by: .seconds(5))
+      while controller.isUpdating && ContinuousClock.now < deadline {
+        try await Task.sleep(for: .milliseconds(10))
+      }
       #expect(!controller.isUpdating)
       #expect(store.widgetLocation() == nil)
       #expect(store.widgetLocationStatus() == .failed)

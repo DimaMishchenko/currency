@@ -31,7 +31,7 @@ final class CurrencySearchIndex: NSObject, CSSearchableIndexDelegate {
   private static let domain = "Currency.Catalog"
   private static let logger = Logger(subsystem: "com.dimasike.currency", category: "Spotlight")
   static let indexName = "Currency.SelectedCurrencies"
-  static let cleanupDomains = [indexName, domain]
+  static let cleanupDomains = [indexName]
   static let converterID = "Currency.Converter"
   static var converterItem: CSSearchableItem {
     let attributes = CSSearchableItemAttributeSet(contentType: .content)
@@ -76,14 +76,27 @@ final class CurrencySearchIndex: NSObject, CSSearchableIndexDelegate {
             if let error { continuation.resume(throwing: error) } else { continuation.resume() }
           }
         }
+        let (local, status) = composition.readLocal()
+        if !status.allowsCache || local?.isUsable != true {
+          let identifier = CSSearchableItem(appEntity: CurrencyEntity(CurrencySelection.localID))
+            .uniqueIdentifier
+          try await withCheckedThrowingContinuation {
+            (continuation: CheckedContinuation<Void, Error>) in
+            index.deleteSearchableItems(withIdentifiers: [identifier]) { error in
+              if let error { continuation.resume(throwing: error) } else { continuation.resume() }
+            }
+          }
+        }
       },
       publish: { entities in
+        logger.info("Preparing \(entities.count, privacy: .public) currency search items")
         let items =
           entities.map { entity in
             let item = CSSearchableItem(appEntity: entity)
             item.domainIdentifier = domain
             return item
           } + [converterItem]
+        logger.info("Submitting \(items.count, privacy: .public) currency search items")
         try await withCheckedThrowingContinuation {
           (continuation: CheckedContinuation<Void, Error>) in
           index.indexSearchableItems(items) { error in
@@ -113,6 +126,7 @@ final class CurrencySearchIndex: NSObject, CSSearchableIndexDelegate {
         }
         do {
           try await dependencies.delete()
+          Self.logger.info("Currency search cleanup completed")
           let state = dependencies.readState()
           try await dependencies.publish(state.entities)
           Self.logger.info("Indexed \(state.entities.count, privacy: .public) currency entities")

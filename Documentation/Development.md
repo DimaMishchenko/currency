@@ -9,7 +9,9 @@ Run `tuist install` after changing package dependencies, then `tuist generate` t
 - `Currency` builds the app and widget extension.
 - `CurrencyTests` builds the shipping app and extension and runs the combined test suite, including rate-core tests.
 - `CurrencyHarnesses` builds the isolated development apps. Module READMEs list their harness launch arguments.
-- `NativeIntentTests` is a UI-test target for iOS 27 AppIntentsTesting against the installed Currency executable. It completes onboarding in setup and exercises extracted metadata and cross-process execution. Domain and adapter tests stay in existing unit targets; this adds no production module.
+- `NativeIntentTests` is a UI-test target for iOS 27 AppIntentsTesting against the installed Currency executable. It completes onboarding once during setup and exercises extracted metadata and cross-process execution. Domain and adapter tests stay in existing unit targets; this adds no production module.
+
+`CurrencyTests` lets Swift Testing run independent cases concurrently within each target. The onboarding suite keeps its transient-state checks serialized. CI reinstalls the app before the native suite, which runs serially on the owned simulator.
 
 For command-line Xcode builds, use `set -o pipefail` and pipe combined output through `xcbeautify`. Use a separate simulator and derived-data directory for parallel work.
 
