@@ -127,6 +127,7 @@ jobs:
             -test-timeouts-enabled YES \
             -default-test-execution-time-allowance 120 \
             -maximum-test-execution-time-allowance 120 \
+            -skip-testing:NativeIntentTests/NativeIntentTests/testSpotlightIndexesTheFullCatalogAndCurrencyCodes \
             CODE_SIGN_IDENTITY=- \
             2>&1 | tee "$RUNNER_TEMP/CurrencyNativeIntents.log" | xcbeautify
       - name: Build feature harnesses

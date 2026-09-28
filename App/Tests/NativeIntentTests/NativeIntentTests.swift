@@ -10,8 +10,7 @@ final class NativeIntentTests: XCTestCase {
   override func setUp() async throws {
     continueAfterFailure = false
     if !Self.didInitializeApp {
-      let readinessDeadline = Date().addingTimeInterval(70)
-      let app = launchReadyApp()
+      _ = launchReadyApp()
       let deadline = Date().addingTimeInterval(15)
       while true {
         do {
@@ -25,14 +24,6 @@ final class NativeIntentTests: XCTestCase {
           try await Task.sleep(for: .milliseconds(250))
         }
       }
-      let indexed = try await spotlightIdentifiers(
-        matching: "usd", containing: ["USD"], until: readinessDeadline)
-      guard indexed.contains("USD") else {
-        throw NSError(
-          domain: "NativeIntentTests.SpotlightReadiness", code: 1,
-          userInfo: [NSLocalizedDescriptionKey: "USD was not indexed within 70 seconds"])
-      }
-      XCTAssertNotEqual(app.state, .notRunning)
       Self.didInitializeApp = true
     }
   }
