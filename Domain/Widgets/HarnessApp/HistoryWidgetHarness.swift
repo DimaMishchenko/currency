@@ -6,7 +6,6 @@ import WidgetKit
 import Widgets
 import WidgetsUI
 
-/// Deterministic scenarios exercise the production layout without writing shared app data.
 struct HistoryWidgetHarness: View {
   let scenario: String
   private let date = Date(timeIntervalSince1970: 1_790_035_200)
@@ -37,7 +36,9 @@ struct HistoryWidgetHarness: View {
       app: ConverterState(),
       base: scenario == "history-unsupported"
         ? "BTC" : scenario == "history-usd-btc" ? "USD" : "EUR",
-      quote: local ? WidgetSelection.localID : scenario == "history-usd-btc" ? "BTC" : "CZK")
+      quote: local
+        ? WidgetSelection.localID
+        : scenario == "history-unsupported" || scenario == "history-usd-btc" ? "BTC" : "CZK")
     return HistoryWidgetEntry(
       date: date,
       snapshot: HistoryWidgetSnapshot(

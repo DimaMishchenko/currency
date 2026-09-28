@@ -12,10 +12,11 @@ public actor HistoryService {
 
   /// Loads a series, reusing a fresh cache or returning saved history when a request fails.
   ///
-  /// Fiat pairs use Frankfurter reference rates; crypto bases require a USD quote and use
-  /// completed Coinbase hourly (`.day`) or daily candles. `.all` aggregates observations by month.
-  /// Fiat intraday history is unavailable. No current
-  /// FX rate is applied to historical crypto prices. Failed pagination never saves partial data.
+  /// Pairs without crypto use Frankfurter reference rates. Crypto/USD uses completed Coinbase
+  /// hourly (`.day`) or daily candles. Crypto/crypto divides matching Coinbase USD closes;
+  /// crypto/fiat or crypto/metal multiplies Coinbase USD closes by Frankfurter USD/quote
+  /// references on matching UTC dates. `.all` samples the joined history by month.
+  /// Frankfurter-based intraday history is unavailable. Failed pagination saves no partial data.
   /// - Parameters:
   ///   - base: Uppercase currency whose historical value is requested.
   ///   - quote: Uppercase denomination of the returned values.
@@ -33,13 +34,14 @@ public actor HistoryService {
       base != quote
     else { return HistoryResult(series: nil, issue: .unsupportedPair) }
     let isCrypto = CurrencyCatalog.crypto.contains(base)
-    guard range != .day || isCrypto else {
+    let quoteIsCrypto = CurrencyCatalog.crypto.contains(quote)
+    let needsReference = isCrypto && quote != "USD" && !quoteIsCrypto
+    guard range != .day || (isCrypto && !needsReference) else {
       return HistoryResult(series: nil, issue: .intradayUnavailable)
     }
     var calendar = Calendar(identifier: .gregorian)
     calendar.timeZone = .gmt
     let year = calendar.component(.year, from: now)
-    // A YTD cache belongs to one calendar year, including when a refresh fails at rollover.
     let interval = range == .yearToDate ? "\(range.rawValue)-\(year)" : "\(range.rawValue)"
     let file = directory.appendingPathComponent("history-\(base)-\(quote)-\(interval).json")
     let cached = (try? Data(contentsOf: file))
@@ -77,36 +79,36 @@ public actor HistoryService {
       } else {
         start = now.addingTimeInterval(-Double(range.rawValue) * 86400)
       }
-      guard
-        var components = URLComponents(
-          string: isCrypto
-            ? "https://api.exchange.coinbase.com/products/\(base)-\(quote)/candles"
-            : "https://api.frankfurter.dev/v2/rates")
-      else { throw RateError.invalidData }
       let points: [HistoryPoint]
       if isCrypto {
-        guard quote == "USD" else { throw RateError.unavailable }
+        let references =
+          needsReference
+          ? try await Self.fetchFiatHistory(
+            client: client, base: "USD", quote: quote, start: start, now: now)
+          : []
         let granularity: CandleGranularity = range == .day ? .hour : .day
         let end = range == .day ? now : calendar.startOfDay(for: now)
-        let combined = try await Self.fetchCandles(
-          client: client, components: components,
+        let candles = try await Self.fetchCryptoHistory(
+          client: client, code: base,
           start: range == .day ? start : calendar.startOfDay(for: start), end: end,
           granularity: granularity)
-        let candles = combined.map { HistoryPoint(date: $0.key, value: $0.value) }
-          .sorted { $0.date < $1.date }
-        points = range == .all ? Self.monthlyCloses(candles) : candles
-      } else {
-        components.queryItems = [
-          URLQueryItem(name: "base", value: base), URLQueryItem(name: "quotes", value: quote),
-          URLQueryItem(name: "from", value: String(start.ISO8601Format().prefix(10))),
-          URLQueryItem(name: "to", value: String(now.ISO8601Format().prefix(10)))
-        ]
-        if range == .all {
-          components.queryItems?.append(URLQueryItem(name: "group", value: "month"))
+        let combined: [HistoryPoint]
+        if quoteIsCrypto {
+          let quoteCandles = try await Self.fetchCryptoHistory(
+            client: client, code: quote,
+            start: range == .day ? start : calendar.startOfDay(for: start), end: end,
+            granularity: granularity)
+          combined = try Self.divideAlignedCloses(candles, by: quoteCandles)
+        } else if needsReference {
+          combined = try Self.convertDailyCloses(candles, rates: references)
+        } else {
+          combined = candles
         }
-        guard let url = components.url else { throw RateError.invalidData }
-        let data = try await client.get(url)
-        let references = try Self.decodeFiat(data, base: base, quote: quote)
+        points = range == .all ? Self.monthlyCloses(combined) : combined
+      } else {
+        let references = try await Self.fetchFiatHistory(
+          client: client, base: base, quote: quote, start: start, now: now,
+          monthly: range == .all)
         points =
           range == .yearToDate
           ? references.filter { $0.date >= start && $0.date <= now } : references
@@ -114,10 +116,13 @@ public actor HistoryService {
       try Task.checkCancellation()
       guard points.count >= 2 else { throw RateError.unavailable }
       let source = RateSource(
-        provider: isCrypto ? .coinbase : .frankfurter,
-        observation: isCrypto
-          ? (range == .all ? .monthlyLastClose : (range == .day ? .hourlyClose : .dailyClose))
-          : (range == .all ? .monthlyReference : .dailyReference),
+        provider: needsReference
+          ? .custom("Coinbase + Frankfurter") : isCrypto ? .coinbase : .frankfurter,
+        observation: needsReference
+          ? .unspecified
+          : isCrypto
+            ? (range == .all ? .monthlyLastClose : (range == .day ? .hourlyClose : .dailyClose))
+            : (range == .all ? .monthlyReference : .dailyReference),
         timeZone: isCrypto ? .gmt : nil
       )
       let series = HistorySeries(points: points, source: source, fetchedAt: now)
@@ -136,5 +141,39 @@ public actor HistoryService {
           ? .unavailable
           : .usingCachedSeries)
     }
+  }
+
+  private static func fetchCryptoHistory(
+    client: any HTTPClient, code: String, start: Date, end: Date,
+    granularity: CandleGranularity
+  ) async throws -> [HistoryPoint] {
+    guard
+      let components = URLComponents(
+        string: "https://api.exchange.coinbase.com/products/\(code)-USD/candles")
+    else { throw RateError.invalidData }
+    let combined = try await fetchCandles(
+      client: client, components: components, start: start, end: end,
+      granularity: granularity)
+    return combined.map { HistoryPoint(date: $0.key, value: $0.value) }
+      .sorted { $0.date < $1.date }
+  }
+
+  private static func fetchFiatHistory(
+    client: any HTTPClient, base: String, quote: String, start: Date, now: Date,
+    monthly: Bool = false
+  ) async throws -> [HistoryPoint] {
+    guard var components = URLComponents(string: "https://api.frankfurter.dev/v2/rates")
+    else { throw RateError.invalidData }
+    components.queryItems = [
+      URLQueryItem(name: "base", value: base), URLQueryItem(name: "quotes", value: quote),
+      URLQueryItem(name: "from", value: String(start.ISO8601Format().prefix(10))),
+      URLQueryItem(name: "to", value: String(now.ISO8601Format().prefix(10)))
+    ]
+    if monthly {
+      components.queryItems?.append(URLQueryItem(name: "group", value: "month"))
+    }
+    guard let url = components.url else { throw RateError.invalidData }
+    let data = try await client.get(url)
+    return try decodeFiat(data, base: base, quote: quote)
   }
 }

@@ -37,18 +37,53 @@ import Testing
     var app = ConverterState()
     app.setDestinations([])
     #expect(HistoryWidgetPair(app: app).quote == nil)
-    for (base, quote) in [
-      ("EUR", "EUR"), ("BTC", "EUR"), ("EUR", "BTC"), ("XAU", "USD"), ("invalid", "USD")
-    ] {
+    for (base, quote) in [("EUR", "EUR"), ("BTC", "BTC"), ("invalid", "USD")] {
       #expect(!HistoryWidgetPair(app: app, base: base, quote: quote).isSupported)
     }
     #expect(HistoryWidgetPair(app: app, base: "BTC", quote: "USD").isSupported)
     #expect(HistoryWidgetPair(app: app, base: "USD", quote: "BTC").isSupported)
+    #expect(HistoryWidgetPair(app: app, base: "BTC", quote: "EUR").isSupported)
+    #expect(HistoryWidgetPair(app: app, base: "EUR", quote: "BTC").isSupported)
+    #expect(HistoryWidgetPair(app: app, base: "BTC", quote: "ETH").isSupported)
+    #expect(HistoryWidgetPair(app: app, base: "BTC", quote: "XAU").isSupported)
+    #expect(HistoryWidgetPair(app: app, base: "XAU", quote: "BTC").isSupported)
+    #expect(HistoryWidgetPair(app: app, base: "XAU", quote: "EUR").isSupported)
+    #expect(HistoryWidgetPair(app: app, base: "XAU", quote: "XAG").isSupported)
     #expect(HistoryWidgetPair(app: app, base: "EUR", quote: "CZK").isSupported)
     #expect(HistoryWidgetPair(app: app, base: "BTC", quote: "USD").supportsIntradayHistory)
     #expect(HistoryWidgetPair(app: app, base: "USD", quote: "BTC").supportsIntradayHistory)
     #expect(!HistoryWidgetPair(app: app, base: "EUR", quote: "CZK").supportsIntradayHistory)
     #expect(!HistoryWidgetPair(app: app, base: "BTC", quote: "EUR").supportsIntradayHistory)
+    #expect(!HistoryWidgetPair(app: app, base: "EUR", quote: "BTC").supportsIntradayHistory)
+    #expect(HistoryWidgetPair(app: app, base: "BTC", quote: "ETH").supportsIntradayHistory)
+    #expect(HistoryWidgetPair(app: app, base: "ETH", quote: "BTC").supportsIntradayHistory)
+    #expect(!HistoryWidgetPair(app: app, base: "BTC", quote: "XAU").supportsIntradayHistory)
+    #expect(!HistoryWidgetPair(app: app, base: "XAU", quote: "BTC").supportsIntradayHistory)
+    #expect(!HistoryWidgetPair(app: app, base: "XAU", quote: "EUR").supportsIntradayHistory)
+  }
+
+  @Test func fiatToBitcoinInvertsCrossRateHistory() {
+    let pair = HistoryWidgetPair(app: ConverterState(), base: "EUR", quote: "BTC")
+    let provider = HistorySeries(
+      points: [
+        HistoryPoint(date: now.addingTimeInterval(-86_400), value: 80_000),
+        HistoryPoint(date: now, value: 100_000)
+      ], source: .init(provider: .custom("Coinbase + Frankfurter")), fetchedAt: now)
+    let shown = HistoryWidgetSnapshot(
+      pair: pair, range: .month,
+      result: HistoryResult(series: provider, issue: nil))
+    #expect(pair.historyRequest?.base == "BTC")
+    #expect(pair.historyRequest?.quote == "EUR")
+    #expect(pair.historyRequest?.inverted == true)
+    #expect(shown.series?.points.map(\.value) == [0.0000125, 0.00001])
+    #expect(shown.change == -0.2)
+  }
+
+  @Test func metalToBitcoinInvertsCrossRateHistory() {
+    let pair = HistoryWidgetPair(app: ConverterState(), base: "XAU", quote: "BTC")
+    #expect(pair.historyRequest?.base == "BTC")
+    #expect(pair.historyRequest?.quote == "XAU")
+    #expect(pair.historyRequest?.inverted == true)
   }
 
   @Test func usdToBitcoinInvertsProviderHistoryWithoutChangingDatesOrSource() {
