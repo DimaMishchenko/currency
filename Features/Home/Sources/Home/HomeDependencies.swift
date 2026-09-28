@@ -54,6 +54,14 @@ public struct HomeDependencies {
   public var refreshRates: (Bool) async throws -> RefreshResult
   /// Observes authoritative input, rate and location changes for this flow.
   public var changes: () -> AsyncStream<Void>
+  /// Reads durable converter discovery progress.
+  public var readDiscovery: () -> HomeDiscoveryProgress
+  /// Saves a completed converter discovery transition.
+  public var saveDiscovery: (HomeDiscoveryProgress) -> Void
+  /// Reports successful onboarding completion without exposing its storage.
+  public var onboardingCompleted: () -> Bool
+  /// Supplies the current date for calendar-day eligibility.
+  public var now: () -> Date
 
   /// Creates required operations without hidden global services.
   public init(
@@ -62,11 +70,17 @@ public struct HomeDependencies {
     readLocalCurrency: @escaping () -> (WidgetLocation?, WidgetLocationStatus),
     editInput: @escaping ((inout ConverterState) throws -> Void) throws -> ConverterState,
     refreshRates: @escaping (Bool) async throws -> RefreshResult,
-    changes: @escaping () -> AsyncStream<Void>
+    changes: @escaping () -> AsyncStream<Void>,
+    readDiscovery: @escaping () -> HomeDiscoveryProgress,
+    saveDiscovery: @escaping (HomeDiscoveryProgress) -> Void,
+    onboardingCompleted: @escaping () -> Bool,
+    now: @escaping () -> Date
   ) {
     self.readInput = readInput; self.readRates = readRates
     self.readRateIssue = readRateIssue
     self.readLocalCurrency = readLocalCurrency; self.editInput = editInput
     self.refreshRates = refreshRates; self.changes = changes
+    self.readDiscovery = readDiscovery; self.saveDiscovery = saveDiscovery
+    self.onboardingCompleted = onboardingCompleted; self.now = now
   }
 }

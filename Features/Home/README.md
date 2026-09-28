@@ -4,6 +4,8 @@ The main converter: amount editing, selected currencies, and rate-refresh feedba
 
 `Home` owns flow state and behavior; `HomeUI` owns presentation and resources. The logic model receives storage and refresh capabilities. The UI emits navigation requests; the app opens their destinations.
 
+Converter discovery uses native TipKit popovers. After one completed amount edit, the next editing interaction can introduce rate history from the keypad button if details have not been opened. The widget tip waits until a later calendar day and a new completed edit with usable converted results, then appears when the keypad closes and the converter is idle. It is excluded from the onboarding completion visit, suppressed after opening the widget guide, and never follows a shown history tip in the same foreground visit. The app supplies onboarding status, clock, and app-local discovery persistence through `HomeDependencies`; TipKit owns native presentation and dismissal.
+
 ## Harness
 
 Select the `HomeHarness` scheme and add launch arguments under **Run → Arguments**. Use `--case <name>`; for example, `--case save-failure`. Omitting it selects `normal`.
@@ -19,3 +21,5 @@ Select the `HomeHarness` scheme and add launch arguments under **Run → Argumen
 | `refresh-warning` | Pull to refresh to show a provider warning. |
 | `loading` | Pull to refresh to start a delayed request. |
 | `interrupted` | The same delayed refresh, for background/cancellation checks. |
+| `discovery-history` | Open the keypad to inspect the native history tip. |
+| `discovery-widgets` | Change an amount and close the keypad to inspect the native widgets tip. |

@@ -5,13 +5,27 @@ import ExchangeRates
 import ExchangeRatesUI
 import Home
 import SwiftUI
+import TipKit
 
 struct HomeScreen: View {
+  private struct DiscoveryTaskID: Equatable {
+    let tip: HomeDiscoveryTip?
+    let editing: Bool
+    let active: Bool
+    let idle: Bool
+    let keypadUsed: Bool
+    let pickerOpen: Bool
+    let manageOpen: Bool
+    let menuEngaged: Bool
+  }
+
   private static var destinationIconColumnWidth: CGFloat { 44 }
   private static var destinationTextInset: CGFloat {
     destinationIconColumnWidth + AppStyle.Space.medium
   }
   let model: HomeModel
+  let active: Bool
+  let discoveryIdle: Bool
   let detailsMotion: Namespace.ID
   let widgetsMotion: Namespace.ID
   var currencyDecoration: (String, AnyView) -> AnyView = { _, content in content }
@@ -32,6 +46,10 @@ struct HomeScreen: View {
   @State private var picker: PickerPurpose?
   @State private var showManage = false
   @State private var opensLocalCurrencyAfterPicker = false
+  @State private var menuEngaged = false
+  @State private var keypadInteractionStarted = false
+  @State private var historyTipRequested = false
+  @State private var widgetsTipRequested = false
   @Namespace private var currencyMotion
   @Namespace private var pickerMotion
   @Namespace private var keypadMotion
@@ -42,6 +60,20 @@ struct HomeScreen: View {
   @ScaledMetric(relativeTo: .largeTitle) private var editingAmountSize = 48
   private var motion: Animation? {
     reduceMotion ? nil : .spring(response: 0.42, dampingFraction: 0.86)
+  }
+
+  private var historyTaskID: DiscoveryTaskID {
+    DiscoveryTaskID(
+      tip: nil, editing: editingAmount, active: active, idle: discoveryIdle,
+      keypadUsed: keypadInteractionStarted, pickerOpen: picker != nil,
+      manageOpen: showManage, menuEngaged: menuEngaged)
+  }
+
+  private var widgetsTaskID: DiscoveryTaskID {
+    DiscoveryTaskID(
+      tip: model.activeDiscoveryTip, editing: editingAmount, active: active,
+      idle: discoveryIdle, keypadUsed: keypadInteractionStarted,
+      pickerOpen: picker != nil, manageOpen: showManage, menuEngaged: menuEngaged)
   }
 
   private var amountLabel: String {
@@ -125,7 +157,59 @@ struct HomeScreen: View {
       }
     }
     .task(id: refreshRequest) { if refreshRequest != nil { await refresh() } }
+    .task(id: historyTaskID) {
+      guard editingAmount else { return }
+      do { try await Task.sleep(for: .milliseconds(550)) } catch { return }
+      guard !Task.isCancelled, editingAmount, !keypadInteractionStarted,
+        active, discoveryIdle, picker == nil, !showManage, !menuEngaged
+      else { return }
+      model.offerHistoryTip()
+      guard !Task.isCancelled, model.activeDiscoveryTip == .history else { return }
+      let tip = RateHistoryTip()
+      if tip.shouldDisplay { historyTipRequested = true; return }
+      for await available in tip.shouldDisplayUpdates {
+        guard !Task.isCancelled, editingAmount, !keypadInteractionStarted,
+          active, discoveryIdle, picker == nil, !showManage, !menuEngaged,
+          model.activeDiscoveryTip == .history
+        else { return }
+        if available { historyTipRequested = true; return }
+      }
+    }
     .accessibilityAction(.escape) { dismissAmount() }
+    .onChange(of: discoveryIdle) { _, idle in
+      if !idle {
+        historyTipRequested = false
+        widgetsTipRequested = false
+        model.suspendDiscoveryTips()
+      }
+    }
+    .onChange(of: active) { _, value in
+      if !value {
+        historyTipRequested = false
+        widgetsTipRequested = false
+      }
+    }
+    .onChange(of: historyTipRequested) { _, requested in
+      if !requested { model.endDiscoveryTip(.history) }
+    }
+    .onChange(of: widgetsTipRequested) { _, requested in
+      if !requested { model.endDiscoveryTip(.widgets) }
+    }
+    .task(id: widgetsTaskID) {
+      guard !Task.isCancelled, active, discoveryIdle, !editingAmount,
+        picker == nil, !showManage, !menuEngaged,
+        model.activeDiscoveryTip == .widgets
+      else { return }
+      let tip = ExploreWidgetsTip()
+      if tip.shouldDisplay { widgetsTipRequested = true; return }
+      for await available in tip.shouldDisplayUpdates {
+        guard !Task.isCancelled, active, discoveryIdle, !editingAmount,
+          picker == nil, !showManage, !menuEngaged,
+          model.activeDiscoveryTip == .widgets
+        else { return }
+        if available { widgetsTipRequested = true; return }
+      }
+    }
   }
 
   private func openRequestedLocalCurrency() {
@@ -241,10 +325,19 @@ struct HomeScreen: View {
   private var widgetsButton: some View {
     Button {
       dismissAmount(feedback: false)
+      widgetsTipRequested = false
+      model.visitWidgets()
       AppHaptics.play(.action)
       onOutput(.widgetsRequested)
     } label: {
       Image(systemName: "square.grid.2x2")
+        .background {
+          WidgetTipPopoverAnchor(
+            tip: ExploreWidgetsTip(), isPresented: $widgetsTipRequested,
+            presented: { model.discoveryTipPresented(.widgets) }
+          )
+          .frame(width: 44, height: 44)
+        }
     }
     .accessibilityLabel(.Converter.widgets)
     .accessibilityIdentifier("converter.widgets")
@@ -271,6 +364,12 @@ struct HomeScreen: View {
       Image(systemName: "ellipsis")
     }
     .accessibilityLabel(.Converter.options)
+    .simultaneousGesture(
+      TapGesture()
+        .onEnded {
+          menuEngaged = true
+          model.suspendDiscoveryTips()
+        })
   }
 
   @ViewBuilder
@@ -526,6 +625,12 @@ struct HomeScreen: View {
                   CurrencyDisplay.name(model.editingCode, locale: locale))
               )
               .accessibilityIdentifier("converter.history")
+              .popover(isPresented: $historyTipRequested, arrowEdge: .bottom) {
+                HomeDiscoveryPopover(
+                  tip: RateHistoryTip(),
+                  presented: { model.discoveryTipPresented(.history) },
+                  dismissed: { historyTipRequested = false })
+              }
               HStack(spacing: AppStyle.Space.small) {
                 if !dynamicTypeSize.isAccessibilitySize {
                   CurrencyIcon(model.editingCode, size: 14).accessibilityHidden(true)
@@ -654,9 +759,13 @@ struct HomeScreen: View {
 
   private func dismissAmount(feedback: Bool = true) {
     guard editingAmount else { return }
+    historyTipRequested = false
     if feedback { AppHaptics.play(.action) }
     withAnimation(motion) {
       editingAmount = false; model.endEditing()
+    }
+    if feedback && active && discoveryIdle && picker == nil && !showManage && !menuEngaged {
+      model.offerWidgetsTip()
     }
   }
 
@@ -665,11 +774,15 @@ struct HomeScreen: View {
     guard model.editor != nil else { return }
     AppHaptics.play(.action)
     withAnimation(motion) { editingAmount = true }
+    widgetsTipRequested = false
+    menuEngaged = false
+    keypadInteractionStarted = false
   }
 
   private func showDetails(code: String, selectionID: String) {
     AppHaptics.play(.action)
     dismissAmount(feedback: false)
+    model.visitDetails()
     onOutput(
       .detailsRequested(
         HomeDetailsRequest(
@@ -678,6 +791,7 @@ struct HomeScreen: View {
   }
 
   private func key(_ key: String) {
+    keypadInteractionStarted = true
     withAnimation(reduceMotion ? nil : .snappy(duration: 0.22)) {
       if model.press(key) {
         AppHaptics.play(key == "⌫" ? .delete : .selection)

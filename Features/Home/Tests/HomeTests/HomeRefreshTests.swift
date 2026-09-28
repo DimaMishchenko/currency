@@ -13,6 +13,7 @@ private final class HomeRefreshFixture {
   var rejectsInput = false
   var requests: [Int: CheckedContinuation<RefreshResult, any Error>] = [:]
   var notifications: AsyncStream<Void>.Continuation?
+  var discovery = HomeDiscoveryProgress()
 
   var dependencies: HomeDependencies {
     .init(
@@ -28,7 +29,11 @@ private final class HomeRefreshFixture {
         let index = self.count
         return try await withCheckedThrowingContinuation { self.requests[index] = $0 }
       },
-      changes: { AsyncStream { self.notifications = $0 } })
+      changes: { AsyncStream { self.notifications = $0 } },
+      readDiscovery: { self.discovery },
+      saveDiscovery: { self.discovery = $0 },
+      onboardingCompleted: { true },
+      now: { .now })
   }
 
   func succeed(_ index: Int, warning: RefreshWarning? = nil) {

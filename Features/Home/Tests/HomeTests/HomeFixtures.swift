@@ -20,7 +20,10 @@ struct HomeTestStore {
 
 @MainActor
 func makeHomeModel(
-  store: HomeTestStore, service: RateService, readRates: (() -> RateSnapshot)? = nil
+  store: HomeTestStore, service: RateService, readRates: (() -> RateSnapshot)? = nil,
+  discovery: HomeDiscoveryStore? = nil,
+  onboardingCompleted: @escaping () -> Bool = { true },
+  now: @escaping () -> Date = { .now }
 ) -> HomeModel {
   HomeModel(
     dependencies: HomeDependencies(
@@ -32,5 +35,9 @@ func makeHomeModel(
       },
       editInput: { try store.updateInput($0) },
       refreshRates: { try await store.rates.refreshRates(using: service, force: $0) },
-      changes: { AsyncStream { $0.finish() } }))
+      changes: { AsyncStream { $0.finish() } },
+      readDiscovery: { discovery?.load() ?? HomeDiscoveryProgress() },
+      saveDiscovery: { discovery?.save($0) },
+      onboardingCompleted: onboardingCompleted,
+      now: now))
 }

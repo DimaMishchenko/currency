@@ -32,7 +32,7 @@ struct AppCompositionTests {
     }
     let composition = AppComposition(
       directory: directory,
-      appearance: AppearancePreferences(defaults: defaults))
+      appearance: AppearancePreferences(defaults: defaults), discoveryDefaults: defaults)
     let home = composition.home
     _ = try home.editInput {
       $0.setAmount("42"); $0.setDestinations(["USD"])

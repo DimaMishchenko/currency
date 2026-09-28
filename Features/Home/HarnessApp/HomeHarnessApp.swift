@@ -6,6 +6,7 @@ import Home
 import HomeUI
 import LocalCurrency
 import SwiftUI
+import TipKit
 
 @MainActor
 private final class HomeHarnessFixture {
@@ -17,6 +18,7 @@ private final class HomeHarnessFixture {
   var notification: AsyncStream<Void>.Continuation?
   var didFailSave = false
   var rateIssue: HomeIssue?
+  var discovery = HomeDiscoveryProgress()
 
   init(name: String) {
     self.name = name
@@ -35,6 +37,14 @@ private final class HomeHarnessFixture {
         country: "CZ", currency: "CZK", updatedAt: .now.addingTimeInterval(-172_800))
       status = .available
       input.resolveLocalCurrency(local, status: status)
+    }
+    if name == "discovery-history" {
+      discovery.completedEdits = 1
+    }
+    if name == "discovery-widgets" {
+      discovery.firstObservedAt = Calendar.current.date(byAdding: .day, value: -1, to: .now)
+      discovery.completedEdits = 1
+      discovery.visitedDetails = true
     }
   }
 
@@ -67,7 +77,11 @@ private final class HomeHarnessFixture {
           snapshot: self.snapshot,
           warning: self.name == "refresh-warning" ? .dailyRatesUnavailable : nil)
       },
-      changes: { AsyncStream { self.notification = $0 } })
+      changes: { AsyncStream { self.notification = $0 } },
+      readDiscovery: { self.discovery },
+      saveDiscovery: { self.discovery = $0 },
+      onboardingCompleted: { true },
+      now: { .now })
   }
 }
 
@@ -81,6 +95,7 @@ struct HomeHarnessApp: App {
   @State private var fixture: HomeHarnessFixture
 
   init() {
+    try? Tips.configure()
     let arguments = ProcessInfo.processInfo.arguments
     let index = arguments.firstIndex(of: "--case")
     let name =
@@ -92,7 +107,8 @@ struct HomeHarnessApp: App {
     WindowGroup {
       NavigationStack {
         HomeEntry(
-          flowID: flowID, active: true, detailsNamespace: details, widgetsNamespace: widgets,
+          flowID: flowID, active: true, discoveryVisitID: flowID, discoveryIdle: true,
+          detailsNamespace: details, widgetsNamespace: widgets,
           onOutput: { _ in })
       }
       .environment(\.homeDependencies, fixture.dependencies)
