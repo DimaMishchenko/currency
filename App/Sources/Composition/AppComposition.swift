@@ -22,6 +22,7 @@ final class AppComposition {
   let conversion: ConversionStore
   let local: LocalCurrencyStore
   let progress: OnboardingProgressStore
+  let discovery: HomeDiscoveryStore
   let history: HistoryService
   let service = RateService()
   let appearance: AppearancePreferences
@@ -38,12 +39,16 @@ final class AppComposition {
       refreshLocalCurrency: { [weak self] in await self?.foregroundLocation.refreshIfNeeded() },
       changed: { [weak self] in self?.changed() }))
 
-  init(directory: URL = AppGroup.directory, appearance: AppearancePreferences? = nil) {
+  init(
+    directory: URL = AppGroup.directory, appearance: AppearancePreferences? = nil,
+    discoveryDefaults: UserDefaults = .standard
+  ) {
     self.appearance = appearance ?? AppearancePreferences(defaults: .standard)
     rates = RateStore(directory: directory)
     conversion = ConversionStore(directory: directory)
     local = LocalCurrencyStore(directory: directory)
     progress = OnboardingProgressStore(directory: directory)
+    discovery = HomeDiscoveryStore(defaults: discoveryDefaults)
     history = HistoryService(directory: directory)
     systemActions = SystemActionComposition(directory: directory, service: service)
     let actions = systemActions
@@ -118,7 +123,16 @@ final class AppComposition {
       readLocalCurrency: { [local] in (local.widgetLocation(), local.widgetLocationStatus()) },
       editInput: { [self] in try edit($0) },
       refreshRates: { [self] in try await refresh(force: $0) },
-      changes: { [self] in changes() })
+      changes: { [self] in changes() },
+      readDiscovery: { [discovery] in discovery.load() },
+      saveDiscovery: { [discovery] in discovery.save($0) },
+      onboardingCompleted: { [progress] in progress.load()?.completed == true },
+      now: { .now })
+  }
+  func markDetailsVisited() {
+    var value = discovery.load()
+    value.visitedDetails = true
+    discovery.save(value)
   }
   var onboarding: OnboardingDependencies {
     OnboardingDependencies(

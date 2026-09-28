@@ -17,6 +17,8 @@ import WidgetOnboardingUI
 struct CurrencyRoot: View {
   let composition: AppComposition
   @State private var scene: CurrencyScene
+  @State private var discoveryVisitID = UUID()
+  @State private var wasBackgrounded = false
   @Environment(\.scenePhase) private var scenePhase
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Namespace private var widgetsMotion
@@ -40,6 +42,9 @@ struct CurrencyRoot: View {
         NavigationStack(path: $scene.path) {
           HomeEntry(
             flowID: scene.homeID, active: !scene.showsOnboarding && scenePhase == .active,
+            discoveryVisitID: discoveryVisitID,
+            discoveryIdle: scene.detail == nil && scene.sheet == nil && scene.location == nil
+              && scene.path.isEmpty,
             detailsNamespace: detailsMotion, widgetsNamespace: widgetsMotion,
             currencyDecoration: { id, content in
               let visible =
@@ -139,6 +144,11 @@ struct CurrencyRoot: View {
       }
     }
     .onChange(of: scenePhase, initial: true) { _, phase in
+      if phase == .background { wasBackgrounded = true }
+      if phase == .active && wasBackgrounded {
+        discoveryVisitID = UUID()
+        wasBackgrounded = false
+      }
       AppHaptics.configure(sceneID: scene.id, active: phase == .active, reducedMotion: reduceMotion)
       if phase == .active { composition.searchIndex.reconcile() }
       composition.foreground.setActive(
@@ -146,6 +156,9 @@ struct CurrencyRoot: View {
     }
     .onChange(of: scene.showsOnboarding) { _, shows in
       composition.foreground.setActive(scenePhase == .active && !shows, sceneID: scene.id)
+    }
+    .onChange(of: scene.detail?.id) { _, id in
+      if id != nil { composition.markDetailsVisited() }
     }
     .onChange(of: reduceMotion) { _, value in
       AppHaptics.configure(sceneID: scene.id, active: scenePhase == .active, reducedMotion: value)

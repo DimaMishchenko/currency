@@ -19,6 +19,15 @@ public final class HomeModel {
   public private(set) var warning: HomeIssue?
   @ObservationIgnored private let dependencies: HomeDependencies
   @ObservationIgnored private var refreshIdentity: UUID?
+  /// Tip currently offered to the UI for native presentation.
+  public private(set) var activeDiscoveryTip: HomeDiscoveryTip?
+  /// Whether the history tip appeared during this foreground visit.
+  public private(set) var historyTipShownThisVisit = false
+  @ObservationIgnored private var firstVisitAfterOnboarding: Bool
+  @ObservationIgnored private var discoveryVisitID: UUID?
+  @ObservationIgnored private var skipWidgetsThisVisit = false
+  @ObservationIgnored private var editStartingAmount: Decimal?
+  @ObservationIgnored private var closedWithResults = false
 
   /// Restores current input and rates without starting background work.
   public init(dependencies: HomeDependencies) {
@@ -26,6 +35,7 @@ public final class HomeModel {
     input = dependencies.readInput()
     snapshot = dependencies.readRates()
     warning = dependencies.readRateIssue()
+    firstVisitAfterOnboarding = !dependencies.onboardingCompleted()
   }
 
   /// Temporary amount editing state; confirmed input remains separately persisted.
@@ -46,6 +56,7 @@ public final class HomeModel {
       editor = nil
     }
     input = next
+    if editor == nil { editStartingAmount = nil }
   }
 
   /// Reconciles input and rates after an authoritative shared-state notification.
@@ -72,6 +83,7 @@ public final class HomeModel {
     guard canEdit(code, selectionID: id, in: input),
       snapshot.convert(input.decimal, from: input.source, to: code) != nil
     else { return }
+    if editor != nil { recordCompletedEdit() }
     var next = AmountEditor(codes: [input.source] + input.destinations)
     next.preset(input.decimal)
     next.select(code, snapshot: snapshot)
@@ -81,6 +93,91 @@ public final class HomeModel {
     next.preset(rounded)
     editor = next
     editingSelectionID = id
+    editStartingAmount = input.decimal
+    closedWithResults = false
+    if activeDiscoveryTip == .widgets { activeDiscoveryTip = nil }
+  }
+
+  /// Starts a foreground visit and anchors later-day discovery.
+  public func beginDiscoveryVisit(id: UUID) {
+    guard dependencies.onboardingCompleted() else { return }
+    guard discoveryVisitID != id else { return }
+    discoveryVisitID = id
+    skipWidgetsThisVisit = firstVisitAfterOnboarding
+    firstVisitAfterOnboarding = false
+    historyTipShownThisVisit = false
+    activeDiscoveryTip = nil
+    closedWithResults = false
+    var progress = dependencies.readDiscovery()
+    guard progress.firstObservedAt == nil else { return }
+    progress.firstObservedAt = dependencies.now()
+    dependencies.saveDiscovery(progress)
+  }
+
+  /// Suspends transient tip eligibility when the foreground visit ends.
+  public func endDiscoveryVisit() {
+    suspendDiscoveryTips()
+  }
+
+  /// Evaluates history at the start of a subsequent editing interaction.
+  public func offerHistoryTip() {
+    guard activeDiscoveryTip == nil else { return }
+    let progress = dependencies.readDiscovery()
+    if progress.canOfferHistory(editing: editor != nil) {
+      activeDiscoveryTip = .history
+    }
+  }
+
+  /// Evaluates widgets after the keypad closes with useful converted results.
+  public func offerWidgetsTip() {
+    guard activeDiscoveryTip == nil else { return }
+    let progress = dependencies.readDiscovery()
+    if progress.canOfferWidgets(
+      now: dependencies.now(), closedWithResults: closedWithResults,
+      firstHomeVisit: skipWidgetsThisVisit, historyShownThisVisit: historyTipShownThisVisit)
+    {
+      activeDiscoveryTip = .widgets
+    }
+  }
+
+  /// Records a tip only after native presentation reports it visible.
+  public func discoveryTipPresented(_ tip: HomeDiscoveryTip) {
+    guard activeDiscoveryTip == tip else { return }
+    var progress = dependencies.readDiscovery()
+    switch tip {
+    case .history:
+      progress.showedHistoryTip = true
+      historyTipShownThisVisit = true
+    case .widgets: progress.showedWidgetsTip = true
+    }
+    dependencies.saveDiscovery(progress)
+  }
+
+  /// Ends an offer when its presentation is dismissed or interrupted.
+  public func endDiscoveryTip(_ tip: HomeDiscoveryTip) {
+    if activeDiscoveryTip == tip { activeDiscoveryTip = nil }
+  }
+
+  /// Removes transient opportunities while another converter interaction owns focus.
+  public func suspendDiscoveryTips() {
+    activeDiscoveryTip = nil
+    closedWithResults = false
+  }
+
+  /// Suppresses undiscovered history after opening details.
+  public func visitDetails() {
+    var progress = dependencies.readDiscovery()
+    progress.visitedDetails = true
+    dependencies.saveDiscovery(progress)
+    suspendDiscoveryTips()
+  }
+
+  /// Suppresses undiscovered widgets after opening the toolbar guide.
+  public func visitWidgets() {
+    var progress = dependencies.readDiscovery()
+    progress.openedWidgets = true
+    dependencies.saveDiscovery(progress)
+    suspendDiscoveryTips()
   }
 
   private func reconcileEditor() {
@@ -99,7 +196,27 @@ public final class HomeModel {
   }
 
   /// Ends temporary keypad input.
-  public func endEditing() { editor = nil }
+  public func endEditing() {
+    let changed = recordCompletedEdit()
+    closedWithResults =
+      changed
+      && input.destinations.contains {
+        snapshot.convert(input.decimal, from: input.source, to: $0) != nil
+      }
+    editor = nil
+    editStartingAmount = nil
+    if activeDiscoveryTip == .history { activeDiscoveryTip = nil }
+  }
+
+  @discardableResult
+  private func recordCompletedEdit() -> Bool {
+    guard let editStartingAmount, editStartingAmount != input.decimal else { return false }
+    var progress = dependencies.readDiscovery()
+    progress.completedEdits += 1
+    dependencies.saveDiscovery(progress)
+    self.editStartingAmount = input.decimal
+    return true
+  }
 
   /// Commits one keypad action against freshly read input.
   @discardableResult

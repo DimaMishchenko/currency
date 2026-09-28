@@ -1,6 +1,10 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "historyTipTitle": {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "View rate history"}}}},
+    "historyTipMessage": {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "See how this exchange rate has changed over time."}}}},
+    "widgetsTipTitle": {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Explore widgets"}}}},
+    "widgetsTipMessage": {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Find widgets for your Home Screen and learn how to add them."}}}},
     "settings": {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Settings"}}}},
     "localCurrency": {
       "extractionState": "manual",

@@ -20,6 +20,8 @@ public struct HomeEntry: View {
   @Environment(\.homeDependencies) private var dependencies
   private let flowID: UUID
   private let active: Bool
+  private let discoveryVisitID: UUID
+  private let discoveryIdle: Bool
   private let detailsNamespace: Namespace.ID
   private let widgetsNamespace: Namespace.ID
   private let onOutput: (HomeOutput) -> Void
@@ -27,11 +29,15 @@ public struct HomeEntry: View {
 
   /// Creates an entry with explicit activity and application-owned output handling.
   public init(
-    flowID: UUID, active: Bool, detailsNamespace: Namespace.ID, widgetsNamespace: Namespace.ID,
+    flowID: UUID, active: Bool, discoveryVisitID: UUID, discoveryIdle: Bool,
+    detailsNamespace: Namespace.ID,
+    widgetsNamespace: Namespace.ID,
     currencyDecoration: @escaping (String, AnyView) -> AnyView = { _, content in content },
     onOutput: @escaping (HomeOutput) -> Void
   ) {
     self.flowID = flowID; self.active = active
+    self.discoveryVisitID = discoveryVisitID
+    self.discoveryIdle = discoveryIdle
     self.detailsNamespace = detailsNamespace; self.widgetsNamespace = widgetsNamespace
     self.onOutput = onOutput
     self.currencyDecoration = currencyDecoration
@@ -40,7 +46,9 @@ public struct HomeEntry: View {
   public var body: some View {
     if let dependencies {
       HomeHost(
-        dependencies: dependencies, active: active, detailsNamespace: detailsNamespace,
+        dependencies: dependencies, active: active, discoveryVisitID: discoveryVisitID,
+        discoveryIdle: discoveryIdle,
+        detailsNamespace: detailsNamespace,
         widgetsNamespace: widgetsNamespace,
         currencyDecoration: currencyDecoration,
         onOutput: onOutput
@@ -58,17 +66,22 @@ public struct HomeEntry: View {
 private struct HomeHost: View {
   @State private var model: HomeModel
   let active: Bool
+  let discoveryVisitID: UUID
+  let discoveryIdle: Bool
   let detailsNamespace: Namespace.ID
   let widgetsNamespace: Namespace.ID
   let onOutput: (HomeOutput) -> Void
   let currencyDecoration: (String, AnyView) -> AnyView
   init(
-    dependencies: HomeDependencies, active: Bool, detailsNamespace: Namespace.ID,
+    dependencies: HomeDependencies, active: Bool, discoveryVisitID: UUID, discoveryIdle: Bool,
+    detailsNamespace: Namespace.ID,
     widgetsNamespace: Namespace.ID,
     currencyDecoration: @escaping (String, AnyView) -> AnyView,
     onOutput: @escaping (HomeOutput) -> Void
   ) {
     self.active = active
+    self.discoveryVisitID = discoveryVisitID
+    self.discoveryIdle = discoveryIdle
     self.detailsNamespace = detailsNamespace; self.widgetsNamespace = widgetsNamespace
     self.onOutput = onOutput
     self.currencyDecoration = currencyDecoration
@@ -76,13 +89,21 @@ private struct HomeHost: View {
   }
   var body: some View {
     HomeScreen(
-      model: model, detailsMotion: detailsNamespace, widgetsMotion: widgetsNamespace,
+      model: model, active: active, discoveryIdle: discoveryIdle,
+      detailsMotion: detailsNamespace, widgetsMotion: widgetsNamespace,
       currencyDecoration: currencyDecoration,
       onOutput: onOutput
     )
     .task(id: active) {
       guard active else { return }
+      model.beginDiscoveryVisit(id: discoveryVisitID)
       await model.observeChanges()
+    }
+    .onChange(of: discoveryVisitID) { _, id in
+      if active { model.beginDiscoveryVisit(id: id) }
+    }
+    .onChange(of: active) { _, value in
+      if !value { model.endDiscoveryVisit() }
     }
   }
 }
