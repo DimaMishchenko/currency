@@ -76,7 +76,7 @@ jobs:
         continue-on-error: true
         run: |
           tuist auth login
-          tuist cache --cache-profile only-external --configuration Debug
+          tuist cache --cache-profile all-possible --configuration Debug
       # Warming creates a cache-build workspace; always regenerate before validation.
       - name: Generate project
         if: needs.changes.outputs.xcode == 'true'
