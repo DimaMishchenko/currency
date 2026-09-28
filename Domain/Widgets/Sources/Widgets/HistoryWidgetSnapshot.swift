@@ -20,18 +20,16 @@ public struct HistoryWidgetPair: Sendable, Equatable {
     base == WidgetSelection.localID || quote == WidgetSelection.localID
   }
 
-  /// The source pair and direction supported by the existing history providers.
+  /// The source pair and direction supported by the history providers.
   public var historyRequest: (base: String, quote: String, inverted: Bool)? {
     guard let quote, base != quote,
-      CurrencyCatalog.codes.contains(base), CurrencyCatalog.codes.contains(quote),
-      !WidgetPresets.metals.contains(base), !WidgetPresets.metals.contains(quote),
-      !(CurrencyCatalog.crypto.contains(base) && CurrencyCatalog.crypto.contains(quote))
+      CurrencyCatalog.codes.contains(base), CurrencyCatalog.codes.contains(quote)
     else { return nil }
     if CurrencyCatalog.crypto.contains(base) {
-      return quote == "USD" ? (base, quote, false) : nil
+      return (base, quote, false)
     }
     if CurrencyCatalog.crypto.contains(quote) {
-      return base == "USD" ? (quote, base, true) : nil
+      return (quote, base, true)
     }
     return (base, quote, false)
   }
@@ -43,6 +41,7 @@ public struct HistoryWidgetPair: Sendable, Equatable {
   public var supportsIntradayHistory: Bool {
     guard let request = historyRequest else { return false }
     return CurrencyCatalog.crypto.contains(request.base)
+      && (request.quote == "USD" || CurrencyCatalog.crypto.contains(request.quote))
   }
 }
 

@@ -78,11 +78,11 @@ import Widgets
     settings.comparison = HistoryCurrency("USD")
     #expect(settings.availableRanges(input: saved) == HistoryWidgetRange.allCases)
     settings.comparison = HistoryCurrency("ETH")
-    #expect(settings.availableRanges(input: saved) == fiatRanges)
+    #expect(settings.availableRanges(input: saved) == HistoryWidgetRange.allCases)
 
     input.changeSource("EUR")
     input.setDestinations(["CZK"])
-    #expect(settings.availableRanges(input: input) == fiatRanges)
+    #expect(settings.availableRanges(input: input) == HistoryWidgetRange.allCases)
     settings.base = nil
     settings.comparison = nil
     #expect(settings.availableRanges(input: input) == fiatRanges)
@@ -218,6 +218,35 @@ import Widgets
     #expect(entry.snapshot.change == -0.5)
   }
 
+  @Test func cryptoCrossPairLoadsSameHistoryInEitherWidgetDirection() async {
+    let now = now
+    let requested = Mutex<[(String, String)]>([])
+    let provider = HistoryTimeline(
+      dependencies: HistoryTimelineDependencies(
+        input: { ConverterState() },
+        load: { base, quote, _, _ in
+          requested.withLock { $0.append((base, quote)) }
+          return HistoryResult(
+            series: HistorySeries(
+              points: [
+                HistoryPoint(date: now.addingTimeInterval(-86_400), value: 100),
+                HistoryPoint(date: now, value: 120)
+              ], source: .init(provider: .custom("Coinbase + Frankfurter")), fetchedAt: now),
+            issue: nil)
+        }, now: { now }))
+    let settings = HistorySettings()
+    settings.base = HistoryCurrency("BTC")
+    settings.comparison = HistoryCurrency("EUR")
+    let direct = await provider.entry(settings)
+    settings.base = HistoryCurrency("EUR")
+    settings.comparison = HistoryCurrency("BTC")
+    let inverse = await provider.entry(settings)
+    #expect(requested.withLock { $0.map { [$0.0, $0.1] } } == [["BTC", "EUR"], ["BTC", "EUR"]])
+    #expect(direct.snapshot.latest?.value == 120)
+    #expect(abs((inverse.snapshot.latest?.value ?? 0) - 1.0 / 120) < 0.0000001)
+    #expect(abs((inverse.snapshot.change ?? 0) + 1.0 / 6) < 0.0001)
+  }
+
   @Test func dayLoadsOnlyCryptoUSDAndSchedulesHourlyWhileFiatRemainsDaily() async {
     let now = now
     let requests = Mutex<[(String, String, HistoryRange)]>([])
@@ -261,7 +290,7 @@ import Widgets
         }, now: { now }))
     let settings = HistorySettings()
     settings.base = HistoryCurrency("BTC")
-    settings.comparison = HistoryCurrency("EUR")
+    settings.comparison = HistoryCurrency("BTC")
     var timeline = await provider.loadTimeline(settings)
     #expect(calls.withLock { $0 } == 0)
     #expect(timeline.entries.first?.snapshot.issue == .unsupportedPair)

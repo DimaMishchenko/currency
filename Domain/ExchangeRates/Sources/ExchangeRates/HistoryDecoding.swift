@@ -28,7 +28,30 @@ extension HistoryService {
     return months.values.sorted { $0.date < $1.date }
   }
 
-  /// Decodes Frankfurter history rows into chronological points.
+  static func convertDailyCloses(
+    _ candles: [HistoryPoint], rates: [HistoryPoint]
+  ) throws -> [HistoryPoint] {
+    let ratesByDate = Dictionary(uniqueKeysWithValues: rates.map { ($0.date, $0.value) })
+    return try candles.compactMap { candle in
+      guard let rate = ratesByDate[candle.date] else { return nil }
+      let value = candle.value * rate
+      guard value.isFinite && value > 0 else { throw RateError.invalidData }
+      return HistoryPoint(date: candle.date, value: value)
+    }
+  }
+
+  static func divideAlignedCloses(
+    _ base: [HistoryPoint], by quote: [HistoryPoint]
+  ) throws -> [HistoryPoint] {
+    let quotesByDate = Dictionary(uniqueKeysWithValues: quote.map { ($0.date, $0.value) })
+    return try base.compactMap { point in
+      guard let quote = quotesByDate[point.date] else { return nil }
+      let value = point.value / quote
+      guard value.isFinite && value > 0 else { throw RateError.invalidData }
+      return HistoryPoint(date: point.date, value: value)
+    }
+  }
+
   static func decodeFiat(_ data: Data, base: String, quote: String) throws -> [HistoryPoint] {
     let rows = try JSONDecoder().decode([FrankfurterRow].self, from: data)
     var values: [Date: Double] = [:]
@@ -44,7 +67,6 @@ extension HistoryService {
     return values.map { HistoryPoint(date: $0.key, value: $0.value) }.sorted { $0.date < $1.date }
   }
 
-  /// Decodes completed Coinbase candles within a date range.
   static func decodeCandles(
     _ data: Data, start: Date, end: Date, granularity: CandleGranularity = .day
   ) throws -> [HistoryPoint] {
@@ -55,7 +77,6 @@ extension HistoryService {
         throw RateError.invalidData
       }
       let date = Date(timeIntervalSince1970: row[0])
-      // Exclude unfinished candles and any extra buckets before the requested range.
       if date >= start && date.addingTimeInterval(Double(granularity.rawValue)) <= end {
         values[date] = row[4]
       }

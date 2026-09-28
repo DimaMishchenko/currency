@@ -18,6 +18,6 @@ Quotes are currency units per EUR. Conversion returns an unrounded `Decimal?`; c
 
 The default service combines Frankfurter with ECB fallback, Fawaz daily rates, and Coinbase crypto overlays. Supply `RateProvider` implementations to `RateService`, or an `HTTPClient` to individual providers and history, to customize data sources and test without network access. The package does not schedule background work.
 
-Crypto history uses USD-denominated completed candles. Use `.week`, `.month`, `.quarter`, `.year`, or `.all`; all-history requests may take longer and support task cancellation. Failed requests retain saved history.
+Crypto history uses completed Coinbase USD candles. Crypto/crypto pairs divide candles on matching timestamps, including hourly observations for `.day`. Crypto/fiat and crypto/metal pairs combine daily closes with same-date Frankfurter USD/quote references; they have no hourly range. Other pairs use Frankfurter history directly. `.all` samples the joined daily series by month. Missing dates are omitted, and failed requests retain saved history for the requested pair.
 
 Run `ExchangeRatesPackageTests` in the `CurrencyTests` scheme. API reference is available through Xcode’s Build Documentation action and the included DocC catalog.

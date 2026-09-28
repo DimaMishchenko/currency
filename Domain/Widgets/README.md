@@ -6,7 +6,7 @@ Keep canonical selections independent of widget size. Default widgets share app 
 
 ## History widget
 
-`HistoryWidgetPair` follows the app base and first displayed destination unless overridden. Crypto history supports BTC/USD and USD/BTC by inverting the same provider series for the latter; other cryptocurrencies follow the same rule. `HistoryWidgetSnapshot` derives the value, observation date, and percentage change from one historical series; it never mixes current quotes with historical endpoints. Changes below half a basis point display as neutral. Unsupported or missing history has no synthetic graph. Saved history retains its original observation date and is marked in the layout.
+`HistoryWidgetPair` follows the app base and first displayed destination unless overridden. History supports distinct currency pairs across fiat, metals, and cryptocurrencies. The domain history service derives crypto cross-rates from observations on matching dates; the widget inverts the resulting series when crypto is the displayed comparison. Hourly 1D history is available for crypto/USD and crypto/crypto pairs. Other ranges use daily observations. `HistoryWidgetSnapshot` derives the value, observation date, and percentage change from one historical series; it never mixes current quotes with historical endpoints. Changes below half a basis point display as neutral. Unsupported or missing history has no synthetic graph. Saved history retains its original observation date and is marked in the layout.
 
 `HistoryWidgetView` renders small and medium widgets with the shared rounded typography and currency icons. The full-bleed graph adapts to light, dark, increased-contrast, and accented rendering. The harness and widget extension use the same layout.
 
@@ -29,4 +29,4 @@ Select the `WidgetsHarness` scheme and add launch arguments under **Run → Argu
 | `history-usd-btc` | USD/BTC history from inverted Coinbase values, including icon alignment. |
 | `history-cached` | Saved-series indicator and original observation date. |
 | `history-unavailable` | No available history; no sample data. |
-| `history-unsupported` | Unsupported cryptocurrency comparison. |
+| `history-unsupported` | Identical currencies cannot form a history pair. |
