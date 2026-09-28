@@ -4,7 +4,6 @@ import ExchangeRates
 import Foundation
 import Widgets
 
-/// Retains the persisted History entity identity; presentation and choices use the shared picker.
 struct HistoryCurrency: AppEntity {
   static let appBase = "@appBase"
   static let appFirst = "@appFirst"
@@ -65,11 +64,13 @@ struct HistoryCurrencyQuery: EntityStringQuery {
 }
 
 enum HistoryWidgetRange: String, AppEnum, CaseIterable {
-  case week, month, quarter, year, all
+  case day, week, month, quarter, year, all
 
   static let typeDisplayRepresentation = TypeDisplayRepresentation(
     name: LocalizedStringResource("historyRange", defaultValue: "Range", table: "Widgets"))
   static let caseDisplayRepresentations: [Self: DisplayRepresentation] = [
+    .day: DisplayRepresentation(
+      title: LocalizedStringResource("historyDay", defaultValue: "1D", table: "Widgets")),
     .week: DisplayRepresentation(
       title: LocalizedStringResource("historyWeek", defaultValue: "1 week", table: "Widgets")),
     .month: DisplayRepresentation(
@@ -84,12 +85,43 @@ enum HistoryWidgetRange: String, AppEnum, CaseIterable {
 
   var range: HistoryRange {
     switch self {
+    case .day: .day
     case .week: .week
     case .month: .month
     case .quarter: .quarter
     case .year: .year
     case .all: .all
     }
+  }
+}
+
+struct HistoryRangeOptionsProvider: DynamicOptionsProvider {
+  private let readInput: @Sendable () -> ConverterState
+  private let readLocalCurrency: @Sendable () -> String?
+
+  init() {
+    self.init(
+      readInput: WidgetComposition.readInput(),
+      readLocalCurrency: WidgetComposition.readHistoryLocalCurrency())
+  }
+
+  init(
+    readInput: @escaping @Sendable () -> ConverterState,
+    readLocalCurrency: @escaping @Sendable () -> String? = { nil }
+  ) {
+    self.readInput = readInput
+    self.readLocalCurrency = readLocalCurrency
+    _settings = IntentParameterDependency(\.$base, \.$comparison)
+  }
+
+  @IntentParameterDependency<HistorySettings> var settings: IntentProjection<HistorySettings>?
+
+  func results() async throws -> [HistoryWidgetRange] {
+    let configuration = HistorySettings()
+    configuration.base = settings?.base
+    configuration.comparison = settings?.comparison
+    return configuration.availableRanges(
+      input: readInput(), localCurrency: readLocalCurrency())
   }
 }
 
@@ -110,13 +142,28 @@ struct HistorySettings: WidgetConfigurationIntent {
 
   @Parameter(
     title: LocalizedStringResource("historyRange", defaultValue: "Range", table: "Widgets"),
-    default: .month)
+    default: .month, optionsProvider: HistoryRangeOptionsProvider())
   var range: HistoryWidgetRange
 
   static var parameterSummary: some ParameterSummary {
-    Summary("Refreshes daily. Crypto pairs require USD.", table: "Widgets") {
+    Summary("1D refreshes hourly; other ranges daily. Crypto pairs require USD.", table: "Widgets")
+    {
       \.$base; \.$comparison; \.$range
     }
+  }
+
+  func availableRanges(
+    input: ConverterState, localCurrency: String? = nil
+  )
+    -> [HistoryWidgetRange]
+  {
+    let ranges = HistoryWidgetRange.allCases
+    return pair(input: input, localCurrency: localCurrency).supportsIntradayHistory
+      ? ranges : ranges.filter { $0 != .day }
+  }
+
+  func effectiveRange(for pair: HistoryWidgetPair) -> HistoryRange {
+    range == .day && !pair.supportsIntradayHistory ? .month : range.range
   }
 
   func pair(input: ConverterState, localCurrency: String? = nil) -> HistoryWidgetPair {

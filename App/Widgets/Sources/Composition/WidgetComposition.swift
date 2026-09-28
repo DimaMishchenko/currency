@@ -5,7 +5,6 @@ import LocalCurrency
 import WidgetKit
 import Widgets
 
-/// Live assembly for OS-created intents, queries, and timeline providers.
 enum WidgetComposition {
   private static func directory() -> URL {
     guard
@@ -17,9 +16,19 @@ enum WidgetComposition {
     return directory
   }
 
-  /// Query constructors retain a closure; they do not access the live container until invoked.
   static func readInput() -> @Sendable () -> ConverterState {
     { ConversionStore(directory: directory()).input() }
+  }
+
+  static func readHistoryLocalCurrency() -> @Sendable () -> String? {
+    {
+      let local = LocalCurrencyStore(directory: directory())
+      let (location, status) = local.snapshot()
+      return ResolvedCurrencySelection(
+        codes: [WidgetSelection.localID], location: location, status: status
+      )
+      .localCode
+    }
   }
 
   static func timeline() -> WidgetTimelineDependencies {
@@ -54,7 +63,9 @@ enum WidgetComposition {
     return HistoryTimelineDependencies(
       input: { conversion.input() },
       load: { base, quote, range, now in
-        await history.load(base: base, quote: quote, range: range, now: now, cacheLifetime: 86_400)
+        await history.load(
+          base: base, quote: quote, range: range, now: now,
+          cacheLifetime: range == .day ? 3600 : 86_400)
       },
       now: { .now }, location: { local.widgetLocation() },
       locationStatus: { local.widgetLocationStatus() })

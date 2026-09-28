@@ -52,7 +52,49 @@ import Widgets
     input.setDestinations(["JPY"])
     #expect(settings.pair(input: input).base == "USD")
     #expect(settings.pair(input: input).quote == "EUR")
-    #expect(HistoryWidgetRange.allCases.map(\.range) == [.week, .month, .quarter, .year, .all])
+    #expect(
+      HistoryWidgetRange.allCases.map(\.range) == [.day, .week, .month, .quarter, .year, .all])
+  }
+
+  @Test func rangeChoicesFollowSupportedCryptoPairsAndKeepFiatChoices() async throws {
+    var input = ConverterState()
+    input.changeSource("BTC")
+    input.setDestinations(["USD"])
+    let saved = input
+    let settings = HistorySettings()
+    let fiatRanges: [HistoryWidgetRange] = [.week, .month, .quarter, .year, .all]
+    #expect(settings.availableRanges(input: saved) == HistoryWidgetRange.allCases)
+    #expect(
+      try await HistoryRangeOptionsProvider(readInput: { saved }).results()
+        == HistoryWidgetRange.allCases)
+
+    settings.base = HistoryCurrency("USD")
+    settings.comparison = HistoryCurrency("BTC")
+    #expect(settings.availableRanges(input: saved) == HistoryWidgetRange.allCases)
+    settings.comparison = HistoryCurrency("EUR")
+    #expect(settings.availableRanges(input: saved) == fiatRanges)
+    settings.base = HistoryCurrency("BTC")
+    #expect(settings.availableRanges(input: saved) == fiatRanges)
+    settings.comparison = HistoryCurrency("USD")
+    #expect(settings.availableRanges(input: saved) == HistoryWidgetRange.allCases)
+    settings.comparison = HistoryCurrency("ETH")
+    #expect(settings.availableRanges(input: saved) == fiatRanges)
+
+    input.changeSource("EUR")
+    input.setDestinations(["CZK"])
+    #expect(settings.availableRanges(input: input) == fiatRanges)
+    settings.base = nil
+    settings.comparison = nil
+    #expect(settings.availableRanges(input: input) == fiatRanges)
+    let fiatInput = input
+    #expect(try await HistoryRangeOptionsProvider(readInput: { fiatInput }).results() == fiatRanges)
+    settings.base = HistoryCurrency("BTC")
+    settings.comparison = HistoryCurrency("@local")
+    #expect(
+      settings.availableRanges(input: input, localCurrency: "USD")
+        == HistoryWidgetRange.allCases)
+    #expect(settings.availableRanges(input: input, localCurrency: "CZK") == fiatRanges)
+    #expect(settings.availableRanges(input: input) == fiatRanges)
   }
 
   @Test func sharedPickerIncludesLocalAndResolvesItForHistory() async throws {
@@ -166,12 +208,45 @@ import Widgets
     let settings = HistorySettings()
     settings.base = HistoryCurrency("USD")
     settings.comparison = HistoryCurrency("BTC")
+    settings.range = .day
     let entry = await provider.entry(settings)
     #expect(requested.withLock { $0 } == ["BTC", "USD"])
+    #expect(entry.snapshot.range == .day)
     #expect(entry.snapshot.pair.base == "USD")
     #expect(entry.snapshot.pair.quote == "BTC")
     #expect(entry.snapshot.latest?.value == 0.00001)
     #expect(entry.snapshot.change == -0.5)
+  }
+
+  @Test func dayLoadsOnlyCryptoUSDAndSchedulesHourlyWhileFiatRemainsDaily() async {
+    let now = now
+    let requests = Mutex<[(String, String, HistoryRange)]>([])
+    let provider = HistoryTimeline(
+      dependencies: HistoryTimelineDependencies(
+        input: { ConverterState() },
+        load: { base, quote, range, _ in
+          requests.withLock { $0.append((base, quote, range)) }
+          return HistoryResult(series: nil, issue: .unavailable)
+        }, now: { now }))
+    let settings = HistorySettings()
+    settings.base = HistoryCurrency("BTC")
+    settings.comparison = HistoryCurrency("USD")
+    settings.range = .day
+    let crypto = await provider.loadTimeline(settings)
+    #expect(requests.withLock { $0 }.map(\.2) == [.day])
+    #expect(crypto.entries.first?.snapshot.range == .day)
+    #expect(crypto.policy == .after(now.addingTimeInterval(3600)))
+
+    settings.base = HistoryCurrency("EUR")
+    settings.comparison = HistoryCurrency("CZK")
+    let fiat = await provider.loadTimeline(settings)
+    #expect(requests.withLock { $0 }.map(\.2) == [.day, .month])
+    #expect(fiat.entries.first?.snapshot.range == .month)
+    #expect(fiat.policy == .after(now.addingTimeInterval(86_400)))
+
+    settings.range = .week
+    _ = await provider.entry(settings)
+    #expect(requests.withLock { $0 }.map(\.2) == [.day, .month, .week])
   }
 
   @Test func unsupportedPairSkipsNetworkAndFailedLoadHasNoSampleData() async throws {

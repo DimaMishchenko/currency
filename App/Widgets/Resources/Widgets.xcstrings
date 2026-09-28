@@ -786,6 +786,18 @@
         }
       }
     },
+    "historyDay": {
+      "extractionState": "manual",
+      "comment": "History widget: historyDay.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1D"
+          }
+        }
+      }
+    },
     "historyWeek": {
       "extractionState": "manual",
       "comment": "History widget: historyWeek.",
@@ -846,14 +858,14 @@
         }
       }
     },
-    "Refreshes daily. Crypto pairs require USD.": {
+    "1D refreshes hourly; other ranges daily. Crypto pairs require USD.": {
       "extractionState": "manual",
       "comment": "History widget: supported crypto pair configuration.",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Refreshes daily. Crypto pairs require USD."
+            "value": "1D refreshes hourly; other ranges daily. Crypto pairs require USD."
           }
         }
       }
