@@ -45,6 +45,10 @@ import Testing
     #expect(HistoryWidgetPair(app: app, base: "BTC", quote: "USD").isSupported)
     #expect(HistoryWidgetPair(app: app, base: "USD", quote: "BTC").isSupported)
     #expect(HistoryWidgetPair(app: app, base: "EUR", quote: "CZK").isSupported)
+    #expect(HistoryWidgetPair(app: app, base: "BTC", quote: "USD").supportsIntradayHistory)
+    #expect(HistoryWidgetPair(app: app, base: "USD", quote: "BTC").supportsIntradayHistory)
+    #expect(!HistoryWidgetPair(app: app, base: "EUR", quote: "CZK").supportsIntradayHistory)
+    #expect(!HistoryWidgetPair(app: app, base: "BTC", quote: "EUR").supportsIntradayHistory)
   }
 
   @Test func usdToBitcoinInvertsProviderHistoryWithoutChangingDatesOrSource() {
@@ -99,5 +103,27 @@ import Testing
     #expect(
       snapshot([20, 25], issue: .usingCachedSeries).nextRefresh(after: now)
         == now.addingTimeInterval(86_400))
+  }
+
+  @Test func dayScheduleUsesHourlyExpiryAndDoesNotScheduleInPast() {
+    let series = HistorySeries(
+      points: [
+        HistoryPoint(date: now.addingTimeInterval(-3600), value: 24),
+        HistoryPoint(date: now, value: 25)
+      ], source: .init(provider: .coinbase, observation: .hourlyClose, timeZone: .gmt),
+      fetchedAt: now)
+    let pair = HistoryWidgetPair(app: ConverterState(), base: "BTC", quote: "USD")
+    let fresh = HistoryWidgetSnapshot(
+      pair: pair, range: .day, result: HistoryResult(series: series, issue: nil))
+    #expect(
+      fresh.nextRefresh(after: now.addingTimeInterval(1200))
+        == now.addingTimeInterval(3600))
+    #expect(
+      fresh.nextRefresh(after: now.addingTimeInterval(4000))
+        == now.addingTimeInterval(7600))
+    let stale = HistoryWidgetSnapshot(
+      pair: pair, range: .day,
+      result: HistoryResult(series: series, issue: .usingCachedSeries))
+    #expect(stale.nextRefresh(after: now) == now.addingTimeInterval(3600))
   }
 }

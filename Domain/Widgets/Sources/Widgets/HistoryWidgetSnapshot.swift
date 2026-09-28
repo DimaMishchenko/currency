@@ -38,6 +38,12 @@ public struct HistoryWidgetPair: Sendable, Equatable {
 
   /// Whether a historical series can be loaded for the displayed pair.
   public var isSupported: Bool { historyRequest != nil }
+
+  /// Whether the supported pair can load completed hourly observations.
+  public var supportsIntradayHistory: Bool {
+    guard let request = historyRequest else { return false }
+    return CurrencyCatalog.crypto.contains(request.base)
+  }
 }
 
 /// Historical observations and their provenance, kept separate from live conversion rates.
@@ -86,12 +92,13 @@ public struct HistoryWidgetSnapshot: Sendable {
     return value.rounded() / 10_000
   }
 
-  /// Daily refreshes are anchored to a successful fetch, including a reused cache.
+  /// Refreshes are anchored to a successful fetch, including a reused cache.
   public func nextRefresh(after now: Date) -> Date {
+    let interval: TimeInterval = range == .day ? 3600 : 86_400
     if let fetchedAt = series?.fetchedAt, fetchedAt <= now, issue != .usingCachedSeries {
-      let expiry = fetchedAt.addingTimeInterval(86_400)
+      let expiry = fetchedAt.addingTimeInterval(interval)
       if expiry > now { return expiry }
     }
-    return now.addingTimeInterval(86_400)
+    return now.addingTimeInterval(interval)
   }
 }

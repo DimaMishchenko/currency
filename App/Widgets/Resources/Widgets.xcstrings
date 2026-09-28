@@ -757,7 +757,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Two currencies and their exchange-rate history. Refreshes daily."
+            "value": "Two currencies and their exchange-rate history. Crypto 1D refreshes hourly; other ranges daily."
           }
         }
       }
@@ -782,6 +782,18 @@
           "stringUnit": {
             "state": "translated",
             "value": "Range"
+          }
+        }
+      }
+    },
+    "historyDay": {
+      "extractionState": "manual",
+      "comment": "History widget: historyDay.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1D"
           }
         }
       }
@@ -846,14 +858,14 @@
         }
       }
     },
-    "Refreshes daily. Crypto pairs require USD.": {
+    "1D refreshes hourly; other ranges daily. Crypto pairs require USD.": {
       "extractionState": "manual",
       "comment": "History widget: supported crypto pair configuration.",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Refreshes daily. Crypto pairs require USD."
+            "value": "1D refreshes hourly; other ranges daily. Crypto pairs require USD."
           }
         }
       }

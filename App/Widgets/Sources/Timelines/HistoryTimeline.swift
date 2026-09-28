@@ -45,7 +45,7 @@ struct HistoryTimeline: AppIntentTimelineProvider {
     let local = ResolvedCurrencySelection(
       codes: [WidgetSelection.localID], location: dependencies.location(), status: status, now: now)
     let pair = configuration.pair(input: dependencies.input(), localCurrency: local.localCode)
-    let range = configuration.range.range
+    let range = configuration.effectiveRange(for: pair)
     let result: HistoryResult
     if let request = pair.historyRequest {
       result = await dependencies.load(request.base, request.quote, range, now)
