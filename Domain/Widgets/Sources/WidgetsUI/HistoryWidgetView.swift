@@ -134,7 +134,7 @@ public struct HistoryWidgetView: View {
           .font(AppStyle.font(.caption, weight: .medium)).foregroundStyle(.secondary)
           .lineLimit(1).minimumScaleFactor(0.7)
       } else if let code {
-        CurrencyIcon(code, size: iconSize)
+        WidgetCurrencyIcon(code: code, size: iconSize)
           .frame(width: iconSize, height: iconSize).accessibilityHidden(true)
         Text(verbatim: code)
           .font(AppStyle.font(.caption, weight: .medium)).foregroundStyle(.secondary).fixedSize()
@@ -211,11 +211,16 @@ private struct HistoryLabelContrast: ViewModifier {
 }
 
 private struct HistoryWidgetBackground: ViewModifier {
+  @Environment(\.widgetRenderingMode) private var renderingMode
   let snapshot: HistoryWidgetSnapshot
   let preview: Bool
 
   func body(content: Content) -> some View {
-    if preview {
+    if renderingMode == .accented {
+      content
+        .background { HistoryWidgetGraph(snapshot: snapshot) }
+        .containerBackground(for: .widget) { Color(uiColor: .systemBackground) }
+    } else if preview {
       content.background { HistoryWidgetGraph(snapshot: snapshot) }
     } else {
       content.containerBackground(for: .widget) { HistoryWidgetGraph(snapshot: snapshot) }
@@ -238,7 +243,9 @@ private struct HistoryWidgetGraph: View {
 
   var body: some View {
     ZStack {
-      Color(uiColor: .systemBackground)
+      if renderingMode != .accented {
+        Color(uiColor: .systemBackground)
+      }
       if let points = snapshot.series?.points, let first = points.first, let last = points.last {
         Canvas { context, size in
           let low = points.map(\.value).min() ?? 0

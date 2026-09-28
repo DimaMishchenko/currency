@@ -1,5 +1,6 @@
 import Conversion
 import DesignSystem
+import ExchangeRates
 import ExchangeRatesUI
 import LocalCurrency
 import SwiftUI
@@ -202,24 +203,51 @@ struct WidgetKeypad: View {
   }
 }
 
-/// Keeps the resolved Local indicator quiet and consistent across widget families.
 struct WidgetCurrencyIcon: View {
+  @Environment(\.widgetRenderingMode) private var renderingMode
   let code: String
   let size: CGFloat
   var isLocal = false
 
   var body: some View {
-    CurrencyIcon(code, size: size)
-      .overlay(alignment: .bottomTrailing) {
-        if isLocal {
-          Image(systemName: "location.fill")
-            .font(.system(size: 5, weight: .medium))
-            .foregroundStyle(.secondary)
-            .offset(x: 3, y: 2)
-            .accessibilityLabel(.WidgetPresentation.localCurrencyChoice)
-            .allowsHitTesting(false)
-        }
+    Group {
+      if renderingMode == .accented,
+        let data = CurrencyIcon.pickerImageData(code),
+        let image = UIImage(data: data)
+      {
+        accentedIcon(image)
+          .accessibilityHidden(true)
+      } else {
+        CurrencyIcon(code, size: size)
       }
+    }
+    .overlay(alignment: .bottomTrailing) {
+      if isLocal {
+        Image(systemName: "location.fill")
+          .font(.system(size: 5, weight: .medium))
+          .foregroundStyle(.secondary)
+          .offset(x: 3, y: 2)
+          .accessibilityLabel(.WidgetPresentation.localCurrencyChoice)
+          .allowsHitTesting(false)
+      }
+    }
+  }
+
+  @ViewBuilder
+  private func accentedIcon(_ image: UIImage) -> some View {
+    let artwork = Image(uiImage: image)
+      .resizable()
+      .widgetAccentedRenderingMode(.fullColor)
+      .scaledToFit()
+      .frame(width: size, height: size)
+
+    if CurrencyCatalog.crypto.contains(code) {
+      artwork.clipShape(Circle())
+    } else if let currency = CurrencyCode(rawValue: code), !currency.isMetal {
+      artwork.scaleEffect(216.0 / 156.0)
+    } else {
+      artwork
+    }
   }
 }
 

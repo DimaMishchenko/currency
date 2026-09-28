@@ -27,7 +27,7 @@ public struct CashView: View {
   public var body: some View {
     VStack(alignment: .leading, spacing: AppStyle.Space.small) {
       HStack {
-        CurrencyIcon(base, size: 22)
+        WidgetCurrencyIcon(code: base, size: 22)
         Text(base).font(AppStyle.font(.caption, weight: .medium))
         Spacer()
         if target == WidgetSelection.localID {
@@ -124,7 +124,7 @@ public struct AnchorView: View {
       } else if let rate = entry.snapshot.convert(1, from: base, to: target), rate > 0 {
         if mental, let rule = WidgetMath.rule(rate: rate) {
           HStack(spacing: AppStyle.Space.xs) {
-            CurrencyIcon(base, size: 20); Text(base)
+            WidgetCurrencyIcon(code: base, size: 20); Text(base)
           }
           .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
           Text(rule.divide ? .WidgetPresentation.divideBy : .WidgetPresentation.multiplyBy)
