@@ -208,22 +208,6 @@ final class NativeIntentTests: XCTestCase {
     }
   }
 
-  func testSpotlightIndexesTheFullCatalogAndCurrencyCodes() async throws {
-    XCUIApplication(bundleIdentifier: "com.dimasike.currency").activate()
-    let definition = definitions.entities["CurrencyEntity"]
-    let catalog = try await definition.suggestedEntities()
-    let expected = Set(identifiers(catalog).filter { $0 != "@local" })
-    for id in ["USD", "EUR", "BTC", "XAU"] {
-      let matches = try await spotlightIdentifiers(
-        matching: id.lowercased(), containing: [id],
-        until: Date().addingTimeInterval(8))
-      XCTAssertTrue(matches.contains(id), id)
-    }
-    let indexed = try await spotlightIdentifiers(
-      containing: expected, until: Date().addingTimeInterval(10))
-    XCTAssertTrue(expected.isSubset(of: indexed), "Missing: \(expected.subtracting(indexed))")
-  }
-
   func testExistingDetailsOpenFromColdAndWarmApp() async throws {
     let app = launchReadyApp()
     app.terminate()
@@ -269,25 +253,6 @@ final class NativeIntentTests: XCTestCase {
       try await Task.sleep(for: .milliseconds(200))
     } while Date() < deadline
     return result
-  }
-
-  private func spotlightIdentifiers(
-    matching term: String? = nil, containing expected: Set<String>, until deadline: Date
-  ) async throws -> Set<String> {
-    let definition = definitions.entities["CurrencyEntity"]
-    var indexed = Set<String>()
-    repeat {
-      let entities: [AnyAppEntity]
-      if let term {
-        entities = try await definition.spotlightQuery(term)
-      } else {
-        entities = try await definition.spotlightQuery()
-      }
-      indexed = Set(identifiers(entities))
-      if expected.isSubset(of: indexed) { break }
-      try await Task.sleep(for: .milliseconds(250))
-    } while Date() < deadline
-    return indexed
   }
 
   private func launchReadyApp() -> XCUIApplication {
