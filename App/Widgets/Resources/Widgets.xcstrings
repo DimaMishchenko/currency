@@ -757,7 +757,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Two currencies and their exchange-rate history. Refreshes daily."
+            "value": "Two currencies and their exchange-rate history. Crypto 1D refreshes hourly; other ranges daily."
           }
         }
       }
