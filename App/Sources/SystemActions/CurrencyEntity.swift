@@ -39,7 +39,7 @@ struct CurrencyEntity: IndexedEntity {
     attributes.displayName = attributes.title
     attributes.alternateNames = [name, id, id.lowercased()] + Self.aliases(id)
     attributes.textContent = ([id, id.lowercased(), name] + Self.aliases(id)).joined(separator: " ")
-    attributes.thumbnailData = CurrencyIcon.pickerImageData(resolvedLocalCode ?? id)
+    attributes.thumbnailData = CurrencyIcon.thumbnailImageData(resolvedLocalCode ?? id)
     attributes.contentURL = CurrencyRoute.currency(id).url
     return attributes
   }
