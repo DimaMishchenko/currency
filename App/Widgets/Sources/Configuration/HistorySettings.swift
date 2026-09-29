@@ -129,10 +129,10 @@ struct HistoryRangeOptionsProvider: DynamicOptionsProvider {
   ) {
     self.readInput = readInput
     self.readLocalCurrency = readLocalCurrency
-    _settings = IntentParameterDependency(\.$base, \.$comparison)
   }
 
-  @IntentParameterDependency<HistorySettings> var settings: IntentProjection<HistorySettings>?
+  @IntentParameterDependency<HistorySettings>(\.$base, \.$comparison)
+  var settings: IntentProjection<HistorySettings>?
 
   func results() async throws -> [HistoryWidgetRange] {
     HistoryWidgetRange.available(

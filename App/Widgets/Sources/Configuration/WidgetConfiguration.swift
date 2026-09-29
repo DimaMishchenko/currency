@@ -231,10 +231,10 @@ struct MultiCurrencyOptionsProvider: DynamicOptionsProvider {
 
   init(readInput: @escaping @Sendable () -> ConverterState) {
     self.readInput = readInput
-    _settings = IntentParameterDependency(\.$list)
   }
 
-  @IntentParameterDependency<MultiSettings> var settings: IntentProjection<MultiSettings>?
+  @IntentParameterDependency<MultiSettings>(\.$list)
+  var settings: IntentProjection<MultiSettings>?
 
   func results() async throws -> IntentItemCollection<WidgetCurrency> {
     CurrencyListOptions(input: readInput()).results
@@ -252,10 +252,10 @@ struct BoardCurrencyOptionsProvider: DynamicOptionsProvider {
 
   init(readInput: @escaping @Sendable () -> ConverterState) {
     self.readInput = readInput
-    _settings = IntentParameterDependency(\.$list)
   }
 
-  @IntentParameterDependency<BoardSettings> var settings: IntentProjection<BoardSettings>?
+  @IntentParameterDependency<BoardSettings>(\.$list)
+  var settings: IntentProjection<BoardSettings>?
 
   func results() async throws -> IntentItemCollection<WidgetCurrency> {
     CurrencyListOptions(input: readInput()).results
