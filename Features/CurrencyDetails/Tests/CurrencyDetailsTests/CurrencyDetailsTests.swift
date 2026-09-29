@@ -48,8 +48,8 @@ struct CurrencyDetailsTests {
     #expect(requestedRange == range)
   }
 
-  @Test(arguments: [("BTC", true), ("ETH", true), ("EUR", false), ("USD", false)])
-  func chartOffersIntradayOnlyForCrypto(code: String, supportsIntraday: Bool) {
+  @Test(arguments: [("BTC", true), ("ETH", true), ("USDC", false), ("EUR", false), ("USD", false)])
+  func chartOffersIntradayOnlyForSupportedHistory(code: String, supportsIntraday: Bool) {
     let model = CurrencyDetailsModel(
       input: .init(code: code, reference: "USD", snapshot: RateSnapshot()),
       dependencies: .init { _, _, _ in HistoryResult(series: nil, issue: .unavailable) })

@@ -56,54 +56,75 @@ import Widgets
       HistoryWidgetRange.allCases.map(\.range) == [.day, .week, .month, .quarter, .year, .all])
   }
 
-  @Test func pickerOptionsExcludeTheOtherCurrencyInBothDirections() async throws {
+  @Test func searchablePickersUseTheSameFullCatalogAndPreserveSavedPairs() async throws {
     var input = ConverterState()
     input.changeSource("USD")
     input.setDestinations(["EUR", "CZK"])
     let saved = input
     for defaultID in [HistoryCurrency.appBase, HistoryCurrency.appFirst] {
-      let provider = HistoryCurrencyOptionsProvider(
-        defaultID: defaultID, readInput: { saved }, readLocalCurrency: { "EUR" })
-      let excluded = provider.choices(excluding: HistoryCurrency("EUR"))
-      let choices = try await excluded.suggestedEntities().items.map(\.id)
-      #expect(!choices.contains("EUR"))
-      #expect(!choices.contains("@local"))
+      let query = HistoryCurrencyQuery(defaultID: defaultID, readInput: { saved })
+      let choices = try await query.suggestedEntities().items.map(\.id)
+      #expect(choices.contains("EUR"))
+      #expect(choices.contains("@local"))
       #expect(choices.contains("USD"))
-      #expect(try await excluded.entities(matching: "Euro").items.isEmpty)
-      #expect(try await excluded.entities(matching: "Local").items.isEmpty)
-      #expect(await excluded.defaultResult()?.id == "USD")
-      let local = provider.choices(excluding: HistoryCurrency("@local"))
-      #expect(try await local.suggestedEntities().items.map(\.id) == choices)
-      let restored = try await excluded.entities(for: ["EUR", "@local"])
-      #expect(restored.map(\.id) == ["EUR", "@local"])
+      #expect(Set(choices) == Set(CurrencyCatalog.codes + ["@local"]))
+      #expect(try await query.entities(matching: "Euro").items.contains { $0.id == "EUR" })
+      #expect(try await query.entities(matching: "Local").items.map(\.id) == ["@local"])
+      let restored = try await query.entities(for: ["EUR", "EUR", "@local"])
+      #expect(restored.map(\.id) == ["EUR", "EUR", "@local"])
     }
   }
 
-  @Test func pickerDefaultsAndLegacyAliasesStayIndependentOfEntityResolution() async throws {
+  @Test func chosenDollarPairSurvivesDifferentAppDefaultsAndRangeChanges() async throws {
+    var input = ConverterState()
+    input.changeSource("EUR")
+    input.setDestinations(["GBP", "CZK"])
+    let settings = HistorySettings()
+    settings.base = HistoryCurrency("BTC")
+    settings.comparison = HistoryCurrency("USD")
+    for range in [HistoryWidgetRange.day, .week, .month] {
+      settings.range = range
+      #expect(settings.pair(input: input).base == "BTC")
+      #expect(settings.pair(input: input).quote == "USD")
+      #expect(settings.effectiveRange(for: settings.pair(input: input)) == range.range)
+      #expect(settings.availableRanges(input: input) == HistoryWidgetRange.allCases)
+    }
+    input.changeSource("CHF")
+    input.setDestinations(["JPY"])
+    let saved = input
+    for defaultID in [HistoryCurrency.appBase, HistoryCurrency.appFirst] {
+      let query = HistoryCurrencyQuery(defaultID: defaultID, readInput: { saved })
+      #expect(try await query.entities(for: ["BTC", "USD"]).map(\.id) == ["BTC", "USD"])
+      #expect(try await query.entities(matching: "USD").items.contains { $0.id == "USD" })
+    }
+    #expect(
+      HistorySettings.resolvePair(
+        input: saved, base: HistoryCurrency("BTC"), comparison: HistoryCurrency("USD"))
+        == settings.pair(input: saved))
+    #expect(settings.pair(input: saved).quote == "USD")
+  }
+
+  @Test func fullRepresentationsIncludeCurrencyAndLocalImagesWhenRequested() async throws {
     var input = ConverterState()
     input.changeSource("USD")
     input.setDestinations(["EUR", "CZK"])
     let saved = input
-    let base = HistoryCurrencyOptionsProvider(
-      defaultID: HistoryCurrency.appBase, readInput: { saved })
-    let comparison = HistoryCurrencyOptionsProvider(
-      defaultID: HistoryCurrency.appFirst, readInput: { saved })
-    #expect(await base.defaultResult()?.id == "USD")
-    #expect(await comparison.defaultResult()?.id == "EUR")
-    let withoutAppFirst = base.choices(excluding: HistoryCurrency(HistoryCurrency.appFirst))
-    let withoutAppBase = comparison.choices(excluding: HistoryCurrency(HistoryCurrency.appBase))
-    #expect(try await withoutAppFirst.suggestedEntities().items.allSatisfy { $0.id != "EUR" })
-    #expect(try await withoutAppBase.suggestedEntities().items.allSatisfy { $0.id != "USD" })
-    #expect(await withoutAppFirst.defaultResult()?.id == "USD")
-    #expect(await withoutAppBase.defaultResult()?.id == "EUR")
-    let restored = try await HistoryCurrencyQuery(
-      defaultID: HistoryCurrency.appBase, readInput: { saved }
-    )
-    .entities(for: [HistoryCurrency.appBase, HistoryCurrency.appFirst, "USD", "EUR", "@local"])
-    #expect(restored.map(\.id) == ["USD", "EUR", "USD", "EUR", "@local"])
-    let unresolvedLocal = comparison.choices(excluding: HistoryCurrency("@local"))
-    #expect(try await unresolvedLocal.suggestedEntities().items.allSatisfy { $0.id != "@local" })
-    #expect(await unresolvedLocal.defaultResult()?.id == "EUR")
+    let query = HistoryCurrencyQuery(defaultID: HistoryCurrency.appBase, readInput: { saved })
+    for code in ["USD", "EUR", "BTC", "XAU", "@local"] {
+      #expect(HistoryCurrency(code).displayRepresentation.image != nil)
+    }
+    if #available(iOS 27.0, *) {
+      let representations = try await query.displayRepresentations(for: [
+        "USD", "EUR", "BTC", "@local", HistoryCurrency.appBase, HistoryCurrency.appFirst, "invalid"
+      ])
+      #expect(representations.count == 6)
+      #expect(representations.values.allSatisfy { $0.image != nil })
+      #expect(
+        representations[HistoryCurrency.appBase] == HistoryCurrency("USD").displayRepresentation)
+      #expect(
+        representations[HistoryCurrency.appFirst] == HistoryCurrency("EUR").displayRepresentation)
+      #expect(representations["invalid"] == nil)
+    }
   }
 
   @Test func rangeChoicesFollowSupportedCryptoPairsAndKeepFiatChoices() async throws {
@@ -124,7 +145,7 @@ import Widgets
     settings.comparison = HistoryCurrency("EUR")
     #expect(settings.availableRanges(input: saved) == fiatRanges)
     settings.base = HistoryCurrency("BTC")
-    #expect(settings.availableRanges(input: saved) == fiatRanges)
+    #expect(settings.availableRanges(input: saved) == HistoryWidgetRange.allCases)
     settings.comparison = HistoryCurrency("USD")
     #expect(settings.availableRanges(input: saved) == HistoryWidgetRange.allCases)
     settings.comparison = HistoryCurrency("ETH")
@@ -268,7 +289,8 @@ import Widgets
     #expect(entry.snapshot.change == -0.5)
   }
 
-  @Test func cryptoCrossPairLoadsSameHistoryInEitherWidgetDirection() async {
+  @Test(arguments: [HistoryWidgetRange.month, .day])
+  func cryptoCrossPairLoadsSameHistoryInEitherWidgetDirection(range: HistoryWidgetRange) async {
     let now = now
     let requested = Mutex<[(String, String)]>([])
     let provider = HistoryTimeline(
@@ -285,6 +307,7 @@ import Widgets
             issue: nil)
         }, now: { now }))
     let settings = HistorySettings()
+    settings.range = range
     settings.base = HistoryCurrency("BTC")
     settings.comparison = HistoryCurrency("EUR")
     let direct = await provider.entry(settings)
@@ -297,7 +320,12 @@ import Widgets
     #expect(abs((inverse.snapshot.change ?? 0) + 1.0 / 6) < 0.0001)
   }
 
-  @Test func dayLoadsOnlyCryptoUSDAndSchedulesHourlyWhileFiatRemainsDaily() async {
+  @Test(arguments: [
+    ("BTC", "USD"), ("USD", "BTC"), ("BTC", "EUR"), ("EUR", "BTC"), ("ETH", "GBP")
+  ])
+  func dayLoadsSupportedCryptoMarketsAndSchedulesHourlyWhileFiatRemainsDaily(
+    base: String, comparison: String
+  ) async {
     let now = now
     let requests = Mutex<[(String, String, HistoryRange)]>([])
     let provider = HistoryTimeline(
@@ -308,8 +336,8 @@ import Widgets
           return HistoryResult(series: nil, issue: .unavailable)
         }, now: { now }))
     let settings = HistorySettings()
-    settings.base = HistoryCurrency("BTC")
-    settings.comparison = HistoryCurrency("USD")
+    settings.base = HistoryCurrency(base)
+    settings.comparison = HistoryCurrency(comparison)
     settings.range = .day
     let crypto = await provider.loadTimeline(settings)
     #expect(requests.withLock { $0 }.map(\.2) == [.day])

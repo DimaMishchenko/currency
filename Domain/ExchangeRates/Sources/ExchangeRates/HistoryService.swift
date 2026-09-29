@@ -4,6 +4,31 @@ import Foundation
 public actor HistoryService {
   private let client: any HTTPClient
   private let directory: URL
+  private static let euroAssets: Set<String> = [
+    "AAVE", "ADA", "ALGO", "ATOM", "AVAX", "BCH", "BTC", "DOGE", "DOT", "ETC", "ETH",
+    "FIL", "ICP", "LINK", "LTC", "SHIB", "SOL", "UNI", "USDC", "USDT", "XLM", "XRP"
+  ]
+  private static let dollarAssets = euroAssets.subtracting(["USDC"])
+  private static let sterlingAssets = euroAssets.subtracting(["AVAX", "ICP", "XLM", "XRP"])
+
+  /// Whether a distinct, crypto-first pair has direct hourly candles or two supported quote legs.
+  public static func supportsIntraday(base: String, quote: String) -> Bool {
+    intradayCandleQuote(base: base, quote: quote) != nil
+  }
+
+  private static func intradayCandleQuote(base: String, quote: String) -> String? {
+    guard base != quote else { return nil }
+    if CurrencyCatalog.crypto.contains(quote) {
+      if dollarAssets.contains(base) && dollarAssets.contains(quote) { return "USD" }
+      return euroAssets.contains(base) && euroAssets.contains(quote) ? "EUR" : nil
+    }
+    return switch quote {
+    case "USD": dollarAssets.contains(base) ? quote : nil
+    case "EUR": euroAssets.contains(base) ? quote : nil
+    case "GBP": sterlingAssets.contains(base) ? quote : nil
+    default: nil
+    }
+  }
   /// Creates a history service with a cache directory and HTTP client.
   public init(directory: URL, client: any HTTPClient = NetworkClient(timeout: 30)) {
     self.directory = directory
@@ -12,10 +37,11 @@ public actor HistoryService {
 
   /// Loads a series, reusing a fresh cache or returning saved history when a request fails.
   ///
-  /// Pairs without crypto use Frankfurter reference rates. Crypto/USD uses completed Coinbase
-  /// hourly (`.day`) or daily candles. Crypto/crypto divides matching Coinbase USD closes;
-  /// crypto/fiat or crypto/metal multiplies Coinbase USD closes by Frankfurter USD/quote
-  /// references on matching UTC dates. `.all` samples the joined history by month.
+  /// Pairs without crypto use Frankfurter reference rates. Supported crypto/fiat `.day` pairs
+  /// use direct, completed Coinbase hourly candles. Crypto/crypto divides matching quote closes,
+  /// using USD or, for intraday pairs without both USD markets, EUR. Longer crypto/fiat or
+  /// crypto/metal ranges multiply Coinbase USD closes by Frankfurter USD/quote references on
+  /// matching UTC dates. `.all` samples the joined history by month.
   /// Frankfurter-based intraday history is unavailable. Failed pagination saves no partial data.
   /// - Parameters:
   ///   - base: Uppercase currency whose historical value is requested.
@@ -35,8 +61,9 @@ public actor HistoryService {
     else { return HistoryResult(series: nil, issue: .unsupportedPair) }
     let isCrypto = CurrencyCatalog.crypto.contains(base)
     let quoteIsCrypto = CurrencyCatalog.crypto.contains(quote)
-    let needsReference = isCrypto && quote != "USD" && !quoteIsCrypto
-    guard range != .day || (isCrypto && !needsReference) else {
+    let needsReference = isCrypto && quote != "USD" && !quoteIsCrypto && range != .day
+    let intradayQuote = Self.intradayCandleQuote(base: base, quote: quote)
+    guard range != .day || intradayQuote != nil else {
       return HistoryResult(series: nil, issue: .intradayUnavailable)
     }
     var calendar = Calendar(identifier: .gregorian)
@@ -88,14 +115,17 @@ public actor HistoryService {
           : []
         let granularity: CandleGranularity = range == .day ? .hour : .day
         let end = range == .day ? now : calendar.startOfDay(for: now)
+        guard let candleQuote = range == .day ? intradayQuote : "USD" else {
+          throw RateError.invalidData
+        }
         let candles = try await Self.fetchCryptoHistory(
-          client: client, code: base,
+          client: client, code: base, quote: candleQuote,
           start: range == .day ? start : calendar.startOfDay(for: start), end: end,
           granularity: granularity)
         let combined: [HistoryPoint]
         if quoteIsCrypto {
           let quoteCandles = try await Self.fetchCryptoHistory(
-            client: client, code: quote,
+            client: client, code: quote, quote: candleQuote,
             start: range == .day ? start : calendar.startOfDay(for: start), end: end,
             granularity: granularity)
           combined = try Self.divideAlignedCloses(candles, by: quoteCandles)
@@ -144,12 +174,12 @@ public actor HistoryService {
   }
 
   private static func fetchCryptoHistory(
-    client: any HTTPClient, code: String, start: Date, end: Date,
+    client: any HTTPClient, code: String, quote: String = "USD", start: Date, end: Date,
     granularity: CandleGranularity
   ) async throws -> [HistoryPoint] {
     guard
       let components = URLComponents(
-        string: "https://api.exchange.coinbase.com/products/\(code)-USD/candles")
+        string: "https://api.exchange.coinbase.com/products/\(code)-\(quote)/candles")
     else { throw RateError.invalidData }
     let combined = try await fetchCandles(
       client: client, components: components, start: start, end: end,

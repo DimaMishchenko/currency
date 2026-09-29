@@ -30,11 +30,10 @@ func currencyRepresentation(_ code: String) -> DisplayRepresentation {
 
 func currencySections<Entity: AppEntity>(
   input: ConverterState, allowsLocal: Bool = false, cashOnly: Bool = false,
-  excluding: Set<String> = [],
   make: (String) -> Entity
 ) -> IntentItemCollection<Entity> {
   let allowed = CurrencyCatalog.codes.filter {
-    !excluding.contains($0) && (!cashOnly || WidgetPresets.allows($0))
+    !cashOnly || WidgetPresets.allows($0)
   }
   let selected = WidgetSelection.appCurrencies(input)
     .filter(allowed.contains)
@@ -46,7 +45,7 @@ func currencySections<Entity: AppEntity>(
   append(
     LocalizedStringResource("appSelectedSection", defaultValue: "App selected", table: "Widgets"),
     selected)
-  if allowsLocal && !excluding.contains(localCurrencyID) {
+  if allowsLocal {
     append(
       LocalizedStringResource("locationSection", defaultValue: "Location", table: "Widgets"),
       [localCurrencyID])
@@ -61,6 +60,22 @@ func currencySections<Entity: AppEntity>(
     LocalizedStringResource("cryptoSection", defaultValue: "Crypto", table: "Widgets"),
     remaining.filter(CurrencyCatalog.crypto.contains))
   return IntentItemCollection(sections: sections)
+}
+
+func currencyMatches<Entity: AppEntity>(
+  _ string: String, allowsLocal: Bool = false, cashOnly: Bool = false,
+  make: (String) -> Entity
+) -> IntentItemCollection<Entity> {
+  let matches = CurrencyCatalog.codes.filter {
+    (!cashOnly || WidgetPresets.allows($0))
+      && ($0.localizedCaseInsensitiveContains(string)
+        || CurrencyDisplay.name($0).localizedCaseInsensitiveContains(string))
+  }
+  let localName = String(
+    localized: "localCurrencyChoice", defaultValue: "Local currency", table: "Widgets")
+  let local =
+    allowsLocal && localName.localizedCaseInsensitiveContains(string) ? [localCurrencyID] : []
+  return IntentItemCollection(items: (local + matches).map(make))
 }
 
 struct WidgetCurrency: AppEntity {
@@ -107,13 +122,7 @@ struct CurrencyQuery: EntityStringQuery {
   }
 
   func entities(matching string: String) async throws -> IntentItemCollection<WidgetCurrency> {
-    IntentItemCollection(
-      items: CurrencyCatalog.codes
-        .filter {
-          $0.localizedCaseInsensitiveContains(string)
-            || CurrencyDisplay.name($0).localizedCaseInsensitiveContains(string)
-        }
-        .map(WidgetCurrency.init))
+    currencyMatches(string, make: WidgetCurrency.init)
   }
 }
 
@@ -151,58 +160,7 @@ struct CashQuery: EntityStringQuery {
   }
 
   func entities(matching string: String) async throws -> IntentItemCollection<CashCurrency> {
-    IntentItemCollection(
-      items: CurrencyCatalog.codes
-        .filter {
-          WidgetPresets.allows($0)
-            && ($0.localizedCaseInsensitiveContains(string)
-              || CurrencyDisplay.name($0).localizedCaseInsensitiveContains(string))
-        }
-        .map(CashCurrency.init))
-  }
-}
-
-struct BaseCurrencyQuery: EntityStringQuery {
-  private let readInput: @Sendable () -> ConverterState
-
-  init() { self.init(readInput: WidgetComposition.readInput()) }
-
-  init(readInput: @escaping @Sendable () -> ConverterState) {
-    self.readInput = readInput
-  }
-
-  func defaultResult() async -> WidgetCurrency? {
-    WidgetCurrency("EUR")
-  }
-  func entities(for identifiers: [String]) async throws -> [WidgetCurrency] {
-    try await CurrencyQuery(readInput: readInput).entities(for: identifiers)
-  }
-  func suggestedEntities() async throws -> IntentItemCollection<WidgetCurrency> {
-    try await CurrencyQuery(readInput: readInput).suggestedEntities()
-  }
-  func entities(matching string: String) async throws -> IntentItemCollection<WidgetCurrency> {
-    try await CurrencyQuery(readInput: readInput).entities(matching: string)
-  }
-}
-
-struct CashBaseQuery: EntityStringQuery {
-  private let readInput: @Sendable () -> ConverterState
-
-  init() { self.init(readInput: WidgetComposition.readInput()) }
-
-  init(readInput: @escaping @Sendable () -> ConverterState) {
-    self.readInput = readInput
-  }
-
-  func defaultResult() async -> CashCurrency? { CashCurrency("CZK") }
-  func entities(for identifiers: [String]) async throws -> [CashCurrency] {
-    try await CashQuery(readInput: readInput).entities(for: identifiers)
-  }
-  func suggestedEntities() async throws -> IntentItemCollection<CashCurrency> {
-    try await CashQuery(readInput: readInput).suggestedEntities()
-  }
-  func entities(matching string: String) async throws -> IntentItemCollection<CashCurrency> {
-    try await CashQuery(readInput: readInput).entities(matching: string)
+    currencyMatches(string, cashOnly: true, make: CashCurrency.init)
   }
 }
 
@@ -227,13 +185,7 @@ struct ComparisonCurrencyQuery: EntityStringQuery {
     currencySections(input: readInput(), allowsLocal: true, make: WidgetCurrency.init)
   }
   func entities(matching string: String) async throws -> IntentItemCollection<WidgetCurrency> {
-    let localName = String(
-      localized: "localCurrencyChoice", defaultValue: "Local currency", table: "Widgets")
-    let local =
-      localName.localizedCaseInsensitiveContains(string) ? [WidgetCurrency(localCurrencyID)] : []
-    return IntentItemCollection(
-      items: local
-        + (try await CurrencyQuery(readInput: readInput).entities(matching: string)).items)
+    currencyMatches(string, allowsLocal: true, make: WidgetCurrency.init)
   }
 }
 
@@ -255,44 +207,20 @@ struct CashComparisonQuery: EntityStringQuery {
     currencySections(input: readInput(), allowsLocal: true, cashOnly: true, make: CashCurrency.init)
   }
   func entities(matching string: String) async throws -> IntentItemCollection<CashCurrency> {
-    let localName = String(
-      localized: "localCurrencyChoice", defaultValue: "Local currency", table: "Widgets")
-    let local =
-      localName.localizedCaseInsensitiveContains(string) ? [CashCurrency(localCurrencyID)] : []
-    return IntentItemCollection(
-      items: local + (try await CashQuery(readInput: readInput).entities(matching: string)).items)
+    currencyMatches(string, allowsLocal: true, cashOnly: true, make: CashCurrency.init)
   }
 }
 
-struct MultiCurrencyQuery: EntityStringQuery {
-  private let readInput: @Sendable () -> ConverterState
-  private let list: CalculatorCurrencyList?
+struct CurrencyListOptions {
+  let input: ConverterState
 
-  init() { self.init(readInput: WidgetComposition.readInput()) }
-
-  init(
-    readInput: @escaping @Sendable () -> ConverterState,
-    list: CalculatorCurrencyList? = nil
-  ) {
-    self.readInput = readInput
-    self.list = list
+  var results: IntentItemCollection<WidgetCurrency> {
+    currencySections(input: input, allowsLocal: true, make: WidgetCurrency.init)
   }
 
-  func defaultResult() async -> [WidgetCurrency]? {
+  func defaultResult(for list: CalculatorCurrencyList?) -> [WidgetCurrency]? {
     guard list == .selected else { return nil }
-    return WidgetSelection.appCurrencies(readInput()).map(WidgetCurrency.init)
-  }
-
-  func entities(for identifiers: [String]) async throws -> [WidgetCurrency] {
-    try await WidgetCurrencyIdentityQuery().entities(for: identifiers)
-  }
-
-  func suggestedEntities() async throws -> IntentItemCollection<WidgetCurrency> {
-    currencySections(input: readInput(), allowsLocal: true, make: WidgetCurrency.init)
-  }
-
-  func entities(matching string: String) async throws -> IntentItemCollection<WidgetCurrency> {
-    try await ComparisonCurrencyQuery(readInput: readInput).entities(matching: string)
+    return WidgetSelection.appCurrencies(input).map(WidgetCurrency.init)
   }
 }
 
@@ -309,47 +237,11 @@ struct MultiCurrencyOptionsProvider: DynamicOptionsProvider {
   @IntentParameterDependency<MultiSettings> var settings: IntentProjection<MultiSettings>?
 
   func results() async throws -> IntentItemCollection<WidgetCurrency> {
-    try await choices(list: settings?.list).suggestedEntities()
+    CurrencyListOptions(input: readInput()).results
   }
 
   func defaultResult() async -> [WidgetCurrency]? {
-    await choices(list: settings?.list).defaultResult()
-  }
-
-  func choices(list: CalculatorCurrencyList?) -> MultiCurrencyQuery {
-    MultiCurrencyQuery(readInput: readInput, list: list)
-  }
-}
-
-struct BoardCurrencyQuery: EntityStringQuery {
-  private let readInput: @Sendable () -> ConverterState
-  private let list: CalculatorCurrencyList?
-
-  init() { self.init(readInput: WidgetComposition.readInput()) }
-
-  init(
-    readInput: @escaping @Sendable () -> ConverterState,
-    list: CalculatorCurrencyList? = nil
-  ) {
-    self.readInput = readInput
-    self.list = list
-  }
-
-  func defaultResult() async -> [WidgetCurrency]? {
-    guard list == .selected else { return nil }
-    return WidgetSelection.appCurrencies(readInput()).map(WidgetCurrency.init)
-  }
-
-  func entities(for identifiers: [String]) async throws -> [WidgetCurrency] {
-    try await WidgetCurrencyIdentityQuery().entities(for: identifiers)
-  }
-
-  func suggestedEntities() async throws -> IntentItemCollection<WidgetCurrency> {
-    currencySections(input: readInput(), allowsLocal: true, make: WidgetCurrency.init)
-  }
-
-  func entities(matching string: String) async throws -> IntentItemCollection<WidgetCurrency> {
-    try await ComparisonCurrencyQuery(readInput: readInput).entities(matching: string)
+    CurrencyListOptions(input: readInput()).defaultResult(for: settings?.list)
   }
 }
 
@@ -366,15 +258,11 @@ struct BoardCurrencyOptionsProvider: DynamicOptionsProvider {
   @IntentParameterDependency<BoardSettings> var settings: IntentProjection<BoardSettings>?
 
   func results() async throws -> IntentItemCollection<WidgetCurrency> {
-    try await choices(list: settings?.list).suggestedEntities()
+    CurrencyListOptions(input: readInput()).results
   }
 
   func defaultResult() async -> [WidgetCurrency]? {
-    await choices(list: settings?.list).defaultResult()
-  }
-
-  func choices(list: CalculatorCurrencyList?) -> BoardCurrencyQuery {
-    BoardCurrencyQuery(readInput: readInput, list: list)
+    CurrencyListOptions(input: readInput()).defaultResult(for: settings?.list)
   }
 }
 
@@ -495,7 +383,7 @@ struct AnchorSettings: SuiteConfiguration {
     "pairSettings", defaultValue: "Currency pair", table: "Widgets")
   @Parameter(
     title: LocalizedStringResource("baseParameter", defaultValue: "Base", table: "Widgets"),
-    default: WidgetCurrency("EUR"), query: BaseCurrencyQuery())
+    default: WidgetCurrency("EUR"), query: CurrencyQuery())
   var base: WidgetCurrency
   @Parameter(
     title: LocalizedStringResource(
@@ -520,7 +408,7 @@ struct CashSettings: SuiteConfiguration {
     "cashSettings", defaultValue: "Know Your Cash settings", table: "Widgets")
   @Parameter(
     title: LocalizedStringResource("baseParameter", defaultValue: "Base", table: "Widgets"),
-    default: CashCurrency("CZK"), query: CashBaseQuery())
+    default: CashCurrency("CZK"), query: CashQuery())
   var base: CashCurrency
   @Parameter(
     title: LocalizedStringResource(
@@ -554,7 +442,7 @@ struct BoardSettings: SuiteConfiguration {
     "boardSettings", defaultValue: "Currency Board settings", table: "Widgets")
   @Parameter(
     title: LocalizedStringResource("baseParameter", defaultValue: "Base", table: "Widgets"),
-    default: WidgetCurrency("EUR"), query: BaseCurrencyQuery())
+    default: WidgetCurrency("EUR"), query: CurrencyQuery())
   var base: WidgetCurrency
   @Parameter(
     title: LocalizedStringResource("amountParameter", defaultValue: "Amount", table: "Widgets"),

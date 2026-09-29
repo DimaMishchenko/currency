@@ -174,14 +174,16 @@ import WidgetsUI
   }
 
   @Test func customBoardPickerPreservesLocalThroughSelectionSearchAndConversion() async throws {
-    let query = BoardCurrencyQuery(readInput: { ConverterState() })
-    let choices = try await query.suggestedEntities()
+    let choices = try await BoardCurrencyOptionsProvider(readInput: { ConverterState() }).results()
     #expect(choices.items.contains { $0.id == WidgetSelection.localID })
     let localName = String(
       localized: "localCurrencyChoice", defaultValue: "Local currency", table: "Widgets")
-    let matches = try await query.entities(matching: localName)
+    let matches = try await ComparisonCurrencyQuery(readInput: { ConverterState() })
+      .entities(matching: localName)
     #expect(matches.items.contains { $0.id == WidgetSelection.localID })
-    let restored = try await query.entities(for: ["USD", WidgetSelection.localID])
+    let restored = try await WidgetCurrencyIdentityQuery()
+      .entities(
+        for: ["USD", WidgetSelection.localID])
     #expect(restored.map(\.id) == ["USD", WidgetSelection.localID])
     let settings = BoardSettings()
     settings.list = .selected
@@ -194,16 +196,9 @@ import WidgetsUI
   }
 
   @Test func customCurrencyPickersNormalizeSavedSelections() async throws {
-    let calculator = MultiCurrencyQuery(readInput: { ConverterState() })
-    let board = BoardCurrencyQuery(readInput: { ConverterState() })
     let identifiers = ["USD", "invalid", "@local", "USD", "BTC", "@local", "EUR"]
-    let calculatorSelection = try await calculator.entities(for: identifiers)
-    let boardSelection = try await board.entities(for: identifiers)
-    #expect(calculatorSelection.map(\.id) == ["USD", "@local", "BTC", "EUR"])
-    #expect(boardSelection.map(\.id) == calculatorSelection.map(\.id))
-    #expect(
-      try await WidgetCurrencyIdentityQuery().entities(for: identifiers).map(\.id)
-        == calculatorSelection.map(\.id))
+    let restored = try await WidgetCurrencyIdentityQuery().entities(for: identifiers)
+    #expect(restored.map(\.id) == ["USD", "@local", "BTC", "EUR"])
   }
 
   @Test func customCurrencyProvidersKeepTheFullCatalogInAppOrder() async throws {
@@ -223,21 +218,34 @@ import WidgetsUI
     }
   }
 
-  @Test func customCurrencyProvidersSeedOnlyTheCustomList() async {
+  @Test func customCurrencyProvidersSeedOnlyTheCustomList() {
     var input = ConverterState()
     input.changeSource("CHF")
     input.setDestinations(["BTC", "EUR", "USD"])
-    let saved = input
-    let calculator = MultiCurrencyOptionsProvider(readInput: { saved })
-    let board = BoardCurrencyOptionsProvider(readInput: { saved })
+    let options = CurrencyListOptions(input: input)
     #expect(
-      await calculator.choices(list: .selected).defaultResult()?.map(\.id)
+      options.defaultResult(for: .selected)?.map(\.id)
         == ["CHF", "BTC", "EUR", "USD"])
-    #expect(
-      await board.choices(list: .selected).defaultResult()?.map(\.id)
-        == ["CHF", "BTC", "EUR", "USD"])
-    #expect(await calculator.choices(list: .synchronized).defaultResult() == nil)
-    #expect(await board.choices(list: .synchronized).defaultResult() == nil)
+    #expect(options.defaultResult(for: .synchronized) == nil)
+    #expect(options.defaultResult(for: nil) == nil)
+  }
+
+  @Test func currencySearchKeepsCashRestrictionsLocalAndCatalogOrder() async throws {
+    let currencies = CurrencyQuery(readInput: { ConverterState() })
+    let cash = CashQuery(readInput: { ConverterState() })
+    #expect(try await currencies.entities(matching: "jPy").items.map(\.id) == ["JPY"])
+    let czechName = Locale.current.localizedString(forCurrencyCode: "CZK") ?? "CZK"
+    #expect(try await currencies.entities(matching: czechName).items.contains { $0.id == "CZK" })
+    let bitcoin = try await currencies.entities(matching: "Bitcoin").items.map(\.id)
+    #expect(bitcoin == ["BTC", "BCH"])
+    #expect(try await cash.entities(matching: "BTC").items.isEmpty)
+    #expect(try await cash.entities(matching: "XAU").items.map(\.id) == ["XAU"])
+    let localName = String(
+      localized: "localCurrencyChoice", defaultValue: "Local currency", table: "Widgets")
+    let local = currencyMatches(
+      localName, allowsLocal: true, cashOnly: true, make: CashCurrency.init)
+    #expect(local.items.contains { $0.id == WidgetSelection.localID })
+    #expect(try await currencies.entities(matching: "").items.isEmpty)
   }
 
   @Test func iconChoicesRoundTripAndHaveRenderableSymbols() {

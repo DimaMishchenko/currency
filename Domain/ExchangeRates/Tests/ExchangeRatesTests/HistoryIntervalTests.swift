@@ -86,6 +86,82 @@ private func candleData(_ dates: [Date]) throws -> Data {
     #expect(query.contains(URLQueryItem(name: "end", value: "2026-09-27T12:37:00Z")))
   }
 
+  @Test(arguments: [("BTC", "EUR"), ("ETH", "GBP"), ("USDC", "EUR"), ("USDC", "GBP")])
+  func nonDollarIntradayUsesDirectHourlyMarketAndItsOwnCache(
+    base: String, quote: String
+  ) async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let now = try intervalDate("2026-09-27T12:37:00Z")
+    let dates = try [
+      "2026-09-26T12:00:00Z", "2026-09-26T13:00:00Z", "2026-09-27T11:00:00Z",
+      "2026-09-27T12:00:00Z"
+    ]
+    .map(intervalDate)
+    let client = IntervalHistoryHTTP(data: try candleData(dates))
+    let service = HistoryService(directory: directory, client: client)
+    let result = await service.load(base: base, quote: quote, range: .day, now: now)
+    #expect(result.issue == nil)
+    #expect(result.series?.points.map(\.date) == [dates[1], dates[2]])
+    #expect(
+      result.series?.source == .init(provider: .coinbase, observation: .hourlyClose, timeZone: .gmt)
+    )
+    let urls = await client.urls
+    #expect(urls.count == 1)
+    let url = try #require(urls.first)
+    #expect(url.host == "api.exchange.coinbase.com")
+    #expect(url.path == "/products/\(base)-\(quote)/candles")
+    let query = try #require(URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems)
+    #expect(query.contains(URLQueryItem(name: "granularity", value: "3600")))
+    #expect(query.contains(URLQueryItem(name: "start", value: "2026-09-26T12:37:00Z")))
+    #expect(query.contains(URLQueryItem(name: "end", value: "2026-09-27T12:37:00Z")))
+    let file = directory.appendingPathComponent("history-\(base)-\(quote)-1.json")
+    #expect(
+      try JSONDecoder().decode(HistorySeries.self, from: Data(contentsOf: file)).points
+        == result.series?.points)
+    let fresh = await service.load(
+      base: base, quote: quote, range: .day, now: now.addingTimeInterval(3599))
+    #expect(await client.urls.count == 1)
+    #expect(fresh.series?.fetchedAt == now)
+    await client.failRequests()
+    let expired = await service.load(
+      base: base, quote: quote, range: .day, now: now.addingTimeInterval(3600))
+    #expect(await client.urls.count == 2)
+    #expect(expired.issue == .usingCachedSeries)
+    #expect(expired.series?.points == result.series?.points)
+  }
+
+  @Test(arguments: [
+    ("USD", "EUR"), ("BTC", "CZK"), ("AVAX", "GBP"), ("USDC", "USD"),
+    ("BTC", "BTC")
+  ])
+  func unsupportedIntradayRoutesNeverRequestOrSave(base: String, quote: String) async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let client = IntervalHistoryHTTP(data: Data())
+    #expect(!HistoryService.supportsIntraday(base: base, quote: quote))
+    let result = await HistoryService(directory: directory, client: client)
+      .load(base: base, quote: quote, range: .day)
+    #expect(result.series == nil)
+    #expect(result.issue == (base == quote ? .unsupportedPair : .intradayUnavailable))
+    #expect(await client.urls.isEmpty)
+    #expect(!FileManager.default.fileExists(atPath: directory.path))
+  }
+
+  @Test func directIntradayQuoteCachesRemainIndependent() async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let now = try intervalDate("2026-09-27T12:00:00Z")
+    let client = IntervalHistoryHTTP(
+      data: try candleData([now.addingTimeInterval(-7200), now.addingTimeInterval(-3600)]))
+    let service = HistoryService(directory: directory, client: client)
+    for quote in ["EUR", "GBP", "EUR", "GBP"] {
+      #expect(await service.load(base: "BTC", quote: quote, range: .day, now: now).issue == nil)
+    }
+    #expect(
+      await client.urls.map(\.path) == ["/products/BTC-EUR/candles", "/products/BTC-GBP/candles"])
+  }
+
   @Test func dayDefaultCacheExpiresAtOneHourAndPreservesOfflineHistory() async throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }
