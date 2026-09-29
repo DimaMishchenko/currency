@@ -46,6 +46,14 @@ private actor CrossRateHTTP: HTTPClient {
     let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
     if query.contains(URLQueryItem(name: "granularity", value: "3600")) {
       let start = Date(timeIntervalSince1970: 1_767_484_800).timeIntervalSince1970
+      if url.path == "/products/USDC-EUR/candles" {
+        return try JSONEncoder()
+          .encode([
+            [start + 3_600, 1, 200, 1, 1, 1],
+            [start + 7_200, 1, 200, 1, 2, 1],
+            [start + 10_800, 1, 200, 1, 3, 1]
+          ])
+      }
       return try JSONEncoder()
         .encode([
           [start + 3_600, 1, 200, 1, isEthereum ? 10 : 100, 1],
@@ -119,6 +127,14 @@ private actor CrossRateHTTP: HTTPClient {
     #expect(result.series?.points.map(\.value) == [10, 5.5])
     #expect(result.series?.source.observation == .hourlyClose)
     #expect(await client.urls.count == 2)
+    let urls = await client.urls
+    #expect(Set(urls.map(\.path)) == ["/products/BTC-USD/candles", "/products/ETH-USD/candles"])
+    #expect(
+      urls.allSatisfy { url in
+        URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?
+          .contains(
+            URLQueryItem(name: "granularity", value: "3600")) == true
+      })
   }
 
   @Test func failedCryptoQuoteLegNeverSavesPartialSeries() async throws {
@@ -133,6 +149,33 @@ private actor CrossRateHTTP: HTTPClient {
     #expect(
       !FileManager.default.fileExists(
         atPath: directory.appendingPathComponent("history-BTC-ETH-30.json").path))
+  }
+
+  @Test(arguments: [("USDC", "BTC"), ("BTC", "USDC")])
+  func cryptoWithoutBothDollarMarketsJoinsMatchingHourlyEuroCloses(
+    base: String, quote: String
+  ) async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let client = CrossRateHTTP()
+    #expect(HistoryService.supportsIntraday(base: base, quote: quote))
+    let result = await HistoryService(directory: directory, client: client)
+      .load(base: base, quote: quote, range: .day, now: now)
+    #expect(result.issue == nil)
+    let values = try #require(result.series?.points.map(\.value))
+    #expect(values.count == 2)
+    #expect(values == (base == "USDC" ? [1.0 / 100, 2.0 / 110] : [100, 55]))
+    #expect(
+      result.series?.source == .init(provider: .coinbase, observation: .hourlyClose, timeZone: .gmt)
+    )
+    let urls = await client.urls
+    #expect(Set(urls.map(\.path)) == ["/products/USDC-EUR/candles", "/products/BTC-EUR/candles"])
+    #expect(
+      urls.allSatisfy { url in
+        URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?
+          .contains(
+            URLQueryItem(name: "granularity", value: "3600")) == true
+      })
   }
 
   @Test func cryptoMetalUsesHistoricalUsdMetalReferences() async throws {
@@ -185,12 +228,12 @@ private actor CrossRateHTTP: HTTPClient {
     #expect(HistoryService.monthlyCloses(joined).map(\.value) == [80, 270])
   }
 
-  @Test func cryptoFiatIntradayReturnsUnsupportedWithoutRequestOrCache() async throws {
+  @Test func cryptoFiatWithoutHourlyMarketReturnsUnsupportedWithoutRequestOrCache() async throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }
     let client = CrossRateHTTP()
     let result = await HistoryService(directory: directory, client: client)
-      .load(base: "BTC", quote: "EUR", range: .day, now: now)
+      .load(base: "BTC", quote: "CZK", range: .day, now: now)
     #expect(result.series == nil)
     #expect(result.issue == .intradayUnavailable)
     #expect(await client.urls.isEmpty)

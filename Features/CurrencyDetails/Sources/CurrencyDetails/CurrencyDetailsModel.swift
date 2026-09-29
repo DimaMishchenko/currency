@@ -41,7 +41,9 @@ public final class CurrencyDetailsModel {
 
   /// Fiat providers publish daily reference rates without intraday observations.
   public var availableRanges: [HistoryRange] {
-    Self.ranges.filter { $0 != .day || CurrencyCatalog.crypto.contains(input.code) }
+    Self.ranges.filter {
+      $0 != .day || HistoryService.supportsIntraday(base: input.code, quote: quote)
+    }
   }
 
   /// Mutually exclusive history request phases.

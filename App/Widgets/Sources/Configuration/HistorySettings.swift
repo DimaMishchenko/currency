@@ -22,7 +22,6 @@ struct HistoryCurrency: AppEntity {
 struct HistoryCurrencyQuery: EntityStringQuery {
   private let defaultID: String
   private let readInput: @Sendable () -> ConverterState
-  private let excludedIDs: Set<String>
 
   init() { self.init(defaultID: HistoryCurrency.appBase) }
 
@@ -30,24 +29,13 @@ struct HistoryCurrencyQuery: EntityStringQuery {
     self.init(defaultID: defaultID, readInput: WidgetComposition.readInput())
   }
 
-  init(
-    defaultID: String, readInput: @escaping @Sendable () -> ConverterState,
-    excluding excludedIDs: Set<String> = []
-  ) {
+  init(defaultID: String, readInput: @escaping @Sendable () -> ConverterState) {
     self.defaultID = defaultID
     self.readInput = readInput
-    self.excludedIDs = excludedIDs
   }
 
   func defaultResult() async -> HistoryCurrency? {
-    let excluded = excludedIDs
-    if let preferred = resolve(defaultID), !excluded.contains(preferred.id) {
-      return preferred
-    }
-    let input = readInput()
-    return (WidgetSelection.appCurrencies(input) + ["USD", "EUR"] + CurrencyCatalog.codes)
-      .first { !excluded.contains($0) }
-      .map(HistoryCurrency.init)
+    resolve(defaultID)
   }
 
   private func resolve(_ id: String) -> HistoryCurrency? {
@@ -67,77 +55,25 @@ struct HistoryCurrencyQuery: EntityStringQuery {
     identifiers.compactMap(resolve)
   }
 
+  @available(iOS 27.0, *)
+  func displayRepresentations(
+    for identifiers: [String]
+  ) async throws -> [String: DisplayRepresentation] {
+    var representations: [String: DisplayRepresentation] = [:]
+    for identifier in identifiers {
+      if let entity = resolve(identifier) {
+        representations[identifier] = entity.displayRepresentation
+      }
+    }
+    return representations
+  }
+
   func suggestedEntities() async throws -> IntentItemCollection<HistoryCurrency> {
-    currencySections(
-      input: readInput(), allowsLocal: true, excluding: excludedIDs,
-      make: HistoryCurrency.init)
+    currencySections(input: readInput(), allowsLocal: true, make: HistoryCurrency.init)
   }
 
   func entities(matching string: String) async throws -> IntentItemCollection<HistoryCurrency> {
-    let matches = try await ComparisonCurrencyQuery(readInput: readInput).entities(matching: string)
-    let excluded = excludedIDs
-    return IntentItemCollection(
-      items: matches.items.filter { !excluded.contains($0.id) }.map { HistoryCurrency($0.id) })
-  }
-}
-
-struct HistoryCurrencyOptionsProvider: DynamicOptionsProvider {
-  private let defaultID: String
-  private let readInput: @Sendable () -> ConverterState
-  private let readLocalCurrency: @Sendable () -> String?
-
-  init(defaultID: String) {
-    self.init(
-      defaultID: defaultID, readInput: WidgetComposition.readInput(),
-      readLocalCurrency: WidgetComposition.readHistoryLocalCurrency())
-  }
-
-  init(
-    defaultID: String, readInput: @escaping @Sendable () -> ConverterState,
-    readLocalCurrency: @escaping @Sendable () -> String? = { nil }
-  ) {
-    self.defaultID = defaultID
-    self.readInput = readInput
-    self.readLocalCurrency = readLocalCurrency
-    _settings =
-      defaultID == HistoryCurrency.appBase
-      ? IntentParameterDependency(\.$comparison) : IntentParameterDependency(\.$base)
-  }
-
-  @IntentParameterDependency<HistorySettings> var settings: IntentProjection<HistorySettings>?
-
-  private var otherCurrency: HistoryCurrency? {
-    defaultID == HistoryCurrency.appBase ? settings?.comparison : settings?.base
-  }
-
-  func results() async throws -> IntentItemCollection<HistoryCurrency> {
-    try await choices(excluding: otherCurrency).suggestedEntities()
-  }
-
-  func defaultResult() async -> HistoryCurrency? {
-    await choices(excluding: otherCurrency).defaultResult()
-  }
-
-  func choices(excluding other: HistoryCurrency?) -> HistoryCurrencyQuery {
-    let input = readInput()
-    let localCurrency = readLocalCurrency()
-    var excluded: Set<String> = []
-    if let other {
-      let code: String? =
-        switch other.id {
-        case HistoryCurrency.appBase: input.source
-        case HistoryCurrency.appFirst: input.destinationRows.first?.code
-        case localCurrencyID: localCurrency
-        default: other.id
-        }
-      excluded.insert(other.id)
-      if let code {
-        excluded.insert(code)
-        if code == localCurrency { excluded.insert(localCurrencyID) }
-      }
-    }
-    return HistoryCurrencyQuery(
-      defaultID: defaultID, readInput: { input }, excluding: excluded)
+    currencyMatches(string, allowsLocal: true, make: HistoryCurrency.init)
   }
 }
 
@@ -171,6 +107,10 @@ enum HistoryWidgetRange: String, AppEnum, CaseIterable {
     case .all: .all
     }
   }
+
+  static func available(for pair: HistoryWidgetPair) -> [Self] {
+    pair.supportsIntradayHistory ? allCases : allCases.filter { $0 != .day }
+  }
 }
 
 struct HistoryRangeOptionsProvider: DynamicOptionsProvider {
@@ -189,17 +129,16 @@ struct HistoryRangeOptionsProvider: DynamicOptionsProvider {
   ) {
     self.readInput = readInput
     self.readLocalCurrency = readLocalCurrency
-    _settings = IntentParameterDependency(\.$base, \.$comparison)
   }
 
-  @IntentParameterDependency<HistorySettings> var settings: IntentProjection<HistorySettings>?
+  @IntentParameterDependency<HistorySettings>(\.$base, \.$comparison)
+  var settings: IntentProjection<HistorySettings>?
 
   func results() async throws -> [HistoryWidgetRange] {
-    let configuration = HistorySettings()
-    configuration.base = settings?.base
-    configuration.comparison = settings?.comparison
-    return configuration.availableRanges(
-      input: readInput(), localCurrency: readLocalCurrency())
+    HistoryWidgetRange.available(
+      for: HistorySettings.resolvePair(
+        input: readInput(), base: settings?.base, comparison: settings?.comparison,
+        localCurrency: readLocalCurrency()))
   }
 }
 
@@ -209,13 +148,13 @@ struct HistorySettings: WidgetConfigurationIntent {
 
   @Parameter(
     title: LocalizedStringResource("baseParameter", defaultValue: "Base", table: "Widgets"),
-    optionsProvider: HistoryCurrencyOptionsProvider(defaultID: HistoryCurrency.appBase))
+    query: HistoryCurrencyQuery())
   var base: HistoryCurrency?
 
   @Parameter(
     title: LocalizedStringResource(
       "comparisonParameter", defaultValue: "Comparison", table: "Widgets"),
-    optionsProvider: HistoryCurrencyOptionsProvider(defaultID: HistoryCurrency.appFirst))
+    query: HistoryCurrencyQuery(defaultID: HistoryCurrency.appFirst))
   var comparison: HistoryCurrency?
 
   @Parameter(
@@ -234,9 +173,7 @@ struct HistorySettings: WidgetConfigurationIntent {
   )
     -> [HistoryWidgetRange]
   {
-    let ranges = HistoryWidgetRange.allCases
-    return pair(input: input, localCurrency: localCurrency).supportsIntradayHistory
-      ? ranges : ranges.filter { $0 != .day }
+    HistoryWidgetRange.available(for: pair(input: input, localCurrency: localCurrency))
   }
 
   func effectiveRange(for pair: HistoryWidgetPair) -> HistoryRange {
@@ -244,6 +181,13 @@ struct HistorySettings: WidgetConfigurationIntent {
   }
 
   func pair(input: ConverterState, localCurrency: String? = nil) -> HistoryWidgetPair {
+    Self.resolvePair(input: input, base: base, comparison: comparison, localCurrency: localCurrency)
+  }
+
+  static func resolvePair(
+    input: ConverterState, base: HistoryCurrency?, comparison: HistoryCurrency?,
+    localCurrency: String? = nil
+  ) -> HistoryWidgetPair {
     func resolve(_ choice: HistoryCurrency?) -> String? {
       guard let choice else { return nil }
       return switch choice.id {

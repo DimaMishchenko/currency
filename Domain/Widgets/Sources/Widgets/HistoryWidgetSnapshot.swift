@@ -40,8 +40,7 @@ public struct HistoryWidgetPair: Sendable, Equatable {
   /// Whether the supported pair can load completed hourly observations.
   public var supportsIntradayHistory: Bool {
     guard let request = historyRequest else { return false }
-    return CurrencyCatalog.crypto.contains(request.base)
-      && (request.quote == "USD" || CurrencyCatalog.crypto.contains(request.quote))
+    return HistoryService.supportsIntraday(base: request.base, quote: request.quote)
   }
 }
 
