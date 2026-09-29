@@ -56,6 +56,56 @@ import Widgets
       HistoryWidgetRange.allCases.map(\.range) == [.day, .week, .month, .quarter, .year, .all])
   }
 
+  @Test func pickerOptionsExcludeTheOtherCurrencyInBothDirections() async throws {
+    var input = ConverterState()
+    input.changeSource("USD")
+    input.setDestinations(["EUR", "CZK"])
+    let saved = input
+    for defaultID in [HistoryCurrency.appBase, HistoryCurrency.appFirst] {
+      let provider = HistoryCurrencyOptionsProvider(
+        defaultID: defaultID, readInput: { saved }, readLocalCurrency: { "EUR" })
+      let excluded = provider.choices(excluding: HistoryCurrency("EUR"))
+      let choices = try await excluded.suggestedEntities().items.map(\.id)
+      #expect(!choices.contains("EUR"))
+      #expect(!choices.contains("@local"))
+      #expect(choices.contains("USD"))
+      #expect(try await excluded.entities(matching: "Euro").items.isEmpty)
+      #expect(try await excluded.entities(matching: "Local").items.isEmpty)
+      #expect(await excluded.defaultResult()?.id == "USD")
+      let local = provider.choices(excluding: HistoryCurrency("@local"))
+      #expect(try await local.suggestedEntities().items.map(\.id) == choices)
+      let restored = try await excluded.entities(for: ["EUR", "@local"])
+      #expect(restored.map(\.id) == ["EUR", "@local"])
+    }
+  }
+
+  @Test func pickerDefaultsAndLegacyAliasesStayIndependentOfEntityResolution() async throws {
+    var input = ConverterState()
+    input.changeSource("USD")
+    input.setDestinations(["EUR", "CZK"])
+    let saved = input
+    let base = HistoryCurrencyOptionsProvider(
+      defaultID: HistoryCurrency.appBase, readInput: { saved })
+    let comparison = HistoryCurrencyOptionsProvider(
+      defaultID: HistoryCurrency.appFirst, readInput: { saved })
+    #expect(await base.defaultResult()?.id == "USD")
+    #expect(await comparison.defaultResult()?.id == "EUR")
+    let withoutAppFirst = base.choices(excluding: HistoryCurrency(HistoryCurrency.appFirst))
+    let withoutAppBase = comparison.choices(excluding: HistoryCurrency(HistoryCurrency.appBase))
+    #expect(try await withoutAppFirst.suggestedEntities().items.allSatisfy { $0.id != "EUR" })
+    #expect(try await withoutAppBase.suggestedEntities().items.allSatisfy { $0.id != "USD" })
+    #expect(await withoutAppFirst.defaultResult()?.id == "USD")
+    #expect(await withoutAppBase.defaultResult()?.id == "EUR")
+    let restored = try await HistoryCurrencyQuery(
+      defaultID: HistoryCurrency.appBase, readInput: { saved }
+    )
+    .entities(for: [HistoryCurrency.appBase, HistoryCurrency.appFirst, "USD", "EUR", "@local"])
+    #expect(restored.map(\.id) == ["USD", "EUR", "USD", "EUR", "@local"])
+    let unresolvedLocal = comparison.choices(excluding: HistoryCurrency("@local"))
+    #expect(try await unresolvedLocal.suggestedEntities().items.allSatisfy { $0.id != "@local" })
+    #expect(await unresolvedLocal.defaultResult()?.id == "EUR")
+  }
+
   @Test func rangeChoicesFollowSupportedCryptoPairsAndKeepFiatChoices() async throws {
     var input = ConverterState()
     input.changeSource("BTC")

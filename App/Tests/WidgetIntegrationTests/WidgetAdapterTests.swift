@@ -193,6 +193,53 @@ import WidgetsUI
     #expect(spec.localCode == "CZK")
   }
 
+  @Test func customCurrencyPickersNormalizeSavedSelections() async throws {
+    let calculator = MultiCurrencyQuery(readInput: { ConverterState() })
+    let board = BoardCurrencyQuery(readInput: { ConverterState() })
+    let identifiers = ["USD", "invalid", "@local", "USD", "BTC", "@local", "EUR"]
+    let calculatorSelection = try await calculator.entities(for: identifiers)
+    let boardSelection = try await board.entities(for: identifiers)
+    #expect(calculatorSelection.map(\.id) == ["USD", "@local", "BTC", "EUR"])
+    #expect(boardSelection.map(\.id) == calculatorSelection.map(\.id))
+    #expect(
+      try await WidgetCurrencyIdentityQuery().entities(for: identifiers).map(\.id)
+        == calculatorSelection.map(\.id))
+  }
+
+  @Test func customCurrencyProvidersKeepTheFullCatalogInAppOrder() async throws {
+    var input = ConverterState()
+    input.changeSource("CHF")
+    input.setDestinations(["BTC", "EUR", "USD"])
+    let saved = input
+    let calculator = MultiCurrencyOptionsProvider(readInput: { saved })
+    let board = BoardCurrencyOptionsProvider(readInput: { saved })
+    for ids in [
+      try await calculator.results().items.map(\.id),
+      try await board.results().items.map(\.id)
+    ] {
+      #expect(Array(ids.prefix(5)) == ["CHF", "BTC", "EUR", "USD", "@local"])
+      #expect(ids.count == CurrencyCatalog.codes.count + 1)
+      #expect(Set(ids) == Set(CurrencyCatalog.codes + [WidgetSelection.localID]))
+    }
+  }
+
+  @Test func customCurrencyProvidersSeedOnlyTheCustomList() async {
+    var input = ConverterState()
+    input.changeSource("CHF")
+    input.setDestinations(["BTC", "EUR", "USD"])
+    let saved = input
+    let calculator = MultiCurrencyOptionsProvider(readInput: { saved })
+    let board = BoardCurrencyOptionsProvider(readInput: { saved })
+    #expect(
+      await calculator.choices(list: .selected).defaultResult()?.map(\.id)
+        == ["CHF", "BTC", "EUR", "USD"])
+    #expect(
+      await board.choices(list: .selected).defaultResult()?.map(\.id)
+        == ["CHF", "BTC", "EUR", "USD"])
+    #expect(await calculator.choices(list: .synchronized).defaultResult() == nil)
+    #expect(await board.choices(list: .synchronized).defaultResult() == nil)
+  }
+
   @Test func iconChoicesRoundTripAndHaveRenderableSymbols() {
     let choices = CurrencySymbolChoice.allCases
     #expect(choices.count == CurrencySymbol.allCases.count)

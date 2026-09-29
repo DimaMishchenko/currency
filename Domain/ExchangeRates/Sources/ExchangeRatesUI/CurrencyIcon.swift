@@ -2,39 +2,72 @@ import CoreText
 import ExchangeRates
 import ImageIO
 import SwiftUI
+import Synchronization
 import UniformTypeIdentifiers
 
 /// A bundled crypto badge, original metal badge, or native fiat flag emoji.
 /// DOGE: https://github.com/spothq/cryptocurrency-icons (CC0; CryptocurrencyIcons-LICENSE.txt).
 /// Other crypto artwork: https://github.com/0xa3k5/web3icons (MIT; see Web3Icons-LICENSE.txt).
 public struct CurrencyIcon: View {
-  /// PNG artwork for system-owned currency pickers and search results.
-  nonisolated public static func pickerImageData(_ code: String) -> Data? { pickerImages[code] }
+  /// PNG artwork at most 72 pixels wide or tall for system-owned pickers and widgets.
+  nonisolated public static func pickerImageData(_ code: String) -> Data? {
+    imageData(code, side: 72)
+  }
 
-  nonisolated private static let pickerImages: [String: Data] = {
-    let bundle = Bundle.module
-    var images: [String: Data] = [:]
-    for code in CurrencyCatalog.crypto {
-      images[code] = UIImage(named: "Crypto" + code, in: bundle, compatibleWith: nil)?.pngData()
-    }
-    for code in ["XAU", "XAG", "XPT", "XPD"] {
-      images[code] = UIImage(named: "Metal" + code, in: bundle, compatibleWith: nil)?.pngData()
-    }
-    for code in CurrencyCatalog.codes where images[code] == nil {
-      images[code] = flagImage(CurrencyDisplay.flag(code))
-    }
-    return images
+  /// PNG artwork at most 216 pixels wide or tall for system search thumbnails.
+  nonisolated public static func thumbnailImageData(_ code: String) -> Data? {
+    imageData(code, side: 216)
+  }
+
+  nonisolated private static let imageCache: Mutex<NSCache<NSString, NSData>> = {
+    let cache = NSCache<NSString, NSData>()
+    cache.totalCostLimit = 2 * 1024 * 1024
+    cache.countLimit = 256
+    return Mutex(cache)
   }()
 
-  nonisolated private static func flagImage(_ flag: String) -> Data? {
-    let side = 216
+  nonisolated private static func imageData(_ code: String, side: Int) -> Data? {
+    guard let currency = CurrencyCode(rawValue: code) else { return nil }
+    return imageCache.withLock { cache in
+      let key = "\(code):\(side)" as NSString
+      if let data = cache.object(forKey: key) { return data as Data }
+      let data = autoreleasepool {
+        if currency.isCryptocurrency {
+          return assetImage("Crypto" + code, side: side)
+        } else if currency.isMetal {
+          return assetImage("Metal" + code, side: side)
+        } else {
+          return flagImage(CurrencyDisplay.flag(code), side: side)
+        }
+      }
+      if let data { cache.setObject(data as NSData, forKey: key, cost: data.count) }
+      return data
+    }
+  }
+
+  nonisolated private static func assetImage(_ name: String, side: Int) -> Data? {
+    guard
+      let data = UIImage(named: name, in: Bundle.module, compatibleWith: nil)?.pngData(),
+      let source = CGImageSourceCreateWithData(data as CFData, nil),
+      let image = CGImageSourceCreateThumbnailAtIndex(
+        source, 0,
+        [
+          kCGImageSourceCreateThumbnailFromImageAlways: true,
+          kCGImageSourceThumbnailMaxPixelSize: side,
+          kCGImageSourceCreateThumbnailWithTransform: true
+        ] as CFDictionary)
+    else { return nil }
+    return pngData(image)
+  }
+
+  nonisolated private static func flagImage(_ flag: String, side: Int) -> Data? {
     guard
       let context = CGContext(
         data: nil, width: side, height: side, bitsPerComponent: 8,
         bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
         bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
     else { return nil }
-    let font = CTFontCreateWithName("AppleColorEmoji" as CFString, 156, nil)
+    let font = CTFontCreateWithName("AppleColorEmoji" as CFString, CGFloat(side) * 13 / 18, nil)
     let string = NSAttributedString(
       string: flag,
       attributes: [
@@ -47,6 +80,10 @@ public struct CurrencyIcon: View {
       y: (CGFloat(side) - bounds.height) / 2 - bounds.minY)
     CTLineDraw(line, context)
     guard let image = context.makeImage() else { return nil }
+    return pngData(image)
+  }
+
+  nonisolated private static func pngData(_ image: CGImage) -> Data? {
     let data = NSMutableData()
     guard
       let destination = CGImageDestinationCreateWithData(
