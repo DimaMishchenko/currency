@@ -58,6 +58,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
       - name: Check release configuration
         run: |
           for name in ASC_KEY_ID ASC_ISSUER_ID ASC_PRIVATE_KEY_B64 APPLE_DISTRIBUTION_PRIVATE_KEY_B64; do
@@ -71,6 +72,11 @@ jobs:
         run: brew install xcbeautify asc
       - name: Install Tuist dependencies
         run: tuist install
+      - name: Generate build testing notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: python3 Scripts/CI/testflight_notes.py --output-dir "$RUNNER_TEMP"
       - name: Allocate build number
         run: bash Scripts/CI/release.sh allocate
       - name: Prepare certificate and profiles
@@ -104,12 +110,17 @@ jobs:
       - name: Verify signed IPA
         run: bash Scripts/CI/verify_ipa.sh "$RUNNER_TEMP/CurrencyExport/Currency.ipa"
       - name: Upload to TestFlight
+        id: upload
         run: bash Scripts/CI/release.sh upload "$RUNNER_TEMP/CurrencyExport/Currency.ipa"
       - name: Record published build
+        if: always() && steps.upload.outputs.processed == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: currency-release-build
-          path: ${{ runner.temp }}/CurrencyBuildId.txt
+          path: |
+            ${{ runner.temp }}/CurrencyBuildId.txt
+            ${{ runner.temp }}/CurrencyCommit.txt
+            ${{ runner.temp }}/CurrencyTestNotes.txt
           if-no-files-found: error
       - name: Remove temporary signing assets
         if: always()
