@@ -397,16 +397,16 @@ struct OnboardingScreen<Widgets: View>: View {
                 CurrencyIcon(code, size: 28)
                 Text(code).font(AppStyle.font(.headline)).foregroundStyle(Color.primary)
                 Spacer(minLength: 0)
-                if model.draft.destinations.contains(code) {
+                if model.draft.manualDestinations.contains(code) {
                   OnboardingSelectionMark()
                 }
               }
               .frame(minHeight: 44).padding(.vertical, 8)
             }
-            .disabled(!model.isAvailable(code) && !model.draft.destinations.contains(code))
+            .disabled(!model.isAvailable(code) && !model.draft.manualDestinations.contains(code))
             .accessibilityLabel("\(CurrencyDisplay.name(code, locale: locale)), \(code)")
             .accessibilityValue(
-              model.draft.destinations.contains(code)
+              model.draft.manualDestinations.contains(code)
                 ? Text(.Onboarding.selected) : Text(.Onboarding.notSelected))
           }
           Button(.Onboarding.moreCurrencies, systemImage: "magnifyingglass") {
@@ -453,7 +453,7 @@ struct OnboardingScreen<Widgets: View>: View {
   }
   private func recommendation(_ code: String) -> some View {
     OnboardingCurrencyTile(
-      code: code, selected: model.draft.destinations.contains(code),
+      code: code, selected: model.draft.manualDestinations.contains(code),
       available: model.isAvailable(code),
       compact: compactHeight, identifier: "onboarding.recommendation.\(code)"
     ) { model.toggle(code) }

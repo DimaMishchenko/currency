@@ -1,8 +1,5 @@
-import Onboarding
+import ExchangeRates
 
-/// A fiat-led shortlist also introduces the supported crypto and precious-metal categories.
 enum OnboardingRecommendations {
-  static let currencies = [
-    "USD", "EUR", "GBP", "JPY", "BTC", "XAU", "CHF", "CNY", "ETH", "XAG", "CAD", "AUD"
-  ]
+  static let currencies = CurrencyCatalog.popularFiat + ["BTC", "ETH", "XAU", "XAG"]
 }

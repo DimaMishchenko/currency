@@ -82,7 +82,6 @@ public struct CurrencyChooser: View {
 
         }
         currencyList
-          // Recreate only the scroll content when filtering; the search field keeps focus.
           .id("\(category)-\(search)")
           .onChange(of: category) { _, _ in AppHaptics.play(.selection) }
 
@@ -120,46 +119,17 @@ public struct CurrencyChooser: View {
             Divider().padding(.top, 8).padding(.bottom, 24)
           }
         }
-        if showsLocalCurrency && localMatchesSearch && search.isEmpty && !filteredCodes.isEmpty {
-          Text(category.title)
-            .font(AppStyle.font(.subheadline, weight: .semibold)).foregroundStyle(.secondary)
-            .padding(.bottom, 8).accessibilityAddTraits(.isHeader)
-        }
-        ForEach(filteredCodes, id: \.self) { code in
-          Button {
-            AppHaptics.play(.selection)
-            choose(code)
-            if !allowsMultipleSelection { dismiss() }
-          } label: {
-            HStack(spacing: AppStyle.Space.large) {
-              CurrencyIcon(code)
-              VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
-                Text(code).font(AppStyle.font(.headline))
-                Text(CurrencyDisplay.name(code, locale: locale)).font(AppStyle.font(.caption))
-                  .foregroundStyle(.secondary)
-              }
-              Spacer()
-              if selected.contains(code) {
-                Image(systemName: "checkmark").foregroundStyle(.tint)
-              } else if !available.contains(code) {
-                Text(.CurrencySelection.unavailable).font(AppStyle.font(.caption2))
-                  .foregroundStyle(.secondary)
-              }
-            }
-            .padding(.vertical, AppStyle.Space.xs)
-            .contentShape(Rectangle())
+        ForEach(Array(browseSections.enumerated()), id: \.offset) { _, section in
+          if let title = section.title {
+            Text(title)
+              .font(AppStyle.font(.subheadline, weight: .semibold)).foregroundStyle(.secondary)
+              .padding(.top, 16).padding(.bottom, 8).accessibilityAddTraits(.isHeader)
           }
-          .foregroundStyle(Color.primary)
-          .disabled(
-            (selected.contains(code) && !allowsMultipleSelection)
-              || (requiresAvailableRate && !available.contains(code) && !selected.contains(code))
-          )
-          .accessibilityIdentifier("currency.picker.\(code)")
-          .accessibilityAddTraits(selected.contains(code) ? .isSelected : [])
-          .buttonStyle(.plain)
-          .padding(.vertical, 12)
-          Divider()
+          ForEach(section.codes, id: \.self) { code in
+            currencyRow(code)
+          }
         }
+
       }
       .padding(.horizontal, 20).padding(.vertical, 24)
     }
@@ -173,6 +143,43 @@ public struct CurrencyChooser: View {
       }
     }
     .clipped()
+  }
+
+  @ViewBuilder
+  private func currencyRow(_ code: String) -> some View {
+    Button {
+      AppHaptics.play(.selection)
+      choose(code)
+      if !allowsMultipleSelection { dismiss() }
+    } label: {
+      HStack(spacing: AppStyle.Space.large) {
+        CurrencyIcon(code)
+        VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
+          Text(code).font(AppStyle.font(.headline))
+          Text(CurrencyDisplay.name(code, locale: locale)).font(AppStyle.font(.caption))
+            .foregroundStyle(.secondary)
+        }
+        Spacer()
+        if selected.contains(code) {
+          Image(systemName: "checkmark").foregroundStyle(.tint)
+        } else if !available.contains(code) {
+          Text(.CurrencySelection.unavailable).font(AppStyle.font(.caption2))
+            .foregroundStyle(.secondary)
+        }
+      }
+      .padding(.vertical, AppStyle.Space.xs)
+      .contentShape(Rectangle())
+    }
+    .foregroundStyle(Color.primary)
+    .disabled(
+      (selected.contains(code) && !allowsMultipleSelection)
+        || (requiresAvailableRate && !available.contains(code) && !selected.contains(code))
+    )
+    .accessibilityIdentifier("currency.picker.\(code)")
+    .accessibilityAddTraits(selected.contains(code) ? .isSelected : [])
+    .buttonStyle(.plain)
+    .padding(.vertical, 12)
+    Divider()
   }
 
   private var localCurrencyRow: some View {
@@ -263,17 +270,40 @@ public struct CurrencyChooser: View {
     }
   }
 
-  private var filteredCodes: [String] {
-    if search.isEmpty, category == .selected {
-      return homeCurrencies.filter { allowedCodes?.contains($0) ?? true }
+  private var filteredCodes: [String] { browseSections.flatMap(\.codes) }
+
+  private var browseSections: [(title: LocalizedStringResource?, codes: [String])] {
+    if !search.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+      return [
+        (
+          nil,
+          CurrencyCatalog.search(search, allowedCodes: allowedCodes, locale: locale) {
+            CurrencyDisplay.name($0, locale: locale)
+          }
+        )
+      ]
     }
-    return CurrencyCatalog.codes.filter { code in
-      guard allowedCodes?.contains(code) ?? true else { return false }
-      if search.isEmpty { return category.contains(code) }
-      return "\(code) \(CurrencyDisplay.name(code, locale: locale))"
-        .localizedCaseInsensitiveContains(search)
+    let sections: [(LocalizedStringResource?, [String])]
+    switch category {
+    case .selected: sections = [(nil, homeCurrencies)]
+    case .currencies:
+      sections = [
+        (.CurrencySelection.popularCurrencies, CurrencyCatalog.popularFiat),
+        (.CurrencySelection.allCurrencies, CurrencyCatalog.otherFiat)
+      ]
+    case .crypto:
+      sections = [
+        (.CurrencySelection.popularCrypto, CurrencyCatalog.popularCrypto),
+        (.CurrencySelection.allCrypto, CurrencyCatalog.otherCrypto)
+      ]
+    case .metals: sections = [(nil, CurrencyCatalog.metals.sorted())]
+    }
+    return sections.compactMap { title, codes in
+      let filtered = codes.filter { allowedCodes?.contains($0) ?? true }
+      return filtered.isEmpty ? nil : (title, filtered)
     }
   }
+
 }
 
 private enum CurrencyCategory: CaseIterable {
@@ -288,13 +318,4 @@ private enum CurrencyCategory: CaseIterable {
     }
   }
 
-  func contains(_ code: String) -> Bool {
-    let isMetal = ["XAU", "XAG", "XPT", "XPD"].contains(code)
-    switch self {
-    case .selected: return false
-    case .crypto: return CurrencyCatalog.crypto.contains(code)
-    case .metals: return isMetal
-    case .currencies: return !isMetal && !CurrencyCatalog.crypto.contains(code)
-    }
-  }
 }

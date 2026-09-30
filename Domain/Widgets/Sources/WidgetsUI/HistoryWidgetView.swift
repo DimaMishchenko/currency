@@ -190,7 +190,6 @@ public struct HistoryWidgetView: View {
   }
 
   private func rate(_ value: Double) -> String {
-    // Significant digits retain useful precision for tiny fiat rates without long trailing zeros.
     value.formatted(.number.precision(.significantDigits(1...6)).locale(locale))
   }
 
@@ -205,7 +204,6 @@ public struct HistoryWidgetView: View {
 
 private struct HistoryLabelContrast: ViewModifier {
   func body(content: Content) -> some View {
-    // One low-opacity shadow keeps text crisp without outlining glyphs or currency icons.
     content.shadow(color: Color(uiColor: .systemBackground).opacity(0.45), radius: 0.75)
   }
 }
@@ -229,6 +227,7 @@ private struct HistoryWidgetBackground: ViewModifier {
 }
 
 private struct HistoryWidgetGraph: View {
+  @Environment(\.isWidgetPreview) private var preview
   @Environment(\.widgetRenderingMode) private var renderingMode
   @Environment(\.colorScheme) private var colorScheme
   @Environment(\.colorSchemeContrast) private var contrast
@@ -243,7 +242,7 @@ private struct HistoryWidgetGraph: View {
 
   var body: some View {
     ZStack {
-      if renderingMode != .accented {
+      if !preview && renderingMode != .accented {
         Color(uiColor: .systemBackground)
       }
       if let points = snapshot.series?.points, let first = points.first, let last = points.last {
