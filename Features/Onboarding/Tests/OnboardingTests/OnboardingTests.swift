@@ -251,6 +251,51 @@ private func waitFor(_ predicate: () -> Bool) async throws {
     #expect(makeModel(store: store).draft == draft)
   }
 
+  @Test func rateRetryUsesInjectedClockAtOneDayBoundary() throws {
+    let location = directory()
+    defer { try? FileManager.default.removeItem(at: location) }
+    let store = OnboardingTestStore(directory: location)
+    let fetchedAt = Date(timeIntervalSince1970: 1_790_000_000)
+    var now = fetchedAt
+    try RateCache(directory: location)
+      .save(
+        RateSnapshot(quotes: onboardingQuotes(), fetchedAt: fetchedAt))
+    let model = makeModel(store: store, configuration: .init(now: { now }))
+    #expect(!model.hasUnavailableDestinations)
+    #expect(!model.shouldOfferRateRetry)
+    now = fetchedAt.addingTimeInterval(86_400)
+    #expect(!model.shouldOfferRateRetry)
+    now = fetchedAt.addingTimeInterval(86_401)
+    #expect(model.shouldOfferRateRetry)
+  }
+
+  @Test func rateRetryTracksMissingCoverageWithoutChangingSelection() async throws {
+    let location = directory()
+    defer { try? FileManager.default.removeItem(at: location) }
+    let store = OnboardingTestStore(directory: location)
+    let now = Date(timeIntervalSince1970: 1_790_000_000)
+    var draft = ConverterState()
+    draft.setDestinations(["USD", "GBP"])
+    try store.progress.save(OnboardingProgress(draft: draft, step: .selection))
+    try RateCache(directory: location)
+      .save(
+        RateSnapshot(quotes: onboardingQuotes().filter { $0.key != "GBP" }, fetchedAt: now))
+    let model = makeModel(
+      store: store,
+      service: RateService(
+        fiat: OnboardingProvider(quotes: onboardingQuotes()), daily: OnboardingProvider(),
+        crypto: nil),
+      configuration: .init(now: { now }))
+    #expect(model.hasUnavailableDestinations)
+    #expect(model.shouldOfferRateRetry)
+    model.retry()
+    try await waitFor { !model.isRefreshing }
+    #expect(!model.hasUnavailableDestinations)
+    #expect(!model.shouldOfferRateRetry)
+    #expect(model.draft.destinations == ["USD", "GBP"])
+    model.stop()
+  }
+
   @Test func fastPartialFiatBecomesReadyAndIsPersistedBeforeCrypto() async throws {
     let location = directory()
     defer { try? FileManager.default.removeItem(at: location) }
@@ -806,47 +851,15 @@ private func waitFor(_ predicate: () -> Bool) async throws {
     }
     let input = store.input()
     let rates = store.loadRates()
-    try model.restart()
-    #expect(model.step == .welcome)
-    #expect(!model.isCompleted)
-    #expect(model.draft.source == "GBP")
-    #expect(model.draft.destinations == ["JPY", "EUR"])
-    #expect(model.draft.amount == "100")
+    try store.progress.restart(input: input)
     #expect(store.input() == input)
     #expect(store.loadRates().quotes == rates.quotes)
     let resumed = makeModel(store: store)
     #expect(!resumed.isCompleted)
     #expect(resumed.step == .welcome)
-    #expect(resumed.draft == model.draft)
-  }
-
-  @Test func failedReplayKeepsCompletionUntilTheProgressWriteSucceeds() throws {
-    let location = directory()
-    defer { try? FileManager.default.removeItem(at: location) }
-    let store = OnboardingTestStore(directory: location)
-    _ = try readyModel(at: location)
-    let failure = OnboardingSaveFailure(nil)
-    let model = makeModel(
-      store: store,
-      configuration: .init(beforeSave: {
-        if $0 == failure.operation { throw CocoaError(.fileWriteOutOfSpace) }
-      }))
-    model.continueFromWelcome()
-    model.continueFromBaseCurrency()
-    model.continueFromSelection()
-    model.continueFromHomeScreen()
-    model.continueFromWidgets()
-    #expect(model.complete())
-    let input = store.input()
-    failure.operation = .draft
-    #expect(throws: (any Error).self) { try model.restart() }
-    #expect(model.isCompleted)
-    #expect(makeModel(store: store).isCompleted)
-    #expect(store.input() == input)
-    failure.operation = nil
-    try model.restart()
-    #expect(!model.isCompleted)
-    #expect(model.step == .welcome)
+    #expect(resumed.draft.source == "GBP")
+    #expect(resumed.draft.destinations == ["JPY", "EUR"])
+    #expect(resumed.draft.amount == "100")
   }
 
   @Test func baseStepResumesWithoutConfirmingAppInputAndCanAdvanceWithNoDestinations() throws {

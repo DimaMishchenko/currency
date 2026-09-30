@@ -137,14 +137,12 @@ struct HomeScreen: View {
           localCurrencySelected: model.input.usesLocalCurrency,
           setUpLocalCurrency: {
             opensLocalCurrencyAfterPicker = true
-          }
+          },
+          selectionFailureMessage: .Converter.selectionSaveFailed
         ) { code in
           withAnimation(motion) {
-            if purpose == .source {
-              model.withFeedback { model.changeSource(code) }
-            } else {
-              model.withFeedback { model.addDestination(code) }
-            }
+            guard purpose == .source else { return model.addDestination(code) }
+            return model.changeSource(code)
           }
         }
         chooser.navigationTransition(.zoom(sourceID: purpose.id, in: pickerMotion))
@@ -519,11 +517,12 @@ struct HomeScreen: View {
 
   private func destinationRow(_ row: ConverterState.Destination) -> some View {
     let code = row.code
-    let value = model.snapshot.convert(model.input.decimal, from: model.input.source, to: code)
+    let projection = model.row(code, selectionID: row.id)
+    let value = projection.amount
     return Button {
       if editingAmount {
         dismissAmount()
-      } else if value == nil {
+      } else if !projection.isEditable {
         showDetails(code: code, selectionID: row.id)
       } else {
         beginEditing(code, selectionID: row.id)

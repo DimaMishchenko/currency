@@ -120,7 +120,7 @@ final class AppComposition {
     HomeDependencies(
       readInput: conversion.input, readRates: rates.loadRates,
       readRateIssue: { [self] in rateIssue },
-      readLocalCurrency: { [local] in (local.widgetLocation(), local.widgetLocationStatus()) },
+      readLocalCurrency: local.snapshot,
       editInput: { [self] in try edit($0) },
       refreshRates: { [self] in try await refresh(force: $0) },
       changes: { [self] in changes() },

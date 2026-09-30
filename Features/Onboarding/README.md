@@ -2,7 +2,7 @@
 
 Initial setup, currency selection, and resumable onboarding progress.
 
-`Onboarding` owns flow state and behavior; `OnboardingUI` owns presentation and resources. Draft choices stay separate from confirmed converter input. Completion is saved before the flow finishes; the host supplies widget demonstrations.
+`Onboarding` owns flow state and behavior; `OnboardingUI` owns presentation and resources. Draft choices stay separate from confirmed converter input. Completion is saved before the flow finishes; the host supplies widget demonstrations. The model reads confirmed input to preserve existing choices and applies USD/EUR only to untouched first-launch defaults. It owns rate coverage and the one-day retry threshold using the supplied clock. Replay commits current choices through `OnboardingProgressStore.restart(input:)`, then the application starts a new flow identity.
 
 ## Harness
 

@@ -12,10 +12,12 @@ public struct ExchangeRate: Codable, Sendable, Equatable {
   public let observedAt: Date?
   /// Retrieval time when the provider supplies no market observation timestamp.
   public let retrievedAt: Date?
+  /// Successful retrieval time of this cached daily quote, when known.
+  public let cachedAt: Date?
   /// Creates a normalized quote.
   public init(
     _ value: Decimal, published: String, source: RateSource, observedAt: Date? = nil,
-    retrievedAt: Date? = nil
+    retrievedAt: Date? = nil, cachedAt: Date? = nil
   ) {
     self.value = value
     self.published = published
@@ -23,6 +25,13 @@ public struct ExchangeRate: Codable, Sendable, Equatable {
 
     self.observedAt = observedAt
     self.retrievedAt = retrievedAt
+    self.cachedAt = cachedAt
+  }
+
+  /// Whether the quote represents a current intraday observation.
+  public var isLive: Bool {
+    observedAt != nil || retrievedAt != nil || source.observation == .trade
+      || source.observation == .exchangeRate
   }
 
   var overlayTimestamp: Date? { observedAt ?? retrievedAt }
@@ -38,12 +47,22 @@ public struct RateSnapshot: Codable, Sendable {
   public let dailyQuotes: [String: ExchangeRate]?
   /// The time at which daily quotes were fetched.
   public let dailyFetchedAt: Date?
+  /// Last successful primary fiat retrieval, independently of supplemental availability.
+  public let fiatFetchedAt: Date?
+  /// Last successful supplemental retrieval, independently of primary fiat availability.
+  public let supplementalFetchedAt: Date?
+  /// Preserved primary quotes before supplemental selection.
+  public let fiatQuotes: [String: ExchangeRate]?
+  /// Preserved supplemental quotes, including offline cryptocurrency fallbacks.
+  public let supplementalQuotes: [String: ExchangeRate]?
   /// The most recent refresh-attempt time.
   public let checkedAt: Date?
   /// Creates a rate snapshot.
   public init(
     quotes: [String: ExchangeRate] = [:], fetchedAt: Date = .distantPast,
-    dailyQuotes: [String: ExchangeRate]? = nil, dailyFetchedAt: Date? = nil, checkedAt: Date? = nil
+    dailyQuotes: [String: ExchangeRate]? = nil, dailyFetchedAt: Date? = nil, checkedAt: Date? = nil,
+    fiatFetchedAt: Date? = nil, supplementalFetchedAt: Date? = nil,
+    fiatQuotes: [String: ExchangeRate]? = nil, supplementalQuotes: [String: ExchangeRate]? = nil
   ) {
     self.quotes = quotes
     self.fetchedAt = fetchedAt
@@ -51,6 +70,10 @@ public struct RateSnapshot: Codable, Sendable {
 
     self.dailyFetchedAt = dailyFetchedAt
     self.checkedAt = checkedAt
+    self.fiatFetchedAt = fiatFetchedAt
+    self.supplementalFetchedAt = supplementalFetchedAt
+    self.fiatQuotes = fiatQuotes
+    self.supplementalQuotes = supplementalQuotes
   }
 
   /// Converts an amount using the ratio of two EUR-normalized quotes.
@@ -70,18 +93,22 @@ extension RateSnapshot {
   ///
   /// The latest refresh attempt controls which live overlays remain available. An older
   /// result cannot resurrect a live quote removed by a newer failed refresh. Equal-date
-  /// daily quotes prefer the latest attempt; the receiver wins equal attempt timestamps.
+  /// daily quotes prefer newer successful retrievals, then the latest attempt. The receiver
+  /// wins when both retrieval and attempt timestamps are equal.
   public func merging(_ other: RateSnapshot) -> RateSnapshot {
     let latest = (checkedAt ?? fetchedAt) >= (other.checkedAt ?? other.fetchedAt) ? self : other
     let older = (checkedAt ?? fetchedAt) >= (other.checkedAt ?? other.fetchedAt) ? other : self
-    var daily = older.dailyQuotes ?? older.quotes.filter { $0.value.overlayTimestamp == nil }
-    for (code, quote) in latest.dailyQuotes
-      ?? latest.quotes.filter({ $0.value.overlayTimestamp == nil })
-    where quote.published >= (daily[code]?.published ?? "") {
-      daily[code] = quote
-    }
+    let primary = Self.mergeDaily(older.primaryDailyQuotes, latest.primaryDailyQuotes)
+    let supplement = Self.mergeDaily(older.supplementalDailyQuotes, latest.supplementalDailyQuotes)
+    let primaryTime = [fiatFetchedAt, other.fiatFetchedAt].compactMap { $0 }.max()
+    let supplementalTime = [supplementalFetchedAt, other.supplementalFetchedAt].compactMap { $0 }
+      .max()
+    let evaluation = latest.checkedAt ?? latest.fetchedAt
+    let daily = Self.selectDaily(
+      primary: primary, supplemental: supplement,
+      primaryFetchedAt: primaryTime ?? latest.dailyFetchedAt, now: evaluation)
     var effective = daily
-    for (code, quote) in latest.quotes where quote.overlayTimestamp != nil {
+    for (code, quote) in latest.quotes where quote.isLive {
       var live = quote
       if let previous = older.quotes[code], let time = previous.overlayTimestamp,
         time > (live.overlayTimestamp ?? .distantPast)
@@ -93,6 +120,80 @@ extension RateSnapshot {
     return RateSnapshot(
       quotes: effective, fetchedAt: max(fetchedAt, other.fetchedAt), dailyQuotes: daily,
       dailyFetchedAt: [dailyFetchedAt, other.dailyFetchedAt].compactMap { $0 }.max(),
-      checkedAt: [checkedAt, other.checkedAt].compactMap { $0 }.max())
+      checkedAt: [checkedAt, other.checkedAt].compactMap { $0 }.max(),
+      fiatFetchedAt: primaryTime, supplementalFetchedAt: supplementalTime,
+      fiatQuotes: primary, supplementalQuotes: supplement)
   }
+
+  func recordingRetrieval(
+    _ incoming: [String: ExchangeRate], at now: Date
+  ) -> [String: ExchangeRate] {
+    incoming.mapValues { quote in
+      ExchangeRate(
+        quote.value, published: quote.published, source: quote.source,
+        observedAt: quote.observedAt, retrievedAt: quote.retrievedAt, cachedAt: now)
+    }
+  }
+
+  var primaryDailyQuotes: [String: ExchangeRate] {
+    fiatQuotes
+      ?? (dailyQuotes ?? quotes)
+      .filter {
+        !$0.value.isLive && $0.value.source.provider != .fawaz
+          && !CurrencyCatalog.crypto.contains($0.key)
+      }
+  }
+
+  var supplementalDailyQuotes: [String: ExchangeRate] {
+    supplementalQuotes
+      ?? (dailyQuotes ?? quotes)
+      .filter {
+        !$0.value.isLive
+          && ($0.value.source.provider == .fawaz || CurrencyCatalog.crypto.contains($0.key))
+      }
+  }
+
+  static func isFresh(_ timestamp: Date?, now: Date) -> Bool {
+    guard let timestamp else { return false }
+    return timestamp <= now && now.timeIntervalSince(timestamp) < 21600
+  }
+
+  static func mergeDaily(
+    _ saved: [String: ExchangeRate], _ incoming: [String: ExchangeRate], savedAt: Date? = nil
+  ) -> [String: ExchangeRate] {
+    var merged = saved.mapValues { quote in
+      guard quote.cachedAt == nil, let savedAt else { return quote }
+      return ExchangeRate(
+        quote.value, published: quote.published, source: quote.source,
+        observedAt: quote.observedAt, retrievedAt: quote.retrievedAt, cachedAt: savedAt)
+    }
+    for (code, quote) in incoming {
+      if let previous = merged[code],
+        previous.published > quote.published
+          || (previous.published == quote.published
+            && (previous.cachedAt ?? savedAt ?? .distantPast) > (quote.cachedAt ?? .distantPast))
+      {
+        continue
+      } else {
+        merged[code] = quote
+      }
+    }
+    return merged
+  }
+
+  static func selectDaily(
+    primary: [String: ExchangeRate], supplemental: [String: ExchangeRate], primaryFetchedAt: Date?,
+    now: Date
+  ) -> [String: ExchangeRate] {
+    var selected = primary
+    for (code, quote) in supplemental
+    where selected[code] == nil || CurrencyCatalog.crypto.contains(code)
+      || (!isFresh(primary[code]?.cachedAt ?? primaryFetchedAt, now: now)
+        && quote.published >= (selected[code]?.published ?? ""))
+    {
+      selected[code] = quote
+    }
+    return selected
+  }
+
 }

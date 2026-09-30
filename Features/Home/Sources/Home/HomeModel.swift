@@ -47,6 +47,14 @@ public final class HomeModel {
   /// Ungrouped decimal text currently shown for editing.
   public var editingText: String { editor?.amount ?? input.amount }
 
+  /// Projects the current amount and editing policy for a fixed or dynamic selection.
+  public func row(_ code: String, selectionID: String? = nil) -> HomeCurrencyRow {
+    let amount = snapshot.convert(input.decimal, from: input.source, to: code)
+    return HomeCurrencyRow(
+      amount: amount,
+      isEditable: amount != nil && canEdit(code, selectionID: selectionID ?? code, in: input))
+  }
+
   /// Reconciles externally edited input, preserving a valid unchanged editor when requested.
   public func reloadInput(preservingEditor: Bool = false) {
     let next = dependencies.readInput()
@@ -80,9 +88,7 @@ public final class HomeModel {
   /// Starts editing a convertible selected row without changing its position.
   public func beginEditing(_ code: String, selectionID: String? = nil) {
     let id = selectionID ?? code
-    guard canEdit(code, selectionID: id, in: input),
-      snapshot.convert(input.decimal, from: input.source, to: code) != nil
-    else { return }
+    guard row(code, selectionID: id).isEditable else { return }
     if editor != nil { recordCompletedEdit() }
     var next = AmountEditor(codes: [input.source] + input.destinations)
     next.preset(input.decimal)

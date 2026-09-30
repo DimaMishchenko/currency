@@ -27,6 +27,7 @@ struct OnboardingCurrencySearch: View {
       showsSelectedCategory: false
     ) { code in
       if choosingBase { model.changeBase(code) } else { model.toggle(code) }
+      return true
     }
   }
 }

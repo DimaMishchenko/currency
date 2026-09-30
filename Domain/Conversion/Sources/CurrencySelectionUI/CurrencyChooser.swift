@@ -30,11 +30,15 @@ public struct CurrencyChooser: View {
   let localCurrencyCode: String?
   let localCurrencySelected: Bool
   let setUpLocalCurrency: (() -> Void)?
-  var choose: (String) -> Void
+  let selectionFailureMessage: LocalizedStringResource?
+  var choose: (String) -> Bool
   @State private var search = ""
+  @State private var selectionFailed = false
   @State private var category: CurrencyCategory
   @Environment(\.dismiss) private var dismiss
   /// Creates a picker with caller-owned selection and optional supported-code filtering.
+  /// `choose` returns true only after accepting the selection. Rejection preserves presentation
+  /// and displays `selectionFailureMessage`, or the picker's default save-failure message.
   public init(
     purpose: PickerPurpose, selected: [String], homeCurrencies: [String],
     available: Set<String>, allowedCodes: Set<String>? = nil,
@@ -43,7 +47,8 @@ public struct CurrencyChooser: View {
     showsLocalCurrency: Bool = false, localCurrencyCode: String? = nil,
     localCurrencySelected: Bool = false,
     setUpLocalCurrency: (() -> Void)? = nil,
-    choose: @escaping (String) -> Void
+    selectionFailureMessage: LocalizedStringResource? = nil,
+    choose: @escaping (String) -> Bool
   ) {
     self.purpose = purpose
     self.selected = selected
@@ -59,6 +64,7 @@ public struct CurrencyChooser: View {
     self.localCurrencyCode = localCurrencyCode
     self.localCurrencySelected = localCurrencySelected
     self.setUpLocalCurrency = setUpLocalCurrency
+    self.selectionFailureMessage = selectionFailureMessage
     _category = State(
       initialValue: showsSelectedCategory && purpose == .source && !homeCurrencies.isEmpty
         ? .selected : .currencies)
@@ -96,6 +102,20 @@ public struct CurrencyChooser: View {
             ? .CurrencySelection.baseCurrency : .CurrencySelection.addCurrency)
       )
       .navigationBarTitleDisplayMode(.inline)
+      .safeAreaInset(edge: .bottom) {
+        if selectionFailed {
+          Label {
+            Text(selectionFailureMessage ?? .CurrencySelection.selectionSaveFailed)
+          } icon: {
+            Image(systemName: "exclamationmark.circle")
+          }
+          .font(AppStyle.font(.caption))
+          .padding()
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .background(.regularMaterial)
+          .accessibilityIdentifier("currency.picker.saveFailure")
+        }
+      }
       .toolbar {
         ToolbarItem(placement: .topBarTrailing) {
           Button(.CurrencySelection.close, systemImage: "xmark") {
@@ -148,9 +168,7 @@ public struct CurrencyChooser: View {
   @ViewBuilder
   private func currencyRow(_ code: String) -> some View {
     Button {
-      AppHaptics.play(.selection)
-      choose(code)
-      if !allowsMultipleSelection { dismiss() }
+      select(code)
     } label: {
       HStack(spacing: AppStyle.Space.large) {
         CurrencyIcon(code)
@@ -184,13 +202,13 @@ public struct CurrencyChooser: View {
 
   private var localCurrencyRow: some View {
     Button {
-      AppHaptics.play(.selection)
       if localCurrencyCode != nil {
-        choose(CurrencySelection.localID)
+        select(CurrencySelection.localID)
       } else {
+        AppHaptics.play(.selection)
         setUpLocalCurrency?()
+        dismiss()
       }
-      dismiss()
     } label: {
       HStack(spacing: AppStyle.Space.large) {
         ZStack(alignment: .bottomTrailing) {
@@ -262,6 +280,13 @@ public struct CurrencyChooser: View {
     ]
     .joined(separator: " ")
     return content.localizedCaseInsensitiveContains(search)
+  }
+
+  private func select(_ code: String) {
+    let accepted = choose(code)
+    selectionFailed = !accepted
+    AppHaptics.play(accepted ? .selection : .error)
+    if accepted && !allowsMultipleSelection { dismiss() }
   }
 
   private var categories: [CurrencyCategory] {

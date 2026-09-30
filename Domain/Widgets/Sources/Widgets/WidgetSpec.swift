@@ -16,6 +16,8 @@ public struct WidgetSpec: Sendable {
   public var localCode: String?
   /// Whether the cached local observation needs an explicit update.
   public var localIsStale = false
+  /// The expiry of the same observation used to resolve this configuration.
+  public var localExpiresAt: Date?
   /// Full configured list; never truncated for a widget size.
   public var canonicalCodes: [String]
   /// Whether the configuration includes a Local slot.
@@ -57,6 +59,7 @@ public struct WidgetSpec: Sendable {
     self.codes = resolved.codes
     localCode = resolved.localCode
     localIsStale = resolved.localIsStale
+    localExpiresAt = resolved.localCode == nil ? nil : location?.updatedAt.addingTimeInterval(86400)
     self.instanceID = instanceID
     self.amount = amount
 

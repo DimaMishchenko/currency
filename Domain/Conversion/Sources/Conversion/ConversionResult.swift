@@ -66,20 +66,28 @@ public struct ConversionEvaluation: Sendable {
           && [(request.source, sourceQuote), (destination.code ?? "", targetQuote)]
             .contains { code, quote in
               CurrencyCatalog.crypto.contains(code) && quote != nil
-                && quote?.source.provider != .coinbase
+                && quote?.isLive == false
             }
         let failed: Bool
         switch warning {
         case .dailyRatesUnavailable:
           failed =
-            usesQuotes && (refreshFailed || legs.contains { $0.source.provider != .coinbase })
+            usesQuotes && (refreshFailed || legs.contains { !$0.isLive })
         case .partialCryptoFallback: failed = usesQuotes && (refreshFailed || dailyFallback)
         case nil: failed = usesQuotes && refreshFailed
         }
         let stale = legs.contains { quote in
           let overlay = quote.observedAt ?? quote.retrievedAt
-          let timestamp = overlay ?? snapshot.dailyFetchedAt ?? snapshot.fetchedAt
-          let window: TimeInterval = overlay == nil && snapshot.dailyFetchedAt != nil ? 21600 : 1800
+          let dailyTimestamp =
+            quote.source.provider == .fawaz
+            ? snapshot.supplementalFetchedAt : snapshot.fiatFetchedAt
+          let timestamp =
+            overlay ?? quote.cachedAt ?? dailyTimestamp ?? snapshot.dailyFetchedAt
+            ?? snapshot.fetchedAt
+          let window: TimeInterval =
+            overlay == nil
+              && (quote.cachedAt != nil || dailyTimestamp != nil || snapshot.dailyFetchedAt != nil)
+            ? 21600 : 1800
           return !timestamp.timeIntervalSince1970.isFinite || timestamp > now
             || now.timeIntervalSince(timestamp) >= window
         }

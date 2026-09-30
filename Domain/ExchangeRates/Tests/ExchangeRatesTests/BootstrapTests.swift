@@ -146,7 +146,12 @@ private func bootstrapQuotes(_ usd: Decimal = 2) -> [String: ExchangeRate] {
     await crypto.finish()
     let final = await updates.next()
     #expect(final?.isFinal == true)
-    #expect(final?.snapshot.quotes["BTC"] == daily["BTC"])
+    let cachedFallback = daily["BTC"]
+      .map {
+        ExchangeRate(
+          $0.value, published: $0.published, source: $0.source, cachedAt: saved.fetchedAt)
+      }
+    #expect(final?.snapshot.quotes["BTC"] == cachedFallback)
     #expect(final?.snapshot.quotes["BTC"]?.observedAt == nil)
   }
 

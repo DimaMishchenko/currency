@@ -15,6 +15,64 @@ private struct SlowFeedbackProvider: RateProvider {
 
 @MainActor
 struct HomeEditingTests {
+  @Test func rowEligibilityTracksResolvedIdentityAndMissingRates() throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = HomeTestStore(directory: directory)
+    try store.updateInput {
+      $0.setAmount("3")
+      $0.setDestinations(["USD", "GBP"])
+      $0.setUsesLocalCurrency(true)
+    }
+    try store.saveWidgetLocation(WidgetLocation(country: "US", currency: "USD"))
+    let model = makeHomeModel(
+      store: store, service: RateService(),
+      readRates: {
+        RateSnapshot(quotes: [
+          "EUR": ExchangeRate(1, published: "2026-09-19", source: .init(provider: .ecb)),
+          "USD": ExchangeRate(2, published: "2026-09-19", source: .init(provider: .ecb))
+        ])
+      })
+    #expect(model.row("USD").amount == 6)
+    #expect(model.row("USD").isEditable)
+    #expect(model.row("USD", selectionID: CurrencySelection.localID).isEditable)
+    #expect(!model.row("GBP").isEditable)
+    #expect(model.row("GBP").amount == nil)
+    model.beginEditing("GBP")
+    #expect(model.editor == nil)
+    #expect(model.removeDestinations(["USD"]))
+    #expect(!model.row("USD").isEditable)
+    #expect(model.row("USD", selectionID: CurrencySelection.localID).isEditable)
+    model.beginEditing("USD")
+    #expect(model.editor == nil)
+    model.beginEditing("USD", selectionID: CurrencySelection.localID)
+    #expect(model.editor != nil)
+    #expect(model.editingSelectionID == CurrencySelection.localID)
+  }
+
+  @Test func selectionSaveFailureKeepsConfirmedInputUntilSuccessfulRetry() throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    try Data().write(to: directory)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = HomeTestStore(directory: directory)
+    let model = makeHomeModel(store: store, service: RateService())
+    let confirmed = model.input
+    #expect(!model.changeSource("USD"))
+    #expect(model.input == confirmed)
+    #expect(model.warning == .selectionSaveFailed)
+    #expect(!model.addDestination("AUD"))
+    #expect(model.input == confirmed)
+    try FileManager.default.removeItem(at: directory)
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    #expect(model.changeSource("USD"))
+    #expect(model.input.source == "USD")
+    #expect(store.input() == model.input)
+    #expect(model.warning == nil)
+    #expect(model.addDestination("AUD"))
+    #expect(model.input.manualDestinations.contains("AUD"))
+    #expect(store.input() == model.input)
+  }
+
   @Test func locationReloadPreservesValidEditorAndClosesOnlyRemovedLocalCurrency() throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }

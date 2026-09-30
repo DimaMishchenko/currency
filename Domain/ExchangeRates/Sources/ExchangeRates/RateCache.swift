@@ -11,7 +11,9 @@ public struct RateCache: Sendable {
     guard let data = try? Data(contentsOf: directory.appendingPathComponent("rates.json")),
       let snapshot = try? JSONDecoder().decode(RateSnapshot.self, from: data),
       snapshot.quotes.values.allSatisfy({ $0.value > 0 && !$0.value.isNaN }),
-      (snapshot.dailyQuotes ?? [:]).values.allSatisfy({ $0.value > 0 && !$0.value.isNaN })
+      (snapshot.dailyQuotes ?? [:]).values.allSatisfy({ $0.value > 0 && !$0.value.isNaN }),
+      (snapshot.fiatQuotes ?? [:]).values.allSatisfy({ $0.value > 0 && !$0.value.isNaN }),
+      (snapshot.supplementalQuotes ?? [:]).values.allSatisfy({ $0.value > 0 && !$0.value.isNaN })
     else { return RateSnapshot() }
     return snapshot
   }
