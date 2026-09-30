@@ -3,7 +3,7 @@ import ExchangeRates
 import Foundation
 import Widgets
 
-/// A pure projection of saved app choices. Missing rates never become made-up preview values.
+/// A pure projection of saved app choices with explicitly labeled demonstration fallbacks.
 public struct OnboardingWidgetConfiguration {
   /// The latest supplied rate or location observation.
   public let snapshot: RateSnapshot
@@ -11,7 +11,7 @@ public struct OnboardingWidgetConfiguration {
   public let input: ConverterState
   /// Ordered canonical currency codes used by this presentation.
   public let codes: [String]
-  /// Whether missing compatible rates require an explicitly labeled demonstration.
+  /// Whether this presentation uses an explicitly labeled demonstration.
   public let isSample: Bool
 
   /// Projects confirmed app choices into compatible preview currencies.
@@ -21,8 +21,9 @@ public struct OnboardingWidgetConfiguration {
       return value > 0 && !value.isNaN
     }
     let compatible = kind == .cash ? destinations.filter(WidgetPresets.allows) : destinations
-    // Cash models banknotes and metal weights, so cryptocurrency pairs need an honest demo.
-    isSample = kind == .cash && (!WidgetPresets.allows(input.source) || compatible.isEmpty)
+    isSample =
+      kind == .history
+      || (kind == .cash && (!WidgetPresets.allows(input.source) || compatible.isEmpty))
     self.snapshot = isSample ? WidgetPreviewState.rates : snapshot
     var previewInput = input
     if isSample {

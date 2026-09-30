@@ -80,6 +80,22 @@ struct OnboardingWidgetTests {
     }
   }
 
+  @Test func historyUsesLabeledSamplePairWithoutMutatingAppInput() {
+    var input = ConverterState()
+    input.changeSource("GBP")
+    input.setDestinations(["USD", "BTC"])
+    input.setAmount("42")
+    let savedInput = input
+    let configuration = OnboardingWidgetConfiguration(kind: .history, snapshot: rates, input: input)
+    #expect(configuration.isSample)
+    #expect(configuration.codes == ["EUR", "CZK"])
+    #expect(configuration.input.source == "EUR")
+    #expect(configuration.input.destinations == ["CZK"])
+    #expect(configuration.input.amount == "100")
+    #expect(configuration.snapshot.convert(100, from: "EUR", to: "CZK") == 2500)
+    #expect(input == savedInput)
+  }
+
   @Test func cashUsesRealCompatiblePairOrExplicitSamplesForCrypto() {
     var input = ConverterState()
     input.setDestinations(["BTC", "USD"])
