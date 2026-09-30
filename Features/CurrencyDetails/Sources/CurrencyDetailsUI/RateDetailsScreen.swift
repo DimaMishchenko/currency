@@ -90,16 +90,20 @@ struct RateDetailsScreen: View {
       }
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
-        ToolbarItem(placement: .principal) {
-          HStack(spacing: AppStyle.Space.small) {
-            CurrencyIcon(code, size: 20).accessibilityHidden(true)
+        ToolbarItem(placement: .topBarLeading) {
+          HStack(spacing: AppStyle.Space.medium) {
+            CurrencyIcon(code, size: 36).accessibilityHidden(true)
             Text(dynamicTypeSize.isAccessibilitySize ? code : currencyName)
-              .font(AppStyle.font(.headline)).lineLimit(1)
+              .font(AppStyle.font(.title2, weight: .semibold)).lineLimit(1)
+              .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+              .frame(maxWidth: 200, alignment: .leading)
           }
+          .fixedSize(horizontal: true, vertical: false)
           .accessibilityElement(children: .ignore)
           .accessibilityLabel(currencyName)
           .accessibilityAddTraits(.isHeader)
         }
+        .sharedBackgroundVisibility(.hidden)
         ToolbarItem(placement: .topBarTrailing) {
           Button(.Details.close, systemImage: "xmark") {
             AppHaptics.play(.action); dismiss()
@@ -211,7 +215,8 @@ struct RateDetailsScreen: View {
             )
             .font(AppStyle.font(.caption2)).lineLimit(1).minimumScaleFactor(0.7)
             .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-            .frame(width: axisWidth, alignment: .leading)
+            .frame(
+              width: dynamicTypeSize.isAccessibilitySize ? axisWidth : nil, alignment: .leading)
           }
         }
       }
@@ -251,7 +256,6 @@ struct RateDetailsScreen: View {
       }
       .allowsHitTesting(false)
     }
-    .padding(.leading, axisWidth + axisLabelSpacing)
     .accessibilityLabel(
       .Details.chartAccessibility(String(localized: range.accessibilityTitle), code, quote))
   }
@@ -389,7 +393,6 @@ private struct HistorySkeleton: View {
         }
       }
     }
-    .padding(.leading, axisWidth + axisLabelSpacing)
     .phaseAnimator(reduceMotion || !isVisible ? [0.7] : [0.55, 1.0]) { content, opacity in
       content.opacity(opacity)
     } animation: { _ in
