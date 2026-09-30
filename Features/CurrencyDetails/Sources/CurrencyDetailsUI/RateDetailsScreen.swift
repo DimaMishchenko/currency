@@ -10,6 +10,8 @@ struct RateDetailsScreen: View {
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(\.locale) private var locale
   @ScaledMetric(relativeTo: .largeTitle) private var amountSize = 48
+  @ScaledMetric(relativeTo: .title2) private var titleBaselineOffset =
+    (UIFont.systemFont(ofSize: 22).ascender + UIFont.systemFont(ofSize: 22).descender) / 2
   @ScaledMetric(relativeTo: .caption2) private var scaledAxisWidth = 44
   private var axisWidth: CGFloat { min(scaledAxisWidth, 64) }
   private let axisLabelSpacing: CGFloat = 4
@@ -90,18 +92,21 @@ struct RateDetailsScreen: View {
       }
       .toolbar(.hidden, for: .navigationBar)
       .safeAreaInset(edge: .top, spacing: 0) {
-        HStack(alignment: .top, spacing: AppStyle.Space.medium) {
+        HStack(alignment: .firstTextBaseline, spacing: AppStyle.Space.medium) {
           HStack(alignment: .firstTextBaseline, spacing: AppStyle.Space.medium) {
             CurrencyIcon(code, size: 36).accessibilityHidden(true)
+              .alignmentGuide(.firstTextBaseline) { $0.height / 2 }
             Text(currencyName)
               .font(AppStyle.font(.title2, weight: .semibold))
               .fixedSize(horizontal: false, vertical: true)
               .frame(maxWidth: .infinity, alignment: .leading)
+              .alignmentGuide(.firstTextBaseline) {
+                $0[.firstTextBaseline] - titleBaselineOffset
+              }
           }
           .accessibilityElement(children: .ignore)
           .accessibilityLabel(currencyName)
           .accessibilityAddTraits(.isHeader)
-          .padding(.vertical, AppStyle.Space.small)
           Button(.Details.close, systemImage: "xmark") {
             AppHaptics.play(.action); dismiss()
           }
@@ -112,6 +117,7 @@ struct RateDetailsScreen: View {
           .buttonStyle(.glass)
           .buttonBorderShape(.circle)
           .tint(nil)
+          .alignmentGuide(.firstTextBaseline) { $0.height / 2 }
         }
         .padding(.horizontal, AppStyle.Space.large)
         .padding(.vertical, AppStyle.Space.small)
