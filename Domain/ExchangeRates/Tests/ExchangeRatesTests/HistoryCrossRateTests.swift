@@ -89,8 +89,10 @@ private actor CrossRateHTTP: HTTPClient {
     #expect(result.series?.source.provider == .custom("Coinbase + Frankfurter"))
     #expect(result.series?.source.observation == .unspecified)
     let urls = await client.urls
-    #expect(urls.count == 2)
+    #expect(urls.count == 3)
     #expect(urls.contains { $0.path == "/products/BTC-USD/candles" })
+    #expect(urls.contains { $0.path == "/products/BTC-EUR/candles" })
+    #expect(result.series?.source.latestObservation == nil)
     let fiatURL = try #require(urls.first { $0.host == "api.frankfurter.dev" })
     let query = try #require(
       URLComponents(url: fiatURL, resolvingAgainstBaseURL: false)?.queryItems)
@@ -99,7 +101,7 @@ private actor CrossRateHTTP: HTTPClient {
     #expect(!query.contains(where: { $0.name == "group" }))
     let cached = await service.load(base: "BTC", quote: "EUR", range: .month, now: now)
     #expect(cached.series?.points == result.series?.points)
-    #expect(await client.urls.count == 2)
+    #expect(await client.urls.count == 3)
   }
 
   @Test func cryptoCryptoDividesOnlyMatchingDailyCloses() async throws {
@@ -112,9 +114,16 @@ private actor CrossRateHTTP: HTTPClient {
     #expect(result.series?.points.map(\.value) == [10, 4])
     #expect(result.series?.source.provider == .coinbase)
     let urls = await client.urls
-    #expect(urls.count == 2)
+    #expect(urls.count == 4)
     #expect(urls.contains { $0.path == "/products/BTC-USD/candles" })
     #expect(urls.contains { $0.path == "/products/ETH-USD/candles" })
+    #expect(result.series?.source.latestObservation == nil)
+    #expect(
+      urls.filter {
+        URLComponents(url: $0, resolvingAgainstBaseURL: false)?.queryItems?
+          .contains(URLQueryItem(name: "granularity", value: "3600")) == true
+      }
+      .count == 2)
   }
 
   @Test func cryptoCryptoDividesMatchingHourlyClosesForOneDay() async throws {

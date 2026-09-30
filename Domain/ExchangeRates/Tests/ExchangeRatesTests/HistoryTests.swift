@@ -14,6 +14,12 @@ private actor LongHistoryHTTP: HTTPClient {
       let date = ISO8601DateFormatter().date(from: raw)
     else { throw RateError.invalidData }
     let start = date.timeIntervalSince1970
+    if query.contains(URLQueryItem(name: "granularity", value: "3600")) {
+      return try JSONEncoder()
+        .encode([
+          [start + 22 * 3600, 1, 10, 2, 5, 1], [start + 23 * 3600, 1, 10, 2, 6, 1]
+        ])
+    }
     return try JSONEncoder()
       .encode([[start + 86400, 1, 5, 2, 3, 1], [start + 172800, 1, 5, 2, 4, 1]])
   }
@@ -86,10 +92,24 @@ private actor HistoryHTTP: HTTPClient {
     let service = HistoryService(directory: directory, client: client)
     let now = try #require(ISO8601DateFormatter().date(from: "2026-01-02T00:00:00Z"))
     let result = await service.load(base: "BTC", quote: "USD", range: .year, now: now)
-    #expect(result.series?.points.count == 4)
-    #expect(await client.urls.count == 2)
+    #expect(result.series?.points.count == 5)
+    #expect(result.series?.source.latestObservation == .hourlyClose)
+    #expect(await client.urls.count == 3)
+    let daily = try JSONDecoder()
+      .decode(
+        HistorySeries.self,
+        from: Data(contentsOf: directory.appendingPathComponent("history-BTC-USD-365.json")))
+    #expect(daily.points.count == 4)
+    #expect(daily.source.latestObservation == nil)
     _ = await service.load(base: "BTC", quote: "USD", range: .year, now: now)
-    #expect(await client.urls.count == 2)
+    #expect(await client.urls.count == 3)
+    let urls = await client.urls
+    #expect(
+      urls.filter {
+        URLComponents(url: $0, resolvingAgainstBaseURL: false)?.queryItems?
+          .contains(URLQueryItem(name: "granularity", value: "86400")) == true
+      }
+      .count == 2)
   }
 
   @Test func maxFiatRequestsMonthlyHistoryAndCachesForOneDay() async throws {

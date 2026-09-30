@@ -90,13 +90,16 @@ public struct HistoryWidgetSnapshot: Sendable {
     return value.rounded() / 10_000
   }
 
-  /// Refreshes are anchored to a successful fetch, including a reused cache.
+  /// Supported crypto refreshes follow UTC hours; other pairs follow daily cache expiry.
   public func nextRefresh(after now: Date) -> Date {
-    let interval: TimeInterval = range == .day ? 3600 : 86_400
+    let hourly = pair.supportsIntradayHistory
+    let interval: TimeInterval = hourly ? 3600 : 86_400
     if let fetchedAt = series?.fetchedAt, fetchedAt <= now, issue != .usingCachedSeries {
-      let expiry = fetchedAt.addingTimeInterval(interval)
+      let expiry =
+        hourly
+        ? HistoryService.nextHour(after: fetchedAt) : fetchedAt.addingTimeInterval(interval)
       if expiry > now { return expiry }
     }
-    return now.addingTimeInterval(interval)
+    return hourly ? HistoryService.nextHour(after: now) : now.addingTimeInterval(interval)
   }
 }

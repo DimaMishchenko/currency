@@ -42,19 +42,26 @@ public struct RateSource: Codable, Sendable, Equatable {
   public let provider: RateProviderID
   /// The observation's sampling or aggregation semantics.
   public let observation: RateObservation
+  /// A distinct sampling interval used for a newer endpoint in a historical series.
+  public let latestObservation: RateObservation?
   /// The time zone used for date buckets, when specified by the provider.
   public let timeZone: TimeZone?
 
   /// Creates provider context without prescribing its display wording.
   public init(
-    provider: RateProviderID, observation: RateObservation = .unspecified, timeZone: TimeZone? = nil
+    provider: RateProviderID, observation: RateObservation = .unspecified,
+    timeZone: TimeZone? = nil,
+    latestObservation: RateObservation? = nil
   ) {
     self.provider = provider
     self.observation = observation
+    self.latestObservation = latestObservation
     self.timeZone = timeZone
   }
 
-  private enum CodingKeys: String, CodingKey { case provider, observation, timeZone }
+  private enum CodingKeys: String, CodingKey {
+    case provider, observation, timeZone, latestObservation
+  }
 
   /// Decodes structured provenance or migrates the former source-string cache format.
   public init(from decoder: any Decoder) throws {
@@ -80,6 +87,8 @@ public struct RateSource: Codable, Sendable, Equatable {
     self.init(
       provider: try values.decode(RateProviderID.self, forKey: .provider),
       observation: try values.decode(RateObservation.self, forKey: .observation),
-      timeZone: try values.decodeIfPresent(TimeZone.self, forKey: .timeZone))
+      timeZone: try values.decodeIfPresent(TimeZone.self, forKey: .timeZone),
+      latestObservation: try values.decodeIfPresent(
+        RateObservation.self, forKey: .latestObservation))
   }
 }

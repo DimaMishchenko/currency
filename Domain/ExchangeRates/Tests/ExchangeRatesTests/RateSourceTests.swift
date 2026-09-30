@@ -13,6 +13,22 @@ import Testing
     #expect(try JSONDecoder().decode(RateSource.self, from: JSONEncoder().encode(source)) == source)
   }
 
+  @Test(arguments: [RateObservation.dailyClose, .monthlyLastClose, .unspecified])
+  func mixedHistoryProvenanceRoundTripsWithoutRelabelingHistoricalPoints(
+    observation: RateObservation
+  ) throws {
+    let source = RateSource(
+      provider: .coinbase, observation: observation, timeZone: .gmt,
+      latestObservation: .hourlyClose)
+    let restored = try JSONDecoder().decode(RateSource.self, from: JSONEncoder().encode(source))
+    #expect(restored == source)
+    #expect(restored.observation == observation)
+    #expect(restored.latestObservation == .hourlyClose)
+    let original = RateSource(provider: .coinbase, observation: observation, timeZone: .gmt)
+    let old = try JSONDecoder().decode(RateSource.self, from: JSONEncoder().encode(original))
+    #expect(old.latestObservation == nil)
+  }
+
   @Test func customProviderRoundTripsWithoutInterpretingDisplayText() throws {
     let source = RateSource(provider: .custom("My reference feed"), observation: .dailyReference)
     #expect(try JSONDecoder().decode(RateSource.self, from: JSONEncoder().encode(source)) == source)

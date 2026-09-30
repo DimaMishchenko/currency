@@ -41,20 +41,47 @@ public actor HistoryService {
   /// use direct, completed Coinbase hourly candles. Crypto/crypto divides matching quote closes,
   /// using USD or, for intraday pairs without both USD markets, EUR. Longer crypto/fiat or
   /// crypto/metal ranges multiply Coinbase USD closes by Frankfurter USD/quote references on
-  /// matching UTC dates. `.all` samples the joined history by month.
+  /// matching UTC dates. `.all` samples the joined history by month. Supported longer crypto
+  /// ranges append the canonical `.day` endpoint when its close is at least as recent as the last daily
+  /// close. The long-range cache retains its original daily or monthly observations.
   /// Frankfurter-based intraday history is unavailable. Failed pagination saves no partial data.
   /// - Parameters:
   ///   - base: Uppercase currency whose historical value is requested.
   ///   - quote: Uppercase denomination of the returned values.
   ///   - range: Requested historical interval.
   ///   - now: Evaluation time for date windows and cache freshness; injectable for tests.
-  ///   - cacheLifetime: Optional caller cadence; nil keeps the one-hour (`.day`), six-hour,
-  ///     or daily (`.all`) policy.
+  ///   - cacheLifetime: Optional long-range cache cadence; nil keeps the six-hour or daily
+  ///     (`.all`) policy. Hourly history expires at the next UTC hour or sooner if requested.
   /// - Returns: A series and an optional recoverable issue. Cancellation returns the saved
   ///   series if available; callers should check cancellation before presenting the result.
   public func load(
     base: String, quote: String, range: HistoryRange, now: Date = .now,
     cacheLifetime: TimeInterval? = nil
+  ) async -> HistoryResult {
+    let historical = await loadSeries(
+      base: base, quote: quote, range: range, now: now, cacheLifetime: cacheLifetime)
+    guard range != .day, Self.supportsIntraday(base: base, quote: quote),
+      !Task.isCancelled, let series = historical.series, let daily = series.points.last
+    else { return historical }
+    let intraday = await loadSeries(
+      base: base, quote: quote, range: .day, now: now, cacheLifetime: nil)
+    guard !Task.isCancelled, let hourly = intraday.series, hourly.fetchedAt <= now,
+      let latest = hourly.points.last,
+      latest.date.addingTimeInterval(3600) <= now,
+      latest.date.addingTimeInterval(3600) >= daily.date.addingTimeInterval(86400)
+    else { return historical }
+    let source = RateSource(
+      provider: series.source.provider, observation: series.source.observation,
+      timeZone: series.source.timeZone, latestObservation: .hourlyClose)
+    return HistoryResult(
+      series: HistorySeries(
+        points: series.points + [latest], source: source, fetchedAt: hourly.fetchedAt),
+      issue: historical.issue ?? intraday.issue)
+  }
+
+  private func loadSeries(
+    base: String, quote: String, range: HistoryRange, now: Date,
+    cacheLifetime: TimeInterval?
   ) async -> HistoryResult {
     guard CurrencyCatalog.codes.contains(base), CurrencyCatalog.codes.contains(quote),
       base != quote
@@ -82,7 +109,8 @@ public actor HistoryService {
       }
     let defaultCacheLifetime: TimeInterval = range == .day ? 3600 : (range == .all ? 86400 : 21600)
     if let cached, now >= cached.fetchedAt,
-      now.timeIntervalSince(cached.fetchedAt) < (cacheLifetime ?? defaultCacheLifetime)
+      now.timeIntervalSince(cached.fetchedAt) < (cacheLifetime ?? defaultCacheLifetime),
+      range != .day || now < Self.nextHour(after: cached.fetchedAt)
     {
       return HistoryResult(series: cached, issue: nil)
     }
@@ -171,6 +199,11 @@ public actor HistoryService {
           ? .unavailable
           : .usingCachedSeries)
     }
+  }
+
+  /// The next UTC boundary at which a completed hourly observation may become available.
+  public static func nextHour(after date: Date) -> Date {
+    Date(timeIntervalSince1970: (floor(date.timeIntervalSince1970 / 3600) + 1) * 3600)
   }
 
   private static func fetchCryptoHistory(

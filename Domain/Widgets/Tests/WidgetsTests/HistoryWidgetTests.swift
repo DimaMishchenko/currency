@@ -144,7 +144,48 @@ import Testing
         == now.addingTimeInterval(86_400))
   }
 
-  @Test func dayScheduleUsesHourlyExpiryAndDoesNotScheduleInPast() {
+  @Test(arguments: HistoryRange.allCases)
+  func supportedCryptoPairsScheduleNextHourEvenWhenHistoryIsUnavailable(range: HistoryRange) {
+    let fetchedAt = now.addingTimeInterval(2220)
+    for (base, quote) in [("USD", "BTC"), ("EUR", "BTC"), ("GBP", "ETH"), ("ETH", "BTC")] {
+      let state = HistoryWidgetSnapshot(
+        pair: HistoryWidgetPair(app: ConverterState(), base: base, quote: quote), range: range,
+        result: HistoryResult(series: nil, issue: .unavailable))
+      #expect(state.nextRefresh(after: fetchedAt) == now.addingTimeInterval(3600))
+    }
+  }
+
+  @Test(arguments: [HistoryRange.week, .month, .quarter, .year, .yearToDate, .all])
+  func fiatAndCryptoWithoutHourlyMarketsKeepDailyRefresh(range: HistoryRange) {
+    for (base, quote) in [("EUR", "CZK"), ("BTC", "XAU"), ("AVAX", "GBP"), ("USDC", "USD")] {
+      let state = HistoryWidgetSnapshot(
+        pair: HistoryWidgetPair(app: ConverterState(), base: base, quote: quote), range: range,
+        result: HistoryResult(series: nil, issue: .unavailable))
+      #expect(state.nextRefresh(after: now) == now.addingTimeInterval(86_400))
+    }
+  }
+
+  @Test func invertedMixedHistoryPreservesHourlyEndpointAndItsFetchAnchor() {
+    let latest = HistoryPoint(date: now.addingTimeInterval(-3600), value: 84_608.1)
+    let source = RateSource(
+      provider: .coinbase, observation: .dailyClose, timeZone: .gmt,
+      latestObservation: .hourlyClose)
+    let provider = HistorySeries(
+      points: [HistoryPoint(date: now.addingTimeInterval(-3 * 86400), value: 80_000), latest],
+      source: source, fetchedAt: now)
+    let state = HistoryWidgetSnapshot(
+      pair: HistoryWidgetPair(app: ConverterState(), base: "USD", quote: "BTC"), range: .year,
+      result: HistoryResult(series: provider, issue: nil))
+    #expect(state.latest?.date == latest.date)
+    #expect(state.latest?.value == 1 / latest.value)
+    #expect(state.series?.source == source)
+    #expect(state.series?.fetchedAt == now)
+    #expect(state.change == ((80_000 / latest.value - 1) * 10_000).rounded() / 10_000)
+    #expect(state.nextRefresh(after: now.addingTimeInterval(2220)) == now.addingTimeInterval(3600))
+  }
+
+  @Test(arguments: HistoryRange.allCases)
+  func supportedCryptoSchedulesHourlyAcrossRanges(range: HistoryRange) {
     let series = HistorySeries(
       points: [
         HistoryPoint(date: now.addingTimeInterval(-3600), value: 24),
@@ -153,15 +194,15 @@ import Testing
       fetchedAt: now)
     let pair = HistoryWidgetPair(app: ConverterState(), base: "BTC", quote: "USD")
     let fresh = HistoryWidgetSnapshot(
-      pair: pair, range: .day, result: HistoryResult(series: series, issue: nil))
+      pair: pair, range: range, result: HistoryResult(series: series, issue: nil))
     #expect(
       fresh.nextRefresh(after: now.addingTimeInterval(1200))
         == now.addingTimeInterval(3600))
     #expect(
       fresh.nextRefresh(after: now.addingTimeInterval(4000))
-        == now.addingTimeInterval(7600))
+        == now.addingTimeInterval(7200))
     let stale = HistoryWidgetSnapshot(
-      pair: pair, range: .day,
+      pair: pair, range: range,
       result: HistoryResult(series: series, issue: .usingCachedSeries))
     #expect(stale.nextRefresh(after: now) == now.addingTimeInterval(3600))
   }

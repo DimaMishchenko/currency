@@ -35,8 +35,24 @@ public enum RateMessages {
     case .coinbase: provider = "Coinbase"
     case .custom(let name): provider = name
     }
+    var description = observationDescription(source.observation, provider: provider, locale: locale)
+    if source.latestObservation == .hourlyClose {
+      var endpoint = LocalizedStringResource.Support.sourceWithLatestHourlyClose(description)
+      endpoint.locale = locale
+      description = String(localized: endpoint)
+    }
+    guard let timeZone = source.timeZone else { return description }
+    var withZone = LocalizedStringResource.Support.sourceWithTimeZone(
+      description, timeZone.identifier)
+    withZone.locale = locale
+    return String(localized: withZone)
+  }
+
+  private static func observationDescription(
+    _ observation: RateObservation, provider: String, locale: Locale
+  ) -> String {
     var resource: LocalizedStringResource
-    switch source.observation {
+    switch observation {
     case .unspecified, .trade: return provider
     case .exchangeRate: resource = .Support.retrievedRates(provider)
     case .dailyRate: resource = .Support.dailyRates(provider)
@@ -47,11 +63,6 @@ public enum RateMessages {
     case .monthlyLastClose: resource = .Support.monthlyLastClose(provider)
     }
     resource.locale = locale
-    let description = String(localized: resource)
-    guard let timeZone = source.timeZone else { return description }
-    var withZone = LocalizedStringResource.Support.sourceWithTimeZone(
-      description, timeZone.identifier)
-    withZone.locale = locale
-    return String(localized: withZone)
+    return String(localized: resource)
   }
 }
