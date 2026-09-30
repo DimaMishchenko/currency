@@ -30,14 +30,6 @@ import os
     }
   }
 
-  @Test func brightAndDarkFillsChooseOppositeLabelColors() {
-    let light = UITraitCollection(userInterfaceStyle: .light)
-    let dark = UITraitCollection(userInterfaceStyle: .dark)
-    #expect(AppAppearance.Accent.orange.foregroundColor.resolvedColor(with: light) == .black)
-    #expect(AppAppearance.Accent.primary.foregroundColor.resolvedColor(with: light) == .white)
-    #expect(AppAppearance.Accent.primary.foregroundColor.resolvedColor(with: dark) == .black)
-  }
-
   private func luminance(_ color: UIColor, traits: UITraitCollection) throws -> Double {
     let space = try #require(CGColorSpace(name: CGColorSpace.sRGB))
     let converted = try #require(

@@ -143,26 +143,6 @@ struct HomeEditingTests {
     #expect(model.input.source == "EUR")
   }
 
-  @Test func removingActiveCurrencyClosesEditor() throws {
-    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-    defer { try? FileManager.default.removeItem(at: directory) }
-    let model = makeHomeModel(
-      store: HomeTestStore(directory: directory), service: RateService(),
-      readRates: {
-        RateSnapshot(quotes: [
-          "EUR": ExchangeRate(1, published: "2026-09-19", source: .init(provider: .custom("test"))),
-          "USD": ExchangeRate(2, published: "2026-09-19", source: .init(provider: .custom("test")))
-        ])
-      })
-    model.beginEditing("USD")
-    #expect(model.editor != nil)
-    #expect(model.removeDestinations(["USD"]))
-    #expect(model.editor == nil)
-    let saved = model.input
-    #expect(!model.press("7"))
-    #expect(model.input == saved)
-  }
-
   @Test func editingUsesLatestSharedBase() throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }

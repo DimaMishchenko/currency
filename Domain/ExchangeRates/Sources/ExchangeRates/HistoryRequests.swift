@@ -5,24 +5,7 @@ enum CandleGranularity: Int, Sendable {
   case day = 86400
 }
 
-/// Shared by history loaders in this process, including when users switch charts.
-private actor CandlePacer {
-  static let shared = CandlePacer()
-  private let clock = ContinuousClock()
-  private var lastStart: ContinuousClock.Instant?
-
-  func acquire() async throws {
-    while let lastStart, clock.now < lastStart.advanced(by: .milliseconds(150)) {
-      try await clock.sleep(until: lastStart.advanced(by: .milliseconds(150)))
-    }
-    try Task.checkCancellation()
-    lastStart = clock.now
-  }
-}
-
 extension HistoryService {
-  /// Overlaps up to three pages while spacing request starts below the public rate limit.
-  /// Structured cancellation prevents a failed or cancelled load from saving partial history.
   static func fetchCandles(
     client: any HTTPClient, components: URLComponents, start: Date, end: Date,
     granularity: CandleGranularity = .day
@@ -31,7 +14,7 @@ extension HistoryService {
     return try await withThrowingTaskGroup(of: [HistoryPoint].self) { group in
       func enqueue(_ window: (start: Date, end: Date)) {
         group.addTask {
-          try await CandlePacer.shared.acquire()
+          try Task.checkCancellation()
           var request = components
           request.queryItems = [
             URLQueryItem(name: "granularity", value: String(granularity.rawValue)),
@@ -41,7 +24,6 @@ extension HistoryService {
           guard let url = request.url else { throw RateError.invalidData }
           let data = try await client.get(url)
           try Task.checkCancellation()
-          // Half-open page ranges give each candle one owner regardless of completion order.
           return try decodeCandles(
             data, start: window.start, end: end, granularity: granularity
           )

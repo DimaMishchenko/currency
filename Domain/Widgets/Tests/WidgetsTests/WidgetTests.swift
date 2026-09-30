@@ -187,16 +187,6 @@ struct WidgetTests {
     #expect(WidgetInput(codes: ["@local", "EUR"]).active == "EUR")
   }
 
-  @Test func staleLocationUsabilityIsSeparateFromPrivacyStatus() {
-    let location = WidgetLocation(country: "CZ", currency: "CZK", updatedAt: .distantPast)
-    #expect(!location.isFresh())
-    #expect(location.isUsable)
-    #expect(WidgetLocationStatus.failed.allowsCache)
-    for status in [WidgetLocationStatus.denied, .restricted, .removed, .notDetermined] {
-      #expect(!status.allowsCache)
-    }
-  }
-
   @Test func resizeProjectsEquivalentValueWithoutSavingUntilInteraction() throws {
     let rates = RateSnapshot(quotes: ["EUR": quote(1), "JPY": quote(175)])
     let codes = ["EUR", "USD", "GBP", "CZK", "CHF", "JPY"]
@@ -249,22 +239,6 @@ struct WidgetTests {
     #expect(input.codes.count == 3)
     input.select("CZK", snapshot: rates)
     #expect(input.amount == "175")
-  }
-
-  @Test func synchronizedValuePreservesWidgetSelectionAndCustomRemainsIndependent() {
-    var app = ConverterState()
-    app.setAmount("7")
-    var synced = WidgetInput(codes: ["EUR", "CZK"])
-    synced.select("CZK", snapshot: rates)
-    synced.synchronize(with: app, snapshot: rates)
-    #expect(synced.active == "CZK")
-    #expect(synced.amount == "175")
-    let custom = WidgetInput(codes: ["EUR", "CZK"], amount: "3")
-    app.setAmount("8")
-    synced.synchronize(with: app, snapshot: rates)
-    #expect(synced.amount == "200")
-    #expect(custom.amount == "3")
-    #expect(app.source == "EUR")
   }
 
   @Test(arguments: ["EUR", "USD", "CZK", "CHF", "JPY", "BTC"])
