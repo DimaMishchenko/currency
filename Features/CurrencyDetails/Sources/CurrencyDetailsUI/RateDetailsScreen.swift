@@ -88,28 +88,34 @@ struct RateDetailsScreen: View {
         }
         .padding(AppStyle.Space.large)
       }
-      .navigationBarTitleDisplayMode(.inline)
-      .toolbar {
-        ToolbarItem(placement: .topBarLeading) {
-          HStack(spacing: AppStyle.Space.medium) {
+      .toolbar(.hidden, for: .navigationBar)
+      .safeAreaInset(edge: .top, spacing: 0) {
+        HStack(alignment: .top, spacing: AppStyle.Space.medium) {
+          HStack(alignment: .firstTextBaseline, spacing: AppStyle.Space.medium) {
             CurrencyIcon(code, size: 36).accessibilityHidden(true)
-            Text(dynamicTypeSize.isAccessibilitySize ? code : currencyName)
-              .font(AppStyle.font(.title2, weight: .semibold)).lineLimit(1)
-              .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-              .frame(maxWidth: 200, alignment: .leading)
+            Text(currencyName)
+              .font(AppStyle.font(.title2, weight: .semibold))
+              .fixedSize(horizontal: false, vertical: true)
+              .frame(maxWidth: .infinity, alignment: .leading)
           }
-          .fixedSize(horizontal: true, vertical: false)
           .accessibilityElement(children: .ignore)
           .accessibilityLabel(currencyName)
           .accessibilityAddTraits(.isHeader)
-        }
-        .sharedBackgroundVisibility(.hidden)
-        ToolbarItem(placement: .topBarTrailing) {
+          .padding(.vertical, AppStyle.Space.small)
           Button(.Details.close, systemImage: "xmark") {
             AppHaptics.play(.action); dismiss()
           }
-          .labelStyle(.iconOnly).tint(nil)
+          .labelStyle(.iconOnly)
+          .font(AppStyle.font(.title2))
+          .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+          .frame(width: 44, height: 44)
+          .buttonStyle(.glass)
+          .buttonBorderShape(.circle)
+          .tint(nil)
         }
+        .padding(.horizontal, AppStyle.Space.large)
+        .padding(.vertical, AppStyle.Space.small)
+        .background(.background)
       }
       .onChange(of: range) { _, _ in AppHaptics.play(.selection) }
       .onChange(of: selected?.date) { _, _ in
