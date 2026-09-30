@@ -17,11 +17,32 @@ public struct OnboardingHomeScreen: View {
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(\.scenePhase) private var scenePhase
   @State private var entrance = HomeScreenEntranceClock()
-  private static let appRows = [
-    ["calendar", "photo", "map", "book.closed"],
-    ["clock", "camera", "cloud.sun", "gearshape"],
-    ["phone", "safari", "bubble.left.and.bubble.right", "music.note"]
+  private static let appRows: [[SampleApp]] = [
+    [
+      .init(name: "Calendar", symbol: "calendar", color: .red),
+      .init(name: "Photos", symbol: "photo.on.rectangle", color: .pink),
+      .init(name: "Maps", symbol: "map.fill", color: .green),
+      .init(name: "Books", symbol: "book.closed.fill", color: .orange)
+    ],
+    [
+      .init(name: "Clock", symbol: "clock.fill", color: .primary),
+      .init(name: "Camera", symbol: "camera.fill", color: .gray),
+      .init(name: "Weather", symbol: "cloud.sun.fill", color: .blue),
+      .init(name: "Settings", symbol: "gearshape.fill", color: .gray)
+    ],
+    [
+      .init(name: "Phone", symbol: "phone.fill", color: .green),
+      .init(name: "Safari", symbol: "safari", color: .blue),
+      .init(name: "Messages", symbol: "bubble.left.and.bubble.right.fill", color: .green),
+      .init(name: "Music", symbol: "music.note", color: .pink)
+    ]
   ]
+
+  private struct SampleApp {
+    let name: String
+    let symbol: String
+    let color: Color
+  }
 
   /// Uses the same personalized calculator presentation as the widget extension.
   public init(snapshot: RateSnapshot, input: ConverterState) {
@@ -29,11 +50,11 @@ public struct OnboardingHomeScreen: View {
     self.input = input
   }
 
-  /// An illustrative Home Screen with one interactive production widget and subdued apps.
+  /// An illustrative Home Screen with production calculator, reference, and history widgets.
   public var body: some View {
     TimelineView(.animation(minimumInterval: 1 / 60, paused: !entrance.isRunning)) { timeline in
       GeometryReader { geometry in
-        let scale = min((geometry.size.width - 64) / 250, (geometry.size.height - 24) / 472, 1)
+        let scale = min((geometry.size.width - 64) / 250, (geometry.size.height - 24) / 540, 1)
         let time =
           reduceMotion ? HomeScreenEntranceClock.duration : entrance.time(at: timeline.date)
         let arrival = reveal(time, start: 0, duration: 0.55)
@@ -62,34 +83,22 @@ public struct OnboardingHomeScreen: View {
   }
 
   private func phone(time: TimeInterval) -> some View {
-    VStack(spacing: 16) {
+    VStack(spacing: 8) {
       Capsule().fill(.black.opacity(0.8)).frame(width: 62, height: 15)
         .padding(.top, 12).accessibilityHidden(true)
-      VStack(spacing: 5) {
-        WidgetPreview(
-          kind: .calculator, family: .systemMedium, interactive: true,
-          codes: [input.source] + input.destinations,
-          amount: input.amount, snapshot: snapshot, converterInput: input
-        )
-        .scaleEffect(218 / WidgetFamily.systemMedium.previewSize.width)
-        .frame(
-          width: 218,
-          height: 218 * WidgetFamily.systemMedium.previewSize.height
-            / WidgetFamily.systemMedium.previewSize.width
-        )
-        .shadow(color: .black.opacity(0.1), radius: 8, y: 4)
+      homeWidget(kind: .calculator, family: .systemMedium, width: 218)
         .accessibilityHint(Text(.WidgetOnboarding.previewCalculatorHint))
-        Text(.WidgetOnboarding.currencyAppName)
-          .font(.system(size: 9, weight: .medium)).foregroundStyle(.secondary)
-          .accessibilityHidden(true)
+        .opacity(reveal(time, start: 0.10, duration: 0.38))
+        .offset(y: 6 * (1 - reveal(time, start: 0.10, duration: 0.45)))
+      HStack(alignment: .top, spacing: 14) {
+        homeWidget(kind: .board, family: .systemSmall, width: 102)
+        homeWidget(kind: .history, family: .systemSmall, width: 102)
       }
-      .opacity(reveal(time, start: 0.10, duration: 0.38))
-      .offset(y: 6 * (1 - reveal(time, start: 0.10, duration: 0.45)))
-      VStack(spacing: 20) {
-        iconRow(Self.appRows[0], offset: 0, time: time)
-        iconRow(Self.appRows[1], offset: 4, time: time)
-      }
-      Spacer(minLength: 8)
+      .opacity(reveal(time, start: 0.16, duration: 0.38))
+      .offset(y: 6 * (1 - reveal(time, start: 0.16, duration: 0.45)))
+      iconRow(Self.appRows[0], offset: 0, time: time, showsNames: true)
+      iconRow(Self.appRows[1], offset: 4, time: time, showsNames: true)
+      Spacer(minLength: 0)
       HStack(spacing: 5) {
         Circle().fill(.primary.opacity(0.4))
         Circle().fill(.primary.opacity(0.15))
@@ -108,7 +117,7 @@ public struct OnboardingHomeScreen: View {
       Capsule().fill(.primary.opacity(0.5)).frame(width: 76, height: 3)
         .padding(.bottom, 8).accessibilityHidden(true)
     }
-    .frame(width: 250, height: 472)
+    .frame(width: 250, height: 540)
     .background {
       RoundedRectangle(cornerRadius: 38)
         .fill(Color(uiColor: .secondarySystemBackground))
@@ -132,21 +141,53 @@ public struct OnboardingHomeScreen: View {
     .shadow(color: .black.opacity(0.07), radius: 14, y: 8)
   }
 
-  private func iconRow(_ symbols: [String], offset: Int, time: TimeInterval) -> some View {
-    HStack(spacing: 14) {
-      ForEach(symbols.indices, id: \.self) { index in
+  private func homeWidget(
+    kind: WidgetShowcaseKind, family: WidgetFamily, width: CGFloat
+  )
+    -> some View
+  {
+    VStack(spacing: 5) {
+      WidgetPreview(
+        kind: kind, family: family, interactive: kind == .calculator,
+        codes: [input.source] + input.destinations,
+        amount: input.amount, snapshot: snapshot, converterInput: input
+      )
+      .scaleEffect(width / family.previewSize.width)
+      .frame(width: width, height: width * family.previewSize.height / family.previewSize.width)
+      .shadow(color: .black.opacity(0.1), radius: 8, y: 4)
+      Text(.WidgetOnboarding.currencyAppName)
+        .font(.system(size: 9, weight: .medium)).foregroundStyle(.secondary)
+        .accessibilityHidden(true)
+    }
+  }
+
+  private func iconRow(
+    _ apps: [SampleApp], offset: Int, time: TimeInterval, showsNames: Bool = false
+  ) -> some View {
+    HStack(alignment: .top, spacing: 0) {
+      ForEach(apps.indices, id: \.self) { index in
         let arrival = reveal(time, start: 0.20 + Double(offset + index) * 0.026, duration: 0.38)
-        Image(systemName: symbols[index])
-          .font(.system(size: 19, weight: .regular))
-          .foregroundStyle(.secondary.opacity(0.7))
-          .frame(width: 42, height: 42)
-          .background(.background.opacity(0.65), in: .rect(cornerRadius: 12))
-          .opacity(arrival)
-          .scaleEffect(0.95 + 0.05 * arrival)
-          .offset(y: 7 * (1 - arrival))
+        VStack(spacing: 3) {
+          Image(systemName: apps[index].symbol)
+            .font(.system(size: 21, weight: .regular))
+            .foregroundStyle(apps[index].color)
+            .frame(width: 42, height: 42)
+            .background(.background.opacity(0.86), in: .rect(cornerRadius: 12))
+          if showsNames {
+            Text(apps[index].name)
+              .font(.system(size: 8, weight: .medium))
+              .foregroundStyle(.secondary)
+              .lineLimit(1)
+          }
+        }
+        .frame(width: 42)
+        .opacity(arrival)
+        .scaleEffect(0.95 + 0.05 * arrival)
+        .offset(y: 7 * (1 - arrival))
+        if index < apps.count - 1 { Spacer(minLength: 0) }
       }
     }
-    .frame(maxWidth: .infinity)
+    .frame(width: 218)
     .accessibilityHidden(true)
   }
 
@@ -160,7 +201,6 @@ public struct OnboardingHomeScreen: View {
   }
 }
 
-/// A finite entrance retains its phase across inactive/background changes without a live idle loop.
 struct HomeScreenEntranceClock {
   static let duration: TimeInterval = 0.95
   private(set) var elapsed: TimeInterval = 0

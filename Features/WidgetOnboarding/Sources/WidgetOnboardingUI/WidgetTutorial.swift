@@ -483,6 +483,9 @@ private struct MiniHomeScreen: View {
     (!editing && !lockScreen && (3...4).contains(step)) || (lockScreen && step == 3)
   }
   private var widgetVisible: Bool { editing || (!lockScreen && step == 5) }
+  private var pressingSmallWidget: Bool {
+    editing && !lockScreen && family == .systemSmall && step == 0
+  }
   private var wiggling: Bool {
     !editing && !lockScreen
       && ((step == 0 && engaged) || (1...2).contains(step) || (step == 5 && !settled))
@@ -522,25 +525,19 @@ private struct MiniHomeScreen: View {
           if lockScreen {
             lockFace
           } else {
-            if widgetVisible {
-              Group {
-                if editing { widget } else { widgetSlot }
+            if widgetVisible && family == .systemSmall {
+              HStack(alignment: .top, spacing: 16 * homeScale) {
+                installedWidget
+                  .frame(width: homeWidth * 164 / 348, height: homeWidth * 164 / 348)
+                appGrid(count: 4, columns: 2, scale: homeScale)
+                  .frame(maxWidth: .infinity)
               }
-              .frame(maxWidth: family == .systemSmall ? w * 0.43 : .infinity)
-              .frame(height: family == .systemLarge ? h * 0.67 : w * 0.42)
-              .scaleEffect(editing && step == 0 && pressed ? 1.035 : 1)
-            }
-            LazyVGrid(
-              columns: Array(repeating: GridItem(.flexible(), spacing: 16 * homeScale), count: 4),
-              spacing: 20 * homeScale
-            ) {
-              ForEach(0..<(widgetVisible ? 4 : 12), id: \.self) { index in
-                appIcon(index, scale: homeScale)
-                  .rotationEffect(
-                    .degrees(
-                      wiggling && animationEnabled
-                        ? (jiggle ? 1.3 : -1.3) * (index.isMultiple(of: 2) ? 1 : -1) : 0))
+            } else {
+              if widgetVisible {
+                installedWidget
+                  .frame(height: family == .systemLarge ? h * 0.67 : w * 0.42)
               }
+              appGrid(count: widgetVisible ? 4 : 12, columns: 4, scale: homeScale)
             }
           }
           Spacer(minLength: 0)
@@ -604,7 +601,9 @@ private struct MiniHomeScreen: View {
           .padding(.bottom, 20)
           .transition(.scale(scale: 0.9).combined(with: .opacity))
         }
-        if step < (lockScreen ? 4 : editing ? 2 : 5) || (!editing && !settled) {
+        if !pressingSmallWidget
+          && (step < (lockScreen ? 4 : editing ? 2 : 5) || (!editing && !settled))
+        {
           touchIndicator
             .position(touchPoint(w: w, h: h))
         }
@@ -622,6 +621,15 @@ private struct MiniHomeScreen: View {
               .allowsHitTesting(false)
           }
         }
+      }
+      .overlayPreferenceValue(TutorialInstalledWidgetBounds.self) { anchor in
+        GeometryReader { proxy in
+          if pressingSmallWidget, let anchor {
+            let bounds = proxy[anchor]
+            touchIndicator.position(x: bounds.midX, y: bounds.midY)
+          }
+        }
+        .allowsHitTesting(false)
       }
       .clipShape(.rect(cornerRadius: 32))
       .overlay {
@@ -661,6 +669,29 @@ private struct MiniHomeScreen: View {
       }
     }
   }
+  private var installedWidget: some View {
+    Group {
+      if editing { widget } else { widgetSlot }
+    }
+    .scaleEffect(editing && step == 0 && pressed ? 1.035 : 1)
+    .anchorPreference(key: TutorialInstalledWidgetBounds.self, value: .bounds) { $0 }
+  }
+
+  private func appGrid(count: Int, columns: Int, scale: CGFloat) -> some View {
+    LazyVGrid(
+      columns: Array(repeating: GridItem(.flexible(), spacing: 16 * scale), count: columns),
+      spacing: 20 * scale
+    ) {
+      ForEach(0..<count, id: \.self) { index in
+        appIcon(index, scale: scale)
+          .rotationEffect(
+            .degrees(
+              wiggling && animationEnabled
+                ? (jiggle ? 1.3 : -1.3) * (index.isMultiple(of: 2) ? 1 : -1) : 0))
+      }
+    }
+  }
+
   private var widget: some View {
     FittedWidgetPreview(
       kind: kind, family: family, codes: codes, amount: amount, synchronized: synchronized
@@ -819,6 +850,13 @@ private struct MiniHomeScreen: View {
 }
 
 private struct TutorialWidgetBounds: PreferenceKey {
+  static var defaultValue: Anchor<CGRect>? { nil }
+  static func reduce(value: inout Anchor<CGRect>?, nextValue: () -> Anchor<CGRect>?) {
+    value = nextValue() ?? value
+  }
+}
+
+private struct TutorialInstalledWidgetBounds: PreferenceKey {
   static var defaultValue: Anchor<CGRect>? { nil }
   static func reduce(value: inout Anchor<CGRect>?, nextValue: () -> Anchor<CGRect>?) {
     value = nextValue() ?? value

@@ -177,6 +177,50 @@
           }
         }
       }
+    },
+    "popularCurrencies": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Popular currencies"
+          }
+        }
+      }
+    },
+    "allCurrencies": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All currencies"
+          }
+        }
+      }
+    },
+    "popularCrypto": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Popular crypto"
+          }
+        }
+      }
+    },
+    "allCrypto": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All crypto"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

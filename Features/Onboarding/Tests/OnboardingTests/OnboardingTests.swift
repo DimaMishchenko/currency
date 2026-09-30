@@ -86,6 +86,171 @@ private func waitFor(_ predicate: () -> Bool) async throws {
     return makeModel(store: OnboardingTestStore(directory: directory))
   }
 
+  @Test func freshWelcomeAndBaseChoiceUseUSDEURWithoutChangingConfirmedInput() throws {
+    let location = directory()
+    defer { try? FileManager.default.removeItem(at: location) }
+    let store = OnboardingTestStore(directory: location)
+    let confirmed = store.input()
+    let model = try readyModel(at: location)
+    #expect(model.draft.source == "USD")
+    #expect(model.draft.destinations == ["EUR"])
+    #expect(model.welcomeDestination == "EUR")
+    model.continueFromWelcome()
+    #expect(model.step == .baseCurrency)
+    #expect(model.draft.source == "USD")
+    #expect(store.input() == confirmed)
+  }
+
+  @Test func freshWelcomeAdoptsUsableFallbackWithoutReplacingSavedDraft() throws {
+    let location = directory()
+    defer { try? FileManager.default.removeItem(at: location) }
+    let store = OnboardingTestStore(directory: location)
+    var quotes = onboardingQuotes()
+    quotes["EUR"] = nil
+    try RateCache(directory: location).save(RateSnapshot(quotes: quotes, fetchedAt: .now))
+    let fresh = makeModel(store: store)
+    let fallback = try #require(fresh.welcomeDestination)
+    #expect(fallback != "EUR")
+    fresh.continueFromWelcome()
+    #expect(fresh.draft.destinations == [fallback])
+    #expect(fresh.canContinue)
+
+    var draft = ConverterState()
+    draft.changeSource("USD")
+    draft.setDestinations(["EUR"])
+    try store.saveOnboardingProgress(OnboardingProgress(draft: draft))
+    let restored = makeModel(store: store)
+    restored.continueFromWelcome()
+    #expect(restored.draft == draft)
+    #expect(!restored.canContinue)
+  }
+
+  @Test func unavailableFreshEURFallbackDoesNotReplaceChoicesAfterReturningToWelcome() throws {
+    let location = directory()
+    defer { try? FileManager.default.removeItem(at: location) }
+    let store = OnboardingTestStore(directory: location)
+    let quotes = onboardingQuotes().filter { ["USD", "GBP", "JPY"].contains($0.key) }
+    try RateCache(directory: location).save(RateSnapshot(quotes: quotes, fetchedAt: .now))
+    let model = makeModel(store: store)
+    #expect(model.welcomeDestination == "GBP")
+    model.continueFromWelcome()
+    model.continueFromBaseCurrency()
+    model.toggle("JPY")
+    #expect(model.draft.destinations == ["GBP", "JPY"])
+    model.back()
+    model.back()
+    #expect(model.step == .welcome)
+    model.continueFromWelcome()
+    #expect(model.draft.destinations == ["GBP", "JPY"])
+    #expect(makeModel(store: store).draft.destinations == ["GBP", "JPY"])
+  }
+
+  @Test func explicitWelcomeChoiceKeepsUnavailableDefaultDestination() throws {
+    let location = directory()
+    defer { try? FileManager.default.removeItem(at: location) }
+    let store = OnboardingTestStore(directory: location)
+    let quotes = onboardingQuotes().filter { ["USD", "GBP", "JPY"].contains($0.key) }
+    try RateCache(directory: location).save(RateSnapshot(quotes: quotes, fetchedAt: .now))
+    let model = makeModel(store: store)
+    model.toggle("JPY")
+    #expect(model.draft.destinations == ["EUR", "JPY"])
+    model.continueFromWelcome()
+    #expect(model.draft.destinations == ["EUR", "JPY"])
+  }
+
+  @Test func priorAmountEditPreservesDefaultCurrencyChoicesWithoutProgress() throws {
+    let location = directory()
+    defer { try? FileManager.default.removeItem(at: location) }
+    let store = OnboardingTestStore(directory: location)
+    try store.updateInput { $0.setAmount("42") }
+    let confirmed = store.input()
+    let model = try readyModel(at: location)
+    #expect(confirmed.editedAt != nil)
+    #expect(model.draft.source == "EUR")
+    #expect(model.draft.destinations == confirmed.destinations)
+    #expect(model.welcomeDestination == "USD")
+    #expect(model.draft.amount == "100")
+    model.continueFromWelcome()
+    #expect(model.draft.source == "EUR")
+    #expect(store.input() == confirmed)
+  }
+
+  @Test func draftEditsAndCommitKeepLocalSelectionDynamicAcrossLocationUpdates() {
+    let now = Date.now
+    var confirmed = ConverterState()
+    confirmed.setAmount("42")
+    confirmed.setDestinations(["GBP"])
+    confirmed.setUsesLocalCurrency(true)
+    confirmed.resolveLocalCurrency(.init(country: "CZ", currency: "CZK"), status: .available)
+    let rates = RateSnapshot(quotes: onboardingQuotes(), fetchedAt: now)
+    var progress: OnboardingProgress?
+    let model = OnboardingModel(
+      dependencies: .init(
+        loadProgress: { progress }, saveProgress: { progress = $0 },
+        readInput: { confirmed }, editInput: { $0(&confirmed) },
+        readRates: { rates }, saveRates: { incoming, _ in incoming },
+        bootstrap: { _, _ in AsyncStream { $0.finish() } }, now: { now }))
+    #expect(model.draft.usesLocalCurrency)
+    #expect(model.draft.manualDestinations == ["GBP"])
+    #expect(model.draft.destinations == ["GBP", "CZK"])
+    model.continueFromWelcome()
+    model.continueFromBaseCurrency()
+    model.toggle("CZK")
+    #expect(model.draft.manualDestinations == ["GBP", "CZK"])
+    #expect(model.draft.usesLocalCurrency)
+    model.toggle("CZK")
+    #expect(model.draft.manualDestinations == ["GBP"])
+    #expect(model.draft.destinations == ["GBP", "CZK"])
+    #expect(model.draft.usesLocalCurrency)
+    model.toggle("JPY")
+    #expect(model.draft.manualDestinations == ["GBP", "JPY"])
+    #expect(model.draft.usesLocalCurrency)
+    #expect(model.draft.destinations == ["GBP", "JPY", "CZK"])
+    confirmed.resolveLocalCurrency(.init(country: "CA", currency: "CAD"), status: .available)
+    model.continueFromSelection()
+    #expect(model.step == .homeScreen)
+    #expect(confirmed.manualDestinations == ["GBP", "JPY"])
+    #expect(confirmed.usesLocalCurrency)
+    #expect(confirmed.destinations == ["GBP", "JPY", "CAD"])
+    #expect(confirmed.amount == "42")
+    confirmed.resolveLocalCurrency(.init(country: "CH", currency: "CHF"), status: .available)
+    #expect(confirmed.destinations == ["GBP", "JPY", "CHF"])
+    #expect(!confirmed.manualDestinations.contains("CZK"))
+    #expect(!confirmed.manualDestinations.contains("CAD"))
+  }
+
+  @Test func missingProgressPreservesExistingCurrencyChoices() throws {
+    let location = directory()
+    defer { try? FileManager.default.removeItem(at: location) }
+    let store = OnboardingTestStore(directory: location)
+    try store.updateInput {
+      $0.changeSource("GBP")
+      $0.setDestinations(["JPY", "EUR"])
+      $0.setAmount("42")
+    }
+    let confirmed = store.input()
+    let model = try readyModel(at: location)
+    #expect(model.draft.source == "GBP")
+    #expect(model.draft.destinations == ["JPY", "EUR"])
+    #expect(model.welcomeDestination == "JPY")
+    #expect(store.input() == confirmed)
+  }
+
+  @Test func savedWelcomeKeepsExplicitPairWhenAnotherQuoteIsAvailable() throws {
+    let location = directory()
+    defer { try? FileManager.default.removeItem(at: location) }
+    let store = OnboardingTestStore(directory: location)
+    var draft = ConverterState()
+    draft.changeSource("USD")
+    draft.setDestinations(["GBP", "EUR"])
+    try store.saveOnboardingProgress(OnboardingProgress(draft: draft))
+    let model = try readyModel(at: location)
+    #expect(model.welcomeDestination == "GBP")
+    model.continueFromWelcome()
+    #expect(model.draft == draft)
+    #expect(makeModel(store: store).draft == draft)
+  }
+
   @Test func fastPartialFiatBecomesReadyAndIsPersistedBeforeCrypto() async throws {
     let location = directory()
     defer { try? FileManager.default.removeItem(at: location) }
@@ -170,19 +335,19 @@ private func waitFor(_ predicate: () -> Bool) async throws {
     let model = try readyModel(at: location)
     model.continueFromWelcome()
     model.continueFromBaseCurrency()
-    model.toggle("USD")
+    model.toggle("EUR")
     #expect(model.draft.destinations.isEmpty)
     #expect(!model.canContinue)
-    for code in ["USD", "GBP", "JPY", "CZK", "CHF", "PLN", "CAD", "AUD"] { model.toggle(code) }
+    for code in ["EUR", "GBP", "JPY", "CZK", "CHF", "PLN", "CAD", "AUD"] { model.toggle(code) }
     #expect(model.draft.destinations.count == 8)
     model.changeBase("GBP")
     #expect(model.draft.source == "GBP")
-    #expect(model.draft.destinations == ["USD", "EUR", "JPY", "CZK", "CHF", "PLN", "CAD", "AUD"])
-    model.toggle("EUR")
-    model.changeBase("EUR")
-    #expect(model.draft.destinations == ["USD", "JPY", "CZK", "CHF", "PLN", "CAD", "AUD"])
+    #expect(model.draft.destinations == ["EUR", "USD", "JPY", "CZK", "CHF", "PLN", "CAD", "AUD"])
+    model.toggle("USD")
+    model.changeBase("USD")
+    #expect(model.draft.destinations == ["EUR", "JPY", "CZK", "CHF", "PLN", "CAD", "AUD"])
     model.changeBase("BTC")
-    #expect(model.draft.source == "EUR")
+    #expect(model.draft.source == "USD")
     let resumed = makeModel(store: OnboardingTestStore(directory: location))
     #expect(resumed.step == .selection)
     #expect(resumed.draft == model.draft)
@@ -202,6 +367,8 @@ private func waitFor(_ predicate: () -> Bool) async throws {
       }))
     model.continueFromWelcome()
     model.continueFromBaseCurrency()
+    for code in model.draft.destinations { model.toggle(code) }
+    model.toggle("USD")
     model.toggle("GBP")
     model.continueFromSelection()
     #expect(model.step == .selection)
@@ -241,7 +408,7 @@ private func waitFor(_ predicate: () -> Bool) async throws {
     model.continueFromBaseCurrency()
     model.toggle("GBP")
     model.pause()
-    #expect(makeModel(store: store).draft.destinations == ["USD", "GBP"])
+    #expect(makeModel(store: store).draft.destinations == ["EUR", "GBP"])
     try RateCache(directory: location)
       .save(
         RateSnapshot(quotes: onboardingQuotes(), fetchedAt: .now.addingTimeInterval(3600)))
@@ -266,7 +433,6 @@ private func waitFor(_ predicate: () -> Bool) async throws {
         daily: OnboardingProvider(), crypto: nil))
     model.start()
     model.pause()
-    // UIKit/SwiftUI commonly reports inactive and then background separately.
     model.pause()
     try await Task.sleep(for: .milliseconds(80))
     #expect(model.phase == .opening)
@@ -309,7 +475,6 @@ private func waitFor(_ predicate: () -> Bool) async throws {
       service: RateService(fiat: provider, daily: OnboardingProvider(), crypto: nil),
       configuration: .init(loadingDelay: .milliseconds(5), deadline: .milliseconds(50)))
     model.start()
-    // Repeated retries while pending must not create parallel foreground owners.
     model.retry()
     model.retry()
     try await waitFor { model.phase == .failed }
@@ -369,7 +534,7 @@ private func waitFor(_ predicate: () -> Bool) async throws {
     model.back()
     model.toggle("GBP")
     #expect(model.step == .ready)
-    #expect(model.draft.destinations == ["USD"])
+    #expect(model.draft.destinations == ["EUR"])
     #expect(OnboardingTestStore(directory: location).onboardingProgress()?.completed == true)
   }
 
@@ -565,7 +730,7 @@ private func waitFor(_ predicate: () -> Bool) async throws {
     #expect(model.saveError == nil)
     #expect(makeModel(store: store).step == .widgets)
     #expect(store.input() == committed)
-    #expect(model.draft.destinations == ["USD", "GBP"])
+    #expect(model.draft.destinations == ["EUR", "GBP"])
   }
 
   @Test func failedGuideFinishPreservesShowcaseAndCanRetryFinaleSave() throws {
@@ -692,7 +857,7 @@ private func waitFor(_ predicate: () -> Bool) async throws {
     let original = store.input()
     model.continueFromWelcome()
     #expect(model.step == .baseCurrency)
-    model.toggle("USD")
+    model.toggle("EUR")
     model.changeBase("GBP")
     #expect(model.draft.destinations.isEmpty)
     #expect(!model.canContinue)
@@ -751,7 +916,6 @@ private func waitFor(_ predicate: () -> Bool) async throws {
     var draft = ready.draft
     draft.changeSource("GBP")
     draft.setDestinations(["JPY", "USD"])
-    // Version 1 and the original raw "selection" identifier remain compatible.
     let progress = OnboardingProgress(version: 1, draft: draft, step: .selection)
     let data = try JSONEncoder().encode(progress)
     #expect(String(decoding: data, as: UTF8.self).contains("\"selection\""))

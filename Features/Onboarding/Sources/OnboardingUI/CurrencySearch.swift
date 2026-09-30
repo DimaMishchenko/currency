@@ -14,8 +14,8 @@ struct OnboardingCurrencySearch: View {
   var body: some View {
     CurrencyChooser(
       purpose: choosingBase ? .source : .add,
-      selected: choosingBase ? [model.draft.source] : model.draft.destinations,
-      homeCurrencies: [model.draft.source] + model.draft.destinations,
+      selected: choosingBase ? [model.draft.source] : model.draft.manualDestinations,
+      homeCurrencies: [model.draft.source] + model.draft.manualDestinations,
       available: Set(
         CurrencyCatalog.codes.filter {
           choosingBase ? model.canUseAsBase($0) : model.isAvailable($0)

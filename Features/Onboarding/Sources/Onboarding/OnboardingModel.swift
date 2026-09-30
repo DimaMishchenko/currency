@@ -59,6 +59,7 @@ public final class OnboardingModel {
   @ObservationIgnored private var didBecomeReady = false
   @ObservationIgnored private var active = true
   @ObservationIgnored private var refreshOnResume = false
+  @ObservationIgnored private var usesFreshWelcomeDefaults = false
 
   /// Restores cached rates and the unfinished draft without starting network work.
   public init(
@@ -68,9 +69,19 @@ public final class OnboardingModel {
     self.dependencies = dependencies
     self.configuration = configuration
     let saved = dependencies.loadProgress()
-    var initial = ConverterState()
+    let confirmed = dependencies.readInput()
+    let defaults = ConverterState()
+    var initial = confirmed
+    if confirmed.editedAt == nil, confirmed.amount == defaults.amount,
+      confirmed.source == defaults.source,
+      confirmed.manualDestinations == defaults.manualDestinations,
+      !confirmed.usesLocalCurrency
+    {
+      initial.changeSource("USD")
+      initial.setDestinations(["EUR"])
+      usesFreshWelcomeDefaults = saved == nil
+    }
     initial.setAmount("100")
-    initial.setDestinations(["USD"])
     draft = saved?.draft ?? initial
     step = saved?.step ?? .welcome
     isCompleted = saved?.completed == true && saved?.version == 1
@@ -101,9 +112,9 @@ public final class OnboardingModel {
     return !value.isNaN && value > 0
   }
 
-  /// Prefers USD, then the ordered draft, then a deterministic available fallback.
+  /// Uses the ordered draft pair, then a deterministic available fallback.
   public var welcomeDestination: String? {
-    (["USD"] + draft.destinations + snapshot.quotes.keys.sorted())
+    (draft.destinations + ["EUR", "USD"] + snapshot.quotes.keys.sorted())
       .first { $0 != draft.source && isAvailable($0) }
   }
 
@@ -160,7 +171,7 @@ public final class OnboardingModel {
   /// Toggles one destination without reordering others; an empty draft remains empty.
   public func toggle(_ code: String) {
     guard !isCompleted, CurrencyCatalog.codes.contains(code), code != draft.source else { return }
-    var codes = draft.destinations
+    var codes = draft.manualDestinations
     if let index = codes.firstIndex(of: code) {
       codes.remove(at: index)
     } else {
@@ -168,6 +179,7 @@ public final class OnboardingModel {
       codes.append(code)
     }
     draft.setDestinations(codes)
+    usesFreshWelcomeDefaults = false
     persistDraft()
   }
 
@@ -175,6 +187,7 @@ public final class OnboardingModel {
   public func changeBase(_ code: String) {
     guard !isCompleted, canUseAsBase(code), code != draft.source else { return }
     draft.changeSource(code)
+    usesFreshWelcomeDefaults = false
     if hasUsableRates { phase = .ready }
     persistDraft()
   }
@@ -182,10 +195,10 @@ public final class OnboardingModel {
   /// Opens the base choice after a persisted usable welcome pair is available.
   public func continueFromWelcome() {
     guard step == .welcome, hasUsableRates, !isCompleted else { return }
-    // The displayed alternate pair is the explicit initial selection when USD is unavailable.
-    if draft.destinations == ["USD"], !isAvailable("USD"), let code = welcomeDestination {
-      draft.setDestinations([code])
+    if usesFreshWelcomeDefaults, !isAvailable("EUR"), let destination = welcomeDestination {
+      draft.setDestinations([destination])
     }
+    usesFreshWelcomeDefaults = false
     move(to: .baseCurrency)
   }
 
@@ -200,10 +213,9 @@ public final class OnboardingModel {
     guard step == .selection, canContinue, !isCompleted else { return }
     do {
       let selection = draft
-      // Preserve the latest app/widget amount; the onboarding 100 is only a preview.
       try dependencies.editInput {
         $0.changeSource(selection.source)
-        $0.setDestinations(selection.destinations)
+        $0.setDestinations(selection.manualDestinations)
       }
       try saveProgress(step: .homeScreen)
       step = .homeScreen
@@ -270,6 +282,7 @@ public final class OnboardingModel {
     started = false
     active = true
     refreshOnResume = false
+    usesFreshWelcomeDefaults = false
     let cached = dependencies.readRates()
     snapshot = cached.hasValidFetchTimestamp(now: dependencies.now()) ? cached : RateSnapshot()
     didBecomeReady = hasUsableRates
@@ -350,13 +363,9 @@ public final class OnboardingModel {
   }
 
   private func accept(_ incoming: RateSnapshot) {
-    // Do not persist an identity-only/invalid response as the first usable rate snapshot.
     let valid = incoming.quotes.keys.contains {
       incoming.hasUsablePair(from: draft.source, to: $0, now: dependencies.now())
     }
-    // Once ready, later provider failures can honestly remove live quotes without a daily
-    // fallback. Keep selections while marking them unavailable; never resurrect that overlay.
-    // A saved base may also be unavailable on welcome, which exposes explicit base recovery.
     let recoveryPair = containsUsablePair(incoming)
     guard valid || recoveryPair || didBecomeReady else { return }
     do {
