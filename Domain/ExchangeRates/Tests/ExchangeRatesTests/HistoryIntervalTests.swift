@@ -19,6 +19,40 @@ private actor IntervalHistoryHTTP: HTTPClient {
   }
 }
 
+private actor EndpointHistoryHTTP: HTTPClient {
+  private(set) var urls: [URL] = []
+  private var failing = false
+  private let delay: Duration
+
+  init(delay: Duration = .zero) { self.delay = delay }
+  func failRequests() { failing = true }
+  func resumeRequests() { failing = false }
+
+  func get(_ url: URL) async throws -> Data {
+    urls.append(url)
+    if failing { throw RateError.http(503) }
+    try await Task.sleep(for: delay)
+    let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems
+    guard query?.contains(URLQueryItem(name: "granularity", value: "3600")) == true,
+      let end = query?.first(where: { $0.name == "end" })?.value,
+      let date = ISO8601DateFormatter().date(from: end)
+    else { throw RateError.invalidData }
+    let completed = floor(date.timeIntervalSince1970 / 3600) * 3600
+    let value: Double =
+      switch url.path {
+      case "/products/ETH-USD/candles": 2_000
+      case "/products/USDC-EUR/candles": 0.9
+      default: 84_608.1
+      }
+    return try JSONEncoder()
+      .encode([
+        [completed - 7200, 1, 100_000, 2, value - 0.1, 1],
+        [completed - 3600, 1, 100_000, 2, value, 1],
+        [completed, 1, 100_000, 2, 99_999, 1]
+      ])
+  }
+}
+
 private func intervalDate(_ value: String) throws -> Date {
   try #require(ISO8601DateFormatter().date(from: value))
 }
@@ -33,6 +67,212 @@ private func candleData(_ dates: [Date]) throws -> Data {
 }
 
 @Suite struct HistoryIntervalTests {
+  @Test func hourlyCachedEndpointIsSharedAcrossLongRanges() async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    let now = try intervalDate("2026-09-30T12:37:00Z")
+    let latest = HistoryPoint(date: try intervalDate("2026-09-30T11:00:00Z"), value: 84_608.1)
+    let hourly = HistorySeries(
+      points: [HistoryPoint(date: now.addingTimeInterval(-7200), value: 84_000), latest],
+      source: .init(provider: .coinbase, observation: .hourlyClose, timeZone: .gmt), fetchedAt: now)
+    try JSONEncoder().encode(hourly)
+      .write(to: directory.appendingPathComponent("history-BTC-USD-1.json"))
+    let client = IntervalHistoryHTTP(data: Data())
+    let service = HistoryService(directory: directory, client: client)
+    for range in HistoryRange.allCases where range != .day {
+      let daily = HistorySeries(
+        points: [
+          HistoryPoint(date: try intervalDate("2026-09-01T00:00:00Z"), value: 80_000),
+          HistoryPoint(date: try intervalDate("2026-09-29T00:00:00Z"), value: 83_638.4)
+        ],
+        source: .init(
+          provider: .coinbase,
+          observation: range == .all ? .monthlyLastClose : .dailyClose, timeZone: .gmt),
+        fetchedAt: now)
+      let interval = range == .yearToDate ? "-1-2026" : String(range.rawValue)
+      let file = directory.appendingPathComponent("history-BTC-USD-\(interval).json")
+      let saved = try JSONEncoder().encode(daily)
+      try saved.write(to: file)
+      let result = await service.load(base: "BTC", quote: "USD", range: range, now: now)
+      #expect(result.issue == nil)
+      #expect(result.series?.points == daily.points + [latest])
+      #expect(result.series?.source.observation == daily.source.observation)
+      #expect(result.series?.source.latestObservation == .hourlyClose)
+      #expect(try Data(contentsOf: file) == saved)
+    }
+    #expect(await client.urls.isEmpty)
+  }
+
+  @Test(arguments: [
+    ("BTC", "USD"), ("BTC", "EUR"), ("ETH", "GBP"), ("BTC", "ETH"), ("USDC", "BTC")
+  ])
+  func longRangesRefreshOnlyTheirCanonicalHourlyEndpoint(base: String, quote: String) async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    let now = try intervalDate("2026-09-30T12:37:00Z")
+    let daily = HistorySeries(
+      points: [
+        HistoryPoint(date: try intervalDate("2026-09-28T00:00:00Z"), value: 80_000),
+        HistoryPoint(date: try intervalDate("2026-09-29T00:00:00Z"), value: 83_638.4)
+      ], source: .init(provider: .coinbase, observation: .dailyClose, timeZone: .gmt),
+      fetchedAt: now)
+    let saved = try JSONEncoder().encode(daily)
+    let client = EndpointHistoryHTTP()
+    let service = HistoryService(directory: directory, client: client)
+    let ranges = HistoryRange.allCases.filter { $0 != .day }
+    for range in ranges {
+      let interval = range == .yearToDate ? "-1-2026" : String(range.rawValue)
+      try saved.write(
+        to: directory.appendingPathComponent("history-\(base)-\(quote)-\(interval).json"))
+      let result = await service.load(
+        base: base, quote: quote, range: range, now: now, cacheLifetime: 86_400)
+      #expect(result.issue == nil)
+      #expect(result.series?.points.last?.date == (try intervalDate("2026-09-30T11:00:00Z")))
+      #expect(result.series?.source.observation == .dailyClose)
+      #expect(result.series?.source.latestObservation == .hourlyClose)
+      #expect(result.series?.fetchedAt == now)
+    }
+    let day = await service.load(base: base, quote: quote, range: .day, now: now)
+    let expected = try #require(day.series?.points.last)
+    let legs = CurrencyCatalog.crypto.contains(quote) ? 2 : 1
+    #expect(await client.urls.count == legs)
+    for range in ranges {
+      let interval = range == .yearToDate ? "-1-2026" : String(range.rawValue)
+      let file = directory.appendingPathComponent("history-\(base)-\(quote)-\(interval).json")
+      let result = await service.load(
+        base: base, quote: quote, range: range, now: now, cacheLifetime: 86_400)
+      #expect(result.series?.points == daily.points + [expected])
+      #expect(try Data(contentsOf: file) == saved)
+    }
+    let nextHour = try intervalDate("2026-09-30T13:00:00Z")
+    let refreshed = await service.load(
+      base: base, quote: quote, range: .year, now: nextHour, cacheLifetime: 86_400)
+    #expect(refreshed.series?.points.last?.date == (try intervalDate("2026-09-30T12:00:00Z")))
+    #expect(refreshed.series?.fetchedAt == nextHour)
+    #expect(await client.urls.count == 2 * legs)
+    #expect(
+      try Data(contentsOf: directory.appendingPathComponent("history-\(base)-\(quote)-365.json"))
+        == saved)
+    let urls = await client.urls
+    #expect(urls.allSatisfy { $0.host == "api.exchange.coinbase.com" })
+    if !CurrencyCatalog.crypto.contains(quote) {
+      #expect(urls.allSatisfy { $0.path == "/products/\(base)-\(quote)/candles" })
+    }
+  }
+
+  @Test(arguments: [true, false])
+  func hourlyUnavailableRetainsTruthfulDailyOrSavedEndpoint(hasHourlyCache: Bool) async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    let now = try intervalDate("2026-09-30T12:37:00Z")
+    let daily = HistorySeries(
+      points: [
+        HistoryPoint(date: now.addingTimeInterval(-3 * 86400), value: 80_000),
+        HistoryPoint(date: try intervalDate("2026-09-29T00:00:00Z"), value: 83_638.4)
+      ], source: .init(provider: .coinbase, observation: .dailyClose, timeZone: .gmt),
+      fetchedAt: now)
+    try JSONEncoder().encode(daily)
+      .write(to: directory.appendingPathComponent("history-BTC-USD-30.json"))
+    let latest = HistoryPoint(date: try intervalDate("2026-09-30T10:00:00Z"), value: 84_000)
+    let hourly = HistorySeries(
+      points: [HistoryPoint(date: latest.date.addingTimeInterval(-3600), value: 83_000), latest],
+      source: .init(provider: .coinbase, observation: .hourlyClose, timeZone: .gmt),
+      fetchedAt: try intervalDate("2026-09-30T11:37:00Z"))
+    if hasHourlyCache {
+      try JSONEncoder().encode(hourly)
+        .write(to: directory.appendingPathComponent("history-BTC-USD-1.json"))
+    }
+    let client = EndpointHistoryHTTP()
+    await client.failRequests()
+    let result = await HistoryService(directory: directory, client: client)
+      .load(base: "BTC", quote: "USD", range: .month, now: now)
+    #expect(result.series?.points == daily.points + (hasHourlyCache ? [latest] : []))
+    #expect(result.issue == (hasHourlyCache ? .usingCachedSeries : nil))
+    #expect(result.series?.source.latestObservation == (hasHourlyCache ? .hourlyClose : nil))
+    #expect(result.series?.fetchedAt == (hasHourlyCache ? hourly.fetchedAt : daily.fetchedAt))
+    #expect(await client.urls.count == 1)
+  }
+
+  @Test(arguments: [false, true])
+  func midnightPrefersEqualHourlyCloseButRejectsOlderSavedClose(
+    hourlyUnavailable: Bool
+  ) async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    let now = try intervalDate("2026-09-30T00:05:00Z")
+    let daily = HistorySeries(
+      points: [
+        HistoryPoint(date: try intervalDate("2026-09-28T00:00:00Z"), value: 80_000),
+        HistoryPoint(date: try intervalDate("2026-09-29T00:00:00Z"), value: 83_638.4)
+      ], source: .init(provider: .coinbase, observation: .dailyClose, timeZone: .gmt),
+      fetchedAt: now)
+    let saved = try JSONEncoder().encode(daily)
+    let file = directory.appendingPathComponent("history-BTC-USD-7.json")
+    try saved.write(to: file)
+    let hourly = HistorySeries(
+      points: [
+        HistoryPoint(date: try intervalDate("2026-09-29T21:00:00Z"), value: 81_000),
+        HistoryPoint(date: try intervalDate("2026-09-29T22:00:00Z"), value: 82_000)
+      ], source: .init(provider: .coinbase, observation: .hourlyClose, timeZone: .gmt),
+      fetchedAt: try intervalDate("2026-09-29T23:45:00Z"))
+    try JSONEncoder().encode(hourly)
+      .write(to: directory.appendingPathComponent("history-BTC-USD-1.json"))
+    let client = EndpointHistoryHTTP()
+    if hourlyUnavailable { await client.failRequests() }
+    let service = HistoryService(directory: directory, client: client)
+    let atMidnight = await service.load(base: "BTC", quote: "USD", range: .week, now: now)
+    let equalClose = HistoryPoint(date: try intervalDate("2026-09-29T23:00:00Z"), value: 84_608.1)
+    #expect(atMidnight.series?.points == daily.points + (hourlyUnavailable ? [] : [equalClose]))
+    #expect(atMidnight.series?.source.latestObservation == (hourlyUnavailable ? nil : .hourlyClose))
+    #expect(await client.urls.count == 1)
+    if !hourlyUnavailable {
+      let day = await service.load(base: "BTC", quote: "USD", range: .day, now: now)
+      #expect(atMidnight.series?.points.last == day.series?.points.last)
+    }
+    await client.resumeRequests()
+    let afterHour = await service.load(
+      base: "BTC", quote: "USD", range: .week, now: try intervalDate("2026-09-30T01:00:00Z"))
+    #expect(afterHour.series?.points.last?.date == (try intervalDate("2026-09-30T00:00:00Z")))
+    #expect(afterHour.series?.source.latestObservation == .hourlyClose)
+    #expect(await client.urls.count == 2)
+    #expect(try Data(contentsOf: file) == saved)
+  }
+
+  @Test func cancellingHourlyRefreshPreservesTheLongRangeCache() async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    let now = try intervalDate("2026-09-30T12:37:00Z")
+    let daily = HistorySeries(
+      points: [
+        HistoryPoint(date: now.addingTimeInterval(-3 * 86400), value: 80_000),
+        HistoryPoint(date: try intervalDate("2026-09-29T00:00:00Z"), value: 83_638.4)
+      ], source: .init(provider: .coinbase, observation: .dailyClose, timeZone: .gmt),
+      fetchedAt: now)
+    let saved = try JSONEncoder().encode(daily)
+    let file = directory.appendingPathComponent("history-BTC-USD-365.json")
+    try saved.write(to: file)
+    let client = EndpointHistoryHTTP(delay: .seconds(10))
+    let service = HistoryService(directory: directory, client: client)
+    let task = Task { await service.load(base: "BTC", quote: "USD", range: .year, now: now) }
+    for _ in 0..<300 {
+      if await !client.urls.isEmpty { break }
+      try await Task.sleep(for: .milliseconds(10))
+    }
+    #expect(await client.urls.count == 1)
+    task.cancel()
+    let result = await task.value
+    #expect(result.series?.points == daily.points)
+    #expect(try Data(contentsOf: file) == saved)
+    #expect(
+      !FileManager.default.fileExists(
+        atPath: directory.appendingPathComponent("history-BTC-USD-1.json").path))
+  }
+
   @Test func hourlyCandlesExcludeOlderAndUnfinishedBuckets() throws {
     let start = try intervalDate("2026-09-26T12:37:00Z")
     let end = start.addingTimeInterval(86400)
@@ -119,13 +359,14 @@ private func candleData(_ dates: [Date]) throws -> Data {
     #expect(
       try JSONDecoder().decode(HistorySeries.self, from: Data(contentsOf: file)).points
         == result.series?.points)
+    let expiry = HistoryService.nextHour(after: now)
     let fresh = await service.load(
-      base: base, quote: quote, range: .day, now: now.addingTimeInterval(3599))
+      base: base, quote: quote, range: .day, now: expiry.addingTimeInterval(-1))
     #expect(await client.urls.count == 1)
     #expect(fresh.series?.fetchedAt == now)
     await client.failRequests()
     let expired = await service.load(
-      base: base, quote: quote, range: .day, now: now.addingTimeInterval(3600))
+      base: base, quote: quote, range: .day, now: expiry)
     #expect(await client.urls.count == 2)
     #expect(expired.issue == .usingCachedSeries)
     #expect(expired.series?.points == result.series?.points)

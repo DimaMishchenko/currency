@@ -29,7 +29,9 @@ private struct WidgetHarnessContent: View {
       snapshot: scenario == "unavailable" ? RateSnapshot() : snapshot)
   }
   @ViewBuilder var body: some View {
-    if scenario.hasPrefix("history") {
+    if scenario == "history-crypto-freshness" {
+      CryptoHistoryWidgetHarness()
+    } else if scenario.hasPrefix("history") {
       HistoryWidgetHarness(scenario: scenario)
     } else {
       standardWidgets

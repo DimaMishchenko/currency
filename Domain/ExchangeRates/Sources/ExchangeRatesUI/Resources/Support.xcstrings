@@ -409,6 +409,17 @@
         }
       }
     },
+    "sourceWithLatestHourlyClose": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · latest hourly close"
+          }
+        }
+      }
+    },
     "sourceWithTimeZone": {
       "extractionState": "manual",
       "comment": "Provider provenance template; arguments contain provider or timezone data.",

@@ -16,6 +16,29 @@ import UniformTypeIdentifiers
         RateSource(provider: .custom("Example"), observation: .exchangeRate),
         locale: Locale(identifier: "en_US")) == "Example · retrieved")
   }
+  @Test(arguments: [
+    (RateObservation.dailyClose, "Coinbase · daily closes · latest hourly close · GMT"),
+    (.monthlyLastClose, "Coinbase · monthly last available close · latest hourly close · GMT")
+  ])
+  func mixedHistoryDescribesBothAggregationAndHourlyEndpoint(
+    observation: RateObservation, expected: String
+  ) {
+    #expect(
+      RateMessages.providerDescription(
+        RateSource(
+          provider: .coinbase, observation: observation, timeZone: .gmt,
+          latestObservation: .hourlyClose), locale: Locale(identifier: "en_US")) == expected)
+  }
+
+  @Test func convertedHistoryKeepsBothProvidersAndNamesItsHourlyEndpoint() {
+    #expect(
+      RateMessages.providerDescription(
+        RateSource(
+          provider: .custom("Coinbase + Frankfurter"), timeZone: .gmt,
+          latestObservation: .hourlyClose), locale: Locale(identifier: "en_US"))
+        == "Coinbase + Frankfurter · latest hourly close · GMT")
+  }
+
   @Test(arguments: CurrencyCatalog.codes)
   func systemPickerArtworkIsValidAndFitsItsPixelBudget(_ code: String) throws {
     let data = try #require(CurrencyIcon.pickerImageData(code))

@@ -383,6 +383,27 @@ import Widgets
     #expect(requests.withLock { $0 }.map(\.2) == [.day, .month, .week])
   }
 
+  @Test(arguments: HistoryWidgetRange.allCases)
+  func supportedCryptoRangeSchedulesTheCanonicalHourlyRefresh(range: HistoryWidgetRange) async {
+    let now = now.addingTimeInterval(2220)
+    let requests = Mutex<[HistoryRange]>([])
+    let provider = HistoryTimeline(
+      dependencies: HistoryTimelineDependencies(
+        input: { ConverterState() },
+        load: { _, _, range, _ in
+          requests.withLock { $0.append(range) }
+          return HistoryResult(series: nil, issue: .unavailable)
+        }, now: { now }))
+    let settings = HistorySettings()
+    settings.base = HistoryCurrency("BTC")
+    settings.comparison = HistoryCurrency("EUR")
+    settings.range = range
+    let timeline = await provider.loadTimeline(settings)
+    #expect(requests.withLock { $0 } == [range.range])
+    #expect(timeline.entries.first?.snapshot.range == range.range)
+    #expect(timeline.policy == .after(HistoryService.nextHour(after: now)))
+  }
+
   @Test func unsupportedPairSkipsNetworkAndFailedLoadHasNoSampleData() async throws {
     let now = now
     let calls = Mutex(0)
@@ -404,6 +425,6 @@ import Widgets
     #expect(calls.withLock { $0 } == 1)
     #expect(timeline.entries.first?.snapshot.series == nil)
     #expect(timeline.entries.first?.snapshot.latest == nil)
-    #expect(timeline.policy == .after(now.addingTimeInterval(86_400)))
+    #expect(timeline.policy == .after(HistoryService.nextHour(after: now)))
   }
 }
