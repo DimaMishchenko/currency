@@ -34,10 +34,14 @@ private actor BatchHTTP: HTTPClient {
     let service = RateService(
       fiat: StubRateProvider(quotes: nil), daily: StubRateProvider(quotes: ["BTC": daily]),
       crypto: StubRateProvider(quotes: nil))
-    let failed = await service.refresh(previous: previous, now: time.addingTimeInterval(60))
+    let refreshedAt = time.addingTimeInterval(60)
+    let cachedDaily = ExchangeRate(
+      1, published: "2026-01-02", source: .init(provider: .fawaz),
+      cachedAt: refreshedAt)
+    let failed = await service.refresh(previous: previous, now: refreshedAt)
     for merged in [previous.merging(failed.snapshot), failed.snapshot.merging(previous)] {
-      #expect(merged.quotes["BTC"] == daily)
-      #expect(merged.dailyQuotes?["BTC"] == daily)
+      #expect(merged.quotes["BTC"] == cachedDaily)
+      #expect(merged.dailyQuotes?["BTC"] == cachedDaily)
     }
     let offline = await RateService(
       fiat: StubRateProvider(quotes: nil), daily: StubRateProvider(quotes: nil), crypto: nil
@@ -61,11 +65,14 @@ private actor BatchHTTP: HTTPClient {
       crypto: StubRateProvider(quotes: ["BTC": live])
     )
     .refresh(previous: RateSnapshot(), now: now)
+    let cachedDaily = ExchangeRate(
+      1, published: "2026-01-02", source: .init(provider: .fawaz),
+      cachedAt: now)
     #expect(result.snapshot.quotes["BTC"] == live)
-    #expect(result.snapshot.quotes["ADA"] == daily)
+    #expect(result.snapshot.quotes["ADA"] == cachedDaily)
     #expect(result.warning == .partialCryptoFallback)
     let saved = RateSnapshot().merging(result.snapshot)
     #expect(saved.quotes["BTC"] == live)
-    #expect(saved.dailyQuotes?["BTC"] == daily)
+    #expect(saved.dailyQuotes?["BTC"] == cachedDaily)
   }
 }

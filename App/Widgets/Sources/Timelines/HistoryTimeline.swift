@@ -10,8 +10,9 @@ struct HistoryTimelineDependencies: Sendable {
   let input: @Sendable () -> ConverterState
   let load: @Sendable (String, String, HistoryRange, Date) async -> HistoryResult
   let now: @Sendable () -> Date
-  var location: @Sendable () -> LocalCurrency.WidgetLocation? = { nil }
-  var locationStatus: @Sendable () -> WidgetLocationStatus = { .notDetermined }
+  var localSnapshot: @Sendable () -> (LocalCurrency.WidgetLocation?, WidgetLocationStatus) = {
+    (nil, .notDetermined)
+  }
 }
 
 struct HistoryTimeline: AppIntentTimelineProvider {
@@ -41,9 +42,9 @@ struct HistoryTimeline: AppIntentTimelineProvider {
 
   func entry(_ configuration: HistorySettings) async -> HistoryWidgetEntry {
     let now = dependencies.now()
-    let status = dependencies.locationStatus()
+    let (location, status) = dependencies.localSnapshot()
     let local = ResolvedCurrencySelection(
-      codes: [WidgetSelection.localID], location: dependencies.location(), status: status, now: now)
+      codes: [WidgetSelection.localID], location: location, status: status, now: now)
     let pair = configuration.pair(input: dependencies.input(), localCurrency: local.localCode)
     let range = configuration.effectiveRange(for: pair)
     let result: HistoryResult

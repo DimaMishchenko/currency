@@ -1,6 +1,10 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "selectionSaveFailed": {
+      "extractionState": "manual",
+      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Couldn’t save this currency selection. Please try again." } } }
+    },
     "addCurrency": {
       "extractionState": "manual",
       "comment": "Converter interface: addCurrency.",

@@ -236,13 +236,14 @@ import Widgets
                 calls.withLock { $0.append([base, quote]) }
                 return HistoryResult(series: nil, issue: .unavailable)
               }, now: { now },
-              location: {
-                localCode.map {
-                  LocalCurrency.WidgetLocation(
-                    country: "CZ", currency: $0, updatedAt: now.addingTimeInterval(-172800))
-                }
-              },
-              locationStatus: { status }))
+              localSnapshot: {
+                (
+                  localCode.map {
+                    LocalCurrency.WidgetLocation(
+                      country: "CZ", currency: $0, updatedAt: now.addingTimeInterval(-172800))
+                  }, status
+                )
+              }))
           let settings = HistorySettings()
           settings.base = HistoryCurrency(localIsBase ? "@local" : "EUR")
           settings.comparison = HistoryCurrency(localIsBase ? "EUR" : "@local")
@@ -256,6 +257,35 @@ import Widgets
         }
       }
     }
+  }
+
+  @Test func localHistoryResolvesOneCoherentSnapshotPerEntry() async {
+    let now = now
+    let reads = Mutex(0)
+    let requests = Mutex<[[String]]>([])
+    let provider = HistoryTimeline(
+      dependencies: HistoryTimelineDependencies(
+        input: { ConverterState() },
+        load: { base, quote, _, _ in
+          requests.withLock { $0.append([base, quote]) }
+          return HistoryResult(series: nil, issue: .unavailable)
+        }, now: { now },
+        localSnapshot: {
+          reads.withLock { count in
+            count += 1
+            return count == 1
+              ? (WidgetLocation(country: "CZ", currency: "CZK", updatedAt: now), .available)
+              : (nil, .denied)
+          }
+        }))
+    let settings = HistorySettings()
+    settings.base = HistoryCurrency("EUR")
+    settings.comparison = HistoryCurrency("@local")
+    let entry = await provider.entry(settings)
+    #expect(reads.withLock { $0 } == 1)
+    #expect(requests.withLock { $0 } == [["EUR", "CZK"]])
+    #expect(entry.snapshot.pair.quote == "CZK")
+    #expect(entry.locationStatus == .available)
   }
 
   @Test func timelineLoadsConfiguredPairAndSchedulesDailyExpiry() async throws {

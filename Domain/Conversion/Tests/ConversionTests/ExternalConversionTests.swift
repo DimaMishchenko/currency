@@ -83,6 +83,41 @@ import Testing
     #expect(evaluation.results[1].refreshFailed && evaluation.results[1].dailyFallback)
     #expect(evaluation.refreshFailed && evaluation.dailyFallback)
   }
+  @Test func partialFiatResponsePreservesLegacyQuoteAge() async throws {
+    let oldFetch = now.addingTimeInterval(-21601)
+    let euro = ExchangeRate(1, published: "2027-01-15", source: .init(provider: .ecb))
+    let dollar = ExchangeRate(2, published: "2027-01-15", source: .init(provider: .ecb))
+    let previous = RateSnapshot(
+      quotes: ["EUR": euro, "USD": dollar], fetchedAt: oldFetch,
+      dailyQuotes: ["EUR": euro, "USD": dollar], dailyFetchedAt: oldFetch)
+    let fresh = await RateService(
+      fiat: PartialFiatProvider(quotes: ["EUR": euro]),
+      daily: PartialFiatProvider(quotes: [:]), crypto: nil
+    )
+    .refresh(previous: previous, now: now)
+    let request = try ConversionRequest(
+      amount: "1", source: "EUR", destinations: [.init(code: "USD")])
+    let evaluation = try ConversionEvaluation(request: request, snapshot: fresh.snapshot, now: now)
+    #expect(evaluation.results[0].amount == "2")
+    #expect(fresh.snapshot.fiatFetchedAt == now)
+    #expect(fresh.snapshot.quotes["USD"]?.cachedAt == oldFetch)
+    #expect(evaluation.cacheIsStale)
+  }
+
+  @Test func customLiveProviderDoesNotProduceDailyFallbackWarning() throws {
+    let request = try ConversionRequest(
+      amount: "1", source: "BTC", destinations: [.init(code: "ETH")])
+    let source = RateSource(provider: .custom("market"), observation: .exchangeRate)
+    let rates = RateSnapshot(
+      quotes: [
+        "BTC": .init(2, published: "2027-01-15", source: source, retrievedAt: now),
+        "ETH": .init(4, published: "2027-01-15", source: source, retrievedAt: now)
+      ], fetchedAt: now)
+    let evaluation = try ConversionEvaluation(
+      request: request, snapshot: rates, now: now, warning: .dailyRatesUnavailable)
+    #expect(!evaluation.dailyFallback && !evaluation.refreshFailed && !evaluation.cacheIsStale)
+  }
+
   @Test func deniedLocalNeverUsesSavedObservationButStalePermissionCan() throws {
     let location = WidgetLocation(
       country: "CZ", currency: "CZK", updatedAt: now.addingTimeInterval(-100000))
@@ -117,4 +152,9 @@ import Testing
     RateSnapshot(
       quotes: ["EUR": quote(1), "USD": quote(2), "CZK": quote(25)], fetchedAt: now, checkedAt: now)
   }
+}
+
+private struct PartialFiatProvider: RateProvider {
+  let quotes: [String: ExchangeRate]
+  func fetch() async throws -> [String: ExchangeRate] { quotes }
 }

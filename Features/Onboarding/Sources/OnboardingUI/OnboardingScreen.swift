@@ -369,12 +369,10 @@ struct OnboardingScreen<Widgets: View>: View {
           .frame(height: tickerHeight)
         }
       }
-      if model.draft.destinations.contains(where: { !model.isAvailable($0) })
-        || (model.lastUpdated.map { Date.now.timeIntervalSince($0) > 86400 } ?? false)
-      {
+      if model.shouldOfferRateRetry {
         HStack(spacing: 8) {
           VStack(alignment: .leading, spacing: 4) {
-            if model.draft.destinations.contains(where: { !model.isAvailable($0) }) {
+            if model.hasUnavailableDestinations {
               Text(.Onboarding.partialRates)
             }
             if let date = model.lastUpdated {

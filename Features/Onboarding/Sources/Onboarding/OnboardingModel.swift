@@ -126,6 +126,13 @@ public final class OnboardingModel {
   public var canContinue: Bool { draft.destinations.contains(where: isAvailable) }
   /// Real snapshot retrieval time; failed refresh attempts do not replace it.
   public var lastUpdated: Date? { hasUsableRates ? snapshot.fetchedAt : nil }
+  /// Whether the draft contains a destination without a usable conversion.
+  public var hasUnavailableDestinations: Bool { draft.destinations.contains { !isAvailable($0) } }
+  /// Whether incomplete coverage or rates older than one day warrant a retry action.
+  public var shouldOfferRateRetry: Bool {
+    hasUnavailableDestinations
+      || (lastUpdated.map { dependencies.now().timeIntervalSince($0) > 86_400 } ?? false)
+  }
 
   /// Owns work until the entry task is cancelled or the flow is explicitly stopped.
   public func run() async {
@@ -263,30 +270,6 @@ public final class OnboardingModel {
       saveError = .completion
       return false
     }
-  }
-
-  /// Reopens setup with today's app choices, preserving app input and cached rates.
-  /// Completion remains intact if the new progress record cannot be saved.
-  public func restart() throws {
-    var current = dependencies.readInput()
-    current.setAmount("100")
-
-    try dependencies.saveProgress(OnboardingProgress(draft: current, step: .welcome))
-    cancelAttempt()
-    draft = current
-    step = .welcome
-    isCompleted = false
-    saveError = nil
-    pendingStep = nil
-    pendingSnapshot = nil
-    started = false
-    active = true
-    refreshOnResume = false
-    usesFreshWelcomeDefaults = false
-    let cached = dependencies.readRates()
-    snapshot = cached.hasValidFetchTimestamp(now: dependencies.now()) ? cached : RateSnapshot()
-    didBecomeReady = hasUsableRates
-    phase = hasUsableRates ? .ready : .opening
   }
 
   /// Repeats only the failed local operation, without refetching or replaying a guide.

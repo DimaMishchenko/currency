@@ -278,6 +278,7 @@ struct WidgetTutorial: View {
         case .comparison: comparison = code
         case .add: currencies = WidgetSelection.normalize(currencies + [code], allowsLocal: true)
         }
+        return true
       }
     }
   }

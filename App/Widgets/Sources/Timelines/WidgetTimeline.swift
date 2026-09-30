@@ -39,10 +39,10 @@ struct SuiteTimeline<Configuration: SuiteConfiguration>: AppIntentTimelineProvid
   func timeline(starting current: SuiteEntry, retry: Bool = false) -> Timeline<SuiteEntry> {
     var entries = [current]
     if current.spec.usesLocation, current.spec.localCode != nil, !current.spec.localIsStale,
-      let location = dependencies.location()
+      let expiresAt = current.spec.localExpiresAt
     {
       var stale = current
-      stale.date = location.updatedAt.addingTimeInterval(86400)
+      stale.date = expiresAt
       stale.spec.localIsStale = true
       if stale.date > current.date { entries.append(stale) }
     }
@@ -53,9 +53,9 @@ struct SuiteTimeline<Configuration: SuiteConfiguration>: AppIntentTimelineProvid
 
   func entry(_ configuration: Configuration) -> SuiteEntry {
     let app = dependencies.input()
+    let (location, status) = dependencies.localSnapshot()
     let spec = configuration.specification(
-      kind: kind, input: app, location: dependencies.location(),
-      status: dependencies.locationStatus())
+      kind: kind, input: app, location: location, status: status)
     #if DEBUG
       Logger(subsystem: "com.dimasike.currency", category: "WidgetConfiguration")
         .debug(

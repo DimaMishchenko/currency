@@ -39,7 +39,7 @@ enum WidgetComposition {
     let widgets = WidgetStore(directory: directory)
     return WidgetTimelineDependencies(
       input: { conversion.input() }, rates: { rates.loadRates() },
-      location: { local.widgetLocation() }, locationStatus: { local.widgetLocationStatus() },
+      localSnapshot: local.snapshot,
       widgetInput: { key, codes, amount in
         widgets.widgetInput(key: key, codes: codes, amount: amount)
       },
@@ -67,8 +67,7 @@ enum WidgetComposition {
           base: base, quote: quote, range: range, now: now,
           cacheLifetime: range == .day ? 3600 : 86_400)
       },
-      now: { .now }, location: { local.widgetLocation() },
-      locationStatus: { local.widgetLocationStatus() })
+      now: { .now }, localSnapshot: local.snapshot)
   }
 
   static func action() -> WidgetActionDependencies {

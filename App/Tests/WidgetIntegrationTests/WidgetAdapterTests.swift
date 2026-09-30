@@ -63,8 +63,8 @@ import WidgetsUI
     let now = Date.now
     let rates = rates
     let dependencies = WidgetTimelineDependencies(
-      input: { ConverterState() }, rates: { rates }, location: { nil },
-      locationStatus: { .notDetermined }, widgetInput: { _, _, _ in current },
+      input: { ConverterState() }, rates: { rates }, localSnapshot: { (nil, .notDetermined) },
+      widgetInput: { _, _, _ in current },
       refreshRates: { _ in
         calls.withLock { $0 += 1 }
         return RefreshResult(snapshot: rates, warning: nil)
@@ -86,8 +86,7 @@ import WidgetsUI
     let now = Date.now
     let rates = rates
     let dependencies = WidgetTimelineDependencies(
-      input: { ConverterState() }, rates: { rates }, location: { nil },
-      locationStatus: { .notDetermined },
+      input: { ConverterState() }, rates: { rates }, localSnapshot: { (nil, .notDetermined) },
       widgetInput: { _, codes, amount in WidgetInput(codes: codes, amount: amount) },
       refreshRates: { _ in throw CocoaError(.fileReadUnknown) },
       refreshLocalCurrency: {}, now: { now })
@@ -103,9 +102,13 @@ import WidgetsUI
     let now = Date.now
     let location = WidgetLocation(country: "CZ", currency: "CZK", updatedAt: now)
     let rates = rates
+    let localReads = Mutex(0)
     let dependencies = WidgetTimelineDependencies(
-      input: { ConverterState() }, rates: { rates }, location: { location },
-      locationStatus: { .available },
+      input: { ConverterState() }, rates: { rates },
+      localSnapshot: {
+        localReads.withLock { $0 += 1 }
+        return (location, .available)
+      },
       widgetInput: { _, codes, amount in WidgetInput(codes: codes, amount: amount) },
       refreshRates: { _ in RefreshResult(snapshot: rates, warning: nil) },
       refreshLocalCurrency: {}, now: { now })
@@ -114,6 +117,7 @@ import WidgetsUI
     let provider = SuiteTimeline<AnchorSettings>(
       kind: "CurrencyPocketRate", dependencies: dependencies)
     let timeline = provider.timeline(starting: provider.entry(settings))
+    #expect(localReads.withLock { $0 } == 1)
     #expect(timeline.entries.count == 2)
     #expect(timeline.entries[0].spec.localIsStale == false)
     #expect(timeline.entries[1].date == now.addingTimeInterval(86400))
