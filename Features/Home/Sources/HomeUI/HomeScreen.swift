@@ -565,14 +565,19 @@ struct HomeScreen: View {
       AppHaptics.play(.success)
     }
     .disabled(value == nil)
-    Text(
-      CurrencyDisplay.details(
-        model.snapshot, from: model.input.source, to: code, locale: locale))
-    Button(.Converter.remove, systemImage: "minus.circle", role: .destructive) {
+    Button(role: .destructive) {
       withAnimation(motion) {
         if model.withFeedback({ model.removeDestinations([row.id]) }) {
           AppHaptics.play(.delete)
         }
+      }
+    } label: {
+      Label {
+        Text(.Converter.remove)
+      } icon: {
+        Image(
+          uiImage: UIImage(systemName: "trash")?
+            .withTintColor(.systemRed, renderingMode: .alwaysOriginal) ?? UIImage())
       }
     }
   }
