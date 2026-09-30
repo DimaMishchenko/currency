@@ -108,6 +108,10 @@ enum HistoryWidgetRange: String, AppEnum, CaseIterable {
     }
   }
 
+  func supported(for pair: HistoryWidgetPair) -> Self {
+    self == .day && !pair.supportsIntradayHistory ? .month : self
+  }
+
   static func available(for pair: HistoryWidgetPair) -> [Self] {
     pair.supportsIntradayHistory ? allCases : allCases.filter { $0 != .day }
   }
@@ -134,6 +138,14 @@ struct HistoryRangeOptionsProvider: DynamicOptionsProvider {
   @IntentParameterDependency<HistorySettings>(\.$base, \.$comparison)
   var settings: IntentProjection<HistorySettings>?
 
+  func defaultResult() async -> HistoryWidgetRange? {
+    let selected = settings?.range ?? .month
+    let pair = HistorySettings.resolvePair(
+      input: readInput(), base: settings?.base, comparison: settings?.comparison,
+      localCurrency: readLocalCurrency())
+    return selected.supported(for: pair)
+  }
+
   func results() async throws -> [HistoryWidgetRange] {
     HistoryWidgetRange.available(
       for: HistorySettings.resolvePair(
@@ -159,8 +171,12 @@ struct HistorySettings: WidgetConfigurationIntent {
 
   @Parameter(
     title: LocalizedStringResource("historyRange", defaultValue: "Range", table: "Widgets"),
-    default: .month, optionsProvider: HistoryRangeOptionsProvider())
-  var range: HistoryWidgetRange
+    optionsProvider: HistoryRangeOptionsProvider())
+  var range: HistoryWidgetRange?
+
+  init() {
+    range = .month
+  }
 
   static var parameterSummary: some ParameterSummary {
     Summary("1D refreshes hourly where available; other ranges daily.", table: "Widgets") {
@@ -177,7 +193,7 @@ struct HistorySettings: WidgetConfigurationIntent {
   }
 
   func effectiveRange(for pair: HistoryWidgetPair) -> HistoryRange {
-    range == .day && !pair.supportsIntradayHistory ? .month : range.range
+    (range ?? .month).supported(for: pair).range
   }
 
   func pair(input: ConverterState, localCurrency: String? = nil) -> HistoryWidgetPair {

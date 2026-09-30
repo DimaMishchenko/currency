@@ -168,6 +168,33 @@ import Widgets
     #expect(settings.availableRanges(input: input) == fiatRanges)
   }
 
+  @Test func rangeDefaultsAndFallbackOnlyReplaceUnsupportedDay() async throws {
+    let settings = HistorySettings()
+    #expect(settings.range == .month)
+    #expect(
+      await HistoryRangeOptionsProvider(readInput: { ConverterState() }).defaultResult() == .month)
+    let input = ConverterState()
+    let pairs = [
+      ("BTC", "EUR"), ("BTC", "USD"), ("USD", "BTC"), ("ETH", "BTC"),
+      ("EUR", "USD"), ("BTC", "CZK"), ("BTC", "@local")
+    ]
+    for (base, quote) in pairs {
+      settings.base = HistoryCurrency(base)
+      settings.comparison = HistoryCurrency(quote)
+      let pair = settings.pair(input: input)
+      for selected in HistoryWidgetRange.allCases {
+        settings.range = selected
+        let expected: HistoryWidgetRange =
+          selected == .day && !pair.supportsIntradayHistory ? .month : selected
+        #expect(selected.supported(for: pair) == expected)
+        #expect(settings.effectiveRange(for: pair) == expected.range)
+        #expect(settings.range == selected)
+      }
+      settings.range = nil
+      #expect(settings.effectiveRange(for: pair) == .month)
+    }
+  }
+
   @Test func sharedPickerIncludesLocalAndResolvesItForHistory() async throws {
     let query = HistoryCurrencyQuery(
       defaultID: HistoryCurrency.appFirst, readInput: { ConverterState() })
