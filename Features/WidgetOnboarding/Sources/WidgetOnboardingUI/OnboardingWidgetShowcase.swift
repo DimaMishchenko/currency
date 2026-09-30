@@ -18,7 +18,7 @@ public struct OnboardingWidgetShowcase: View {
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(\.dynamicTypeSize) private var textSize
   @State private var page: WidgetShowcaseKind? = .calculator
-  private let featured: [WidgetShowcaseKind] = [.calculator, .board, .cash]
+  private let featured: [WidgetShowcaseKind] = [.calculator, .history, .board]
   @State private var families: [WidgetShowcaseKind: WidgetFamily] = [:]
 
   /// Creates a personalized showcase and continues into the installation guide when requested.
@@ -71,8 +71,6 @@ public struct OnboardingWidgetShowcase: View {
     .navigationDestination(isPresented: $guideRequested) {
       WidgetPresentation {
         WidgetTutorial(kind: selected, family: family, continuation: true) {
-          // The host crossfades the entire navigation stack into its finale.
-          // Keep the tutorial visible until that transition removes this scene.
           onGuideFinished()
         }
       }
@@ -134,7 +132,6 @@ public struct OnboardingWidgetShowcase: View {
       .frame(maxWidth: 300, minHeight: 44)
       .accessibilityIdentifier("onboarding.widgetFamily")
     } else {
-      // Reserve the control row so paging between widgets keeps the composition stable.
       Color.clear.frame(height: 44).accessibilityHidden(true)
     }
   }
@@ -162,7 +159,6 @@ public struct OnboardingWidgetShowcase: View {
   }
 }
 
-/// Keeps one isolated editor alive while the same widget changes family or rate coverage.
 private struct OnboardingWidgetCard: View {
   let kind: WidgetShowcaseKind
   let family: WidgetFamily
@@ -217,7 +213,6 @@ private struct OnboardingWidgetCard: View {
         codes: configuration.codes, amount: configuration.input.amount,
         snapshot: configuration.snapshot, state: $state)
     } else if kind == .icon {
-      // Retain the live production layout for every personalized currency count.
       AnimatedWidgetFamilyPreview(
         kind: kind, family: family, maximumWidth: width, availableHeight: availableHeight,
         codes: configuration.codes, amount: configuration.input.amount,
@@ -238,8 +233,6 @@ private struct OnboardingWidgetCard: View {
 
 extension OnboardingWidgetConfiguration {
   func accessibilitySummary(family: WidgetFamily) -> String {
-    // Cash, Pocket and Mental use their own reference amounts and approximation rules.
-    // Announce the configuration without claiming the app's amount is shown by every layout.
     let currencies = codes.map { "\(CurrencyDisplay.name($0)), \($0)" }.joined(separator: "; ")
     return "\(family.showcaseTitle). \(currencies)"
   }

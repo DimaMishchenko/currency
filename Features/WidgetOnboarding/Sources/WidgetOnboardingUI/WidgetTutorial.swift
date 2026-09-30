@@ -460,7 +460,6 @@ struct WidgetTutorial: View {
   }
 }
 
-/// An intentional crop of the Home Screen, assembled from separate native pieces.
 private struct MiniHomeScreen: View {
   let kind: WidgetShowcaseKind
   let family: WidgetFamily
@@ -742,8 +741,10 @@ private struct MiniHomeScreen: View {
         .font(.system(size: 13, design: .rounded)).padding(12)
         .background(.quaternary, in: .rect(cornerRadius: 12))
         HStack {
-          Image(systemName: "equal").font(.title2).padding(8)
-            .background(.quaternary, in: .rect(cornerRadius: 12))
+          Image("CurrencyAppIcon", bundle: .module)
+            .resizable()
+            .frame(width: 40, height: 40)
+            .clipShape(.rect(cornerRadius: 12))
           Text("Currency"); Spacer(); Image(systemName: "chevron.right")
         }
         .font(.system(size: 14, weight: .medium, design: .rounded))
