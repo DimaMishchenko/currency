@@ -8,6 +8,7 @@ import SwiftUI
 struct ManageCurrencies: View {
   let model: HomeModel
   @Environment(\.dismiss) private var dismiss
+  @State private var editMode: EditMode = .inactive
   var body: some View {
     NavigationStack {
       List {
@@ -54,10 +55,12 @@ struct ManageCurrencies: View {
           Text(warning).font(AppStyle.font(.caption)).foregroundStyle(.secondary).padding()
         }
       }
-      .environment(\.editMode, .constant(.active))
       .navigationTitle(.Converter.manageCurrencies)
       .navigationBarTitleDisplayMode(.large)
       .toolbar {
+        ToolbarItem(placement: .topBarLeading) {
+          EditButton()
+        }
         ToolbarItem(placement: .topBarTrailing) {
           Button(.Converter.close, systemImage: "xmark") {
             AppHaptics.play(.action); dismiss()
@@ -66,5 +69,6 @@ struct ManageCurrencies: View {
         }
       }
     }
+    .environment(\.editMode, $editMode)
   }
 }

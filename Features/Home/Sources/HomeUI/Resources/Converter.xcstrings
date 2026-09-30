@@ -365,7 +365,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Drag to reorder. Your widgets follow the same order."
+            "value": "Swipe to remove. Tap Edit to reorder. Your widgets follow the same order."
           }
         }
       }
