@@ -26,6 +26,8 @@ jobs:
         run: for script in Scripts/CI/*.sh; do bash -n "$script"; done
       - name: Test CI skip rules
         run: python3 Scripts/CI/test_skip_rules.py
+      - name: Test TestFlight notes
+        run: python3 Scripts/CI/test_testflight_notes.py
       - name: Record release decision
         if: github.event_name == 'push'
         uses: actions/upload-artifact@v7

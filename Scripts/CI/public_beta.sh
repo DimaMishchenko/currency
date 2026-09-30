@@ -133,6 +133,7 @@ jq -e '.data[0].attributes | [.contactFirstName, .contactLastName, .contactEmail
   all(.[]; type == "string" and length > 0)' "$workdir/review-details.json" > /dev/null \
   || fail 'Complete the beta review contact name, email, and phone in App Store Connect → TestFlight → Test Information.'
 
+notes=$(python3 Scripts/CI/testflight_notes.py --read "$(dirname "$1")/CurrencyTestNotes.txt")
 flags=(--notify)
 if [[ "$state" == READY_FOR_BETA_SUBMISSION ]]; then
   # This schedules notification after approval; it does not notify unapproved builds.
@@ -140,7 +141,7 @@ if [[ "$state" == READY_FOR_BETA_SUBMISSION ]]; then
   flags=(--submit --confirm)
 fi
 publish=(asc publish testflight --app "$ASC_APP_ID" --build-id "$build_id" --group "$group_id"
-  --test-notes 'Please test currency conversion, currency selection, rate refresh, and Home Screen widgets. Report unexpected results or layout issues through TestFlight.'
+  --test-notes "$notes"
   --locale en-US "${flags[@]}" --output json)
 if [[ "$state" == READY_FOR_BETA_SUBMISSION ]] && jq -e --arg id "$group_id" 'any(.groups[]; .id == $id)' "$workdir/membership.json" > /dev/null; then
   # The previous attempt may have assigned the group before submission failed.
