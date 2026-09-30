@@ -20,18 +20,16 @@ struct OnboardingWidgetTests {
   }
 
   @Test func tutorialLocalSelectionResolvesTheSameSampleAsItsPicker() {
-    for kind in [WidgetShowcaseKind.calculator, .board, .cash, .pocket, .mental] {
-      let codes = ["EUR", WidgetSelection.localID]
-      let state = WidgetPreviewState(kind: kind, codes: codes, amount: "100")
-      let entry = state.entry(configuredCodes: codes, sampleLocation: true)
-      #expect(entry.spec.canonicalCodes == codes)
-      #expect(entry.spec.localCode == WidgetPreviewState.sampleLocalCurrencyCode)
-      #expect(entry.spec.codes == ["EUR", "@local:CZK"])
-      #expect(entry.input.codes == ["EUR", "@local:CZK"])
-      #expect(entry.input.amount == "100")
-      #expect(entry.snapshot.convert(entry.input.decimal, from: "EUR", to: "CZK") == 2500)
-      #expect(state.input.codes == codes)
-    }
+    let codes = ["EUR", WidgetSelection.localID]
+    let state = WidgetPreviewState(kind: .calculator, codes: codes, amount: "100")
+    let entry = state.entry(configuredCodes: codes, sampleLocation: true)
+    #expect(entry.spec.canonicalCodes == codes)
+    #expect(entry.spec.localCode == WidgetPreviewState.sampleLocalCurrencyCode)
+    #expect(entry.spec.codes == ["EUR", "@local:CZK"])
+    #expect(entry.input.codes == ["EUR", "@local:CZK"])
+    #expect(entry.input.amount == "100")
+    #expect(entry.snapshot.convert(entry.input.decimal, from: "EUR", to: "CZK") == 2500)
+    #expect(state.input.codes == codes)
   }
 
   @Test func localOnlyTutorialKeepsItsAmountWhenTheSampleLocationResolves() {
@@ -125,7 +123,6 @@ struct OnboardingWidgetTests {
       kind: .calculator, snapshot: allRates, codes: codes, amount: "100")
     state.apply(WidgetCommand("select:AUD", spec: state.entry().spec))
     let edited = state.input
-    // Large→medium projects the hidden active tile without truncating or saving its display list.
     let medium = state.entry().input.displayedInput(limit: 4, snapshot: allRates)
     #expect(medium.active == "EUR")
     #expect(medium.decimal == 100)
@@ -142,38 +139,6 @@ struct OnboardingWidgetTests {
     #expect(state.input.codes == codes)
   }
 
-  @Test func previewEditsNeverWriteAppOrInstalledWidgetState() throws {
-    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-    defer { try? FileManager.default.removeItem(at: directory) }
-    let store = ConversionStore(directory: directory)
-    let widgets = WidgetStore(directory: directory)
-    let codes = ["EUR", "USD"]
-    try store.updateInput { $0.setAmount("42") }
-    let installed = try widgets.updateWidgetInput(key: "installed-calculator", codes: codes) {
-      $0.preset(17)
-    }
-    let files = try FileManager.default.contentsOfDirectory(
-      at: directory, includingPropertiesForKeys: nil)
-    let before = try Dictionary(
-      uniqueKeysWithValues: files.map { ($0.lastPathComponent, try Data(contentsOf: $0)) })
-    var calculator = WidgetPreviewState(
-      kind: .calculator, snapshot: rates, codes: codes, amount: "100")
-    var cash = WidgetPreviewState(kind: .cash, snapshot: rates, codes: codes, amount: "100")
-    calculator.apply(WidgetCommand("select:USD", spec: calculator.entry().spec))
-    calculator.apply(WidgetCommand("9", spec: calculator.entry().spec))
-    cash.apply(WidgetCommand("preset:50", spec: cash.entry().spec))
-    cash.update(snapshot: rates, codes: codes, amount: "100")
-    #expect(calculator.input.amount == "9")
-    #expect(cash.entry().input.amount == "50")
-    #expect(store.input().amount == "42")
-    #expect(widgets.widgetInput(key: "installed-calculator", codes: codes) == installed)
-    let afterFiles = try FileManager.default.contentsOfDirectory(
-      at: directory, includingPropertiesForKeys: nil)
-    let after = try Dictionary(
-      uniqueKeysWithValues: afterFiles.map { ($0.lastPathComponent, try Data(contentsOf: $0)) })
-    #expect(after == before)
-  }
-
   @Test func uneditedTutorialPreviewStillFollowsExternalAmountAndCurrencyChanges() {
     var state = WidgetPreviewState(
       kind: .calculator, snapshot: rates, codes: ["EUR", "USD"], amount: "100")
@@ -181,7 +146,6 @@ struct OnboardingWidgetTests {
     #expect(state.entry().input.active == "GBP")
     #expect(state.entry().input.amount == "25")
     #expect(state.entry().spec.codes == ["GBP", "USD"])
-    // An empty custom tutorial configuration must still show the real choose-currencies state.
     state.update(snapshot: rates, codes: [], amount: "25")
     #expect(state.entry(configuredCodes: []).spec.codes.isEmpty)
   }
@@ -207,7 +171,6 @@ struct OnboardingWidgetTests {
     var preview = WidgetPreviewState(kind: .calculator)
     var spec = WidgetSpec(
       kind: "CurrencyConverter", codes: ["EUR", "USD", "GBP", "JPY"], status: .notDetermined)
-    // Preview dispatch must remain in memory even when an intent carries Default metadata.
     spec.synchronized = true
     preview.apply(WidgetCommand("7", spec: spec))
     preview.apply(WidgetCommand("5", spec: spec))

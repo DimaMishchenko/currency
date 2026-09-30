@@ -258,13 +258,16 @@ final class NativeIntentTests: XCTestCase {
   private func launchReadyApp() -> XCUIApplication {
     let app = XCUIApplication(bundleIdentifier: "com.dimasike.currency")
     app.launch()
+    let primary = app.buttons["onboarding.primary"]
+    let home = app.buttons["converter.widgets"]
+    if !primary.exists && home.exists { return app }
     for _ in 0..<6 {
-      let primary = app.buttons["onboarding.primary"]
-      guard primary.waitForExistence(timeout: 1) else { break }
+      guard primary.waitForExistence(timeout: 5) else { break }
       let later = app.buttons["onboarding.later"]
       if later.exists { later.tap() } else { primary.tap() }
     }
-    XCTAssertFalse(app.buttons["onboarding.primary"].exists)
+    XCTAssertTrue(primary.waitForNonExistence(timeout: 5))
+    XCTAssertTrue(home.exists || home.waitForExistence(timeout: 5))
     return app
   }
 

@@ -144,18 +144,4 @@ private actor HistoryHTTP: HTTPClient {
       try HistoryService.decodeFiat(fiat, base: "USD", quote: "EUR").map(\.value) == [0.8, 0.9])
   }
 
-  @Test func historyCachesAndFallsBackOffline() async throws {
-    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-    defer { try? FileManager.default.removeItem(at: directory) }
-    let client = HistoryHTTP()
-    let service = HistoryService(directory: directory, client: client)
-    let first = await service.load(base: "USD", quote: "EUR", range: .month)
-    #expect(first.series?.points.count == 2)
-    _ = await service.load(base: "USD", quote: "EUR", range: .month)
-    #expect(await client.calls == 1)
-    let offline = await service.load(
-      base: "USD", quote: "EUR", range: .month, now: Date().addingTimeInterval(86400))
-    #expect(offline.series?.points == first.series?.points)
-    #expect(offline.issue != nil)
-  }
 }

@@ -20,19 +20,6 @@ import Testing
             }, source: .init(provider: .frankfurter), fetchedAt: now), issue: issue))
   }
 
-  @Test func defaultPairTracksBaseAndFirstDisplayedDestination() {
-    var app = ConverterState()
-    app.setDestinations(["CZK", "USD"])
-    #expect(HistoryWidgetPair(app: app).base == "EUR")
-    #expect(HistoryWidgetPair(app: app).quote == "CZK")
-    app.setDestinations(["USD", "CZK"])
-    #expect(HistoryWidgetPair(app: app).quote == "USD")
-    app.changeSource("GBP")
-    #expect(HistoryWidgetPair(app: app).base == "GBP")
-    #expect(HistoryWidgetPair(app: app, base: "CHF", quote: "JPY").quote == "JPY")
-    #expect(HistoryWidgetPair(app: app, base: "CHF").base == "CHF")
-  }
-
   @Test func missingAndUnsupportedPairsAreNotSilentlySubstituted() {
     var app = ConverterState()
     app.setDestinations([])

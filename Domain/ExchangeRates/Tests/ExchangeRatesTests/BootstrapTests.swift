@@ -5,11 +5,9 @@ import Testing
 
 private struct BootstrapProvider: RateProvider {
   var quotes: [String: ExchangeRate] = [:]
-  var delay: Duration = .zero
   var error: URLError.Code?
 
   func fetch() async throws -> [String: ExchangeRate] {
-    try await Task.sleep(for: delay)
     if let error { throw URLError(error) }
     return quotes
   }
@@ -59,11 +57,16 @@ private func bootstrapQuotes(_ usd: Decimal = 2) -> [String: ExchangeRate] {
   }
 
   @Test func completionOrderDoesNotChangePrimaryPrecedence() async {
+    let daily = PendingBootstrapProvider(quotes: bootstrapQuotes(2))
     let service = RateService(
-      fiat: BootstrapProvider(quotes: bootstrapQuotes(3)),
-      daily: BootstrapProvider(quotes: bootstrapQuotes(2), delay: .milliseconds(20)), crypto: nil)
-    var final: BootstrapUpdate?
-    for await update in await service.bootstrap(previous: RateSnapshot()) { final = update }
+      fiat: BootstrapProvider(quotes: bootstrapQuotes(3)), daily: daily, crypto: nil)
+    var updates = await service.bootstrap(previous: RateSnapshot()).makeAsyncIterator()
+    let first = await updates.next()
+    #expect(first?.snapshot.quotes["USD"]?.value == 3)
+    #expect(first?.isFinal == false)
+    await daily.finish()
+    var final = first
+    while let update = await updates.next() { final = update }
     #expect(final?.isFinal == true)
     #expect(final?.snapshot.quotes["USD"]?.value == 3)
   }
@@ -108,7 +111,6 @@ private func bootstrapQuotes(_ usd: Decimal = 2) -> [String: ExchangeRate] {
       fiat: BootstrapProvider(quotes: bootstrapQuotes()), daily: BootstrapProvider(),
       crypto: crypto)
     var updates = await service.bootstrap(previous: saved).makeAsyncIterator()
-    // Both daily providers finish while crypto remains explicitly suspended.
     for _ in 0..<2 {
       let update = await updates.next()
       #expect(update?.isFinal == false)
