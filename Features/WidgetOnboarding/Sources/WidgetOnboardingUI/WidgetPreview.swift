@@ -99,6 +99,7 @@ struct WidgetPreview: View {
   var amount: String? = nil
   var synchronized = false
   var calculatorProgress: CGFloat? = nil
+  var historyWidth: CGFloat? = nil
   let snapshot: RateSnapshot
   let converterInput: ConverterState?
   @State private var localState: WidgetPreviewState
@@ -174,7 +175,7 @@ struct WidgetPreview: View {
     )
     .padding(kind == .icon || kind == .history || family == .accessoryInline ? 0 : 12)
     .frame(
-      width: family.previewSize.width,
+      width: historyWidth ?? family.previewSize.width,
       height: calculatorProgress.map { CalculatorPreviewTransition(progress: $0).canvasHeight }
         ?? family.previewSize.height
     )
@@ -245,6 +246,29 @@ struct AnimatedCalculatorPreview: View, @preconcurrency Animatable {
       preview
       .scaleEffect(width / 348, anchor: .topLeading)
       .frame(width: width, height: height * width / 348, alignment: .topLeading)
+      .transaction {
+        $0.animation = nil; $0.disablesAnimations = true
+      }
+  }
+}
+
+struct AnimatedHistoryPreview: View, @preconcurrency Animatable {
+  let family: WidgetFamily
+  var canvasWidth: CGFloat
+  var scale: CGFloat
+
+  var animatableData: AnimatablePair<CGFloat, CGFloat> {
+    get { AnimatablePair(canvasWidth, scale) }
+    set { canvasWidth = newValue.first; scale = newValue.second }
+  }
+
+  var body: some View {
+    var preview = WidgetPreview(kind: .history, family: family)
+    preview.historyWidth = canvasWidth
+    return
+      preview
+      .scaleEffect(scale)
+      .frame(width: canvasWidth * scale, height: family.previewSize.height * scale)
       .transaction {
         $0.animation = nil; $0.disablesAnimations = true
       }

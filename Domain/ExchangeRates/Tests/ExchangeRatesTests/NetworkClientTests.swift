@@ -7,14 +7,12 @@ private final class ControlledProtocol: URLProtocol, @unchecked Sendable {
   final class State: @unchecked Sendable {
     let lock = NSLock()
     var requests: [URLRequest] = []
-    var starts: [URL: ContinuousClock.Instant] = [:]
     var active: [ControlledProtocol] = []
     var stopped = 0
 
     func start(_ loader: ControlledProtocol) {
       lock.withLock {
         requests.append(loader.request)
-        if let url = loader.request.url { starts[url] = ContinuousClock().now }
         active.append(loader)
       }
     }
@@ -28,10 +26,6 @@ private final class ControlledProtocol: URLProtocol, @unchecked Sendable {
 
     func count(_ url: URL) -> Int {
       lock.withLock { requests.filter { $0.url == url }.count }
-    }
-
-    func startTime(_ url: URL) -> ContinuousClock.Instant? {
-      lock.withLock { starts[url] }
     }
 
     func reply(_ url: URL, status: Int = 200) {
@@ -76,7 +70,22 @@ private final class ControlledProtocol: URLProtocol, @unchecked Sendable {
     try #require(URL(string: "https://\(host)\(path)?request=\(UUID().uuidString)"))
   }
 
-  @Test func separateTransportsPaceCandlesWhileOtherEndpointsComplete() async throws {
+  @Test func concurrentCandleAdmissionsStayAtLeast150MillisecondsApart() async throws {
+    let pacer = CandlePacer()
+    let urls = try [
+      url(), url(path: "/products/ETH-USD/candles"), url(path: "/products/BTC-EUR/candles")
+    ]
+    let tasks = urls.map { url in Task { try await pacer.acquire(for: url) } }
+    defer { for task in tasks { task.cancel() } }
+    var starts: [ContinuousClock.Instant] = []
+    for task in tasks { starts.append(try #require(try await task.value)) }
+    starts.sort()
+    for (earlier, later) in zip(starts, starts.dropFirst()) {
+      #expect(earlier.duration(to: later) >= .milliseconds(150))
+    }
+  }
+
+  @Test func separateTransportsLoadCandlesWhileOtherEndpointsComplete() async throws {
     let (firstClient, firstSession) = setup()
     let (secondClient, secondSession) = setup()
     defer {
@@ -108,13 +117,6 @@ private final class ControlledProtocol: URLProtocol, @unchecked Sendable {
       ControlledProtocol.state.count(secondURL) == 1
         && ControlledProtocol.state.count(thirdURL) == 1
     }
-    let starts = try [firstURL, secondURL, thirdURL]
-      .map {
-        try #require(ControlledProtocol.state.startTime($0))
-      }
-      .sorted()
-    #expect(starts[0].duration(to: starts[1]) >= .milliseconds(100))
-    #expect(starts[1].duration(to: starts[2]) >= .milliseconds(100))
     for requestURL in [firstURL, secondURL, thirdURL] {
       ControlledProtocol.state.reply(requestURL)
     }

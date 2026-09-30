@@ -207,6 +207,12 @@ private struct OnboardingWidgetCard: View {
       )
       .animation(
         reduceMotion || scenePhase != .active ? nil : .easeInOut(duration: 0.64), value: family)
+    } else if kind == .history {
+      let natural = family.previewSize
+      let scale = min(width / natural.width, availableHeight / natural.height, 1.08)
+      AnimatedHistoryPreview(family: family, canvasWidth: natural.width, scale: scale)
+        .animation(
+          reduceMotion || scenePhase != .active ? nil : .smooth(duration: 0.55), value: family)
     } else if kind == .board {
       AnimatedWidgetFamilyPreview(
         kind: .board, family: family, maximumWidth: width, availableHeight: availableHeight,

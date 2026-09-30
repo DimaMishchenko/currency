@@ -47,22 +47,25 @@ public struct NetworkClient: HTTPClient {
   }
 }
 
-private actor CandlePacer {
+actor CandlePacer {
   static let shared = CandlePacer()
   private let clock = ContinuousClock()
   private var lastStart: ContinuousClock.Instant?
 
-  func acquire(for url: URL) async throws {
+  @discardableResult
+  func acquire(for url: URL) async throws -> ContinuousClock.Instant? {
     let path = url.path.split(separator: "/", omittingEmptySubsequences: false)
     guard
       url.host == "api.exchange.coinbase.com", path.count == 4, path[0].isEmpty,
       path[1] == "products", !path[2].isEmpty, path[3] == "candles"
-    else { return }
+    else { return nil }
     while let lastStart, clock.now < lastStart.advanced(by: .milliseconds(150)) {
       try await clock.sleep(until: lastStart.advanced(by: .milliseconds(150)))
     }
     try Task.checkCancellation()
-    lastStart = clock.now
+    let start = clock.now
+    lastStart = start
+    return start
   }
 }
 
