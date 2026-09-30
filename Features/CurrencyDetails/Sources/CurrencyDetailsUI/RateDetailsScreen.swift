@@ -5,13 +5,16 @@ import ExchangeRates
 import ExchangeRatesUI
 import SwiftUI
 
-/// Current rate provenance and on-demand historical charts for a currency.
 struct RateDetailsScreen: View {
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(\.locale) private var locale
   @ScaledMetric(relativeTo: .largeTitle) private var amountSize = 48
-  @ScaledMetric(relativeTo: .caption2) private var axisWidth = 52
+  @ScaledMetric(relativeTo: .title2) private var titleBaselineOffset =
+    (UIFont.systemFont(ofSize: 22).ascender + UIFont.systemFont(ofSize: 22).descender) / 2
+  @ScaledMetric(relativeTo: .caption2) private var scaledAxisWidth = 44
+  private var axisWidth: CGFloat { min(scaledAxisWidth, 64) }
+  private let axisLabelSpacing: CGFloat = 4
   @Bindable var model: CurrencyDetailsModel
   private var code: String { model.input.code }
   private var reference: String { model.input.reference }
@@ -22,8 +25,6 @@ struct RateDetailsScreen: View {
   private var message: LocalizedStringResource? { RateMessages.history(model.issue) }
   private var loading: Bool { model.phase != .loaded }
   @State private var reveal: CGFloat = 0
-  @State private var titleHeight: CGFloat = 60
-  @State private var compactTitle = false
   private var currencyName: String { CurrencyDisplay.name(code, locale: locale) }
 
   @State private var selectedDate: Date?
@@ -45,27 +46,13 @@ struct RateDetailsScreen: View {
     return max(0, low - padding)...(high + padding)
   }
 
-  /// The rate details and history chart.
   var body: some View {
     NavigationStack {
       ScrollView {
         VStack(alignment: .leading, spacing: AppStyle.Space.section) {
-          HStack(spacing: AppStyle.Space.medium) {
-            CurrencyIcon(code, size: 36)
-            VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
-              Text(currencyName).font(AppStyle.font(.title2, weight: .semibold))
-              Text(.Details.unitConversion(code, quote)).font(AppStyle.font(.subheadline))
-                .foregroundStyle(.secondary)
-            }
-          }
-          .accessibilityElement(children: .combine)
-          .accessibilityAddTraits(.isHeader)
-          .onGeometryChange(for: CGFloat.self) {
-            $0.size.height
-          } action: {
-            titleHeight = $0
-          }
           VStack(alignment: .leading, spacing: AppStyle.Space.small) {
+            Text(.Details.unitConversion(code, quote))
+              .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
             Text(rateLabel(snapshot.convert(1, from: code, to: quote)))
               .font(.system(size: amountSize, weight: .light, design: .rounded)).monospacedDigit()
               .lineLimit(1).minimumScaleFactor(0.4)
@@ -103,28 +90,38 @@ struct RateDetailsScreen: View {
         }
         .padding(AppStyle.Space.large)
       }
-      .onScrollGeometryChange(for: Bool.self) { geometry in
-        geometry.contentOffset.y + geometry.contentInsets.top > titleHeight + AppStyle.Space.large
-      } action: { _, collapsed in
-        compactTitle = collapsed
-      }
-      .navigationBarTitleDisplayMode(.inline)
-      .toolbar {
-        ToolbarItem(placement: .principal) {
-          HStack(spacing: AppStyle.Space.small) {
-            CurrencyIcon(code, size: 20).accessibilityHidden(true)
-            Text(dynamicTypeSize.isAccessibilitySize ? code : currencyName)
-              .font(AppStyle.font(.headline)).lineLimit(1)
+      .toolbar(.hidden, for: .navigationBar)
+      .safeAreaInset(edge: .top, spacing: 0) {
+        HStack(alignment: .firstTextBaseline, spacing: AppStyle.Space.medium) {
+          HStack(alignment: .firstTextBaseline, spacing: AppStyle.Space.medium) {
+            CurrencyIcon(code, size: 36).accessibilityHidden(true)
+              .alignmentGuide(.firstTextBaseline) { $0.height / 2 }
+            Text(currencyName)
+              .font(AppStyle.font(.title2, weight: .semibold))
+              .fixedSize(horizontal: false, vertical: true)
+              .frame(maxWidth: .infinity, alignment: .leading)
+              .alignmentGuide(.firstTextBaseline) {
+                $0[.firstTextBaseline] - titleBaselineOffset
+              }
           }
-          .opacity(compactTitle ? 1 : 0)
-          .accessibilityHidden(!compactTitle)
-        }
-        ToolbarItem(placement: .topBarTrailing) {
+          .accessibilityElement(children: .ignore)
+          .accessibilityLabel(currencyName)
+          .accessibilityAddTraits(.isHeader)
           Button(.Details.close, systemImage: "xmark") {
             AppHaptics.play(.action); dismiss()
           }
-          .labelStyle(.iconOnly).tint(nil)
+          .labelStyle(.iconOnly)
+          .font(AppStyle.font(.title2))
+          .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+          .frame(width: 44, height: 44)
+          .buttonStyle(.glass)
+          .buttonBorderShape(.circle)
+          .tint(nil)
+          .alignmentGuide(.firstTextBaseline) { $0.height / 2 }
         }
+        .padding(.horizontal, AppStyle.Space.large)
+        .padding(.vertical, AppStyle.Space.small)
+        .background(.background)
       }
       .onChange(of: range) { _, _ in AppHaptics.play(.selection) }
       .onChange(of: selected?.date) { _, _ in
@@ -141,7 +138,6 @@ struct RateDetailsScreen: View {
         if reduceMotion {
           reveal = 1
         } else {
-          // Let the accepted final domains lay out before revealing the plot.
           await Task.yield()
           guard !Task.isCancelled else { return }
           if model.issue == nil { AppHaptics.play(.chartReveal) }
@@ -154,7 +150,6 @@ struct RateDetailsScreen: View {
   private var historyContent: some View {
     VStack(alignment: .leading, spacing: AppStyle.Space.medium) {
       ZStack(alignment: .leading) {
-        // Real typography reserves enough space at every Dynamic Type size.
         VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
           Text(verbatim: "0.000000 \(quote)").font(AppStyle.font(.title3))
           Text(dayLabel(Date())).font(AppStyle.font(.caption))
@@ -179,7 +174,7 @@ struct RateDetailsScreen: View {
       Group {
         if loading {
           HistorySkeleton(
-            reduceMotion: reduceMotion, axisWidth: axisWidth,
+            reduceMotion: reduceMotion, axisWidth: axisWidth, axisLabelSpacing: axisLabelSpacing,
             singleDateLabel: dynamicTypeSize.isAccessibilitySize
           )
           .frame(height: 220)
@@ -223,10 +218,17 @@ struct RateDetailsScreen: View {
     .chartYAxis {
       AxisMarks(position: .trailing, values: .automatic(desiredCount: 4)) { value in
         AxisGridLine()
-        AxisValueLabel {
+        AxisValueLabel(horizontalSpacing: axisLabelSpacing) {
           if let number = value.as(Double.self) {
-            Text(number.formatted(.number.precision(.significantDigits(1...4)).locale(locale)))
-              .font(AppStyle.font(.caption2)).frame(width: axisWidth, alignment: .leading)
+            Text(
+              number.formatted(
+                .number.notation(dynamicTypeSize.isAccessibilitySize ? .scientific : .automatic)
+                  .precision(.significantDigits(1...4)).locale(locale))
+            )
+            .font(AppStyle.font(.caption2)).lineLimit(1).minimumScaleFactor(0.7)
+            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+            .frame(
+              width: dynamicTypeSize.isAccessibilitySize ? axisWidth : nil, alignment: .leading)
           }
         }
       }
@@ -246,7 +248,6 @@ struct RateDetailsScreen: View {
       GeometryReader { geometry in
         if let anchor = proxy.plotFrame {
           let plot = geometry[anchor]
-          // Keep native axes, selection and accessibility stable; reveal only the real line.
           Path { path in
             for (index, point) in series.points.enumerated() {
               if let x = proxy.position(forX: point.date), let y = proxy.position(forY: point.value)
@@ -347,23 +348,22 @@ struct RateDetailsScreen: View {
   }
 }
 
-/// Decorative geometry only; never supplied to Charts as historical observations.
 private struct HistorySkeleton: View {
   let reduceMotion: Bool
   let axisWidth: CGFloat
+  let axisLabelSpacing: CGFloat
   let singleDateLabel: Bool
   @State private var isVisible = false
 
   var body: some View {
     Chart {
-      // Keep the empty chart compatible with iOS 26 under Xcode 27's ViewBuilder inference.
       ChartContentBuilder.buildBlock()
     }
     .chartXScale(domain: 0.0...1.0).chartYScale(domain: 0.0...1.0)
     .chartYAxis {
       AxisMarks(position: .trailing, values: [0.0, 0.33, 0.66, 1.0]) { _ in
         AxisGridLine().foregroundStyle(.quaternary)
-        AxisValueLabel {
+        AxisValueLabel(horizontalSpacing: axisLabelSpacing) {
           Text("0.000").font(AppStyle.font(.caption2)).hidden()
             .frame(width: axisWidth, alignment: .leading)
             .overlay(alignment: .leading) {

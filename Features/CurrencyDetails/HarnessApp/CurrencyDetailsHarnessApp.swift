@@ -17,11 +17,18 @@ struct CurrencyDetailsHarnessApp: App {
     return arguments[index + 1]
   }
 
-  private var code: String { name == "crypto" ? "BTC" : "EUR" }
+  private var code: String {
+    switch name {
+    case "crypto": "BTC"
+    case "long-name": "BAM"
+    default: "EUR"
+    }
+  }
 
   private var snapshot: RateSnapshot {
     RateSnapshot(
       quotes: [
+        "BAM": ExchangeRate(1, published: "2026-09-19", source: .init(provider: .ecb)),
         "EUR": ExchangeRate(1, published: "2026-09-19", source: .init(provider: .ecb)),
         "USD": ExchangeRate(1.08, published: "2026-09-19", source: .init(provider: .ecb)),
         "BTC": ExchangeRate(0.000018, published: "2026-09-19", source: .init(provider: .coinbase))
