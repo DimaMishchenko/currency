@@ -309,9 +309,14 @@ struct WidgetPlayground: View {
               .onChange(of: family) { _, _ in AppHaptics.play(.transition) }
             }
             if kind == .icon {
-              Picker("Symbol", selection: $symbol) {
+              Picker(.WidgetOnboarding.symbol, selection: $symbol) {
                 ForEach(CurrencySymbol.allCases) { symbol in
-                  Label(symbol.title, systemImage: symbol.rawValue).tag(symbol)
+                  Label {
+                    Text(symbol.localizedTitle)
+                  } icon: {
+                    Image(systemName: symbol.rawValue)
+                  }
+                  .tag(symbol)
                 }
               }
               .pickerStyle(.menu)

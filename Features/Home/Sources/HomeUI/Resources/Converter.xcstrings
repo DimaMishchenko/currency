@@ -1,47 +1,749 @@
 {
   "sourceLanguage": "en",
   "strings": {
-    "historyTipTitle": {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "View rate history"}}}},
-    "historyTipMessage": {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "See how this exchange rate has changed over time."}}}},
-    "widgetsTipTitle": {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Explore widgets"}}}},
-    "widgetsTipMessage": {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Find widgets for your Home Screen and learn how to add them."}}}},
-    "settings": {"extractionState": "manual", "localizations": {"en": {"stringUnit": {"state": "translated", "value": "Settings"}}}},
-    "localCurrency": {
+    "historyTipTitle": {
       "extractionState": "manual",
-      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Local currency" } } }
-    },
-    "localCurrencyName": {
-      "extractionState": "manual",
-      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Local · %1$@" } } }
-    },
-    "localUnavailable": {
-      "extractionState": "manual",
-      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Local currency unavailable · Tap to retry" } } }
-    },
-    "localLastKnown": {
-      "extractionState": "manual",
-      "localizations": { "en": { "stringUnit": { "state": "translated", "value": "Last-known local currency · Tap to retry" } } }
-    },
-    "yourCurrenciesHeading": {
-      "extractionState": "manual",
-      "comment": "Converter interface: yourCurrenciesHeading.",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "YOUR CURRENCIES"
+            "value": "View rate history"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "查看汇率历史"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "レートの履歴を見る"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ver historial del cambio"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kursverlauf ansehen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voir l’historique du taux"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ver histórico da taxa"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "환율 내역 보기"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "查看匯率歷史"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visualizza la cronologia del tasso"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kur geçmişini görüntüle"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Посмотреть историю курса"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Переглянути історію курсу"
           }
         }
       }
     },
-    "reorderAccessibility": {
+    "historyTipMessage": {
       "extractionState": "manual",
-      "comment": "Converter interface: reorderAccessibility.",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Reorder or remove currencies"
+            "value": "See how this exchange rate has changed over time."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "查看此汇率随时间的变化。"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "為替レートの時間による変化を確認。"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consulta cómo ha variado este tipo de cambio con el tiempo."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sieh dir an, wie sich dieser Wechselkurs im Laufe der Zeit verändert hat."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Découvre comment ce taux de change a évolué au fil du temps."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Veja como esta taxa de câmbio mudou ao longo do tempo."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "시간에 따른 환율 변화를 확인하세요."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "查看此匯率隨時間的變化。"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scopri come è cambiato questo tasso nel tempo."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu döviz kurunun zaman içinde nasıl değiştiğini görün."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Узнайте, как этот курс менялся со временем."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дізнайтеся, як цей курс змінювався з часом."
+          }
+        }
+      }
+    },
+    "widgetsTipTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Explore widgets"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "探索小组件"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ウィジェットを見る"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Explorar widgets"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Widgets entdecken"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Explorer les widgets"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Explorar widgets"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "위젯 살펴보기"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "探索小工具"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esplora i widget"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Araç takımlarını keşfet"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыть виджеты"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Переглянути віджети"
+          }
+        }
+      }
+    },
+    "widgetsTipMessage": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find widgets for your Home Screen and learn how to add them."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "查找主屏幕小组件并了解添加方法。"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ホーム画面用のウィジェットを見つけ、追加方法を確認。"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Descubre widgets para tu pantalla de inicio y aprende a añadirlos."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finde Widgets für deinen Home-Bildschirm und erfahre, wie du sie hinzufügst."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Découvre des widgets pour ton écran d’accueil et apprends à les ajouter."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Encontre widgets para sua Tela de Início e aprenda a adicioná-los."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "홈 화면 위젯을 찾고 추가 방법을 알아보세요."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "尋找主畫面小工具並了解加入方法。"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trova widget per la schermata Home e scopri come aggiungerli."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ana Ekranınız için araç takımları bulun ve nasıl ekleneceğini öğrenin."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Найдите виджеты для экрана «Домой» и узнайте, как их добавить."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Знайдіть віджети для початкового екрана й дізнайтеся, як їх додати."
+          }
+        }
+      }
+    },
+    "settings": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设置"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajustes"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Einstellungen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réglages"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajustes"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "설정"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impostazioni"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ayarlar"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Настройки"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Параметри"
+          }
+        }
+      }
+    },
+    "localCurrency": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local currency"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当地货币"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "現地通貨"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moneda local"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lokale Währung"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Devise locale"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moeda local"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "현지 통화"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "當地貨幣"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valuta locale"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yerel para birimi"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Местная валюта"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Місцева валюта"
+          }
+        }
+      }
+    },
+    "localCurrencyName": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local · %1$@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当地 · %1$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "現地 · %1$@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local · %1$@"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lokal · %1$@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Locale · %1$@"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local · %1$@"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "현지 · %1$@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "當地 · %1$@"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Locale · %1$@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yerel · %1$@"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Местная · %1$@"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Місцева · %1$@"
+          }
+        }
+      }
+    },
+    "localUnavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local currency unavailable · Tap to retry"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当地货币不可用 · 轻点重试"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "現地通貨を利用できません · タップして再試行"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moneda local no disponible · Toca para reintentar"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lokale Währung nicht verfügbar · Tippen zum Wiederholen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Devise locale indisponible · Touche pour réessayer"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moeda local indisponível · Toque para tentar novamente"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "현지 통화 사용 불가 · 탭하여 재시도"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無法使用當地貨幣 · 點一下再試"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valuta locale non disponibile · Tocca per riprovare"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yerel para birimi kullanılamıyor · Yeniden denemek için dokunun"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Местная валюта недоступна · Нажмите для повтора"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Місцева валюта недоступна · Торкніться для повтору"
+          }
+        }
+      }
+    },
+    "localLastKnown": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last-known local currency · Tap to retry"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "上次确认的当地货币 · 轻点重试"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最後に確認した現地通貨 · タップして再試行"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Última moneda local conocida · Toca para reintentar"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zuletzt bekannte lokale Währung · Tippen zum Wiederholen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dernière devise locale connue · Touche pour réessayer"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Última moeda local conhecida · Toque para tentar novamente"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "마지막으로 확인한 현지 통화 · 탭하여 재시도"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "上次確認的當地貨幣 · 點一下再試"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ultima valuta locale nota · Tocca per riprovare"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Son bilinen yerel para birimi · Yeniden denemek için dokunun"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Последняя известная местная валюта · Нажмите для повтора"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Остання відома місцева валюта · Торкніться для повтору"
           }
         }
       }
@@ -55,41 +757,77 @@
             "state": "translated",
             "value": "Add currency"
           }
-        }
-      }
-    },
-    "connectToDownload": {
-      "extractionState": "manual",
-      "comment": "Converter interface: connectToDownload.",
-      "localizations": {
-        "en": {
+        },
+        "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Connect to download rates"
+            "value": "添加货币"
           }
-        }
-      }
-    },
-    "savedOffline": {
-      "extractionState": "manual",
-      "comment": "Converter interface: savedOffline.",
-      "localizations": {
-        "en": {
+        },
+        "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Saved rates · available offline"
+            "value": "通貨を追加"
           }
-        }
-      }
-    },
-    "appName": {
-      "extractionState": "manual",
-      "comment": "Converter interface: appName.",
-      "localizations": {
-        "en": {
+        },
+        "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Currency"
+            "value": "Añadir moneda"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Währung hinzufügen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter une devise"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adicionar moeda"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "통화 추가"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "加入貨幣"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aggiungi valuta"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Para birimi ekle"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавить валюту"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Додати валюту"
           }
         }
       }
@@ -103,6 +841,78 @@
             "state": "translated",
             "value": "Widgets"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小组件"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ウィジェット"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Widgets"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Widgets"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Widgets"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Widgets"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "위젯"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小工具"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Widget"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Araç takımları"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Виджеты"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Віджети"
+          }
         }
       }
     },
@@ -114,6 +924,78 @@
           "stringUnit": {
             "state": "translated",
             "value": "Refresh rates"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刷新汇率"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "レートを更新"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actualizar tipos de cambio"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kurse aktualisieren"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actualiser les taux"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Atualizar taxas"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "환율 갱신"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重新整理匯率"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aggiorna i tassi"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kurları yenile"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Обновить курсы"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Оновити курси"
           }
         }
       }
@@ -127,6 +1009,78 @@
             "state": "translated",
             "value": "Manage currencies"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "管理货币"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通貨を管理"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gestionar monedas"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Währungen verwalten"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gérer les devises"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gerenciar moedas"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "통화 관리"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "管理貨幣"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gestisci valute"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Para birimlerini yönet"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Управление валютами"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Керування валютами"
+          }
         }
       }
     },
@@ -139,29 +1093,77 @@
             "state": "translated",
             "value": "Options"
           }
-        }
-      }
-    },
-    "baseAmountHeading": {
-      "extractionState": "manual",
-      "comment": "Converter interface: baseAmountHeading.",
-      "localizations": {
-        "en": {
+        },
+        "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "BASE AMOUNT"
+            "value": "选项"
           }
-        }
-      }
-    },
-    "editing": {
-      "extractionState": "manual",
-      "comment": "Converter interface: editing.",
-      "localizations": {
-        "en": {
+        },
+        "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Editing"
+            "value": "オプション"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opciones"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optionen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Options"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opções"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "옵션"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選項"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opzioni"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seçenekler"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Параметры"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Опції"
           }
         }
       }
@@ -175,6 +1177,78 @@
             "state": "translated",
             "value": "Tap to edit this amount"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "轻点以编辑此金额"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "タップして金額を編集"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toca para editar este importe"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tippen, um diesen Betrag zu bearbeiten"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touche pour modifier ce montant"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toque para editar este valor"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "탭하여 금액 편집"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "點一下以編輯此金額"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tocca per modificare questo importo"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu tutarı düzenlemek için dokunun"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нажмите, чтобы изменить сумму"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Торкніться, щоб змінити суму"
+          }
         }
       }
     },
@@ -186,6 +1260,78 @@
           "stringUnit": {
             "state": "translated",
             "value": "Details & history"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "详情与历史"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "詳細と履歴"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detalles e historial"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Details und Verlauf"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Détails et historique"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detalhes e histórico"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "세부사항 및 내역"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "詳細資訊與歷史"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dettagli e cronologia"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ayrıntılar ve geçmiş"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сведения и история"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відомості та історія"
           }
         }
       }
@@ -199,6 +1345,78 @@
             "state": "translated",
             "value": "History"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "历史"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "履歴"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Historial"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verlauf"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Historique"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Histórico"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "내역"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "歷史"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cronologia"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geçmiş"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "История"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Історія"
+          }
         }
       }
     },
@@ -211,17 +1429,77 @@
             "state": "translated",
             "value": "Editing %@ amount"
           }
-        }
-      }
-    },
-    "useAsBase": {
-      "extractionState": "manual",
-      "comment": "Converter interface: useAsBase.",
-      "localizations": {
-        "en": {
+        },
+        "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Use as base"
+            "value": "正在编辑%@金额"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@の金額を編集中"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editando importe en %@"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Betrag in %@ bearbeiten"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modification du montant en %@"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editando valor em %@"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 금액 편집 중"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在編輯%@金額"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifica dell’importo in %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ tutarı düzenleniyor"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Редактирование суммы в %@"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Редагування суми в %@"
           }
         }
       }
@@ -235,6 +1513,78 @@
             "state": "translated",
             "value": "Copy amount"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拷贝金额"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "金額をコピー"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiar importe"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Betrag kopieren"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copier le montant"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiar valor"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "금액 복사"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拷貝金額"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copia l’importo"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tutarı kopyala"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скопировать сумму"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скопіювати суму"
+          }
         }
       }
     },
@@ -247,17 +1597,77 @@
             "state": "translated",
             "value": "Remove"
           }
-        }
-      }
-    },
-    "clear": {
-      "extractionState": "manual",
-      "comment": "Converter interface: clear.",
-      "localizations": {
-        "en": {
+        },
+        "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Clear"
+            "value": "移除"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "削除"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminar"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entfernen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retirer"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remover"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "제거"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移除"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rimuovi"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kaldır"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Убрать"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Прибрати"
           }
         }
       }
@@ -271,6 +1681,78 @@
             "state": "translated",
             "value": "Done entering amount"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完成金额输入"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "金額の入力を完了"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finalizar entrada de importe"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Betragseingabe abschließen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terminer la saisie du montant"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Concluir entrada de valor"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "금액 입력 완료"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完成金額輸入"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Termina l’inserimento dell’importo"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tutar girişini bitir"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Завершить ввод суммы"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Завершити введення суми"
+          }
         }
       }
     },
@@ -282,6 +1764,78 @@
           "stringUnit": {
             "state": "translated",
             "value": "Enter amount"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "输入金额"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "金額を入力"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Introducir importe"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Betrag eingeben"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saisir un montant"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inserir valor"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "금액 입력"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "輸入金額"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inserisci l’importo"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tutar girin"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Введите сумму"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Введіть суму"
           }
         }
       }
@@ -295,6 +1849,78 @@
             "state": "translated",
             "value": "Delete digit"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "删除一位"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1桁削除"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminar dígito"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ziffer löschen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer un chiffre"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apagar dígito"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "숫자 삭제"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刪除一位"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elimina cifra"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rakamı sil"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалить цифру"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Видалити цифру"
+          }
         }
       }
     },
@@ -307,53 +1933,77 @@
             "state": "translated",
             "value": "Decimal separator"
           }
-        }
-      }
-    },
-    "publicationDates": {
-      "extractionState": "manual",
-      "comment": "Converter interface: publicationDates.",
-      "localizations": {
-        "en": {
+        },
+        "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Publication dates"
+            "value": "小数分隔符"
           }
-        }
-      }
-    },
-    "homeScreen": {
-      "extractionState": "manual",
-      "comment": "Converter interface: homeScreen.",
-      "localizations": {
-        "en": {
+        },
+        "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Home screen"
+            "value": "小数点"
           }
-        }
-      }
-    },
-    "widgetSharingExplanation": {
-      "extractionState": "manual",
-      "comment": "Converter interface: widgetSharingExplanation.",
-      "localizations": {
-        "en": {
+        },
+        "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Widgets share this amount and currency list. The large widget includes a keypad. iOS controls widget input processing and refresh timing."
+            "value": "Separador decimal"
           }
-        }
-      }
-    },
-    "providerExplanation": {
-      "extractionState": "manual",
-      "comment": "Converter interface: providerExplanation.",
-      "localizations": {
-        "en": {
+        },
+        "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Frankfurter v2 for daily fiat rates, with direct ECB fallback. Fawaz supplies daily crypto and backup rates. Coinbase public market data is checked every 30 minutes while active, falling back to daily crypto rates if unavailable. iOS schedules widget refreshes. No accounts or API keys."
+            "value": "Dezimaltrennzeichen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Séparateur décimal"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Separador decimal"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "소수 구분 기호"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小數分隔符"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Separatore decimale"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ondalık ayırıcı"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Десятичный разделитель"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Десятковий роздільник"
           }
         }
       }
@@ -367,185 +2017,77 @@
             "state": "translated",
             "value": "Swipe to remove. Tap Edit to reorder. Your widgets follow the same order."
           }
-        }
-      }
-    },
-    "yourCurrencies": {
-      "extractionState": "manual",
-      "comment": "Converter interface: yourCurrencies.",
-      "localizations": {
-        "en": {
+        },
+        "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your currencies"
+            "value": "轻扫以移除，轻点“编辑”以排序。小组件遵循相同顺序。"
           }
-        }
-      }
-    },
-    "widgetGuideHeadline": {
-      "extractionState": "manual",
-      "comment": "Converter interface: widgetGuideHeadline.",
-      "localizations": {
-        "en": {
+        },
+        "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your currencies, one glance away."
+            "value": "スワイプして削除。「編集」をタップして並べ替えます。ウィジェットも同じ順序に従います。"
           }
-        }
-      }
-    },
-    "widgetGuideIntroduction": {
-      "extractionState": "manual",
-      "comment": "Converter interface: widgetGuideIntroduction.",
-      "localizations": {
-        "en": {
+        },
+        "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choose a widget for typing, everyday cash, quick estimates, or a currency list. Configure each Home Screen widget independently."
+            "value": "Desliza para eliminar. Toca Editar para reordenar. Tus widgets siguen el mismo orden."
           }
-        }
-      }
-    },
-    "homeScreenGuide": {
-      "extractionState": "manual",
-      "comment": "Converter interface: homeScreenGuide.",
-      "localizations": {
-        "en": {
+        },
+        "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Home Screen"
+            "value": "Wische zum Entfernen. Tippe auf Bearbeiten, um die Reihenfolge zu ändern. Deine Widgets folgen derselben Reihenfolge."
           }
-        }
-      }
-    },
-    "converter": {
-      "extractionState": "manual",
-      "comment": "Converter interface: converter.",
-      "localizations": {
-        "en": {
+        },
+        "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Converter"
+            "value": "Balaye pour supprimer. Touche Modifier pour réordonner. Tes widgets suivent le même ordre."
           }
-        }
-      }
-    },
-    "converterWidgetGuide": {
-      "extractionState": "manual",
-      "comment": "Converter interface: converterWidgetGuide.",
-      "localizations": {
-        "en": {
+        },
+        "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "A quiet pair in small, three rates in medium. Large fits up to eight rates and a complete numeric keypad."
+            "value": "Deslize para remover. Toque em Editar para reordenar. Seus widgets seguem a mesma ordem."
           }
-        }
-      }
-    },
-    "currencyBoard": {
-      "extractionState": "manual",
-      "comment": "Converter interface: currencyBoard.",
-      "localizations": {
-        "en": {
+        },
+        "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "Currency board"
+            "value": "쓸어넘겨 제거하세요. 편집을 탭하여 순서를 바꾸세요. 위젯도 같은 순서를 따릅니다."
           }
-        }
-      }
-    },
-    "boardWidgetGuide": {
-      "extractionState": "manual",
-      "comment": "Converter interface: boardWidgetGuide.",
-      "localizations": {
-        "en": {
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "More currencies, more space. Up to six in medium or twelve in large, with a layout that follows your list."
+            "value": "滑動以移除，點一下「編輯」以排序。小工具遵循相同順序。"
           }
-        }
-      }
-    },
-    "lockScreen": {
-      "extractionState": "manual",
-      "comment": "Converter interface: lockScreen.",
-      "localizations": {
-        "en": {
+        },
+        "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Lock Screen"
+            "value": "Scorri per rimuovere. Tocca Modifica per riordinare. I widget seguono lo stesso ordine."
           }
-        }
-      }
-    },
-    "quickRateGuide": {
-      "extractionState": "manual",
-      "comment": "Converter interface: quickRateGuide.",
-      "localizations": {
-        "en": {
+        },
+        "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quick rate · inline or rectangular"
+            "value": "Kaldırmak için kaydırın. Sıralamak için Düzenle’ye dokunun. Araç takımlarınız aynı sırayı izler."
           }
-        }
-      }
-    },
-    "quickRateExplanation": {
-      "extractionState": "manual",
-      "comment": "Converter interface: quickRateExplanation.",
-      "localizations": {
-        "en": {
+        },
+        "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your first currency, always easy to find. Tap to open the converter."
+            "value": "Смахните для удаления. Нажмите «Править», чтобы изменить порядок. Виджеты используют тот же порядок."
           }
-        }
-      }
-    },
-    "addWidget": {
-      "extractionState": "manual",
-      "comment": "Converter interface: addWidget.",
-      "localizations": {
-        "en": {
+        },
+        "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Add a widget"
-          }
-        }
-      }
-    },
-    "addWidgetInstructions": {
-      "extractionState": "manual",
-      "comment": "Converter interface: addWidgetInstructions.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Touch and hold your Home Screen, choose Edit → Add Widget, then search for Currency. Swipe to choose a size."
-          }
-        }
-      }
-    },
-    "lockScreenInstructions": {
-      "extractionState": "manual",
-      "comment": "Converter interface: lockScreenInstructions.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "For Lock Screen widgets, touch and hold your Lock Screen and choose Customize."
-          }
-        }
-      }
-    },
-    "widgetRefreshExplanation": {
-      "extractionState": "manual",
-      "comment": "Converter interface: widgetRefreshExplanation.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fiat rates are daily. Crypto checks Coinbase every 30 minutes, with daily fallback. Rates are cached offline. iOS controls widget refresh timing; keypad updates may take a moment."
+            "value": "Змахніть для видалення. Торкніться «Змінити», щоб змінити порядок. Віджети використовують той самий порядок."
           }
         }
       }
@@ -559,6 +2101,78 @@
             "state": "translated",
             "value": "Your selection couldn’t be saved."
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法保存您的选择。"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選択内容を保存できませんでした。"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo guardar tu selección."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine Auswahl konnte nicht gespeichert werden."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ta sélection n’a pas pu être enregistrée."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível salvar sua seleção."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "선택을 저장하지 못했습니다."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無法儲存您的選擇。"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossibile salvare la tua selezione."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seçiminiz kaydedilemedi."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось сохранить ваш выбор."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вдалося зберегти ваш вибір."
+          }
         }
       }
     },
@@ -570,6 +2184,78 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rates updated, but couldn’t be saved for offline use."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "汇率已更新，但无法保存以供离线使用。"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "レートを更新しましたが、オフライン用に保存できませんでした。"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los tipos se han actualizado, pero no se pudieron guardar sin conexión."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kurse wurden aktualisiert, konnten aber nicht für die Offline-Nutzung gespeichert werden."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les taux ont été actualisés, mais n’ont pas pu être enregistrés pour une utilisation hors ligne."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "As taxas foram atualizadas, mas não puderam ser salvas para uso offline."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "환율이 갱신되었지만 오프라인으로 저장하지 못했습니다."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "匯率已更新，但無法儲存以供離線使用。"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tassi aggiornati, ma non salvati per l’uso offline."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kurlar güncellendi ancak çevrimdışı kullanım için kaydedilemedi."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Курсы обновлены, но их не удалось сохранить для работы без интернета."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Курси оновлено, але їх не вдалося зберегти для роботи без інтернету."
           }
         }
       }
@@ -583,6 +2269,78 @@
             "state": "translated",
             "value": "Source currency, %@"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "来源货币，%@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "換算元通貨、%@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moneda de origen, %@"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ausgangswährung, %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Devise source, %@"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moeda de origem, %@"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "기준 통화, %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "來源貨幣，%@"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valuta di origine, %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kaynak para birimi, %@"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Исходная валюта, %@"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вихідна валюта, %@"
+          }
         }
       }
     },
@@ -595,6 +2353,78 @@
             "state": "translated",
             "value": "Edit amount in %@"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "编辑%@金额"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@の金額を編集"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editar importe en %@"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Betrag in %@ bearbeiten"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifier le montant en %@"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editar valor em %@"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 금액 편집"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "編輯%@金額"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifica l’importo in %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ cinsinden tutarı düzenle"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Изменить сумму в %@"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Змінити суму в %@"
+          }
         }
       }
     },
@@ -603,6 +2433,78 @@
       "comment": "Converter interface: conversionAccessibility.",
       "localizations": {
         "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$@"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$@"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$@"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$@"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$@"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$@"
+          }
+        },
+        "uk": {
           "stringUnit": {
             "state": "translated",
             "value": "%1$@, %2$@"
@@ -619,314 +2521,77 @@
             "state": "translated",
             "value": "%@ details and history"
           }
-        }
-      }
-    },
-    "cryptoIconAttribution": {
-      "comment": "Credit and source link for bundled cryptocurrency artwork.",
-      "localizations": {
-        "en": {
+        },
+        "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Crypto icons except DOGE by Web3 Icons · MIT License · © 2024 0xa3k5"
+            "value": "%@详情与历史"
           }
-        }
-      },
-      "extractionState": "manual"
-    },
-    "dogecoinIconAttribution": {
-      "extractionState": "manual",
-      "comment": "Credit and source link for the separately sourced Dogecoin icon.",
-      "localizations": {
-        "en": {
+        },
+        "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "DOGE icon by Cryptocurrency Icons · CC0 1.0"
+            "value": "%@の詳細と履歴"
           }
-        }
-      }
-    },
-    "multiWidgetTitle": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
+        },
+        "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Currency Calculator"
+            "value": "Detalles e historial de %@"
           }
-        }
-      }
-    },
-    "multiWidgetGuide": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
+        },
+        "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choose Default to follow the app currency list or Custom list for a separate selection. Two currencies give you a pair calculator. Medium shows up to four entries and large up to eight."
+            "value": "Details und Verlauf von %@"
           }
-        }
-      }
-    },
-    "pairWidgetTitle": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
+        },
+        "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Existing pair calculators"
+            "value": "Détails et historique de %@"
           }
-        }
-      }
-    },
-    "pairWidgetGuide": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
+        },
+        "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Existing pair widgets continue to work. Choose Currency Calculator when adding a new widget."
+            "value": "Detalhes e histórico de %@"
           }
-        }
-      }
-    },
-    "cashWidgetTitle": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
+        },
+        "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "Know Your Cash"
+            "value": "%@ 세부사항 및 내역"
           }
-        }
-      }
-    },
-    "cashWidgetGuide": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tap common banknotes or 1 g, 10 g, and 1 kg metal weights. Other fiat currencies use labeled reference amounts. No crypto."
+            "value": "%@詳細資訊與歷史"
           }
-        }
-      }
-    },
-    "pocketWidgetTitle": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
+        },
+        "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pocket Rate"
+            "value": "Dettagli e cronologia di %@"
           }
-        }
-      }
-    },
-    "pocketWidgetGuide": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
+        },
+        "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "One automatic reference amount for your chosen pair."
-          }
-        }
-      }
-    },
-    "mentalWidgetTitle": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mental Math"
-          }
-        }
-      }
-    },
-    "mentalWidgetGuide": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "A rounded multiply or divide rule for quick estimates."
-          }
-        }
-      }
-    },
-    "newBoardWidgetGuide": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Choose a base and amount. Default follows your app currencies; Custom list keeps its own selection. The base is always first and bold. Available in every Home Screen size."
+            "value": "%@ ayrıntıları ve geçmişi"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Укажите сумму и порядок валют в настройках виджета. Выберите «Валюты по умолчанию», чтобы вернуть стандартный список. Доступны все размеры для экрана «Домой»."
+            "value": "Сведения и история %@"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Укажіть суму й порядок валют у налаштуваннях віджета. Виберіть «Типові валюти», щоб повернути стандартний список. Доступні всі розміри для початкового екрана."
-          }
-        }
-      }
-    },
-    "widgetSettingsTitle": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Widget settings"
-          }
-        }
-      }
-    },
-    "editWidgetGuide": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Touch and hold a widget, then choose Edit Widget to select currencies and amounts."
-          }
-        }
-      }
-    },
-    "widgetIndependenceGuide": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Each new calculator automatically keeps its own amount, even when its currencies match another widget. Amounts are separate from the app."
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Каждый новый калькулятор автоматически сохраняет свою сумму, даже если валюты совпадают с другим виджетом. Суммы независимы от приложения."
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Кожен новий калькулятор автоматично зберігає власну суму, навіть якщо валюти збігаються з іншим віджетом. Суми незалежні від застосунку."
-          }
-        }
-      }
-    },
-    "widgetEntryGuide": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "On a currency tile, the next digit replaces the displayed value. Decimal, clear, delete, and zero shortcuts work without opening the keyboard."
-          }
-        }
-      }
-    },
-    "localComparisonTitle": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Local comparison"
-          }
-        }
-      }
-    },
-    "localComparisonGuide": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Choose Local currency in a calculator or supported reference widget. Tap its setup link, then Update here to request location permission. Only your country, currency, and update time are saved. Authorized lookup failures retain your last-known currency. Location updates only when you tap Update here. Allow Once expires after the session; reopen this screen to grant access again. After one day widgets label the saved currency as last-known."
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Выберите «Местная валюта» в калькуляторе или поддерживаемом справочном виджете. Нажмите ссылку настройки, затем «Обновить» здесь, чтобы запросить доступ к геопозиции. Сохраняются только страна, валюта и время обновления. При ошибке поиска с разрешённым доступом сохраняется последняя известная валюта. Местоположение обновляется только по нажатию «Обновить» здесь. Разовое разрешение истекает после сеанса; откройте этот экран, чтобы снова предоставить доступ. Через день виджеты помечают сохранённую валюту как последнюю известную."
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Виберіть «Місцева валюта» в калькуляторі або підтримуваному довідковому віджеті. Натисніть посилання налаштування, потім «Оновити» тут, щоб запросити доступ до геопозиції. Зберігаються лише країна, валюта й час оновлення. У разі помилки пошуку з дозволеним доступом зберігається остання відома валюта. Розташування оновлюється лише після натискання «Оновити» тут. Одноразовий дозвіл спливає після сеансу; відкрийте цей екран, щоб знову надати доступ. Через день віджети позначають збережену валюту як останню відому."
-          }
-        }
-      }
-    },
-    "localUpdating": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Updating…"
-          }
-        }
-      }
-    },
-    "localUpdate": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Update local currency"
-          }
-        }
-      }
-    },
-    "localRemove": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Remove saved local currency"
-          }
-        }
-      }
-    },
-    "localPrivacy": {
-      "extractionState": "manual",
-      "comment": "Configurable widget collection.",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Only country, currency, and update time are saved. Location is requested only when you tap Update; reverse geocoding uses Apple Maps."
+            "value": "Відомості та історія %@"
           }
         }
       }
@@ -938,6 +2603,78 @@
           "stringUnit": {
             "state": "translated",
             "value": "Close"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "閉じる"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerrar"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schließen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fermer"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fechar"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "닫기"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "關閉"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chiudi"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kapat"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Закрыть"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Закрити"
           }
         }
       }

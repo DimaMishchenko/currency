@@ -35,7 +35,7 @@ final class CurrencySearchIndex: NSObject, CSSearchableIndexDelegate {
   static let converterID = "Currency.Converter"
   static var converterItem: CSSearchableItem {
     let attributes = CSSearchableItemAttributeSet(contentType: .content)
-    attributes.title = String(localized: "Currency")
+    attributes.title = "Currency"
     attributes.contentDescription = String(localized: "Convert currencies, crypto and metals")
     attributes.keywords = [
       String(localized: "currency"), String(localized: "convert"), String(localized: "exchange"),

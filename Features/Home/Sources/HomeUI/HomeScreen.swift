@@ -362,6 +362,7 @@ struct HomeScreen: View {
       Image(systemName: "ellipsis")
     }
     .accessibilityLabel(.Converter.options)
+    .accessibilityIdentifier("converter.options")
     .simultaneousGesture(
       TapGesture()
         .onEnded {

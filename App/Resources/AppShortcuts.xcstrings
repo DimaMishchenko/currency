@@ -12,6 +12,114 @@
               "Check the rate for ${source} with ${applicationName}"
             ]
           }
+        },
+        "zh-Hans": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "用${applicationName}查询汇率",
+              "用${applicationName}查询${source}的汇率"
+            ]
+          }
+        },
+        "ja": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "${applicationName}で為替レートを確認",
+              "${applicationName}で${source}のレートを確認"
+            ]
+          }
+        },
+        "es": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Consulta un tipo de cambio con ${applicationName}",
+              "Consulta el cambio de ${source} con ${applicationName}"
+            ]
+          }
+        },
+        "de": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Prüfe einen Wechselkurs mit ${applicationName}",
+              "Prüfe den Kurs für ${source} mit ${applicationName}"
+            ]
+          }
+        },
+        "fr": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Consulte un taux de change avec ${applicationName}",
+              "Consulte le taux de ${source} avec ${applicationName}"
+            ]
+          }
+        },
+        "pt-BR": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Consulte uma taxa de câmbio com ${applicationName}",
+              "Consulte a taxa de ${source} com ${applicationName}"
+            ]
+          }
+        },
+        "ko": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "${applicationName}으로 환율 확인",
+              "${applicationName}으로 ${source} 환율 확인"
+            ]
+          }
+        },
+        "zh-Hant": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "用${applicationName}查詢匯率",
+              "用${applicationName}查詢${source}的匯率"
+            ]
+          }
+        },
+        "it": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Controlla un tasso di cambio con ${applicationName}",
+              "Controlla il tasso di ${source} con ${applicationName}"
+            ]
+          }
+        },
+        "tr": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "${applicationName} ile döviz kurunu kontrol et",
+              "${applicationName} ile ${source} kurunu kontrol et"
+            ]
+          }
+        },
+        "ru": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Проверить курс обмена с ${applicationName}",
+              "Проверить курс ${source} с ${applicationName}"
+            ]
+          }
+        },
+        "uk": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Перевірити курс обміну з ${applicationName}",
+              "Перевірити курс ${source} з ${applicationName}"
+            ]
+          }
         }
       }
     },
@@ -24,6 +132,114 @@
             "values": [
               "Convert money with ${applicationName}",
               "Convert ${source} with ${applicationName}"
+            ]
+          }
+        },
+        "zh-Hans": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "用${applicationName}换算货币",
+              "用${applicationName}换算${source}"
+            ]
+          }
+        },
+        "ja": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "${applicationName}で通貨を換算",
+              "${applicationName}で${source}を換算"
+            ]
+          }
+        },
+        "es": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Convierte dinero con ${applicationName}",
+              "Convierte ${source} con ${applicationName}"
+            ]
+          }
+        },
+        "de": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Rechne Geld um mit ${applicationName}",
+              "Rechne ${source} um mit ${applicationName}"
+            ]
+          }
+        },
+        "fr": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Convertis de l’argent avec ${applicationName}",
+              "Convertis ${source} avec ${applicationName}"
+            ]
+          }
+        },
+        "pt-BR": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Converta dinheiro com ${applicationName}",
+              "Converta ${source} com ${applicationName}"
+            ]
+          }
+        },
+        "ko": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "${applicationName}으로 금액 환산",
+              "${applicationName}으로 ${source} 환산"
+            ]
+          }
+        },
+        "zh-Hant": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "用${applicationName}換算貨幣",
+              "用${applicationName}換算${source}"
+            ]
+          }
+        },
+        "it": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Converti denaro con ${applicationName}",
+              "Converti ${source} con ${applicationName}"
+            ]
+          }
+        },
+        "tr": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "${applicationName} ile para çevir",
+              "${applicationName} ile ${source} çevir"
+            ]
+          }
+        },
+        "ru": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Конвертировать деньги с ${applicationName}",
+              "Конвертировать ${source} с ${applicationName}"
+            ]
+          }
+        },
+        "uk": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Конвертувати гроші з ${applicationName}",
+              "Конвертувати ${source} з ${applicationName}"
             ]
           }
         }
@@ -39,6 +255,102 @@
               "Convert to Local currency with ${applicationName}"
             ]
           }
+        },
+        "zh-Hans": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "用${applicationName}换算为当地货币"
+            ]
+          }
+        },
+        "ja": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "${applicationName}で現地通貨に換算"
+            ]
+          }
+        },
+        "es": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Convierte a moneda local con ${applicationName}"
+            ]
+          }
+        },
+        "de": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Rechne in die lokale Währung um mit ${applicationName}"
+            ]
+          }
+        },
+        "fr": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Convertis en devise locale avec ${applicationName}"
+            ]
+          }
+        },
+        "pt-BR": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Converta para a moeda local com ${applicationName}"
+            ]
+          }
+        },
+        "ko": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "${applicationName}으로 현지 통화로 환산"
+            ]
+          }
+        },
+        "zh-Hant": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "用${applicationName}換算為當地貨幣"
+            ]
+          }
+        },
+        "it": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Converti nella valuta locale con ${applicationName}"
+            ]
+          }
+        },
+        "tr": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "${applicationName} ile yerel para birimine çevir"
+            ]
+          }
+        },
+        "ru": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Конвертировать в местную валюту с ${applicationName}"
+            ]
+          }
+        },
+        "uk": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Конвертувати в місцеву валюту з ${applicationName}"
+            ]
+          }
         }
       }
     },
@@ -50,6 +362,102 @@
             "state": "translated",
             "values": [
               "Convert to my currencies with ${applicationName}"
+            ]
+          }
+        },
+        "zh-Hans": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "用${applicationName}换算为我的货币"
+            ]
+          }
+        },
+        "ja": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "${applicationName}で自分の通貨に換算"
+            ]
+          }
+        },
+        "es": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Convierte a mis monedas con ${applicationName}"
+            ]
+          }
+        },
+        "de": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Rechne in meine Währungen um mit ${applicationName}"
+            ]
+          }
+        },
+        "fr": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Convertis dans mes devises avec ${applicationName}"
+            ]
+          }
+        },
+        "pt-BR": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Converta para minhas moedas com ${applicationName}"
+            ]
+          }
+        },
+        "ko": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "${applicationName}으로 내 통화로 환산"
+            ]
+          }
+        },
+        "zh-Hant": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "用${applicationName}換算為我的貨幣"
+            ]
+          }
+        },
+        "it": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Converti nelle mie valute con ${applicationName}"
+            ]
+          }
+        },
+        "tr": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "${applicationName} ile para birimlerime çevir"
+            ]
+          }
+        },
+        "ru": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Конвертировать в мои валюты с ${applicationName}"
+            ]
+          }
+        },
+        "uk": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Конвертувати в мої валюти з ${applicationName}"
             ]
           }
         }

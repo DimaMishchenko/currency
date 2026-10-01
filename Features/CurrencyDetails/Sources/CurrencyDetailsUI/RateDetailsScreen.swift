@@ -111,6 +111,7 @@ struct RateDetailsScreen: View {
             AppHaptics.play(.action); dismiss()
           }
           .labelStyle(.iconOnly)
+          .accessibilityIdentifier("currency.details.close")
           .font(AppStyle.font(.title2))
           .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
           .frame(width: 44, height: 44)
@@ -364,7 +365,7 @@ private struct HistorySkeleton: View {
       AxisMarks(position: .trailing, values: [0.0, 0.33, 0.66, 1.0]) { _ in
         AxisGridLine().foregroundStyle(.quaternary)
         AxisValueLabel(horizontalSpacing: axisLabelSpacing) {
-          Text("0.000").font(AppStyle.font(.caption2)).hidden()
+          Text(verbatim: "0.000").font(AppStyle.font(.caption2)).hidden()
             .frame(width: axisWidth, alignment: .leading)
             .overlay(alignment: .leading) {
               RoundedRectangle(cornerRadius: 3).fill(.quaternary).frame(width: 32, height: 8)
@@ -376,7 +377,7 @@ private struct HistorySkeleton: View {
       AxisMarks(values: singleDateLabel ? [0.5] : [0.1, 0.5, 0.9]) { _ in
         AxisGridLine().foregroundStyle(.quaternary)
         AxisValueLabel {
-          Text("00 Sep").font(AppStyle.font(.caption2)).hidden().fixedSize()
+          Text(verbatim: "00 Sep").font(AppStyle.font(.caption2)).hidden().fixedSize()
             .overlay {
               RoundedRectangle(cornerRadius: 3).fill(.quaternary).frame(width: 36, height: 8)
             }

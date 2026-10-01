@@ -19,27 +19,29 @@ public struct OnboardingHomeScreen: View {
   @State private var entrance = HomeScreenEntranceClock()
   private static let appRows: [[SampleApp]] = [
     [
-      .init(name: "Calendar", symbol: "calendar", color: .red),
-      .init(name: "Photos", symbol: "photo.on.rectangle", color: .pink),
-      .init(name: "Maps", symbol: "map.fill", color: .green),
-      .init(name: "Books", symbol: "book.closed.fill", color: .orange)
+      .init(name: .WidgetOnboarding.sampleCalendar, symbol: "calendar", color: .red),
+      .init(name: .WidgetOnboarding.samplePhotos, symbol: "photo.on.rectangle", color: .pink),
+      .init(name: .WidgetOnboarding.sampleMaps, symbol: "map.fill", color: .green),
+      .init(name: .WidgetOnboarding.sampleBooks, symbol: "book.closed.fill", color: .orange)
     ],
     [
-      .init(name: "Clock", symbol: "clock.fill", color: .primary),
-      .init(name: "Camera", symbol: "camera.fill", color: .gray),
-      .init(name: "Weather", symbol: "cloud.sun.fill", color: .blue),
-      .init(name: "Settings", symbol: "gearshape.fill", color: .gray)
+      .init(name: .WidgetOnboarding.sampleClock, symbol: "clock.fill", color: .primary),
+      .init(name: .WidgetOnboarding.sampleCamera, symbol: "camera.fill", color: .gray),
+      .init(name: .WidgetOnboarding.sampleWeather, symbol: "cloud.sun.fill", color: .blue),
+      .init(name: .WidgetOnboarding.sampleSettings, symbol: "gearshape.fill", color: .gray)
     ],
     [
-      .init(name: "Phone", symbol: "phone.fill", color: .green),
-      .init(name: "Safari", symbol: "safari", color: .blue),
-      .init(name: "Messages", symbol: "bubble.left.and.bubble.right.fill", color: .green),
-      .init(name: "Music", symbol: "music.note", color: .pink)
+      .init(name: .WidgetOnboarding.samplePhone, symbol: "phone.fill", color: .green),
+      .init(name: .WidgetOnboarding.sampleSafari, symbol: "safari", color: .blue),
+      .init(
+        name: .WidgetOnboarding.sampleMessages, symbol: "bubble.left.and.bubble.right.fill",
+        color: .green),
+      .init(name: .WidgetOnboarding.sampleMusic, symbol: "music.note", color: .pink)
     ]
   ]
 
   private struct SampleApp {
-    let name: String
+    let name: LocalizedStringResource
     let symbol: String
     let color: Color
   }

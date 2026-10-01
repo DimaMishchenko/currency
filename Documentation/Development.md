@@ -50,7 +50,7 @@ After landing a configuration change, check the first [Dependabot update job](ht
 
 Keep signing enabled when validating shared App Group storage, including on simulators. Device builds require a configured signing team.
 
-Use Xcode-generated string-catalog symbols in the owning UI module. Keep resource and interpolation behavior covered by integration tests.
+Use Xcode-generated string-catalog symbols in the owning UI module. Keep resource and interpolation behavior covered by integration tests. Run `python3 Scripts/CI/check_localizations.py` for language coverage, placeholder and line-break validation; see [Localization](Localization.md) for supported languages and the system preference flow.
 
 [Architecture](Architecture.md) describes ownership and dependency rules; [Decisions](Decisions.md) records durable constraints. Module READMEs explain purpose and boundaries. Keep API details in source comments and harness launch options in the owning module README.
 

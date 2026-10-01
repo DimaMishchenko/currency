@@ -12,9 +12,6 @@ import Testing
 @testable import WidgetOnboardingUI
 @testable import WidgetsUI
 
-// These are resource-integration checks: generated getter defaults deliberately lack the
-// surrounding sentence, so a wrong/missing framework bundle would fail these expectations.
-
 @Suite struct LocalizationTests {
   @Test func generatedAccessorsResolveOwningFrameworkAndSubstitutions() {
     #expect(String(localized: .WidgetOnboarding.guideStep(2, 6)) == "Step 2 of 6")
@@ -48,7 +45,7 @@ import Testing
     #expect(String(localized: .Settings.settings) == "Settings")
     #expect(String(localized: .Settings.locationSettings) == "Location")
     var resource = LocalizedStringResource.Settings.quoteRetrieved("today")
-    resource.locale = Locale(identifier: "uk_UA")
+    resource.locale = Locale(identifier: "ar_SA")
     #expect(String(localized: resource) == "Retrieved today")
     #expect(String(localized: .Settings.appearanceSystem) == "System")
     #expect(String(localized: .Settings.appearancePrimary) == "Default")
@@ -60,7 +57,7 @@ import Testing
     #expect(String(localized: .Onboarding.baseTitle) == "Choose your base")
     #expect(String(localized: .Onboarding.updated("today")) == "Last updated today")
     var resource = LocalizedStringResource.Onboarding.homeScreenTitle
-    resource.locale = Locale(identifier: "uk_UA")
+    resource.locale = Locale(identifier: "ar_SA")
     #expect(String(localized: resource) == "On your Home Screen")
   }
 
@@ -100,9 +97,34 @@ import Testing
     #expect(RateMessages.providerDescription(daily).hasPrefix("Coinbase · daily closes · "))
   }
 
+  @Test(arguments: [
+    "zh-Hans", "ja", "es", "de", "fr", "pt-BR", "ko", "zh-Hant", "it", "tr", "ru", "uk"
+  ])
+  func supportedLanguagesResolveEveryFeatureBundle(language: String) {
+    let resources: [LocalizedStringResource] = [
+      .Settings.language, .Converter.settings, .Onboarding.welcomeTitle,
+      .WidgetOnboarding.guideStep(2, 6), .LocalCurrency.localUseLocation,
+      .CurrencySelection.baseCurrency, .Details.loadingHistory, .WidgetPresentation.clear,
+      .Support.historyIntradayUnavailable, .WidgetPresentation.symbolHryvnia
+    ]
+    for resource in resources {
+      var localized = resource
+      localized.locale = Locale(identifier: language)
+      let value = String(localized: localized)
+      #expect(!value.isEmpty)
+      #expect(value != String(localized: resource))
+      #expect(!value.contains("%@"))
+    }
+    var step = LocalizedStringResource.WidgetOnboarding.guideStep(2, 6)
+    step.locale = Locale(identifier: language)
+    let formatted = String(localized: step)
+    #expect(formatted.contains("2"))
+    #expect(formatted.contains("6"))
+  }
+
   @Test func unsupportedLanguageFallsBackToEnglishCatalog() {
     var resource = LocalizedStringResource.Details.unitConversion("EUR", "USD")
-    resource.locale = Locale(identifier: "uk_UA")
+    resource.locale = Locale(identifier: "ar_SA")
     #expect(String(localized: resource) == "1 EUR in USD")
   }
 }

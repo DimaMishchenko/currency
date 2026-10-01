@@ -755,7 +755,7 @@ private struct MiniHomeScreen: View {
       Capsule().fill(.tertiary).frame(width: 30, height: 4)
       if lockScreen {
         HStack {
-          Text("Currency"); Spacer(); Image(systemName: "xmark")
+          Text(.WidgetOnboarding.currencyAppName); Spacer(); Image(systemName: "xmark")
         }
         .font(.system(size: 13, weight: .semibold, design: .rounded))
         Text(kind.title).font(.system(size: 17, weight: .semibold, design: .rounded))
@@ -777,7 +777,7 @@ private struct MiniHomeScreen: View {
             .resizable()
             .frame(width: 40, height: 40)
             .clipShape(.rect(cornerRadius: 12))
-          Text("Currency"); Spacer(); Image(systemName: "chevron.right")
+          Text(.WidgetOnboarding.currencyAppName); Spacer(); Image(systemName: "chevron.right")
         }
         .font(.system(size: 14, weight: .medium, design: .rounded))
         .opacity(typed.isEmpty ? 0 : 1)

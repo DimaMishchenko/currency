@@ -1,6 +1,9 @@
 import ProjectDescription
 
 let teamID = "77X75EH6F4"
+let supportedLanguages: Plist.Value = [
+  "en", "zh-Hans", "ja", "es", "de", "fr", "pt-BR", "ko", "zh-Hant", "it", "tr", "ru", "uk"
+]
 let appProfile = Environment.currencyAppProfileUuid.getString(default: "")
 let widgetProfile = Environment.currencyWidgetProfileUuid.getString(default: "")
 let currencyUnitTestTargets: [TargetReference] = [
@@ -36,6 +39,11 @@ let project = Project(
   ]),
   targets: [
     .target(
+      name: "NativeLocalizationTests", destinations: .iOS, product: .uiTests,
+      bundleId: "com.dimasike.currency.nativelocalizationtests", deploymentTargets: .iOS("26.0"),
+      infoPlist: .default, buildableFolders: ["App/Tests/NativeLocalizationTests"],
+      dependencies: [.target(name: "Currency")]),
+    .target(
       name: "NativeIntentTests", destinations: .iOS, product: .uiTests,
       bundleId: "com.dimasike.currency.nativeintenttests", deploymentTargets: .iOS("27.0"),
       infoPlist: .default, buildableFolders: ["App/Tests/NativeIntentTests"],
@@ -69,6 +77,7 @@ let project = Project(
         "CFBundleDisplayName": "Currency Widgets",
         "CFBundleShortVersionString": "$(MARKETING_VERSION)",
         "CFBundleVersion": "$(CURRENT_PROJECT_VERSION)",
+        "CFBundleLocalizations": supportedLanguages,
         "NSExtension": ["NSExtensionPointIdentifier": "com.apple.widgetkit-extension"],
         "NSWidgetWantsLocation": true
       ]),
@@ -86,6 +95,8 @@ let project = Project(
       infoPlist: .extendingDefault(with: [
         "CFBundleShortVersionString": "$(MARKETING_VERSION)",
         "CFBundleVersion": "$(CURRENT_PROJECT_VERSION)",
+        "CFBundleLocalizations": supportedLanguages,
+        "UIPrefersShowingLanguageSettings": true,
         "ITSAppUsesNonExemptEncryption": false,
         "CFBundleURLTypes": [["CFBundleURLSchemes": ["currency"]]],
         "NSLocationDefaultAccuracyReduced": true,
@@ -312,6 +323,10 @@ let project = Project(
       ])
   ],
   schemes: [
+    .scheme(
+      name: "NativeLocalizationTests", shared: true,
+      buildAction: .buildAction(targets: ["Currency", "NativeLocalizationTests"]),
+      testAction: .targets(["NativeLocalizationTests"], expandVariableFromTarget: "Currency")),
     .scheme(
       name: "NativeIntentTests", shared: true,
       buildAction: .buildAction(targets: ["Currency", "NativeIntentTests"]),
