@@ -126,12 +126,17 @@ jobs:
                os.path.join(os.environ["RUNNER_TEMP"], "CurrencyTestsDerivedData")],
               check=True, timeout=25)
           PYTHON
-      - name: Reset app before native tests
+      - name: Prepare app launch before native tests
         if: needs.changes.outputs.xcode == 'true'
         run: |
           if xcrun simctl get_app_container "$CURRENCY_TEST_SIMULATOR" com.dimasike.currency app >/dev/null 2>&1; then
             xcrun simctl uninstall "$CURRENCY_TEST_SIMULATOR" com.dimasike.currency
           fi
+          xcrun simctl install "$CURRENCY_TEST_SIMULATOR" \
+            "$RUNNER_TEMP/CurrencyTestsDerivedData/Build/Products/Debug-iphonesimulator/Currency.app"
+          xcrun simctl launch "$CURRENCY_TEST_SIMULATOR" com.dimasike.currency \
+            -AppleLanguages '(en)' -AppleLocale en_US
+          xcrun simctl terminate "$CURRENCY_TEST_SIMULATOR" com.dimasike.currency
       - name: Test extracted App Intents
         if: needs.changes.outputs.xcode == 'true'
         run: |
