@@ -362,6 +362,7 @@ struct HomeScreen: View {
       Image(systemName: "ellipsis")
     }
     .accessibilityLabel(.Converter.options)
+    .accessibilityIdentifier("converter.options")
     .simultaneousGesture(
       TapGesture()
         .onEnded {
@@ -412,7 +413,9 @@ struct HomeScreen: View {
     .buttonStyle(.plain)
     .matchedTransitionSource(id: PickerPurpose.source.id, in: pickerMotion)
     .accessibilityLabel(
-      .Converter.sourceAccessibility(CurrencyDisplay.name(model.input.source, locale: locale)))
+      .Converter.sourceAccessibility(CurrencyDisplay.name(model.input.source, locale: locale))
+    )
+    .accessibilityIdentifier("converter.source")
   }
 
   private var amountEntry: some View {

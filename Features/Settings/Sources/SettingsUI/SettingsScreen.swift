@@ -24,6 +24,7 @@ struct SettingsScreen: View {
   var body: some View {
     List {
       appearanceControls
+      languageControl
       Section {
         Button(action: manageLocation) {
           Label(.Settings.locationSettings, systemImage: "location")
@@ -70,6 +71,21 @@ struct SettingsScreen: View {
     .alert(.Settings.replayFailed, isPresented: $replayFailed) {
       Button(.Settings.retryReplay) { restartOnboarding() }
       Button(.Settings.close, role: .cancel) {}
+    }
+  }
+
+  private var languageControl: some View {
+    Section {
+      Button {
+        if let url = URL(string: UIApplication.openSettingsURLString) {
+          UIApplication.shared.open(url)
+        }
+      } label: {
+        Label(.Settings.language, systemImage: "globe")
+      }
+      .accessibilityIdentifier("settings.language")
+    } footer: {
+      Text(.Settings.languageSettingsExplanation)
     }
   }
 

@@ -302,16 +302,23 @@ struct WidgetPlayground: View {
         ScrollView {
           VStack(spacing: 20) {
             if kind.families.count > 1 {
-              Picker(.WidgetOnboarding.previewSize, selection: $family) {
-                ForEach(kind.families, id: \.self) { Text($0.showcaseTitle).tag($0) }
-              }
-              .pickerStyle(.segmented)
+              AdaptiveSegmentedPicker(
+                .WidgetOnboarding.previewSize,
+                choices: kind.families,
+                selection: $family,
+                optionTitle: { Text($0.showcaseTitle) }
+              )
               .onChange(of: family) { _, _ in AppHaptics.play(.transition) }
             }
             if kind == .icon {
-              Picker("Symbol", selection: $symbol) {
+              Picker(.WidgetOnboarding.symbol, selection: $symbol) {
                 ForEach(CurrencySymbol.allCases) { symbol in
-                  Label(symbol.title, systemImage: symbol.rawValue).tag(symbol)
+                  Label {
+                    Text(symbol.localizedTitle)
+                  } icon: {
+                    Image(systemName: symbol.rawValue)
+                  }
+                  .tag(symbol)
                 }
               }
               .pickerStyle(.menu)

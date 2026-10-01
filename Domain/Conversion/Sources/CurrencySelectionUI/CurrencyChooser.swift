@@ -75,14 +75,14 @@ public struct CurrencyChooser: View {
     NavigationStack {
       VStack(spacing: 0) {
         if search.isEmpty {
-          Picker(selection: $category) {
-            ForEach(categories, id: \.self) { category in
-              Text(category.title).tag(category)
-            }
-          } label: {
-            Text(.CurrencySelection.assetCategory)
-          }
-          .pickerStyle(.segmented)
+          AdaptiveSegmentedPicker(
+            .CurrencySelection.assetCategory,
+            choices: categories,
+            selection: $category,
+            optionTitle: { Text($0.title) },
+            fullTitle: { Text($0.accessibilityTitle) }
+          )
+          .accessibilityIdentifier("currency.picker.category")
           .padding(.horizontal)
           .padding(.vertical, AppStyle.Space.small)
 
@@ -93,7 +93,7 @@ public struct CurrencyChooser: View {
 
       }
 
-      .searchable(text: $search)
+      .searchable(text: $search, prompt: Text(.CurrencySelection.search))
       .autocorrectionDisabled()
       .textInputAutocapitalization(.never)
       .navigationTitle(
@@ -122,6 +122,7 @@ public struct CurrencyChooser: View {
             AppHaptics.play(.action); dismiss()
           }
           .labelStyle(.iconOnly).tint(nil)
+          .accessibilityIdentifier("currency.picker.close")
         }
       }
     }
@@ -340,6 +341,14 @@ private enum CurrencyCategory: CaseIterable {
     case .crypto: .CurrencySelection.crypto
     case .metals: .CurrencySelection.metals
     case .currencies: .CurrencySelection.currencies
+    }
+  }
+
+  var accessibilityTitle: LocalizedStringResource {
+    switch self {
+    case .crypto: .CurrencySelection.cryptoAccessibility
+    case .selected: .CurrencySelection.selectedCurrenciesAccessibility
+    default: title
     }
   }
 

@@ -115,20 +115,17 @@ public struct OnboardingWidgetShowcase: View {
 
   @ViewBuilder private var familyControl: some View {
     if selected.families.count > 1 {
-      Picker(
+      AdaptiveSegmentedPicker(
         .WidgetOnboarding.previewSize,
+        choices: selected.families,
         selection: Binding(
           get: { family },
           set: {
             AppHaptics.play(.transition)
             families[selected] = $0
-          })
-      ) {
-        ForEach(selected.families, id: \.self) { choice in
-          Text(choice.showcaseTitle).tag(choice)
-        }
-      }
-      .pickerStyle(.segmented)
+          }),
+        optionTitle: { Text($0.showcaseTitle) }
+      )
       .frame(maxWidth: 300, minHeight: 44)
       .accessibilityIdentifier("onboarding.widgetFamily")
     } else {

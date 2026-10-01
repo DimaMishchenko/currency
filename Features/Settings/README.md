@@ -1,6 +1,6 @@
 # Settings
 
-Appearance preferences, rate information, and entry points to location setup and onboarding replay.
+Appearance preferences, language preferences through system Settings, rate information, and entry points to location setup and onboarding replay.
 
 `Settings` owns flow state and behavior; `SettingsUI` owns presentation and resources. The host owns persisted preferences and cross-feature actions. Settings observes updates for the lifetime of its flow, including navigation to child pages.
 

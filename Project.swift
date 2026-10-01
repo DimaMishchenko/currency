@@ -1,6 +1,9 @@
 import ProjectDescription
 
 let teamID = "77X75EH6F4"
+let supportedLanguages: Plist.Value = [
+  "en", "zh-Hans", "ja", "es", "de", "fr", "pt-BR", "ko", "zh-Hant", "it", "tr", "ru", "uk", "et"
+]
 let appProfile = Environment.currencyAppProfileUuid.getString(default: "")
 let widgetProfile = Environment.currencyWidgetProfileUuid.getString(default: "")
 let currencyUnitTestTargets: [TargetReference] = [
@@ -69,6 +72,7 @@ let project = Project(
         "CFBundleDisplayName": "Currency Widgets",
         "CFBundleShortVersionString": "$(MARKETING_VERSION)",
         "CFBundleVersion": "$(CURRENT_PROJECT_VERSION)",
+        "CFBundleLocalizations": supportedLanguages,
         "NSExtension": ["NSExtensionPointIdentifier": "com.apple.widgetkit-extension"],
         "NSWidgetWantsLocation": true
       ]),
@@ -86,6 +90,8 @@ let project = Project(
       infoPlist: .extendingDefault(with: [
         "CFBundleShortVersionString": "$(MARKETING_VERSION)",
         "CFBundleVersion": "$(CURRENT_PROJECT_VERSION)",
+        "CFBundleLocalizations": supportedLanguages,
+        "UIPrefersShowingLanguageSettings": true,
         "ITSAppUsesNonExemptEncryption": false,
         "CFBundleURLTypes": [["CFBundleURLSchemes": ["currency"]]],
         "NSLocationDefaultAccuracyReduced": true,

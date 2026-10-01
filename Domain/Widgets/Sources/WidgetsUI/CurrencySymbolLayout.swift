@@ -27,6 +27,6 @@ public struct CurrencySymbolLayout: View {
       .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     .accessibilityElement(children: .ignore)
-    .accessibilityLabel(symbol.title)
+    .accessibilityLabel(Text(symbol.localizedTitle))
   }
 }

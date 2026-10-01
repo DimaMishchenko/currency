@@ -6,7 +6,8 @@ public enum CurrencyDisplay {
   /// Returns a localized display name for a currency code.
   public static func name(_ code: String, locale: Locale = .current) -> String {
     guard let currency = CurrencyCode(rawValue: code) else { return code }
-    return currency.assetName ?? locale.localizedString(forCurrencyCode: code) ?? code
+    let name = currency.assetName ?? locale.localizedString(forCurrencyCode: code) ?? code
+    return name.prefix(1).uppercased(with: locale) + name.dropFirst()
   }
 
   /// Formats a currency value using the currency's supported precision.

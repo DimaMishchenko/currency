@@ -11,7 +11,10 @@ Run `tuist install` after changing package dependencies, then `tuist generate` t
 - `CurrencyHarnesses` builds the isolated development apps. Module READMEs list their harness launch arguments.
 - `NativeIntentTests` is a UI-test target for iOS 27 AppIntentsTesting against the installed Currency executable. It completes onboarding once during setup and exercises extracted metadata and cross-process execution. Domain and adapter tests stay in existing unit targets; this adds no production module.
 
-`CurrencyTests` lets Swift Testing run independent cases concurrently within each target. The onboarding suite keeps its transient-state checks serialized. CI reinstalls the app before the native suite, which runs serially on the owned simulator.
+`CurrencyTests` lets Swift Testing run independent cases concurrently within each target.
+The onboarding suite keeps its transient-state checks serialized. CI reinstalls the app,
+launches it through `simctl`, then terminates it before the native suite. This completes fresh-install activation outside XCTest’s background-assertion
+handshake. Native tests still start from a stopped app and run serially on the owned simulator.
 
 For command-line Xcode builds, use `set -o pipefail` and pipe combined output through `xcbeautify`. Use a separate simulator and derived-data directory for parallel work.
 
@@ -50,7 +53,7 @@ After landing a configuration change, check the first [Dependabot update job](ht
 
 Keep signing enabled when validating shared App Group storage, including on simulators. Device builds require a configured signing team.
 
-Use Xcode-generated string-catalog symbols in the owning UI module. Keep resource and interpolation behavior covered by integration tests.
+Use Xcode-generated string-catalog symbols in the owning UI module. Keep resource and interpolation behavior covered by integration tests. Run `python3 Scripts/CI/check_localizations.py` for language coverage, placeholder and line-break validation; see [Localization](Localization.md) for supported languages and the system preference flow.
 
 [Architecture](Architecture.md) describes ownership and dependency rules; [Decisions](Decisions.md) records durable constraints. Module READMEs explain purpose and boundaries. Keep API details in source comments and harness launch options in the owning module README.
 

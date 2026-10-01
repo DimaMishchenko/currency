@@ -9,8 +9,8 @@ final class NativeIntentTests: XCTestCase {
 
   override func setUp() async throws {
     continueAfterFailure = false
+    _ = launchReadyApp()
     if !Self.didInitializeApp {
-      _ = launchReadyApp()
       let deadline = Date().addingTimeInterval(15)
       while true {
         do {
@@ -221,8 +221,8 @@ final class NativeIntentTests: XCTestCase {
           .waitForExistence(timeout: 5))
       let annotations = try await annotationIDs(hidden: false)
       XCTAssertEqual(annotations, [id])
-      XCTAssertTrue(app.buttons["Close"].waitForExistence(timeout: 5))
-      app.buttons["Close"].tap()
+      XCTAssertTrue(app.buttons["currency.details.close"].waitForExistence(timeout: 5))
+      app.buttons["currency.details.close"].tap()
     }
   }
 
@@ -257,6 +257,7 @@ final class NativeIntentTests: XCTestCase {
 
   private func launchReadyApp() -> XCUIApplication {
     let app = XCUIApplication(bundleIdentifier: "com.dimasike.currency")
+    app.launchArguments = ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
     app.launch()
     let primary = app.buttons["onboarding.primary"]
     let home = app.buttons["converter.widgets"]

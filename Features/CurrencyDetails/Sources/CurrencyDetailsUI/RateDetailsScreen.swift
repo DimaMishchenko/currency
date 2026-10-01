@@ -55,7 +55,8 @@ struct RateDetailsScreen: View {
               .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
             Text(rateLabel(snapshot.convert(1, from: code, to: quote)))
               .font(.system(size: amountSize, weight: .light, design: .rounded)).monospacedDigit()
-              .lineLimit(1).minimumScaleFactor(0.4)
+              .lineLimit(1).minimumScaleFactor(0.25)
+              .accessibilityIdentifier("currency.details.rate")
             Text(CurrencyDisplay.details(snapshot, from: code, to: quote, locale: locale))
               .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
             if let observed = snapshot.quotes[code]?.observedAt {
@@ -78,12 +79,14 @@ struct RateDetailsScreen: View {
           VStack(alignment: .leading, spacing: AppStyle.Space.large) {
             Text(.Details.historyHeading).font(AppStyle.font(.caption2, weight: .semibold))
               .tracking(2)
-            Picker(.Details.historyRange, selection: $model.range) {
-              ForEach(model.availableRanges, id: \.self) { range in
-                Text(range.title).accessibilityLabel(range.accessibilityTitle).tag(range)
-              }
-            }
-            .pickerStyle(.segmented)
+            AdaptiveSegmentedPicker(
+              .Details.historyRange,
+              choices: model.availableRanges,
+              selection: $model.range,
+              optionTitle: { Text($0.title) },
+              fullTitle: { Text($0.accessibilityTitle) }
+            )
+            .accessibilityIdentifier("currency.details.historyRange")
             historyContent
             historyFooter
           }
@@ -111,6 +114,7 @@ struct RateDetailsScreen: View {
             AppHaptics.play(.action); dismiss()
           }
           .labelStyle(.iconOnly)
+          .accessibilityIdentifier("currency.details.close")
           .font(AppStyle.font(.title2))
           .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
           .frame(width: 44, height: 44)
@@ -152,6 +156,7 @@ struct RateDetailsScreen: View {
       ZStack(alignment: .leading) {
         VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
           Text(verbatim: "0.000000 \(quote)").font(AppStyle.font(.title3))
+            .lineLimit(1).minimumScaleFactor(0.25)
           Text(dayLabel(Date())).font(AppStyle.font(.caption))
         }
         .hidden().accessibilityHidden(true)
@@ -159,6 +164,7 @@ struct RateDetailsScreen: View {
           VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
             Text(verbatim: "\(rateLabel(Decimal(selected.value))) \(quote)")
               .font(AppStyle.font(.title3).monospacedDigit())
+              .lineLimit(1).minimumScaleFactor(0.25)
             Text(dayLabel(selected.date))
               .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
           }
@@ -364,7 +370,7 @@ private struct HistorySkeleton: View {
       AxisMarks(position: .trailing, values: [0.0, 0.33, 0.66, 1.0]) { _ in
         AxisGridLine().foregroundStyle(.quaternary)
         AxisValueLabel(horizontalSpacing: axisLabelSpacing) {
-          Text("0.000").font(AppStyle.font(.caption2)).hidden()
+          Text(verbatim: "0.000").font(AppStyle.font(.caption2)).hidden()
             .frame(width: axisWidth, alignment: .leading)
             .overlay(alignment: .leading) {
               RoundedRectangle(cornerRadius: 3).fill(.quaternary).frame(width: 32, height: 8)
@@ -376,7 +382,7 @@ private struct HistorySkeleton: View {
       AxisMarks(values: singleDateLabel ? [0.5] : [0.1, 0.5, 0.9]) { _ in
         AxisGridLine().foregroundStyle(.quaternary)
         AxisValueLabel {
-          Text("00 Sep").font(AppStyle.font(.caption2)).hidden().fixedSize()
+          Text(verbatim: "00 Sep").font(AppStyle.font(.caption2)).hidden().fixedSize()
             .overlay {
               RoundedRectangle(cornerRadius: 3).fill(.quaternary).frame(width: 36, height: 8)
             }
