@@ -82,6 +82,12 @@
             "state": "translated",
             "value": "Табло валют"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valuutatabel"
+          }
         }
       }
     },
@@ -165,6 +171,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Валютний калькулятор"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valuutakalkulaator"
           }
         }
       }
@@ -250,6 +262,12 @@
             "state": "translated",
             "value": "Виберіть «Типово», щоб використовувати валюти програми, або «Власний список». Середній розмір показує до чотирьох валют, великий — до восьми. Дві валюти працюють як калькулятор пари."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rakenduse valuutade kasutamiseks vali Vaikimisi või vali Kohandatud loend. Keskmine vidin näitab kuni nelja, suur kuni kaheksat valuutat. Kahe valuutaga töötab see valuutapaari kalkulaatorina."
+          }
         }
       }
     },
@@ -333,6 +351,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ваша готівка"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sularaha väärtus"
           }
         }
       }
@@ -418,6 +442,12 @@
             "state": "translated",
             "value": "Торкайтеся звичних банкнот або вибирайте масу металу, щоб побачити їхню довідкову вартість."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puuduta levinud rahatähti või metallide kaaluvalikuid, et näha nende võrdlusväärtust."
+          }
         }
       }
     },
@@ -501,6 +531,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Курс у кишені"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Taskukurss"
           }
         }
       }
@@ -586,6 +622,12 @@
             "state": "translated",
             "value": "Одна корисна довідкова сума, автоматично вибрана для вашої валютної пари."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Üks kasulik võrdlussumma, mis valitakse sinu valuutapaari jaoks automaatselt."
+          }
         }
       }
     },
@@ -669,6 +711,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Усний рахунок"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Peastarvutus"
           }
         }
       }
@@ -754,6 +802,12 @@
             "state": "translated",
             "value": "Округлене правило множення або ділення для швидких оцінок."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ümardatud korrutus- või jagamisreegel kiireks hindamiseks."
+          }
         }
       }
     },
@@ -837,6 +891,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Табло валют із базовою валютою першою. «Типово» використовує валюти програми; «Власний список» зберігає окремий набір."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valuutatabel, kus baasvaluuta on esimene. Vaikimisi kasutab rakenduse valuutasid; Kohandatud loend säilitab eraldi valiku."
           }
         }
       }
@@ -922,6 +982,12 @@
             "state": "translated",
             "value": "Валюта"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valuuta"
+          }
         }
       }
     },
@@ -1005,6 +1071,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Валюта або метал"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valuuta või metall"
           }
         }
       }
@@ -1090,6 +1162,12 @@
             "state": "translated",
             "value": "Параметри калькулятора"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kalkulaatori seaded"
+          }
         }
       }
     },
@@ -1173,6 +1251,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Валютна пара"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valuutapaar"
           }
         }
       }
@@ -1258,6 +1342,12 @@
             "state": "translated",
             "value": "Параметри «Ваша готівка»"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sularaha väärtuse seaded"
+          }
         }
       }
     },
@@ -1341,6 +1431,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Параметри табло валют"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valuutatabeli seaded"
           }
         }
       }
@@ -1426,6 +1522,12 @@
             "state": "translated",
             "value": "Валюти"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valuutad"
+          }
         }
       }
     },
@@ -1509,6 +1611,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Базова"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Baasvaluuta"
           }
         }
       }
@@ -1594,6 +1702,12 @@
             "state": "translated",
             "value": "Порівняння"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Võrdlusvaluuta"
+          }
         }
       }
     },
@@ -1677,6 +1791,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сума"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Summa"
           }
         }
       }
@@ -1762,6 +1882,12 @@
             "state": "translated",
             "value": "Додатне число з крапкою або комою для дробової частини, без роздільників розрядів."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Positiivne arv, mille kümnendkohad on eraldatud punkti või komaga, ilma tuhandeliste eraldajateta."
+          }
         }
       }
     },
@@ -1845,6 +1971,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Оновити валютний віджет"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Värskenda valuutavidinat"
           }
         }
       }
@@ -1930,6 +2062,12 @@
             "state": "translated",
             "value": "Стан"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Olek"
+          }
         }
       }
     },
@@ -2013,6 +2151,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Команда"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Käsk"
           }
         }
       }
@@ -2098,6 +2242,12 @@
             "state": "translated",
             "value": "Початкова сума"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Algne summa"
+          }
         }
       }
     },
@@ -2180,6 +2330,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Yerel para birimi"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kohalik valuuta"
           }
         }
       }
@@ -2264,6 +2420,12 @@
             "state": "translated",
             "value": "Konumunuzu uygulamada ayarlayın"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seadista oma asukoht rakenduses"
+          }
         }
       }
     },
@@ -2346,6 +2508,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Para birimi listesi"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valuutaloend"
           }
         }
       }
@@ -2430,6 +2598,12 @@
             "state": "translated",
             "value": "Özel liste"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kohandatud loend"
+          }
         }
       }
     },
@@ -2512,6 +2686,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Вибрано в програмі"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rakenduses valitud"
           }
         }
       }
@@ -2596,6 +2776,12 @@
             "state": "translated",
             "value": "Розташування"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asukoht"
+          }
         }
       }
     },
@@ -2678,6 +2864,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Валюти"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valuutad"
           }
         }
       }
@@ -2762,6 +2954,12 @@
             "state": "translated",
             "value": "Метали"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Metallid"
+          }
         }
       }
     },
@@ -2844,6 +3042,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Криптовалюти"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Krüpto"
           }
         }
       }
@@ -2928,6 +3132,12 @@
             "state": "translated",
             "value": "Типово"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vaikimisi"
+          }
         }
       }
     },
@@ -3011,6 +3221,12 @@
             "state": "translated",
             "value": "«Типово» використовує валюти програми. Виберіть «Власний список», щоб змінити окремий набір."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vaikimisi kasutab rakenduse valuutasid. Eraldi valiku muutmiseks vali Kohandatud loend."
+          }
         }
       }
     },
@@ -3092,6 +3308,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Середній розмір показує перші 4 валюти. Решта з’являються у великому."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keskmine vidin näitab nelja esimest valuutat. Ülejäänud ilmuvad suures vidinas."
           }
         }
       }
@@ -3175,6 +3397,12 @@
             "state": "translated",
             "value": "Великий розмір показує перші 8 валют. Середній — перші 4."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suur vidin näitab kaheksat esimest valuutat. Keskmine näitab nelja esimest."
+          }
         }
       }
     },
@@ -3257,6 +3485,12 @@
             "state": "translated",
             "value": "Середній розмір використовує перші 4 валюти програми, включно з місцевою, якщо її вибрано."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keskmine vidin kasutab rakenduse nelja esimest valuutat, sealhulgas kohalikku valuutat, kui see on valitud."
+          }
         }
       }
     },
@@ -3338,6 +3572,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Великий розмір використовує перші 8 валют програми, включно з місцевою, якщо її вибрано."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suur vidin kasutab rakenduse kaheksat esimest valuutat, sealhulgas kohalikku valuutat, kui see on valitud."
           }
         }
       }
@@ -3423,6 +3663,12 @@
             "state": "translated",
             "value": "Історія"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kursiajalugu"
+          }
         }
       }
     },
@@ -3506,6 +3752,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Дві валюти та історія їхнього курсу обміну. За 1Д дані оновлюються щогодини, де це доступно; за інші періоди — щодня."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kaks valuutat ja nende vahetuskursi ajalugu. 1p värskendatakse võimalusel iga tund, teisi perioode iga päev."
           }
         }
       }
@@ -3591,6 +3843,12 @@
             "state": "translated",
             "value": "Параметри історії"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajaloo seaded"
+          }
         }
       }
     },
@@ -3674,6 +3932,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Період"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Periood"
           }
         }
       }
@@ -3759,6 +4023,12 @@
             "state": "translated",
             "value": "1Д"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1p"
+          }
         }
       }
     },
@@ -3842,6 +4112,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "1 тиждень"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 nädal"
           }
         }
       }
@@ -3927,6 +4203,12 @@
             "state": "translated",
             "value": "1 місяць"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 kuu"
+          }
         }
       }
     },
@@ -4010,6 +4292,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "3 місяці"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3 kuud"
           }
         }
       }
@@ -4095,6 +4383,12 @@
             "state": "translated",
             "value": "1 рік"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 aasta"
+          }
         }
       }
     },
@@ -4179,6 +4473,12 @@
             "state": "translated",
             "value": "Уся історія"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kogu ajalugu"
+          }
         }
       }
     },
@@ -4262,6 +4562,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "За 1Д дані оновлюються щогодини, де це доступно; за інші періоди — щодня."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1p värskendatakse võimalusel iga tund, teisi perioode iga päev."
           }
         }
       }

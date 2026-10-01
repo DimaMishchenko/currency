@@ -81,6 +81,12 @@
             "state": "translated",
             "value": "Currency — одним поглядом"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Currency ühe pilguga"
+          }
         }
       }
     },
@@ -163,6 +169,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Повсякденні валюти завжди поруч"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sinu igapäevased valuutad, alati käepärast"
           }
         }
       }
@@ -247,6 +259,12 @@
             "state": "translated",
             "value": "Додайте свої валюти"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lisa oma valuutad"
+          }
         }
       }
     },
@@ -329,6 +347,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Виберіть валюти, у які хочете конвертувати"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vali valuutad, millesse soovid teisendada"
           }
         }
       }
@@ -413,6 +437,12 @@
             "state": "translated",
             "value": "Тримайте їх поруч"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hoia neid käepärast"
+          }
         }
       }
     },
@@ -495,6 +525,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ваші валюти на початковому екрані"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sinu valuutad avakuval"
           }
         }
       }
@@ -579,6 +615,12 @@
             "state": "translated",
             "value": "Підготовка"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ettevalmistused"
+          }
         }
       }
     },
@@ -661,6 +703,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Завантажуємо курси для першої конвертації"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Laadime alla kursse sinu esimese teisenduse jaoks"
           }
         }
       }
@@ -745,6 +793,12 @@
             "state": "translated",
             "value": "Повторна спроба"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uuesti proovimine"
+          }
         }
       }
     },
@@ -827,6 +881,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Підключіться, щоб почати"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alustamiseks loo internetiühendus"
           }
         }
       }
@@ -911,6 +971,12 @@
             "state": "translated",
             "value": "Для завантаження перших курсів потрібен інтернет"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esimeste vahetuskursside allalaadimiseks on vaja internetiühendust"
+          }
         }
       }
     },
@@ -993,6 +1059,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Не вдалося завантажити курси"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kursse ei saanud laadida"
           }
         }
       }
@@ -1077,6 +1149,12 @@
             "state": "translated",
             "value": "Спробуйте ще раз за деякий час"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proovi mõne hetke pärast uuesti"
+          }
         }
       }
     },
@@ -1159,6 +1237,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Збережімо ваші налаштування"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salvestame sinu seadistuse"
           }
         }
       }
@@ -1243,6 +1327,12 @@
             "state": "translated",
             "value": "Не вдалося зберегти курси; спробуйте ще раз"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vahetuskursse ei saanud salvestada; proovi uuesti"
+          }
         }
       }
     },
@@ -1325,6 +1415,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Не вдалося зберегти валюти; спробуйте ще раз"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valuutasid ei saanud salvestada; proovi uuesti"
           }
         }
       }
@@ -1409,6 +1505,12 @@
             "state": "translated",
             "value": "Не вдалося зберегти налаштування; спробуйте ще раз"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seadistust ei saanud salvestada; proovi uuesti"
+          }
         }
       }
     },
@@ -1491,6 +1593,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Почати"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alusta"
           }
         }
       }
@@ -1575,6 +1683,12 @@
             "state": "translated",
             "value": "Продовжити"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jätka"
+          }
         }
       }
     },
@@ -1657,6 +1771,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Покажіть, як"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Näita, kuidas"
           }
         }
       }
@@ -1741,6 +1861,12 @@
             "state": "translated",
             "value": "Пізніше"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hiljem"
+          }
         }
       }
     },
@@ -1823,6 +1949,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Назад"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tagasi"
           }
         }
       }
@@ -1907,6 +2039,12 @@
             "state": "translated",
             "value": "Спробувати ще раз"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proovi uuesti"
+          }
         }
       }
     },
@@ -1989,6 +2127,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Повторити збереження"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proovi uuesti salvestada"
           }
         }
       }
@@ -2073,6 +2217,12 @@
             "state": "translated",
             "value": "Повторна спроба…"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uuesti proovimine…"
+          }
         }
       }
     },
@@ -2155,6 +2305,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Завантаження курсів обміну…"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vahetuskursside laadimine…"
           }
         }
       }
@@ -2239,6 +2395,12 @@
             "state": "translated",
             "value": "Останнє оновлення %@"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Viimati värskendatud %@"
+          }
         }
       }
     },
@@ -2321,6 +2483,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Валюти"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valuutad"
           }
         }
       }
@@ -2405,6 +2573,12 @@
             "state": "translated",
             "value": "Вибрано"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valitud"
+          }
         }
       }
     },
@@ -2487,6 +2661,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Не вибрано"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valimata"
           }
         }
       }
@@ -2571,6 +2751,12 @@
             "state": "translated",
             "value": "Недоступно"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pole saadaval"
+          }
         }
       }
     },
@@ -2653,6 +2839,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Базова валюта"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Baasvaluuta"
           }
         }
       }
@@ -2737,6 +2929,12 @@
             "state": "translated",
             "value": "Виберіть валюти"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vali valuutad"
+          }
         }
       }
     },
@@ -2819,6 +3017,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Попередній перегляд конвертації"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teisenduse eelvaade"
           }
         }
       }
@@ -2903,6 +3107,12 @@
             "state": "translated",
             "value": "Додайте валюту, щоб побачити її вартість"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lisa valuuta, et näha selle väärtust"
+          }
         }
       }
     },
@@ -2985,6 +3195,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Деякі курси поки недоступні"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mõned kursid pole veel saadaval"
           }
         }
       }
@@ -3069,6 +3285,12 @@
             "state": "translated",
             "value": "Виберіть іншу базову валюту"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vali teine baasvaluuta"
+          }
         }
       }
     },
@@ -3151,6 +3373,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Курси для базової валюти поки недоступні"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Baasvaluuta kursid pole veel saadaval"
           }
         }
       }
@@ -3235,6 +3463,12 @@
             "state": "translated",
             "value": "Змінити базову валюту"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Muuda baasvaluutat"
+          }
         }
       }
     },
@@ -3317,6 +3551,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Пошук"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otsi"
           }
         }
       }
@@ -3401,6 +3641,12 @@
             "state": "translated",
             "value": "На початковому екрані"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sinu avakuval"
+          }
         }
       }
     },
@@ -3483,6 +3729,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Переглядайте свої валюти, не відкриваючи програму"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vaata oma valuutasid äppi avamata"
           }
         }
       }
@@ -3567,6 +3819,12 @@
             "state": "translated",
             "value": "Переглянути віджети"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avasta vidinaid"
+          }
         }
       }
     },
@@ -3649,6 +3907,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Виберіть базову валюту"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vali baasvaluuta"
           }
         }
       }
@@ -3733,6 +3997,12 @@
             "state": "translated",
             "value": "Валюта, із якої ви зазвичай конвертуєте"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valuuta, millest tavaliselt teisendad"
+          }
         }
       }
     },
@@ -3815,6 +4085,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Виберіть іншу валюту або повторіть спробу завантаження курсу"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vali teine valuuta või proovi selle kurssi uuesti laadida"
           }
         }
       }
@@ -3899,6 +4175,12 @@
             "state": "translated",
             "value": "Конвертація з"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lähtevaluuta"
+          }
         }
       }
     },
@@ -3981,6 +4263,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Інші валюти"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Veel valuutasid"
           }
         }
       }
@@ -4065,6 +4353,12 @@
             "state": "translated",
             "value": "Популярні"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Populaarsed"
+          }
         }
       }
     },
@@ -4147,6 +4441,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ще"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Veel"
           }
         }
       }
@@ -4231,6 +4531,12 @@
             "state": "translated",
             "value": "Вітаємо в Currency"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tere tulemast Currency äppi"
+          }
         }
       }
     },
@@ -4313,6 +4619,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ваші валюти завжди поруч."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sinu valuutad, alati käepärast."
           }
         }
       }
@@ -4397,6 +4709,12 @@
             "state": "translated",
             "value": "Вітаємо"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tere tulemast"
+          }
         }
       }
     },
@@ -4480,6 +4798,12 @@
             "state": "translated",
             "value": "у Currency"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Currency äppi"
+          }
         }
       }
     },
@@ -4562,6 +4886,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Проведіть по колу, щоб обертати валюти."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valuutade pööramiseks lohista mööda ringi."
           }
         }
       }

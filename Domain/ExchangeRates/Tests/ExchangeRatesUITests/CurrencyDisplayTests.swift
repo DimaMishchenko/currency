@@ -10,6 +10,12 @@ import Testing
     #expect(CurrencyDisplay.name("UAH", locale: Locale(identifier: "uk_UA")) == "Українська гривня")
   }
 
+  @Test func estonianCurrencyNamesUseSentenceCapitalizationAndPreserveCountryAcronyms() {
+    let estonian = Locale(identifier: "et_EE")
+    #expect(CurrencyDisplay.name("EUR", locale: estonian) == "Euro")
+    #expect(CurrencyDisplay.name("USD", locale: estonian) == "USA dollar")
+  }
+
   @Test func capitalizationPreservesAcronymsAndUnknownCodes() {
     let ukrainian = Locale(identifier: "uk_UA")
     #expect(CurrencyDisplay.name("USD", locale: ukrainian).hasSuffix("США"))

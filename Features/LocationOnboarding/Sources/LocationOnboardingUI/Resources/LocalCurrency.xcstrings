@@ -81,6 +81,12 @@
             "state": "translated",
             "value": "Закрити"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sulge"
+          }
         }
       }
     },
@@ -164,6 +170,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Готово"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valmis"
           }
         }
       }
@@ -249,6 +261,12 @@
             "state": "translated",
             "value": "Місцева валюта"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kohalik valuuta"
+          }
         }
       }
     },
@@ -332,6 +350,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Очікування вашого дозволу…"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sinu loa ootamine…"
           }
         }
       }
@@ -417,6 +441,12 @@
             "state": "translated",
             "value": "Додати в програму"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lisa äppi"
+          }
         }
       }
     },
@@ -500,6 +530,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ми визначаємо валюту для цього розташування."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otsime selle asukoha valuutat."
           }
         }
       }
@@ -585,6 +621,12 @@
             "state": "translated",
             "value": "Визначення вашої валюти…"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sinu valuuta otsimine…"
+          }
         }
       }
     },
@@ -668,6 +710,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Знаходимо ваше місце\nу світі."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sinu koha leidmine\nmaailmas."
           }
         }
       }
@@ -753,6 +801,12 @@
             "state": "translated",
             "value": "Дозвольте доступ до розташування, щоб визначити місцеву валюту."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Luba asukoha kasutamine, et leida kohalik valuuta."
+          }
         }
       }
     },
@@ -836,6 +890,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Знайдіть валюту навколо вас,\nдля програми й віджетів."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leia oma asukoha valuuta,\näpi ja vidinate jaoks."
           }
         }
       }
@@ -921,6 +981,12 @@
             "state": "translated",
             "value": "Почувайтеся як удома,\nбудь-де."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tunne end koduselt,\nükskõik kus."
+          }
         }
       }
     },
@@ -1004,6 +1070,12 @@
             "state": "translated",
             "value": "Konum erişimi kapalı. Yerel para biriminizi güncellemek için Ayarlar’da Currency’ye konum izni verin."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asukoha kasutamine on välja lülitatud. Kohaliku valuuta värskendamiseks luba Currency äpil seadetes asukohta kasutada."
+          }
         }
       }
     },
@@ -1086,6 +1158,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bu aygıtta konum erişimi kısıtlı. Yerel para biriminiz güncellenemedi."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selles seadmes on asukoha kasutamine piiratud. Kohalikku valuutat ei saanud värskendada."
           }
         }
       }
@@ -1171,6 +1249,12 @@
             "state": "translated",
             "value": "Приблизне розташування. Лише країна й валюта."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ligikaudne asukoht. Ainult riik ja valuuta."
+          }
         }
       }
     },
@@ -1254,6 +1338,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Розташування\nнедоступне."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asukoht pole\nsaadaval."
           }
         }
       }
@@ -1339,6 +1429,12 @@
             "state": "translated",
             "value": "Карта регіону: %1$@. Точне розташування не показано."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ piirkonna kaart. Täpset asukohta ei näidata."
+          }
         }
       }
     },
@@ -1422,6 +1518,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Не вдалося видалити збережену валюту. Спробуйте ще раз."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salvestatud valuutat ei saanud eemaldada. Proovi uuesti."
           }
         }
       }
@@ -1507,6 +1609,12 @@
             "state": "translated",
             "value": "Місцеву валюту видалено."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kohalik valuuta eemaldati."
+          }
         }
       }
     },
@@ -1590,6 +1698,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Спробувати ще раз"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proovi uuesti"
           }
         }
       }
@@ -1675,6 +1789,12 @@
             "state": "translated",
             "value": "Збережена місцева валюта: %1$@ (%2$@)"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salvestatud kohalik valuuta: %1$@ (%2$@)"
+          }
         }
       }
     },
@@ -1758,6 +1878,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Служби локації вимкнено. Увімкніть їх у Параметрах, щоб визначити місцеву валюту."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asukohateenused on välja lülitatud. Kohaliku valuuta leidmiseks lülita need seadetes sisse."
           }
         }
       }
@@ -1843,6 +1969,12 @@
             "state": "translated",
             "value": "Розташування недоступне. Спробуйте ще раз після підключення до інтернету або за сильнішого сигналу."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asukoht pole saadaval. Proovi uuesti, kui internetiühendus või signaal on parem."
+          }
         }
       }
     },
@@ -1926,6 +2058,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Для цього розташування не знайдено підтримувану валюту."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selle asukoha jaoks ei leitud toetatud valuutat."
           }
         }
       }
@@ -2011,6 +2149,12 @@
             "state": "translated",
             "value": "Не вдалося оновити збережену валюту. Спробуйте ще раз."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salvestatud valuutat ei saanud värskendada. Proovi uuesti."
+          }
         }
       }
     },
@@ -2094,6 +2238,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Не вдалося додати валюту. Спробуйте ще раз."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valuutat ei saanud lisada. Proovi uuesti."
           }
         }
       }
@@ -2179,6 +2329,12 @@
             "state": "translated",
             "value": "Використати моє розташування"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kasuta minu asukohta"
+          }
         }
       }
     },
@@ -2261,6 +2417,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Відкрити Параметри"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ava seaded"
           }
         }
       }
@@ -2346,6 +2508,12 @@
             "state": "translated",
             "value": "Ваша місцева валюта — %1$@. Вона оновлюється щодня, поки програма або віджети використовуються."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sinu kohalik valuuta on %1$@. Seda värskendatakse iga päev, kui äpp või vidinad on kasutusel."
+          }
         }
       }
     },
@@ -2430,6 +2598,12 @@
             "state": "translated",
             "value": "Додайте місцеву валюту, щоб використовувати валюту вашого розташування. Зараз — %1$@."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lisa Kohalik valuuta, et valuuta muutuks koos sinu asukohaga. Praegu %1$@."
+          }
         }
       }
     },
@@ -2513,6 +2687,12 @@
             "state": "translated",
             "value": "Орбіта валют"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valuutade orbiit"
+          }
         }
       }
     },
@@ -2595,6 +2775,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Потягніть для обертання або змахніть угору чи вниз, щоб повернути валюти."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pööramiseks lohista või pühi üles või alla."
           }
         }
       }

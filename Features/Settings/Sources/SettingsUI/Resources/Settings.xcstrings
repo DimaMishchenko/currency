@@ -81,6 +81,12 @@
             "state": "translated",
             "value": "Розташування"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asukoht"
+          }
         }
       }
     },
@@ -163,6 +169,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Розташування"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asukoht"
           }
         }
       }
@@ -247,6 +259,12 @@
             "state": "translated",
             "value": "Налаштуйте місцеву валюту або керуйте доступом до розташування."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seadista kohalik valuuta või halda asukoha kasutamise luba."
+          }
         }
       }
     },
@@ -329,6 +347,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Параметри"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seaded"
           }
         }
       }
@@ -413,6 +437,12 @@
             "state": "translated",
             "value": "Вигляд"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Välimus"
+          }
         }
       }
     },
@@ -495,6 +525,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Тема"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teema"
           }
         }
       }
@@ -579,6 +615,12 @@
             "state": "translated",
             "value": "Акцентний колір"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rõhuvärv"
+          }
         }
       }
     },
@@ -661,6 +703,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Подяки"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tänuavaldused"
           }
         }
       }
@@ -745,6 +793,12 @@
             "state": "translated",
             "value": "Початок роботи"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alustamine"
+          }
         }
       }
     },
@@ -827,6 +881,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Системна"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Süsteem"
           }
         }
       }
@@ -911,6 +971,12 @@
             "state": "translated",
             "value": "Світла"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hele"
+          }
         }
       }
     },
@@ -993,6 +1059,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Темна"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tume"
           }
         }
       }
@@ -1077,6 +1149,12 @@
             "state": "translated",
             "value": "Типово"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vaikimisi"
+          }
         }
       }
     },
@@ -1159,6 +1237,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Синій"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sinine"
           }
         }
       }
@@ -1243,6 +1327,12 @@
             "state": "translated",
             "value": "Індиго"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indigosinine"
+          }
         }
       }
     },
@@ -1325,6 +1415,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Фіолетовий"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lilla"
           }
         }
       }
@@ -1409,6 +1505,12 @@
             "state": "translated",
             "value": "Рожевий"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Roosa"
+          }
         }
       }
     },
@@ -1491,6 +1593,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Червоний"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Punane"
           }
         }
       }
@@ -1575,6 +1683,12 @@
             "state": "translated",
             "value": "Помаранчевий"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oranž"
+          }
         }
       }
     },
@@ -1658,6 +1772,12 @@
             "state": "translated",
             "value": "Зелений"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Roheline"
+          }
         }
       }
     },
@@ -1740,6 +1860,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Бірюзовий"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sinakasroheline"
           }
         }
       }
@@ -1825,6 +1951,12 @@
             "state": "translated",
             "value": "Про ці курси"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nende kursside kohta"
+          }
         }
       }
     },
@@ -1908,6 +2040,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Збережено для роботи без інтернету. Банківські комісії не включено."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salvestatud võrguühenduseta kasutamiseks. Pangatasud ei sisaldu."
           }
         }
       }
@@ -1993,6 +2131,12 @@
             "state": "translated",
             "value": "Остання перевірка"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Viimati kontrollitud"
+          }
         }
       }
     },
@@ -2076,6 +2220,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Оновити зараз"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Värskenda kohe"
           }
         }
       }
@@ -2161,6 +2311,12 @@
             "state": "translated",
             "value": "Джерела"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allikad"
+          }
         }
       }
     },
@@ -2244,6 +2400,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Недоступно"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pole saadaval"
           }
         }
       }
@@ -2329,6 +2491,12 @@
             "state": "translated",
             "value": "Не завантажено"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pole alla laaditud"
+          }
         }
       }
     },
@@ -2411,6 +2579,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Курси"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vahetuskursid"
           }
         }
       }
@@ -2495,6 +2669,12 @@
             "state": "translated",
             "value": "Курси отримано"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kursid hangitud"
+          }
         }
       }
     },
@@ -2577,6 +2757,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Остання угода %@"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Viimane tehing %@"
           }
         }
       }
@@ -2661,6 +2847,12 @@
             "state": "translated",
             "value": "Отримано %@"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hangitud %@"
+          }
         }
       }
     },
@@ -2743,6 +2935,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Відомості про котирування"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noteeringu teave"
           }
         }
       }
@@ -2827,6 +3025,12 @@
             "state": "translated",
             "value": "Опубліковано %@"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avaldatud %@"
+          }
         }
       }
     },
@@ -2909,6 +3113,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Закрити"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sulge"
           }
         }
       }
@@ -2993,6 +3203,12 @@
             "state": "translated",
             "value": "Графіка"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Graafika"
+          }
         }
       }
     },
@@ -3075,6 +3291,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Щоденні довідкові курси звичайних валют та історичні курси обміну."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tavavaluutade igapäevased võrdluskursid ja ajaloolised vahetuskursid."
           }
         }
       }
@@ -3159,6 +3381,12 @@
             "state": "translated",
             "value": "Прямі щоденні довідкові курси звичайних валют, коли основне джерело недоступне."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tavavaluutade igapäevased võrdluskursid otse allikast, kui peamine allikas pole saadaval."
+          }
         }
       }
     },
@@ -3241,6 +3469,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Щоденні курси криптовалют і резервні курси обміну."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Krüptovaluutade igapäevased kursid ja varuvahetuskursid."
           }
         }
       }
@@ -3325,6 +3559,12 @@
             "state": "translated",
             "value": "Поточні курси криптовалют і завершені історичні свічки в USD."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Krüptovaluutade praegused vahetuskursid ja suletud ajaloolised USD hinnaküünlad."
+          }
         }
       }
     },
@@ -3407,6 +3647,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Графіка криптовалют від 0xa3k5. © 2024 0xa3k5. Використовується без змін."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Krüptovaluutade graafika autor on 0xa3k5. © 2024 0xa3k5. Kasutatud muutmata kujul."
           }
         }
       }
@@ -3491,6 +3737,12 @@
             "state": "translated",
             "value": "Графіка Dogecoin від Cryptocurrency Icons. Використовується без змін."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dogecoini graafika pärineb kogust Cryptocurrency Icons. Kasutatud muutmata kujul."
+          }
         }
       }
     },
@@ -3573,6 +3825,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Повторити знайомство"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vaata sissejuhatust uuesti"
           }
         }
       }
@@ -3657,6 +3915,12 @@
             "state": "translated",
             "value": "Не вдалося відкрити налаштування повторно. Спробуйте ще раз."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seadistust ei saanud uuesti avada. Proovi uuesti."
+          }
         }
       }
     },
@@ -3739,6 +4003,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Спробувати ще раз"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proovi uuesti"
           }
         }
       }
@@ -3823,6 +4093,12 @@
             "state": "translated",
             "value": "Надіслати відгук"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saada tagasisidet"
+          }
         }
       }
     },
@@ -3905,6 +4181,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Незабаром"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Peagi tulekul"
           }
         }
       }
@@ -3989,6 +4271,12 @@
             "state": "translated",
             "value": "Версія %1$@ · Збірка %2$@"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versioon %1$@ · Järk %2$@"
+          }
         }
       }
     },
@@ -4071,6 +4359,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Не вдалося оновити курси. Спробуйте ще раз."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kursse ei saanud värskendada. Proovi uuesti."
           }
         }
       }
@@ -4155,6 +4449,12 @@
             "state": "translated",
             "value": "Мова"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keel"
+          }
         }
       }
     },
@@ -4237,6 +4537,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Виберіть бажану мову для Currency в системних Параметрах."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vali Currency äpi eelistatud keel süsteemi seadetes."
           }
         }
       }

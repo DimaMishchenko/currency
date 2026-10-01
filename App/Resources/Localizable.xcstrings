@@ -80,6 +80,12 @@
             "state": "translated",
             "value": "%@"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@"
+          }
         }
       }
     },
@@ -158,6 +164,12 @@
           }
         },
         "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %@"
+          }
+        },
+        "et": {
           "stringUnit": {
             "state": "translated",
             "value": "%@ %@"
@@ -244,6 +256,12 @@
             "state": "translated",
             "value": "%@ %@ — %@."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %@ on %@."
+          }
         }
       }
     },
@@ -325,6 +343,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ %@ — приблизно %@."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %@ on ligikaudu %@."
           }
         }
       }
@@ -408,6 +432,12 @@
             "state": "translated",
             "value": "%@ %@ тройських унцій"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %@ troiuntsi"
+          }
         }
       }
     },
@@ -486,6 +516,12 @@
           }
         },
         "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %@ → %@"
+          }
+        },
+        "et": {
           "stringUnit": {
             "state": "translated",
             "value": "%@ %@ → %@"
@@ -572,6 +608,12 @@
             "state": "translated",
             "value": "%@ %@ → ≈ %@"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %@ → ≈ %@"
+          }
         }
       }
     },
@@ -653,6 +695,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ (місцева)"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ (kohalik)"
           }
         }
       }
@@ -736,6 +784,12 @@
             "state": "translated",
             "value": "%@: недоступно"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@: pole saadaval"
+          }
         }
       }
     },
@@ -817,6 +871,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Доступно ще %lld результатів."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saadaval on veel %lld tulemust."
           }
         }
       }
@@ -900,6 +960,12 @@
             "state": "translated",
             "value": "Американський долар"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "USA dollar"
+          }
         }
       }
     },
@@ -981,6 +1047,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сума"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Summa"
           }
         }
       }
@@ -1064,6 +1136,12 @@
             "state": "translated",
             "value": "Австралійський долар"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Austraalia dollar"
+          }
         }
       }
     },
@@ -1145,6 +1223,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Канадський долар"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kanada dollar"
           }
         }
       }
@@ -1228,6 +1312,12 @@
             "state": "translated",
             "value": "Перевірити курс"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kontrolli kurssi"
+          }
         }
       }
     },
@@ -1309,6 +1399,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Перевірити курс обміну"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kontrolli vahetuskurssi"
           }
         }
       }
@@ -1392,6 +1488,12 @@
             "state": "translated",
             "value": "Перевірити курс ${source} до ${destination}"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kontrolli vahetuskurssi ${source} → ${destination}"
+          }
         }
       }
     },
@@ -1473,6 +1575,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Виберіть підтримувану валюту."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vali toetatud valuuta."
           }
         }
       }
@@ -1556,6 +1664,12 @@
             "state": "translated",
             "value": "Результат конвертації"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teisenduse tulemus"
+          }
         }
       }
     },
@@ -1637,6 +1751,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Конвертувати ${amount} із ${source} у ${destination}"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teisenda ${amount} valuutast ${source} valuutasse ${destination}"
           }
         }
       }
@@ -1720,6 +1840,12 @@
             "state": "translated",
             "value": "Конвертувати ${amount} із ${source} у місцеву валюту"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teisenda ${amount} valuutast ${source} kohalikku valuutasse"
+          }
         }
       }
     },
@@ -1801,6 +1927,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Конвертувати ${amount} із ${source} у мої валюти"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teisenda ${amount} valuutast ${source} minu valuutadesse"
           }
         }
       }
@@ -1884,6 +2016,12 @@
             "state": "translated",
             "value": "Конвертувати суму"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teisenda summa"
+          }
         }
       }
     },
@@ -1965,6 +2103,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Конвертувати суму між валютами, криптовалютами або металами."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teisenda summa valuutade, krüptovaluutade või metallide vahel."
           }
         }
       }
@@ -2048,6 +2192,12 @@
             "state": "translated",
             "value": "Конвертувати суму у валюти, вибрані в Currency."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teisenda summa Currency rakenduses valitud valuutadesse."
+          }
         }
       }
     },
@@ -2129,6 +2279,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Конвертувати суму у валюту вашого розташування."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teisenda summa oma asukoha valuutasse."
           }
         }
       }
@@ -2212,6 +2368,12 @@
             "state": "translated",
             "value": "Конвертувати валюти, криптовалюти й метали"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teisenda valuutasid, krüptovaluutasid ja metalle"
+          }
         }
       }
     },
@@ -2293,6 +2455,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Конвертувати в місцеву"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teisenda kohalikku valuutasse"
           }
         }
       }
@@ -2376,6 +2544,12 @@
             "state": "translated",
             "value": "Конвертувати в місцеву валюту"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teisenda kohalikku valuutasse"
+          }
         }
       }
     },
@@ -2457,6 +2631,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Конвертувати в мої валюти"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teisenda minu valuutadesse"
           }
         }
       }
@@ -2540,6 +2720,12 @@
             "state": "translated",
             "value": "Конвертована сума"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teisendatud summa"
+          }
         }
       }
     },
@@ -2621,6 +2807,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Валюта"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valuuta"
           }
         }
       }
@@ -2704,6 +2896,12 @@
             "state": "translated",
             "value": "Щоденні курси криптовалют"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Krüptovaluutade päevakursid"
+          }
         }
       }
     },
@@ -2785,6 +2983,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Введіть суму без роздільників розрядів, наприклад 100 або 12.50."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sisesta summa ilma tuhandeliste eraldajateta, näiteks 100 või 12.50."
           }
         }
       }
@@ -2868,6 +3072,12 @@
             "state": "translated",
             "value": "Курси обміну недоступні"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vahetuskursid pole saadaval"
+          }
         }
       }
     },
@@ -2949,6 +3159,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Курси обміну недоступні. Відкрийте Currency, щоб оновити їх."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vahetuskursid pole saadaval. Värskendamiseks ava Currency."
           }
         }
       }
@@ -3032,6 +3248,12 @@
             "state": "translated",
             "value": "Із"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lähtevaluuta"
+          }
         }
       }
     },
@@ -3113,6 +3335,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Містить курси від %@"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sisaldab kursse allikast %@"
           }
         }
       }
@@ -3196,6 +3424,12 @@
             "state": "translated",
             "value": "Остання відома місцева валюта"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Viimane teadaolev kohalik valuuta"
+          }
         }
       }
     },
@@ -3277,6 +3511,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Менше %@"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vähem kui %@"
           }
         }
       }
@@ -3360,6 +3600,12 @@
             "state": "translated",
             "value": "Місцева валюта"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kohalik valuuta"
+          }
         }
       }
     },
@@ -3441,6 +3687,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Грошова сума"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rahasumma"
           }
         }
       }
@@ -3524,6 +3776,12 @@
             "state": "translated",
             "value": "Мої валюти"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Minu valuutad"
+          }
         }
       }
     },
@@ -3605,6 +3863,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Новозеландський долар"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uus-Meremaa dollar"
           }
         }
       }
@@ -3688,6 +3952,12 @@
             "state": "translated",
             "value": "Доступний ще один результат."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saadaval on veel üks tulemus."
+          }
         }
       }
     },
@@ -3769,6 +4039,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Відкрити відомості про валюту"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ava valuuta üksikasjad"
           }
         }
       }
@@ -3852,6 +4128,12 @@
             "state": "translated",
             "value": "Відкрити відомості про валюту в Currency"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ava valuuta üksikasjad Currency rakenduses"
+          }
         }
       }
     },
@@ -3933,6 +4215,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Відкрити відомості про ${target}"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ava ${target} üksikasjad"
           }
         }
       }
@@ -4016,6 +4304,12 @@
             "state": "translated",
             "value": "Результат"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tulemus"
+          }
         }
       }
     },
@@ -4097,6 +4391,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Переглянути курс та історію валюти в Currency."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vaata valuuta vahetuskurssi ja ajalugu Currency rakenduses."
           }
         }
       }
@@ -4180,6 +4480,12 @@
             "state": "translated",
             "value": "Переглянути вартість однієї одиниці в іншій валюті."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vaata, kui palju on üks ühik väärt teises valuutas."
+          }
         }
       }
     },
@@ -4261,6 +4567,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Спочатку виберіть цільові валюти в Currency."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vali kõigepealt sihtvaluutad Currency rakenduses."
           }
         }
       }
@@ -4344,6 +4656,12 @@
             "state": "translated",
             "value": "Деякі конвертації недоступні."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mõned teisendused pole saadaval."
+          }
         }
       }
     },
@@ -4425,6 +4743,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Не вдалося оновити деякі курси"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mõnda kurssi ei saanud värskendada"
           }
         }
       }
@@ -4508,6 +4832,12 @@
             "state": "translated",
             "value": "Стан"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Olek"
+          }
         }
       }
     },
@@ -4589,6 +4919,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сума для конвертації."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teisendatav summa."
           }
         }
       }
@@ -4672,6 +5008,12 @@
             "state": "translated",
             "value": "Потрібні курси обміну недоступні."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vajalikud vahetuskursid pole saadaval."
+          }
         }
       }
     },
@@ -4753,6 +5095,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ця сума завелика для конвертації. Спробуйте меншу суму."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "See summa on teisendamiseks liiga suur. Proovi väiksemat summat."
           }
         }
       }
@@ -4836,6 +5184,12 @@
             "state": "translated",
             "value": "Обчислення перевищує десяткову точність"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "See arvutus ületab kümnendarvu täpsuse"
+          }
         }
       }
     },
@@ -4917,6 +5271,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Обчислення перевищує десяткову точність."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "See arvutus ületab kümnendarvu täpsuse."
           }
         }
       }
@@ -5000,6 +5360,12 @@
             "state": "translated",
             "value": "У"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sihtvaluuta"
+          }
         }
       }
     },
@@ -5081,6 +5447,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Щоб використовувати місцеву валюту, відкрийте Currency і налаштуйте розташування."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kohaliku valuuta kasutamiseks ava Currency ja seadista asukoht."
           }
         }
       }
@@ -5164,6 +5536,12 @@
             "state": "translated",
             "value": "Долар США"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "USA dollar"
+          }
         }
       }
     },
@@ -5245,6 +5623,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Використовуються збережені курси"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kasutusel on vahemällu salvestatud kursid"
           }
         }
       }
@@ -5328,6 +5712,12 @@
             "state": "translated",
             "value": "Яку суму ви хочете конвертувати?"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Millise summa soovid teisendada?"
+          }
         }
       }
     },
@@ -5409,6 +5799,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Із якої валюти ви конвертуєте?"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Millisest valuutast soovid teisendada?"
           }
         }
       }
@@ -5492,6 +5888,12 @@
             "state": "translated",
             "value": "У яку валюту ви конвертуєте?"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Millisesse valuutasse soovid teisendada?"
+          }
         }
       }
     },
@@ -5573,6 +5975,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Яку валюту ви хочете відкрити?"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Millise valuuta soovid avada?"
           }
         }
       }
@@ -5656,6 +6064,12 @@
             "state": "translated",
             "value": "Яку цільову валюту ви мали на увазі?"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Millist sihtvaluutat mõtlesid?"
+          }
         }
       }
     },
@@ -5737,6 +6151,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Яку вихідну валюту ви мали на увазі?"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Millist lähtevaluutat mõtlesid?"
           }
         }
       }
@@ -5820,6 +6240,12 @@
             "state": "translated",
             "value": "конвертувати"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "teisenda"
+          }
         }
       }
     },
@@ -5901,6 +6327,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "криптовалюта"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "krüpto"
           }
         }
       }
@@ -5984,6 +6416,12 @@
             "state": "translated",
             "value": "валюта"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "valuuta"
+          }
         }
       }
     },
@@ -6065,6 +6503,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "конвертер валют"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "valuutakalkulaator"
           }
         }
       }
@@ -6148,6 +6592,12 @@
             "state": "translated",
             "value": "долар"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "dollar"
+          }
         }
       }
     },
@@ -6229,6 +6679,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "євро"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "euro"
           }
         }
       }
@@ -6312,6 +6768,12 @@
             "state": "translated",
             "value": "обмін"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "vahetus"
+          }
         }
       }
     },
@@ -6393,6 +6855,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "курс обміну"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "vahetuskurss"
           }
         }
       }
@@ -6476,6 +6944,12 @@
             "state": "translated",
             "value": "метали"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "metallid"
+          }
         }
       }
     },
@@ -6557,6 +7031,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "гроші"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "raha"
           }
         }
       }
@@ -6640,6 +7120,12 @@
             "state": "translated",
             "value": "фунт"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "nael"
+          }
         }
       }
     },
@@ -6721,6 +7207,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "женьміньбі"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "renminbi"
           }
         }
       }
@@ -6804,6 +7296,12 @@
             "state": "translated",
             "value": "стерлінг"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "naelsterling"
+          }
         }
       }
     },
@@ -6886,6 +7384,12 @@
             "state": "translated",
             "value": "єна"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "jeen"
+          }
         }
       }
     },
@@ -6967,6 +7471,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "юань"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "jüaan"
           }
         }
       }

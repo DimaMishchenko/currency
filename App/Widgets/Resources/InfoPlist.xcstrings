@@ -82,6 +82,12 @@
             "state": "translated",
             "value": "Віджети Currency"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Currency vidinad"
+          }
         }
       }
     },
@@ -162,6 +168,12 @@
           }
         },
         "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CurrencyWidgets"
+          }
+        },
+        "et": {
           "stringUnit": {
             "state": "translated",
             "value": "CurrencyWidgets"

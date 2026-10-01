@@ -80,6 +80,12 @@
             "state": "translated",
             "value": "Символ валюти"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valuuta sümbol"
+          }
         }
       }
     },
@@ -161,6 +167,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Аустраль"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Austral"
           }
         }
       }
@@ -244,6 +256,12 @@
             "state": "translated",
             "value": "Австралійський долар"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Austraalia dollar"
+          }
         }
       }
     },
@@ -326,6 +344,12 @@
             "state": "translated",
             "value": "Таїландський бат"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tai baat"
+          }
         }
       }
     },
@@ -404,6 +428,12 @@
           }
         },
         "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bitcoin"
+          }
+        },
+        "et": {
           "stringUnit": {
             "state": "translated",
             "value": "Bitcoin"
@@ -490,6 +520,12 @@
             "state": "translated",
             "value": "Бразильський реал"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Brasiilia reaal"
+          }
         }
       }
     },
@@ -571,6 +607,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ганський седі"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ghana sedi"
           }
         }
       }
@@ -654,6 +696,12 @@
             "state": "translated",
             "value": "Цент"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sent"
+          }
         }
       }
     },
@@ -735,6 +783,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Китайський юань"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hiina jüaan"
           }
         }
       }
@@ -818,6 +872,12 @@
             "state": "translated",
             "value": "Колон"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Koloon"
+          }
         }
       }
     },
@@ -899,6 +959,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Крузейро"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kruzeiro"
           }
         }
       }
@@ -982,6 +1048,12 @@
             "state": "translated",
             "value": "Данська крона"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Taani kroon"
+          }
         }
       }
     },
@@ -1063,6 +1135,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "В’єтнамський донг"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vietnami dong"
           }
         }
       }
@@ -1146,6 +1224,12 @@
             "state": "translated",
             "value": "Долар"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dollar"
+          }
         }
       }
     },
@@ -1227,6 +1311,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Євро"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Euro"
           }
         }
       }
@@ -1310,6 +1400,12 @@
             "state": "translated",
             "value": "Єврозона"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Euroala"
+          }
         }
       }
     },
@@ -1391,6 +1487,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Флорин"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Floriin"
           }
         }
       }
@@ -1474,6 +1576,12 @@
             "state": "translated",
             "value": "Франк"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frank"
+          }
         }
       }
     },
@@ -1555,6 +1663,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Гуарані"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guaranii"
           }
         }
       }
@@ -1638,6 +1752,12 @@
             "state": "translated",
             "value": "Українська гривня"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ukraina grivna"
+          }
         }
       }
     },
@@ -1719,6 +1839,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Індійська рупія"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "India ruupia"
           }
         }
       }
@@ -1802,6 +1928,12 @@
             "state": "translated",
             "value": "Лаоський кіп"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Laose kiip"
+          }
         }
       }
     },
@@ -1883,6 +2015,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Грузинський ларі"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gruusia lari"
           }
         }
       }
@@ -1966,6 +2104,12 @@
             "state": "translated",
             "value": "Ліра"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Liir"
+          }
         }
       }
     },
@@ -2047,6 +2191,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Малайзійський рингіт"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Malaisia ringgit"
           }
         }
       }
@@ -2130,6 +2280,12 @@
             "state": "translated",
             "value": "Манат"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Manat"
+          }
         }
       }
     },
@@ -2211,6 +2367,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Мілль"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mill"
           }
         }
       }
@@ -2294,6 +2456,12 @@
             "state": "translated",
             "value": "Нігерійська найра"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nigeeria naira"
+          }
         }
       }
     },
@@ -2375,6 +2543,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Норвезька крона"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Norra kroon"
           }
         }
       }
@@ -2458,6 +2632,12 @@
             "state": "translated",
             "value": "Перуанський соль"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Peruu soll"
+          }
         }
       }
     },
@@ -2539,6 +2719,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Песета"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Peseeta"
           }
         }
       }
@@ -2622,6 +2808,12 @@
             "state": "translated",
             "value": "Песо"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Peeso"
+          }
         }
       }
     },
@@ -2703,6 +2895,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Польський злотий"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Poola zlott"
           }
         }
       }
@@ -2786,6 +2984,12 @@
             "state": "translated",
             "value": "Рубль"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rubla"
+          }
         }
       }
     },
@@ -2867,6 +3071,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Рупія"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ruupia"
           }
         }
       }
@@ -2950,6 +3160,12 @@
             "state": "translated",
             "value": "Шекель"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seekel"
+          }
         }
       }
     },
@@ -3031,6 +3247,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сінгапурський долар"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Singapuri dollar"
           }
         }
       }
@@ -3114,6 +3336,12 @@
             "state": "translated",
             "value": "Фунт стерлінгів"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Naelsterling"
+          }
         }
       }
     },
@@ -3195,6 +3423,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Шведська крона"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rootsi kroon"
           }
         }
       }
@@ -3278,6 +3512,12 @@
             "state": "translated",
             "value": "Казахстанський тенге"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kasahstani tenge"
+          }
         }
       }
     },
@@ -3359,6 +3599,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Монгольський тугрик"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mongoolia tugrik"
           }
         }
       }
@@ -3442,6 +3688,12 @@
             "state": "translated",
             "value": "Турецька ліра"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Türgi liir"
+          }
         }
       }
     },
@@ -3523,6 +3775,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Корейська вона"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Korea vonn"
           }
         }
       }
@@ -3606,6 +3864,12 @@
             "state": "translated",
             "value": "Єна"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jeen"
+          }
         }
       }
     },
@@ -3687,6 +3951,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Значок валюти"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valuutaikoon"
           }
         }
       }
@@ -3770,6 +4040,12 @@
             "state": "translated",
             "value": "Символ"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sümbol"
+          }
         }
       }
     },
@@ -3851,6 +4127,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Синхронізовано"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sünkroonitud"
           }
         }
       }
@@ -3934,6 +4216,12 @@
             "state": "translated",
             "value": "Активна валюта"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aktiivne valuuta"
+          }
         }
       }
     },
@@ -4015,6 +4303,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Прихована валюта"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Peidetud valuuta"
           }
         }
       }
@@ -4098,6 +4392,12 @@
             "state": "translated",
             "value": "Значок валюти"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valuutaikoon"
+          }
         }
       }
     },
@@ -4180,6 +4480,12 @@
             "state": "translated",
             "value": "Символ валюти на замкненому екрані. Торкніться, щоб відкрити Currency."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valuuta sümbol lukustuskuval. Currency avamiseks puuduta seda."
+          }
         }
       }
     },
@@ -4258,6 +4564,12 @@
           }
         },
         "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@"
+          }
+        },
+        "et": {
           "stringUnit": {
             "state": "translated",
             "value": "%@"
@@ -4344,6 +4656,12 @@
             "state": "translated",
             "value": "Калькулятор"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kalkulaator"
+          }
         }
       }
     },
@@ -4425,6 +4743,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Введення"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sisend"
           }
         }
       }

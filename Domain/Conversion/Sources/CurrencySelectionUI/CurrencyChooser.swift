@@ -93,7 +93,7 @@ public struct CurrencyChooser: View {
 
       }
 
-      .searchable(text: $search)
+      .searchable(text: $search, prompt: Text(.CurrencySelection.search))
       .autocorrectionDisabled()
       .textInputAutocapitalization(.never)
       .navigationTitle(

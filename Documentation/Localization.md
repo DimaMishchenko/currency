@@ -1,7 +1,7 @@
 # Localization
 
 Currency supports English, Simplified Chinese, Japanese, Spanish, German, French,
-Brazilian Portuguese, Korean, Traditional Chinese, Italian, Turkish, Russian and Ukrainian.
+Brazilian Portuguese, Korean, Traditional Chinese, Italian, Turkish, Russian, Ukrainian and Estonian.
 
 ## Ownership and behavior
 
@@ -20,7 +20,7 @@ saved currencies retain their existing behavior.
 ## Implementation and acceptance
 
 1. Audit active catalog entries and remove strings whose former UI has been removed.
-2. Translate every active entry in all 13 languages, including accessibility text,
+2. Translate every active entry in all 14 languages, including accessibility text,
    permission messages, widget configuration, intent dialogs and shortcut variants.
 3. Declare the supported languages in the app and widget extension manifests.
 4. Check coverage, substitution placeholders and multiline copy in CI with
@@ -33,7 +33,7 @@ saved currencies retain their existing behavior.
 
 The `NativeLocalizationTests` scheme captures Home, Settings, currency categories and
 history in every language, exercises crypto-category and year-to-date selection, checks
-Ukrainian widget/tutorial and accessibility text sizes, and verifies that Language opens
+Ukrainian and Estonian widget/tutorial and accessibility text sizes, and verifies that Language opens
 system Settings. Each language runs separately to keep native checks within CI timeouts.
 Preferred-language selection is a separate system acceptance check.
 

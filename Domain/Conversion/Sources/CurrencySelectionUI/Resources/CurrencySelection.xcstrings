@@ -81,6 +81,12 @@
             "state": "translated",
             "value": "Не вдалося зберегти вибрані валюти. Спробуйте ще раз."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seda valuutavalikut ei saanud salvestada. Proovi uuesti."
+          }
         }
       }
     },
@@ -164,6 +170,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Додати валюту"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lisa valuuta"
           }
         }
       }
@@ -249,6 +261,12 @@
             "state": "translated",
             "value": "Категорія активу"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vara liik"
+          }
         }
       }
     },
@@ -333,6 +351,12 @@
             "state": "translated",
             "value": "Базова валюта"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Baasvaluuta"
+          }
         }
       }
     },
@@ -415,6 +439,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Закрити"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sulge"
           }
         }
       }
@@ -500,6 +530,12 @@
             "state": "translated",
             "value": "Крипто"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Krüpto"
+          }
         }
       }
     },
@@ -583,6 +619,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Валюти"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valuutad"
           }
         }
       }
@@ -668,6 +710,12 @@
             "state": "translated",
             "value": "Місцева валюта"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kohalik valuuta"
+          }
         }
       }
     },
@@ -751,6 +799,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Місцева валюта · %1$@"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kohalik valuuta · %1$@"
           }
         }
       }
@@ -836,6 +890,12 @@
             "state": "translated",
             "value": "Розташування"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asukoht"
+          }
         }
       }
     },
@@ -919,6 +979,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Метали"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Metallid"
           }
         }
       }
@@ -1004,6 +1070,12 @@
             "state": "translated",
             "value": "Мої"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valitud"
+          }
         }
       }
     },
@@ -1087,6 +1159,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Визначити за розташуванням"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leia asukoha järgi"
           }
         }
       }
@@ -1172,6 +1250,12 @@
             "state": "translated",
             "value": "Недоступно"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pole saadaval"
+          }
         }
       }
     },
@@ -1254,6 +1338,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Валюти не знайдено"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valuutasid ei leitud"
           }
         }
       }
@@ -1338,6 +1428,12 @@
             "state": "translated",
             "value": "Введіть назву або код валюти"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proovi nime või valuutakoodi"
+          }
         }
       }
     },
@@ -1420,6 +1516,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Популярні валюти"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Populaarsed valuutad"
           }
         }
       }
@@ -1504,6 +1606,12 @@
             "state": "translated",
             "value": "Усі валюти"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kõik valuutad"
+          }
         }
       }
     },
@@ -1586,6 +1694,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Популярні криптовалюти"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Populaarsed"
           }
         }
       }
@@ -1670,6 +1784,12 @@
             "state": "translated",
             "value": "Усі криптовалюти"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kõik"
+          }
         }
       }
     },
@@ -1753,6 +1873,12 @@
             "state": "translated",
             "value": "Kripto paralar"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Krüptovaluutad"
+          }
         }
       }
     },
@@ -1835,6 +1961,101 @@
           "stringUnit": {
             "state": "translated",
             "value": "Seçili para birimleri"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valitud valuutad"
+          }
+        }
+      }
+    },
+    "search": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜索"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "検索"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buscar"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suchen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rechercher"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buscar"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "검색"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜尋"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerca"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ara"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Поиск"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пошук"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otsi"
           }
         }
       }

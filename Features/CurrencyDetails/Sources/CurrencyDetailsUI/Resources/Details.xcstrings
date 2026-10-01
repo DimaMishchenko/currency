@@ -82,6 +82,12 @@
             "state": "translated",
             "value": "ІСТОРІЯ"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KURSIAJALUGU"
+          }
         }
       }
     },
@@ -165,6 +171,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Немає доступної історії"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajaloolised kursid pole saadaval"
           }
         }
       }
@@ -250,6 +262,12 @@
             "state": "translated",
             "value": "Спробуйте інший період або поверніться після підключення до інтернету."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vali teine periood või proovi uuesti, kui internetiühendus on olemas."
+          }
         }
       }
     },
@@ -334,6 +352,12 @@
             "state": "translated",
             "value": "«Усе» показує всю історію, доступну в цього постачальника для цієї пари, з групуванням за місяцями. Вона може починатися пізніше появи валюти."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kõik näitab selle pakkuja kogu saadaolevat kursiajalugu valitud valuutapaari kohta, kuude kaupa. Ajalugu võib alata pärast valuuta kasutuselevõttu."
+          }
         }
       }
     },
@@ -417,6 +441,12 @@
             "state": "translated",
             "value": "Історія використовує завершені свічки Coinbase у USD; за пропущені торгові дні спостережень немає. Джерела історичних і поточних курсів можуть відрізнятися."
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajalugu põhineb Coinbase’i suletud USD hinnaküünaldel; puuduvate kauplemispäevade kohta vaatlusi pole. Ajalooliste ja praeguste vahetuskursside allikad võivad erineda."
+          }
         }
       }
     },
@@ -499,6 +529,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "В історії довідкових курсів можливі прогалини у вихідні та між публікаціями. Джерела історичних і поточних курсів можуть відрізнятися."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Võrdluskursside ajaloos võib nädalavahetuste ja avaldamisgraafiku tõttu olla lünki. Ajalooliste ja praeguste vahetuskursside allikad võivad erineda."
           }
         }
       }
@@ -584,6 +620,12 @@
             "state": "translated",
             "value": "Період історії"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajaloo periood"
+          }
         }
       }
     },
@@ -667,6 +709,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Історія %1$@ %2$@ у %3$@"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@ väärtuse ajalugu valuutas %3$@"
           }
         }
       }
@@ -752,6 +800,12 @@
             "state": "translated",
             "value": "1 %1$@ у %2$@"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 %1$@ valuutas %2$@"
+          }
         }
       }
     },
@@ -835,6 +889,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Остання угода %@"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Viimane tehing %@"
           }
         }
       }
@@ -920,6 +980,12 @@
             "state": "translated",
             "value": "Збережено %@"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salvestatud %@"
+          }
         }
       }
     },
@@ -1003,6 +1069,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "1Т"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1n"
           }
         }
       }
@@ -1088,6 +1160,12 @@
             "state": "translated",
             "value": "1М"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1k"
+          }
         }
       }
     },
@@ -1171,6 +1249,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "3М"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3k"
           }
         }
       }
@@ -1256,6 +1340,12 @@
             "state": "translated",
             "value": "1Р"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1a"
+          }
         }
       }
     },
@@ -1339,6 +1429,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Усе"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kõik"
           }
         }
       }
@@ -1424,6 +1520,12 @@
             "state": "translated",
             "value": "Один тиждень"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Üks nädal"
+          }
         }
       }
     },
@@ -1507,6 +1609,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Один місяць"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Üks kuu"
           }
         }
       }
@@ -1592,6 +1700,12 @@
             "state": "translated",
             "value": "Три місяці"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kolm kuud"
+          }
         }
       }
     },
@@ -1675,6 +1789,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Один рік"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Üks aasta"
           }
         }
       }
@@ -1760,6 +1880,12 @@
             "state": "translated",
             "value": "Усе доступне"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kogu saadaolev kursiajalugu"
+          }
         }
       }
     },
@@ -1843,6 +1969,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Дата"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kuupäev"
           }
         }
       }
@@ -1928,6 +2060,12 @@
             "state": "translated",
             "value": "Отримано %@ · час ринкових даних недоступний"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hangitud %@ · turu ajatempel pole saadaval"
+          }
         }
       }
     },
@@ -2010,6 +2148,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Завантаження історії…"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kursiajaloo laadimine…"
           }
         }
       }
@@ -2094,6 +2238,12 @@
             "state": "translated",
             "value": "Закрити"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sulge"
+          }
         }
       }
     },
@@ -2176,6 +2326,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "1Д"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1p"
           }
         }
       }
@@ -2260,6 +2416,12 @@
             "state": "translated",
             "value": "Один день"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Üks päev"
+          }
         }
       }
     },
@@ -2342,6 +2504,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "З січ."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YTD"
           }
         }
       }
@@ -2426,6 +2594,12 @@
             "state": "translated",
             "value": "Від початку року"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aasta algusest tänaseni"
+          }
         }
       }
     },
@@ -2508,6 +2682,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Історія звичайних валют використовує щоденні довідкові курси. Виберіть 1Т або довший період."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tavavaluutade ajalugu põhineb igapäevastel võrdluskurssidel. Vali 1n või pikem periood."
           }
         }
       }

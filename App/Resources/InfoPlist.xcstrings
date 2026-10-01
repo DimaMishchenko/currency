@@ -82,6 +82,12 @@
             "state": "translated",
             "value": "Currency"
           }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Currency"
+          }
         }
       }
     },
@@ -162,6 +168,12 @@
           }
         },
         "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Currency"
+          }
+        },
+        "et": {
           "stringUnit": {
             "state": "translated",
             "value": "Currency"
@@ -249,6 +261,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Визначати валюту вашої країни й оновлювати її щодня, поки програма або віджети використовуються. Зберігаються лише країна та валюта."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leia oma riigi valuuta ja värskenda seda iga päev, kui rakendus või vidinad on kasutusel. Salvestatakse ainult riik ja valuuta."
           }
         }
       }

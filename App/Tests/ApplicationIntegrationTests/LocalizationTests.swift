@@ -98,7 +98,7 @@ import Testing
   }
 
   @Test(arguments: [
-    "zh-Hans", "ja", "es", "de", "fr", "pt-BR", "ko", "zh-Hant", "it", "tr", "ru", "uk"
+    "zh-Hans", "ja", "es", "de", "fr", "pt-BR", "ko", "zh-Hant", "it", "tr", "ru", "uk", "et"
   ])
   func supportedLanguagesResolveEveryFeatureBundle(language: String) {
     let resources: [LocalizedStringResource] = [

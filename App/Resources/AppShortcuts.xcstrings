@@ -120,6 +120,15 @@
               "Перевірити курс ${source} з ${applicationName}"
             ]
           }
+        },
+        "et": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Kontrolli vahetuskurssi rakendusega ${applicationName}",
+              "Kontrolli ${source} kurssi rakendusega ${applicationName}"
+            ]
+          }
         }
       }
     },
@@ -242,6 +251,15 @@
               "Конвертувати ${source} з ${applicationName}"
             ]
           }
+        },
+        "et": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Teisenda raha rakendusega ${applicationName}",
+              "Teisenda ${source} rakendusega ${applicationName}"
+            ]
+          }
         }
       }
     },
@@ -351,6 +369,14 @@
               "Конвертувати в місцеву валюту з ${applicationName}"
             ]
           }
+        },
+        "et": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Teisenda kohalikku valuutasse rakendusega ${applicationName}"
+            ]
+          }
         }
       }
     },
@@ -458,6 +484,14 @@
             "state": "translated",
             "values": [
               "Конвертувати в мої валюти з ${applicationName}"
+            ]
+          }
+        },
+        "et": {
+          "stringSet": {
+            "state": "translated",
+            "values": [
+              "Teisenda minu valuutadesse rakendusega ${applicationName}"
             ]
           }
         }

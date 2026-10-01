@@ -3,6 +3,10 @@ import XCTest
 @MainActor
 final class NativeLocalizationTests: XCTestCase {
   private let bundleID = "com.dimasike.currency"
+  func testEstonian() {
+    verifyLanguages(["et"])
+  }
+
   func testEnglish() {
     verifyLanguages(["en"])
   }
@@ -55,6 +59,18 @@ final class NativeLocalizationTests: XCTestCase {
     verifyLanguages(["uk"])
   }
 
+  func testEstonianPickerAndHistoryAccessibilityTextSize() {
+    let app = launchReadyApp()
+    app.terminate()
+    app.launchArguments = [
+      "-AppleLanguages", "(et)", "-AppleLocale", "en_US",
+      "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"
+    ]
+    app.launch()
+    verifyPickerAndHistory(app, language: "et", requiresMenu: true)
+    app.terminate()
+  }
+
   func testUkrainianPickerAndHistoryAccessibilityTextSize() {
     let app = launchReadyApp()
     app.terminate()
@@ -65,6 +81,19 @@ final class NativeLocalizationTests: XCTestCase {
     app.launch()
     verifyPickerAndHistory(app, language: "uk", requiresMenu: true)
     app.terminate()
+  }
+
+  func testEstonianWidgetsAndTutorial() {
+    let app = launchReadyApp()
+    app.terminate()
+    app.launchArguments = ["-AppleLanguages", "(et)", "-AppleLocale", "en_US"]
+    app.launch()
+    app.buttons["converter.widgets"].tap()
+    XCTAssertTrue(app.buttons["Lisa vidin"].waitForExistence(timeout: 10))
+    capture(app, name: "widgets-et")
+    app.buttons["Lisa vidin"].tap()
+    XCTAssertTrue(app.staticTexts["Puuduta pikalt avakuva"].waitForExistence(timeout: 5))
+    capture(app, name: "widget-tutorial-et")
   }
 
   func testUkrainianWidgetsAndTutorial() {
@@ -160,6 +189,9 @@ final class NativeLocalizationTests: XCTestCase {
     XCTAssertTrue(source.waitForExistence(timeout: 10))
     source.tap()
     XCTAssertTrue(app.buttons["currency.picker.close"].waitForExistence(timeout: 5))
+    if language == "et" {
+      XCTAssertEqual(app.searchFields.firstMatch.placeholderValue, "Otsi")
+    }
     capture(app, name: "currency-picker-\(language)\(requiresMenu ? "-accessibility" : "")")
     selectOption(
       app, identifier: "currency.picker.category", title: titles.crypto,
@@ -190,6 +222,10 @@ final class NativeLocalizationTests: XCTestCase {
     XCTAssertLessThanOrEqual(rate.frame.maxX, app.windows.firstMatch.frame.maxX)
     Thread.sleep(forTimeInterval: 1)
     capture(app, name: "currency-history-ytd-\(language)\(requiresMenu ? "-accessibility" : "")")
+    if requiresMenu {
+      app.swipeUp()
+      capture(app, name: "currency-history-ytd-\(language)-accessibility-controls")
+    }
   }
 
   private func selectOption(
@@ -221,6 +257,9 @@ final class NativeLocalizationTests: XCTestCase {
 
   private var controlTitles: [String: ControlTitles] {
     [
+      "et": ControlTitles(
+        crypto: "Krüptovaluutad", yearToDate: "Aasta algusest tänaseni",
+        editAmount: "Muuda summat valuutas %@"),
       "en": ControlTitles(
         crypto: "Cryptocurrencies", yearToDate: "Year to date", editAmount: "Edit amount in %@"),
       "zh-Hans": ControlTitles(crypto: "加密货币", yearToDate: "年初至今", editAmount: "编辑%@金额"),
