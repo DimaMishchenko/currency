@@ -390,9 +390,7 @@ private struct SourceDetailsDisclosureStyle: DisclosureGroupStyle {
       }
       .buttonStyle(.plain)
       .accessibilityValue(
-        Text(
-          configuration.isExpanded ? "sourceExpanded" : "sourceCollapsed",
-          tableName: "Details", bundle: .module))
+        Text(configuration.isExpanded ? .Details.sourceExpanded : .Details.sourceCollapsed))
       if configuration.isExpanded {
         configuration.content
           .frame(maxWidth: .infinity, alignment: .leading)
