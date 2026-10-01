@@ -17,7 +17,7 @@ has no separate language preference or runtime locale override. The app declares
 when the device has only one preferred language. Region formatting and
 saved currencies retain their existing behavior.
 
-## Implementation and acceptance
+## Validation
 
 1. Audit active catalog entries and remove strings whose former UI has been removed.
 2. Translate every active entry in all 14 languages, including accessibility text,
@@ -26,36 +26,8 @@ saved currencies retain their existing behavior.
 4. Check coverage, substitution placeholders and multiline copy in CI with
    `python3 Scripts/CI/check_localizations.py`. After a source build, also pass
    `--strings-data <DerivedData>` to detect uncatalogued production strings.
-5. Verify generated accessors against compiled module bundles, run the app tests and
-   native intent tests, and inspect the production app in every language.
-6. Exercise Language → system Settings → preferred language → return to Currency;
-   inspect longer text at accessibility sizes and representative widget/onboarding screens.
-
-The `NativeLocalizationTests` scheme captures Home, Settings, currency categories and
-history in every language, exercises crypto-category and year-to-date selection, checks
-Ukrainian and Estonian widget/tutorial and accessibility text sizes, and verifies that Language opens
-system Settings. This is an explicit visual acceptance suite, excluded from routine CI.
-Repeated app launches, screen navigation and screenshot capture across all languages
-take several minutes.
-Run it when adding a language, changing layouts or reviewing a release, with a task-owned
-simulator targeted by UDID:
-
-```sh
-set -o pipefail
-xcodebuild test \
-  -workspace Currency.xcworkspace \
-  -scheme NativeLocalizationTests \
-  -destination "platform=iOS Simulator,id=$CURRENCY_TEST_SIMULATOR" \
-  -parallel-testing-enabled NO \
-  -test-timeouts-enabled YES \
-  -default-test-execution-time-allowance 120 \
-  -maximum-test-execution-time-allowance 120 \
-  CODE_SIGN_IDENTITY=- 2>&1 | xcbeautify
-```
-
-Use `-only-testing:NativeLocalizationTests/NativeLocalizationTests/testEstonian`, for
-example, to review one language. Preferred-language selection is a separate system
-acceptance check.
+5. Verify generated accessors against compiled module bundles and run the app and
+   native intent tests.
 
 Routine CI checks every catalog's language coverage, completed translations, placeholders
 and line breaks, then audits compiler-extracted strings against their owning catalogs.

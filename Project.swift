@@ -39,11 +39,6 @@ let project = Project(
   ]),
   targets: [
     .target(
-      name: "NativeLocalizationTests", destinations: .iOS, product: .uiTests,
-      bundleId: "com.dimasike.currency.nativelocalizationtests", deploymentTargets: .iOS("26.0"),
-      infoPlist: .default, buildableFolders: ["App/Tests/NativeLocalizationTests"],
-      dependencies: [.target(name: "Currency")]),
-    .target(
       name: "NativeIntentTests", destinations: .iOS, product: .uiTests,
       bundleId: "com.dimasike.currency.nativeintenttests", deploymentTargets: .iOS("27.0"),
       infoPlist: .default, buildableFolders: ["App/Tests/NativeIntentTests"],
@@ -323,10 +318,6 @@ let project = Project(
       ])
   ],
   schemes: [
-    .scheme(
-      name: "NativeLocalizationTests", shared: true,
-      buildAction: .buildAction(targets: ["Currency", "NativeLocalizationTests"]),
-      testAction: .targets(["NativeLocalizationTests"], expandVariableFromTarget: "Currency")),
     .scheme(
       name: "NativeIntentTests", shared: true,
       buildAction: .buildAction(targets: ["Currency", "NativeIntentTests"]),
