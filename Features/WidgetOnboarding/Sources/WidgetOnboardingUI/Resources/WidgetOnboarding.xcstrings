@@ -193,7 +193,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "小小工具\n日常超能力"
+            "value": "小小工具\n日常更方便"
           }
         },
         "ja": {
@@ -229,13 +229,13 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "작은 것들이 주는\n일상의 초능력"
+            "value": "작은 위젯으로\n더 편리한 일상"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "小小工具\n日常超能力"
+            "value": "小小工具\n日常更方便"
           }
         },
         "it": {
@@ -265,7 +265,7 @@
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Väikesed asjad\nIgapäevased supervõimed"
+            "value": "Väikesed vidinad\nIgapäevane abi"
           }
         }
       }
@@ -355,7 +355,7 @@
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Vali üks ja tee see enda omaks"
+            "value": "Vali vidin ja kohanda endale sobivaks"
           }
         }
       }
@@ -445,7 +445,7 @@
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kollektsioon"
+            "value": "Vidinad"
           }
         }
       }
@@ -1201,7 +1201,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Wähle Lokal in der Währungsauswahl für eine eigene Liste oder füge sie bei Standard zur Liste deiner App hinzu."
+            "value": "Wähle für eine eigene Liste „Lokale Währung“ in der Währungsauswahl. Für „Standard“ füge sie zur Währungsliste der App hinzu."
           }
         },
         "fr": {
@@ -1237,13 +1237,13 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Özel liste için para birimi seçicisinden Yerel’i seçin veya Varsayılan’ı kullanırken uygulama listenize ekleyin."
+            "value": "Özel liste için para birimi seçicisinden “Yerel para birimi”ni seçin. “Varsayılan”ı kullanırken yerel para birimini uygulama listenize ekleyin."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Для своего списка выберите местную валюту в списке выбора валют; для списка по умолчанию добавьте её в список приложения."
+            "value": "Для своего списка выберите «Местная валюта» в списке валют. Для списка по умолчанию добавьте её в приложении."
           }
         },
         "uk": {
@@ -1255,7 +1255,7 @@
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kohandatud loendi jaoks vali valuutavalikust Kohalik valuuta. Valiku Vaikimisi korral lisa see äpi valuutaloendisse."
+            "value": "Kohandatud loendi jaoks vali valuutavalikust Kohalik valuuta. Valiku Vaikimisi korral lisa see rakenduse valuutaloendisse."
           }
         }
       }
@@ -1489,7 +1489,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@까지 쓸어넘기고 %2$@을(를) 선택한 다음 위젯 추가를 탭하세요"
+            "value": "%1$@까지 쓸어넘기고 %2$@ 크기를 선택한 다음 위젯 추가를 탭하세요"
           }
         },
         "zh-Hant": {
@@ -2011,7 +2011,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Wähle Vergleich und dann Lokal im Bereich Standort."
+            "value": "Wähle „Vergleich“ und dann „Lokale Währung“ im Bereich „Standort“."
           }
         },
         "fr": {
@@ -2101,7 +2101,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Wähle Währung hinzufügen und dann Lokal im Bereich Standort. Sie bleibt eine separate Auswahl neben festen Währungen."
+            "value": "Wähle „Währung hinzufügen“ und dann „Lokale Währung“ im Bereich „Standort“. Diese Auswahl wird getrennt von festen Währungen gespeichert."
           }
         },
         "fr": {
@@ -2461,7 +2461,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Standard folgt deiner App-Liste, einschließlich Lokal. Füge Lokal über Währung hinzufügen in der App hinzu."
+            "value": "„Standard“ verwendet die Währungsliste der App, einschließlich der lokalen Währung. Füge sie über „Währung hinzufügen“ in der App hinzu."
           }
         },
         "fr": {
@@ -2515,7 +2515,7 @@
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Vaikimisi kasutab äpi valuutaloendit, sealhulgas kohalikku valuutat. Lisa Kohalik valuuta äpis valiku Lisa valuuta kaudu."
+            "value": "Vaikimisi kasutab rakenduse valuutaloendit, sealhulgas kohalikku valuutat. Lisa Kohalik valuuta rakenduses valiku Lisa valuuta kaudu."
           }
         }
       }
@@ -2965,7 +2965,7 @@
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Avasta kollektsiooni"
+            "value": "Avasta vidinaid"
           }
         }
       }
@@ -3253,7 +3253,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "随时在旁"
+            "value": "随时查看"
           }
         },
         "ja": {
@@ -3295,7 +3295,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "隨時在旁"
+            "value": "隨時查看"
           }
         },
         "it": {
@@ -3955,7 +3955,7 @@
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Puuduta pikalt avakuva tühja ala, kuni äpid hakkavad värisema"
+            "value": "Puuduta pikalt avakuva tühja ala, kuni rakendused hakkavad värisema"
           }
         }
       }
@@ -4495,7 +4495,7 @@
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Vaikimisi kasutab äpi valuutaloendit. Kohandatud loend kasutab eraldi valikut."
+            "value": "Vaikimisi kasutab rakenduse valuutaloendit. Kohandatud loend kasutab eraldi valikut."
           }
         }
       }
@@ -4597,7 +4597,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A currency for where you are"
+            "value": "The currency where you are"
           }
         },
         "zh-Hans": {
@@ -4615,25 +4615,25 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Una moneda para donde estás"
+            "value": "La moneda del lugar donde estás"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Eine Währung für deinen Standort"
+            "value": "Die Währung an deinem Standort"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une devise pour là où tu es"
+            "value": "La devise du pays où tu te trouves"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Uma moeda para onde você está"
+            "value": "A moeda do lugar onde você está"
           }
         },
         "ko": {
@@ -4651,7 +4651,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Una valuta per dove ti trovi"
+            "value": "La valuta del luogo in cui ti trovi"
           }
         },
         "tr": {
@@ -4675,7 +4675,7 @@
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Valuuta sinu asukoha järgi"
+            "value": "Sinu asukoha valuuta"
           }
         }
       }
@@ -5935,7 +5935,7 @@
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tee see enda omaks"
+            "value": "Kohanda endale sobivaks"
           }
         }
       }
@@ -6385,7 +6385,7 @@
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Otsi vidinate galeriist Currency ja vali äpp"
+            "value": "Otsi vidinate galeriist Currency ja vali rakendus"
           }
         }
       }
@@ -6439,7 +6439,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld / %2$lld단계"
+            "value": "전체 %2$lld단계 중 %1$lld단계"
           }
         },
         "zh-Hant": {
@@ -7453,13 +7453,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ваши валюты вместе — одним взглядом"
+            "value": "Все ваши валюты на одном экране"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ваші валюти разом — одним поглядом"
+            "value": "Усі ваші валюти на одному екрані"
           }
         },
         "et": {
@@ -7645,7 +7645,7 @@
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Väike kalkulaator maailma valuutade jaoks"
+            "value": "Arvuta mitmes valuutas korraga"
           }
         }
       }
@@ -8185,7 +8185,7 @@
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kasulik teisendus, alati taskus"
+            "value": "Vaata vahetuskurssi ühe pilguga"
           }
         }
       }
@@ -9096,43 +9096,43 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Currency calculator, reference, and history widgets on an example Home Screen"
+            "value": "Currency calculator, conversion reference, and history widgets on an example Home Screen"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "示例主屏幕上的货币计算器、参考和历史小组件"
+            "value": "示例主屏幕上的货币计算器、参考换算和历史小组件"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "サンプルのホーム画面にある通貨計算機、参考、履歴のウィジェット"
+            "value": "サンプルのホーム画面にある通貨計算機、換算の目安、履歴のウィジェット"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Widgets de calculadora, referencia e historial de monedas en una pantalla de inicio de ejemplo"
+            "value": "Widgets de calculadora de monedas, referencia de conversión e historial en una pantalla de inicio de ejemplo"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Währungsrechner-, Referenz- und Verlaufswidgets auf einem Beispiel-Home-Bildschirm"
+            "value": "Währungsrechner, Umrechnungshilfen und Verlaufswidgets auf einem Beispiel-Home-Bildschirm"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Widgets de calculatrice, de référence et d’historique de devises sur un exemple d’écran d’accueil"
+            "value": "Widgets de calculatrice de devises, de repères de conversion et d’historique sur un exemple d’écran d’accueil"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Widgets de calculadora, referência e histórico de moedas em uma Tela de Início de exemplo"
+            "value": "Widgets de calculadora de moedas, referência de conversão e histórico em uma Tela de Início de exemplo"
           }
         },
         "ko": {
@@ -9144,37 +9144,37 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "範例主畫面上的貨幣計算機、參考和歷史小工具"
+            "value": "範例主畫面上的貨幣計算機、參考換算和歷史小工具"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Widget di calcolatrice valutaria, riferimento e cronologia su una schermata Home di esempio"
+            "value": "Widget di calcolatrice valutaria, riferimento per le conversioni e cronologia su una schermata Home di esempio"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Örnek Ana Ekran’da para birimi hesaplayıcı, referans ve geçmiş araç takımları"
+            "value": "Örnek Ana Ekran’da para birimi hesaplayıcı, dönüşüm örnekleri ve kur geçmişi araç takımları"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Валютный калькулятор, справочные виджеты и виджеты истории на примере экрана «Домой»"
+            "value": "Валютный калькулятор, виджеты для оценки стоимости и виджеты истории на примере экрана «Домой»"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Валютний калькулятор, довідкові віджети й віджети історії на прикладі початкового екрана"
+            "value": "Валютний калькулятор, віджети для оцінки вартості й віджети історії на прикладі початкового екрана"
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Valuutakalkulaatori, võrdluse ja kursiajaloo vidinad näidisavakuval"
+            "value": "Valuutakalkulaatori, näidisteisenduse ja kursiajaloo vidinad näidisavakuval"
           }
         }
       }
@@ -9530,7 +9530,7 @@
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Avasta äpis veel rohkem vidinaid"
+            "value": "Avasta rakenduses veel rohkem vidinaid"
           }
         }
       }
@@ -9698,13 +9698,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Две валюты и их история — одним взглядом"
+            "value": "История курса двух валют на одном экране"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Дві валюти та їхня історія — одним поглядом"
+            "value": "Історія курсу двох валют на одному екрані"
           }
         },
         "et": {
@@ -9812,85 +9812,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Starts with your app’s base and first currency. Choose either currency here. For crypto, choose USD as the other currency."
+            "value": "Starts with your app’s base and first currency. Choose either currency here. Available history depends on the pair."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "初始使用 App 的基准货币和第一种货币。可在此选择任一货币。对于加密货币，请选择 USD 作为另一种货币。"
+            "value": "初始使用 App 的基准货币和第一种货币。可在此更改任一货币。可用历史取决于货币对。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "アプリの基準通貨と最初の通貨で始まります。ここでどちらの通貨も変更できます。暗号資産の場合は、もう一方の通貨にUSDを選択してください。"
+            "value": "アプリの基準通貨と最初の通貨で始まります。ここでどちらの通貨も変更できます。利用できる履歴は通貨ペアによって異なります。"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Comienza con la moneda base y la primera moneda de tu app. Elige cualquiera de las dos monedas aquí. Para criptomonedas, elige USD como la otra moneda."
+            "value": "Comienza con la moneda base y la primera moneda de tu app. Elige cualquiera de las dos monedas aquí. El historial disponible depende del par."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Beginnt mit der Basiswährung und der ersten Währung deiner App. Wähle hier eine der beiden Währungen. Wähle für Krypto USD als andere Währung."
+            "value": "Beginnt mit der Basiswährung und der ersten Währung deiner App. Hier kannst du beide Währungen ändern. Der verfügbare Verlauf hängt vom Währungspaar ab."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Commence avec la devise de base et la première devise de ton app. Choisis l’une ou l’autre ici. Pour les cryptos, choisis USD comme autre devise."
+            "value": "Commence avec la devise de base et la première devise de ton app. Choisis l’une ou l’autre ici. L’historique disponible dépend de la paire."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Começa com a moeda base e a primeira moeda do app. Escolha qualquer uma das moedas aqui. Para criptomoedas, escolha USD como a outra moeda."
+            "value": "Começa com a moeda base e a primeira moeda do app. Escolha qualquer uma das moedas aqui. O histórico disponível depende do par."
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "앱의 기준 통화와 첫 번째 통화로 시작합니다. 여기에서 어느 통화든 선택할 수 있습니다. 암호화폐는 다른 통화로 USD를 선택하세요."
+            "value": "앱의 기준 통화와 첫 번째 통화로 시작합니다. 여기에서 두 통화 중 어느 쪽이든 바꿀 수 있습니다. 이용 가능한 과거 환율 데이터는 통화 쌍에 따라 다릅니다."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "初始使用 App 的基準貨幣和第一種貨幣。可在此選擇任一貨幣。對於加密貨幣，請選擇 USD 作為另一種貨幣。"
+            "value": "初始使用 App 的基準貨幣和第一種貨幣。可在此更改任一貨幣。可用歷史取決於貨幣對。"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Inizia con la base e la prima valuta dell’app. Qui puoi cambiare entrambe le valute. Per le criptovalute, scegli USD come altra valuta."
+            "value": "Inizia con la valuta di base e la prima valuta dell’app. Qui puoi cambiare entrambe le valute. La cronologia disponibile dipende dalla coppia."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Uygulamanızın temel ve ilk para birimiyle başlar. Buradan her iki para birimini de seçebilirsiniz. Kripto için diğer para birimi olarak USD seçin."
+            "value": "Uygulamanızın temel ve ilk para birimiyle başlar. Buradan her iki para birimini de değiştirebilirsiniz. Kullanılabilir geçmiş, para birimi çiftine bağlıdır."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Изначально используются базовая и первая валюты приложения. Здесь можно изменить любую из двух валют. Для криптовалют выберите USD второй валютой."
+            "value": "Изначально используются базовая и первая валюты приложения. Здесь можно изменить любую из двух валют. Доступная история зависит от валютной пары."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Спочатку використовуються базова й перша валюти програми. Тут можна змінити будь-яку з двох валют. Для криптовалют виберіть USD другою валютою."
+            "value": "Спочатку використовуються базова й перша валюти програми. Тут можна змінити будь-яку з двох валют. Доступна історія залежить від валютної пари."
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Alguses kasutatakse äpi baasvaluutat ja loendi esimest valuutat. Siin saad muuta mõlemat valuutat. Krüptovaluuta korral vali teiseks valuutaks USD."
+            "value": "Alguses kasutatakse rakenduse baasvaluutat ja loendi esimest valuutat. Siin saad muuta mõlemat valuutat. Saadaolev kursiajalugu sõltub valuutapaarist."
           }
         }
       }
@@ -9992,85 +9992,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choose one week, one month, three months, one year, or all history. The widget refreshes daily. Green means the rate increased; red means it decreased."
+            "value": "Choose a history range. One-day history is available for crypto pairs with hourly data. Green shows a rate increase; red shows a decrease."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "选择一周、一个月、三个月、一年或全部历史。小组件每日刷新。绿色表示汇率上涨，红色表示下跌。"
+            "value": "选择历史时段。有每小时数据的加密货币对提供一天的历史。绿色表示汇率上涨，红色表示下跌。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "1週間、1か月、3か月、1年、またはすべての履歴を選択。ウィジェットは毎日更新します。緑はレートの上昇、赤は下落を示します。"
+            "value": "履歴の期間を選択してください。毎時データがある暗号資産のペアでは1日の履歴を利用できます。緑はレートの上昇、赤は下落を示します。"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Elige una semana, un mes, tres meses, un año o todo el historial. El widget se actualiza a diario. Verde indica que el tipo subió; rojo, que bajó."
+            "value": "Elige un periodo del historial. El historial de un día está disponible para los pares de criptomonedas con datos horarios. Verde indica que el tipo subió; rojo, que bajó."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Wähle eine Woche, einen Monat, drei Monate, ein Jahr oder den gesamten Verlauf. Das Widget wird täglich aktualisiert. Grün bedeutet, dass der Kurs gestiegen ist; Rot, dass er gefallen ist."
+            "value": "Wähle einen Zeitraum. Ein eintägiger Verlauf ist für Kryptopaare mit stündlichen Daten verfügbar. Grün zeigt einen Kursanstieg, Rot einen Kursrückgang."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choisis une semaine, un mois, trois mois, un an ou tout l’historique. Le widget s’actualise chaque jour. Le vert indique une hausse du taux ; le rouge une baisse."
+            "value": "Choisis une période de l’historique. L’historique sur un jour est disponible pour les paires de cryptomonnaies disposant de données horaires. Le vert indique une hausse du taux ; le rouge une baisse."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Escolha uma semana, um mês, três meses, um ano ou todo o histórico. O widget é atualizado diariamente. Verde significa que a taxa aumentou; vermelho, que diminuiu."
+            "value": "Escolha um período do histórico. O histórico de um dia está disponível para os pares de criptomoedas com dados por hora. Verde significa que a taxa aumentou; vermelho, que diminuiu."
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "1주, 1개월, 3개월, 1년 또는 전체 환율 기록을 선택하세요. 위젯은 매일 갱신됩니다. 초록색은 환율 상승, 빨간색은 하락을 뜻합니다."
+            "value": "과거 환율을 볼 기간을 선택하세요. 시간별 데이터가 있는 암호화폐 쌍은 1일 데이터를 제공합니다. 초록색은 환율 상승, 빨간색은 하락을 뜻합니다."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "選擇一週、一個月、三個月、一年或全部歷史。小工具每日重新整理。綠色表示匯率上漲，紅色表示下跌。"
+            "value": "選擇歷史期間。有每小時資料的加密貨幣對提供一天的歷史。綠色表示匯率上漲，紅色表示下跌。"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Scegli una settimana, un mese, tre mesi, un anno o tutta la cronologia. Il widget si aggiorna ogni giorno. Il verde indica un aumento del tasso; il rosso una diminuzione."
+            "value": "Scegli un periodo della cronologia. La cronologia di un giorno è disponibile per le coppie di criptovalute con dati orari. Il verde indica un aumento del tasso; il rosso una diminuzione."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bir hafta, bir ay, üç ay, bir yıl veya tüm geçmişi seçin. Araç takımı günlük yenilenir. Yeşil kurun arttığını, kırmızı azaldığını gösterir."
+            "value": "Bir geçmiş aralığı seçin. Bir günlük geçmiş, saatlik verisi olan kripto para çiftleri için kullanılabilir. Yeşil kur artışını, kırmızı kur düşüşünü gösterir."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Выберите неделю, месяц, три месяца, год или всю историю. Виджет обновляется ежедневно. Зелёный означает рост курса, красный — снижение."
+            "value": "Выберите период истории. История за один день доступна для криптовалютных пар с почасовыми данными. Зелёный означает рост курса, красный — снижение."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Виберіть тиждень, місяць, три місяці, рік або всю історію. Віджет оновлюється щодня. Зелений означає зростання курсу, червоний — зниження."
+            "value": "Виберіть період історії. Історія за один день доступна для криптовалютних пар з погодинними даними. Зелений означає зростання курсу, червоний — зниження."
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Vali üks nädal, üks kuu, kolm kuud, üks aasta või kogu ajalugu. Vidinat värskendatakse iga päev. Roheline tähendab kursi tõusu, punane langust."
+            "value": "Vali kursiajaloo periood. Ühe päeva ajalugu on saadaval tunniandmetega krüptovaluutapaaridele. Roheline näitab kursi tõusu, punane langust."
           }
         }
       }

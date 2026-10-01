@@ -108,7 +108,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "為替レートの時間による変化を確認。"
+            "value": "為替レートが時間とともにどう変化したかを確認。"
           }
         },
         "es": {
@@ -2147,7 +2147,7 @@
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kümnenderaldaja"
+            "value": "Kümnendkoha eraldaja"
           }
         }
       }
@@ -2381,7 +2381,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "환율이 갱신되었지만 오프라인으로 저장하지 못했습니다."
+            "value": "환율이 갱신되었지만 오프라인 사용을 위해 저장하지 못했습니다."
           }
         },
         "zh-Hant": {
@@ -2435,7 +2435,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "来源货币，%@"
+            "value": "原始货币，%@"
           }
         },
         "ja": {
@@ -2477,7 +2477,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "來源貨幣，%@"
+            "value": "原始貨幣，%@"
           }
         },
         "it": {

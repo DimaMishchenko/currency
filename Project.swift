@@ -250,7 +250,9 @@ let project = Project(
     .target(
       name: "OnboardingHarness", destinations: .iOS, product: .app,
       bundleId: "com.dimasike.currency.onboardingharness", deploymentTargets: .iOS("26.0"),
-      infoPlist: .extendingDefault(with: ["UILaunchScreen": [:]]),
+      infoPlist: .extendingDefault(with: [
+        "UILaunchScreen": [:], "CFBundleLocalizations": supportedLanguages
+      ]),
       buildableFolders: ["Features/Onboarding/HarnessApp"],
       dependencies: [
         .external(name: "Conversion"), .external(name: "DesignSystem"),
@@ -303,6 +305,7 @@ let project = Project(
         "App/Tests/ApplicationIntegrationTests/**.swift",
         "App/Sources/Composition/**.swift", "App/Sources/SystemActions/**.swift"
       ],
+      resources: ["App/Resources/Localizable.xcstrings"],
       dependencies: [
         .external(name: "CurrencyDetailsUI"), .external(name: "CurrencySelectionUI"),
         .external(name: "ExchangeRates"), .external(name: "ExchangeRatesUI"),

@@ -8,6 +8,8 @@ Initial setup, currency selection, and resumable onboarding progress.
 
 Select the `OnboardingHarness` scheme and add launch arguments under **Run → Arguments**. Use `--case <name>`; for example, `--case offline`. Omitting it selects `normal`.
 
+The harness declares the app's supported languages. Add `-AppleLanguages (de) -AppleLocale de_DE` to check German copy, or substitute another supported language and region.
+
 | Case | Behavior |
 | --- | --- |
 | `normal` | Welcome with cached rates. |

@@ -71,8 +71,8 @@
           "stringSet": {
             "state": "translated",
             "values": [
-              "${applicationName}으로 환율 확인",
-              "${applicationName}으로 ${source} 환율 확인"
+              "${applicationName}에서 환율 확인",
+              "${applicationName}에서 ${source} 환율 확인"
             ]
           }
         },
@@ -107,8 +107,8 @@
           "stringSet": {
             "state": "translated",
             "values": [
-              "Проверить курс обмена с ${applicationName}",
-              "Проверить курс ${source} с ${applicationName}"
+              "Проверить курс обмена в ${applicationName}",
+              "Проверить курс ${source} в ${applicationName}"
             ]
           }
         },
@@ -116,8 +116,8 @@
           "stringSet": {
             "state": "translated",
             "values": [
-              "Перевірити курс обміну з ${applicationName}",
-              "Перевірити курс ${source} з ${applicationName}"
+              "Перевірити курс обміну в ${applicationName}",
+              "Перевірити курс ${source} у ${applicationName}"
             ]
           }
         },
@@ -202,8 +202,8 @@
           "stringSet": {
             "state": "translated",
             "values": [
-              "${applicationName}으로 금액 환산",
-              "${applicationName}으로 ${source} 환산"
+              "${applicationName}에서 금액 환산",
+              "${applicationName}에서 ${source} 환산"
             ]
           }
         },
@@ -326,7 +326,7 @@
           "stringSet": {
             "state": "translated",
             "values": [
-              "${applicationName}으로 현지 통화로 환산"
+              "${applicationName}에서 현지 통화로 환산"
             ]
           }
         },
@@ -443,7 +443,7 @@
           "stringSet": {
             "state": "translated",
             "values": [
-              "${applicationName}으로 내 통화로 환산"
+              "${applicationName}에서 내 통화로 환산"
             ]
           }
         },

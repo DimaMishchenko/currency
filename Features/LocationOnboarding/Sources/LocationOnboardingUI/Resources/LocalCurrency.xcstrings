@@ -355,7 +355,7 @@
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sinu loa ootamine…"
+            "value": "Ootame sinu luba…"
           }
         }
       }
@@ -445,7 +445,7 @@
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Lisa äppi"
+            "value": "Lisa rakendusse"
           }
         }
       }
@@ -625,7 +625,7 @@
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sinu valuuta otsimine…"
+            "value": "Otsime kohalikku valuutat…"
           }
         }
       }
@@ -649,7 +649,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "世界の中の\n現在地を検索中。"
+            "value": "現在地の通貨を\n調べています。"
           }
         },
         "es": {
@@ -715,7 +715,7 @@
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sinu koha leidmine\nmaailmas."
+            "value": "Kohaliku valuuta\notsimine…"
           }
         }
       }
@@ -883,19 +883,19 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Найдите валюту вокруг вас,\nдля приложения и виджетов."
+            "value": "Определите местную валюту\nдля приложения и виджетов."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Знайдіть валюту навколо вас,\nдля програми й віджетів."
+            "value": "Визначте місцеву валюту\nдля програми й віджетів."
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Leia oma asukoha valuuta,\näpi ja vidinate jaoks."
+            "value": "Leia kohalik valuuta\nrakenduse ja vidinate jaoks."
           }
         }
       }
@@ -913,13 +913,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无论身在何处，\n都如同在家。"
+            "value": "无论身在何处，\n轻松查看当地货币。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "どこにいても、\n自分の場所に。"
+            "value": "どこにいても、\n現地の通貨を。"
           }
         },
         "es": {
@@ -949,13 +949,13 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "어디서나\n내 집처럼."
+            "value": "어디서나\n현지 통화를."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "無論身在何處，\n都如同在家。"
+            "value": "無論身在何處，\n輕鬆查看當地貨幣。"
           }
         },
         "it": {
@@ -967,7 +967,7 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Her yerde\nevinizde hissedin."
+            "value": "Her yerde\nkendinizi evinizde hissedin."
           }
         },
         "ru": {
@@ -985,7 +985,7 @@
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tunne end koduselt,\nükskõik kus."
+            "value": "Kohalik valuuta,\nkus iganes oled."
           }
         }
       }
@@ -1074,7 +1074,7 @@
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Asukoha kasutamine on välja lülitatud. Kohaliku valuuta värskendamiseks luba Currency äpil seadetes asukohta kasutada."
+            "value": "Asukoha kasutamine on välja lülitatud. Kohaliku valuuta värskendamiseks luba rakendusel Currency seadetes asukohta kasutada."
           }
         }
       }
@@ -1223,7 +1223,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "大概位置。僅國家和貨幣。"
+            "value": "概略位置。僅儲存國家和貨幣。"
           }
         },
         "it": {
@@ -1907,7 +1907,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "位置情報を利用できません。接続できるか、より良い信号が得られる時にもう一度お試しください。"
+            "value": "位置情報を利用できません。インターネットに接続するか、電波状況のよい場所で、もう一度お試しください。"
           }
         },
         "es": {
@@ -2512,7 +2512,7 @@
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sinu kohalik valuuta on %1$@. Seda värskendatakse iga päev, kui äpp või vidinad on kasutusel."
+            "value": "Sinu kohalik valuuta on %1$@. Seda värskendatakse iga päev, kui rakendus või vidinad on kasutusel."
           }
         }
       }
@@ -2524,55 +2524,55 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Add Local to follow the currency around you. Currently %1$@."
+            "value": "Add Local currency to use the currency at your current location. Currently %1$@."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "添加“当地”以跟随您所在地的货币。目前为%1$@。"
+            "value": "添加“当地货币”，即可随所在地自动切换货币。目前为%1$@。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "「現地」を追加して今いる場所の通貨に合わせましょう。現在は%1$@です。"
+            "value": "「現地通貨」を追加すると、現在地に合わせて通貨が変わります。現在は%1$@です。"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Añade Local para seguir la moneda de tu entorno. Actualmente %1$@."
+            "value": "Añade Moneda local para usar la moneda del lugar donde estés. Actualmente %1$@."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Füge Lokal hinzu, um der Währung an deinem Standort zu folgen. Aktuell %1$@."
+            "value": "Füge „Lokale Währung“ hinzu, um die Währung an deinem aktuellen Standort zu verwenden. Aktuell: %1$@."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ajoute Locale pour suivre la devise autour de toi. Actuellement %1$@."
+            "value": "Ajoute Devise locale pour utiliser la devise du pays où tu te trouves. Actuellement %1$@."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Adicione Local para acompanhar a moeda ao seu redor. Atualmente %1$@."
+            "value": "Adicione Moeda local para usar a moeda do lugar onde você estiver. Atualmente %1$@."
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "현지를 추가하여 주변 통화를 따르세요. 현재 %1$@입니다."
+            "value": "‘현지 통화’를 추가하면 현재 위치에 맞춰 통화가 자동으로 바뀝니다. 현재는 %1$@입니다."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "加入「當地」以跟隨您所在地的貨幣。目前為%1$@。"
+            "value": "加入「當地貨幣」，即可隨所在地自動切換貨幣。目前為%1$@。"
           }
         },
         "it": {
@@ -2584,19 +2584,19 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Çevrenizdeki para birimini izlemek için Yerel’i ekleyin. Şu anda %1$@."
+            "value": "Bulunduğunuz konumun para birimini kullanmak için “Yerel para birimi”ni ekleyin. Şu anda %1$@."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Добавьте местную валюту, чтобы использовать валюту вашего местоположения. Сейчас — %1$@."
+            "value": "Добавьте «Местная валюта», чтобы использовать валюту вашего текущего местоположения. Сейчас — %1$@."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Додайте місцеву валюту, щоб використовувати валюту вашого розташування. Зараз — %1$@."
+            "value": "Додайте «Місцева валюта», щоб використовувати валюту вашого поточного розташування. Зараз — %1$@."
           }
         },
         "et": {
