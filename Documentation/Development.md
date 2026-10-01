@@ -9,12 +9,12 @@ Run `tuist install` after changing package dependencies, then `tuist generate` t
 - `Currency` builds the app and widget extension.
 - `CurrencyTests` builds the shipping app and extension and runs the combined test suite, including rate-core tests.
 - `CurrencyHarnesses` builds the isolated development apps. Module READMEs list their harness launch arguments.
-- `NativeIntentTests` is a UI-test target for iOS 27 AppIntentsTesting against the installed Currency executable. It completes onboarding once during setup and exercises extracted metadata and cross-process execution. Domain and adapter tests stay in existing unit targets; this adds no production module.
+- `NativeIntentTests` is a UI-test target for iOS 27 AppIntentsTesting against the installed Currency executable. It launches the app and completes onboarding once per test process, then waits for extracted metadata before exercising cross-process execution. Data-only cases reuse that bootstrap, except English name/query assertions explicitly relaunch with English arguments because cold intent execution can restart the app in the system language. The annotation case launches a clean UI, and cold conversion/detail cases explicitly terminate the app before invoking intents. Domain and adapter tests stay in existing unit targets; this adds no production module.
 
 `CurrencyTests` lets Swift Testing run independent cases concurrently within each target.
 The onboarding suite keeps its transient-state checks serialized. CI reinstalls the app,
 launches it through `simctl`, then terminates it before the native suite. This completes fresh-install activation outside XCTest’s background-assertion
-handshake. Native tests still start from a stopped app and run serially on the owned simulator.
+handshake. The native suite starts from a stopped app and runs serially on the owned simulator. Each individually selected case performs the same onboarding and metadata bootstrap.
 
 For command-line Xcode builds, use `set -o pipefail` and pipe combined output through `xcbeautify`. Use a separate simulator and derived-data directory for parallel work.
 
