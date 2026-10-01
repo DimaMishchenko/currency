@@ -2020,13 +2020,13 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Alcuni tassi delle criptovalute usano l’alternativa giornaliera."
+            "value": "Alcuni tassi delle criptovalute usano i dati giornalieri della fonte di riserva."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bazı kripto para kurlarında günlük yedek kullanılır."
+            "value": "Bazı kripto paralar için günlük yedek kurlar kullanılır."
           }
         },
         "ru": {
@@ -2763,7 +2763,7 @@
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ajalugu pole saadaval. Teisendaja töötab endiselt salvestatud kurssidega."
+            "value": "Ajalugu pole saadaval. Valuutakalkulaator töötab endiselt salvestatud kurssidega."
           }
         }
       }

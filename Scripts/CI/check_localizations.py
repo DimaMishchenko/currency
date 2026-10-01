@@ -16,6 +16,14 @@ def values(localization):
     if "stringSet" in localization:
         group = localization["stringSet"]
         return [{"state": group["state"], "value": value} for value in group["values"]]
+    if "variations" in localization:
+        variations = localization["variations"]
+        if set(variations) != {"plural"}:
+            raise ValueError("Unsupported variation type")
+        plurals = variations["plural"]
+        if "other" not in plurals or not set(plurals) <= {"zero", "one", "two", "few", "many", "other"}:
+            raise ValueError("Invalid plural categories")
+        return [unit for variant in plurals.values() for unit in values(variant)]
     raise ValueError("Unsupported localization shape")
 
 
@@ -37,11 +45,19 @@ def check(root):
                 continue
             source = values(localizations["en"])
             for language, localization in localizations.items():
-                targets = values(localization)
-                if len(targets) != len(source):
+                try:
+                    targets = values(localization)
+                except ValueError as error:
+                    failures.append(f"{path}:{key}:{language}: {error}")
+                    continue
+                if "variations" in localization and len(source) == 1:
+                    comparisons = [(source[0], target) for target in targets]
+                elif len(targets) == len(source):
+                    comparisons = list(zip(source, targets))
+                else:
                     failures.append(f"{path}:{key}:{language}: phrase count differs")
                     continue
-                for english, target in zip(source, targets):
+                for english, target in comparisons:
                     value = target["value"]
                     if target["state"] != "translated" or not value.strip():
                         failures.append(f"{path}:{key}:{language}: unfinished translation")

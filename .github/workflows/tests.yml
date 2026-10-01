@@ -29,6 +29,7 @@ jobs:
         run: |
           python3 - <<'PYTHON'
           import subprocess
+          subprocess.run(["python3", "Scripts/CI/test_check_localizations.py"], check=True, timeout=25)
           subprocess.run(["python3", "Scripts/CI/check_localizations.py"], check=True, timeout=25)
           PYTHON
       - name: Test CI skip rules

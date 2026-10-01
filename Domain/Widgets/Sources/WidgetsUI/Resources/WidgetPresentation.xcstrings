@@ -1468,7 +1468,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Standort ist eingeschränkt"
+            "value": "Standortzugriff ist eingeschränkt"
           }
         },
         "fr": {
@@ -1486,7 +1486,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "위치가 제한됨"
+            "value": "위치 접근이 제한됨"
           }
         },
         "zh-Hant": {
@@ -1824,7 +1824,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bearbeite dieses Widget, um eine Eigene Liste zu wählen."
+            "value": "Bearbeite dieses Widget und wähle „Eigene Liste“."
           }
         },
         "fr": {

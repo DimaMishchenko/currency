@@ -3485,85 +3485,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Current cryptocurrency exchange rates and completed historical candles in USD."
+            "value": "Cryptocurrency exchange rates and completed historical candles."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "加密货币当前汇率和已完成的美元历史 K 线。"
+            "value": "加密货币汇率和已收盘的历史 K 线。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "暗号資産の現在レートとUSD建ての確定済み過去ローソク足。"
+            "value": "暗号資産の為替レートと確定済みの過去ローソク足。"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tipos de cambio actuales de criptomonedas y velas históricas cerradas en USD."
+            "value": "Tipos de cambio de criptomonedas y velas históricas cerradas."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aktuelle Kryptowährungskurse und abgeschlossene historische Kerzen in USD."
+            "value": "Kryptowährungskurse und abgeschlossene historische Kerzen."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Taux crypto actuels et bougies historiques clôturées en USD."
+            "value": "Taux de change des cryptomonnaies et bougies historiques clôturées."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Taxas de câmbio atuais de criptomoedas e candles históricos fechados em USD."
+            "value": "Taxas de câmbio de criptomoedas e candles históricos fechados."
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "현재 암호화폐 환율 및 USD 기준 완료된 과거 캔들입니다."
+            "value": "암호화폐 환율 및 마감된 과거 캔들입니다."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "加密貨幣目前匯率和已完成的美元歷史 K 線。"
+            "value": "加密貨幣匯率和已收盤的歷史 K 線。"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tassi di cambio attuali delle criptovalute e candele storiche completate in USD."
+            "value": "Tassi di cambio delle criptovalute e candele storiche completate."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Güncel kripto para kurları ve USD cinsinden tamamlanmış geçmiş mumlar."
+            "value": "Kripto para kurları ve tamamlanmış geçmiş mumlar."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Текущие курсы криптовалют и завершённые исторические свечи в USD."
+            "value": "Курсы криптовалют и завершённые исторические свечи."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Поточні курси криптовалют і завершені історичні свічки в USD."
+            "value": "Курси криптовалют і завершені історичні свічки."
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Krüptovaluutade praegused vahetuskursid ja suletud ajaloolised USD hinnaküünlad."
+            "value": "Krüptovaluutade vahetuskursid ja suletud ajaloolised hinnaküünlad."
           }
         }
       }
@@ -4542,7 +4542,7 @@
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Vali Currency äpi eelistatud keel süsteemi seadetes."
+            "value": "Vali rakenduse Currency eelistatud keel süsteemi seadetes."
           }
         }
       }

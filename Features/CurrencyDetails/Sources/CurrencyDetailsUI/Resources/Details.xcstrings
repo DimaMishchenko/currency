@@ -350,7 +350,7 @@
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "«Усе» показує всю історію, доступну в цього постачальника для цієї пари, з групуванням за місяцями. Вона може починатися пізніше появи валюти."
+            "value": "«Усе» показує всю історію, доступну в цього постачальника для цієї пари, з групуванням за місяцями. Вона може починатися після появи валюти."
           }
         },
         "et": {
@@ -367,85 +367,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "History uses completed Coinbase candles in USD; missing trading days have no observations. Historical and current conversion sources may differ."
+            "value": "Crypto history uses completed Coinbase candles and, where needed, reference exchange rates. Historical and current conversion sources may differ."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "历史使用 Coinbase 已完成的美元 K 线；缺失交易日没有观测值。历史和当前换算的数据来源可能不同。"
+            "value": "加密货币历史使用 Coinbase 已收盘的 K 线，并在需要时使用参考汇率。历史和当前换算的数据来源可能不同。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "履歴はCoinbaseの確定済みUSDローソク足を使用します。取引データのない日は表示されません。過去と現在の換算データは異なる提供元を使う場合があります。"
+            "value": "暗号資産の履歴にはCoinbaseの確定済みローソク足を使用し、必要に応じて参考為替レートも使用します。過去と現在の換算データは異なる提供元を使う場合があります。"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "El historial usa velas cerradas de Coinbase en USD; los días sin negociación no tienen observaciones. Las fuentes de los tipos de cambio históricos y actuales pueden diferir."
+            "value": "El historial de criptomonedas usa velas cerradas de Coinbase y, cuando es necesario, tipos de cambio de referencia. Las fuentes de las conversiones históricas y actuales pueden diferir."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Der Verlauf verwendet abgeschlossene Coinbase-Kerzen in USD; für Tage ohne Handel gibt es keine Beobachtungen. Historische und aktuelle Umrechnungsquellen können sich unterscheiden."
+            "value": "Der Kryptoverlauf verwendet abgeschlossene Coinbase-Kerzen und bei Bedarf Referenzwechselkurse. Historische und aktuelle Umrechnungskurse können aus unterschiedlichen Quellen stammen."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "L’historique utilise les bougies clôturées de Coinbase en USD ; les jours sans transactions n’ont pas d’observations. Les sources des conversions historiques et actuelles peuvent différer."
+            "value": "L’historique des cryptomonnaies utilise les bougies clôturées de Coinbase et, si nécessaire, des taux de change de référence. Les sources des conversions historiques et actuelles peuvent différer."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "O histórico usa candles fechados da Coinbase em USD; dias sem negociação não têm observações. As fontes das taxas de câmbio históricas e atuais podem diferir."
+            "value": "O histórico de criptomoedas usa candles fechados da Coinbase e, quando necessário, taxas de câmbio de referência. As fontes das conversões históricas e atuais podem diferir."
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "과거 환율은 Coinbase의 마감된 USD 캔들을 사용합니다. 거래일 데이터가 없으면 관측값도 없습니다. 과거 환율과 현재 환율의 데이터 출처가 다를 수 있습니다."
+            "value": "암호화폐의 과거 데이터는 Coinbase의 마감된 캔들을 사용하며, 필요한 경우 참고 환율도 적용합니다. 과거 환율과 현재 환율의 데이터 출처가 다를 수 있습니다."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "歷史使用 Coinbase 已完成的美元 K 線；缺失交易日沒有觀測值。歷史和目前換算的資料來源可能不同。"
+            "value": "加密貨幣歷史使用 Coinbase 已收盤的 K 線，並在需要時使用參考匯率。歷史和目前換算的資料來源可能不同。"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "La cronologia usa candele completate di Coinbase in USD; i giorni di negoziazione mancanti non hanno osservazioni. Le fonti storiche e attuali possono differire."
+            "value": "La cronologia delle criptovalute usa candele completate di Coinbase e, quando necessario, tassi di cambio di riferimento. Le fonti delle conversioni storiche e attuali possono differire."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Geçmiş, USD cinsinden tamamlanmış Coinbase mumlarını kullanır; eksik işlem günlerinde gözlem yoktur. Geçmiş ve güncel çevirme kaynakları farklı olabilir."
+            "value": "Kripto para geçmişi, tamamlanmış Coinbase mumlarını ve gerektiğinde referans döviz kurlarını kullanır. Geçmiş ve güncel çevirme kurları farklı kaynaklardan gelebilir."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "История использует завершённые свечи Coinbase в USD; за пропущенные торговые дни наблюдений нет. Источники исторических и текущих курсов могут отличаться."
+            "value": "История криптовалют использует завершённые свечи Coinbase и, при необходимости, справочные курсы обмена. Источники исторических и текущих курсов могут отличаться."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Історія використовує завершені свічки Coinbase у USD; за пропущені торгові дні спостережень немає. Джерела історичних і поточних курсів можуть відрізнятися."
+            "value": "Історія криптовалют використовує завершені свічки Coinbase та, за потреби, довідкові курси обміну. Джерела історичних і поточних курсів можуть відрізнятися."
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ajalugu põhineb Coinbase’i suletud USD hinnaküünaldel; puuduvate kauplemispäevade kohta vaatlusi pole. Ajalooliste ja praeguste vahetuskursside allikad võivad erineda."
+            "value": "Krüptovaluutade ajalugu põhineb Coinbase’i suletud hinnaküünaldel ja vajaduse korral võrdluskurssidel. Ajalooliste ja praeguste vahetuskursside allikad võivad erineda."
           }
         }
       }
@@ -456,85 +456,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Reference-rate history can have weekend and publication gaps. Historical and current conversion sources may differ."
+            "value": "Reference-rate history may have gaps on weekends or when no data is published. Historical and current conversion sources may differ."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "参考汇率历史可能存在周末和发布日期的空缺。历史和当前换算的数据来源可能不同。"
+            "value": "参考汇率历史可能在周末或未发布数据时出现空缺。历史和当前换算的数据来源可能不同。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "参考レートの履歴には週末や公表日の空白が生じる場合があります。過去と現在の換算データは異なる提供元を使う場合があります。"
+            "value": "参考レートの履歴には、週末やデータが公表されない日に空白が生じる場合があります。過去と現在の換算データは異なる提供元を使う場合があります。"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "El historial de tipos de referencia puede tener huecos por fines de semana o publicaciones. Las fuentes de las conversiones históricas y actuales pueden diferir."
+            "value": "El historial de tipos de referencia puede tener huecos durante los fines de semana o cuando no se publican datos. Las fuentes de las conversiones históricas y actuales pueden diferir."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Der Referenzkursverlauf kann Wochenend- und Veröffentlichungslücken aufweisen. Historische und aktuelle Umrechnungsquellen können sich unterscheiden."
+            "value": "Im Referenzkursverlauf können an Wochenenden oder bei fehlenden Veröffentlichungen Lücken auftreten. Historische und aktuelle Umrechnungskurse können aus unterschiedlichen Quellen stammen."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "L’historique des taux de référence peut comporter des interruptions liées aux week-ends et aux publications. Les sources des conversions historiques et actuelles peuvent différer."
+            "value": "L’historique des taux de référence peut comporter des interruptions pendant les week-ends ou lorsque les données ne sont pas publiées. Les sources des conversions historiques et actuelles peuvent différer."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "O histórico de taxas de referência pode ter lacunas de fins de semana e publicações. As fontes das conversões históricas e atuais podem diferir."
+            "value": "O histórico de taxas de referência pode ter lacunas nos fins de semana ou quando não há publicação de dados. As fontes das conversões históricas e atuais podem diferir."
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "과거 참고 환율에는 주말이나 발표 일정에 따른 공백이 있을 수 있습니다. 과거 환율과 현재 환율의 데이터 출처가 다를 수 있습니다."
+            "value": "과거 참고 환율에는 주말이나 데이터가 발표되지 않는 날에 공백이 있을 수 있습니다. 과거 환율과 현재 환율의 데이터 출처가 다를 수 있습니다."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "參考匯率歷史可能存在週末和發布日期的空缺。歷史和目前換算的資料來源可能不同。"
+            "value": "參考匯率歷史可能在週末或未發布資料時出現空缺。歷史和目前換算的資料來源可能不同。"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "La cronologia dei tassi di riferimento può avere lacune nei fine settimana e nelle pubblicazioni. Le fonti storiche e attuali possono differire."
+            "value": "La cronologia dei tassi di riferimento può avere lacune nei fine settimana o quando non vengono pubblicati dati. Le fonti delle conversioni storiche e attuali possono differire."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Referans kur geçmişinde hafta sonları ve yayımlamalar arasında boşluklar olabilir. Geçmiş ve güncel çevirme kaynakları farklı olabilir."
+            "value": "Referans kur geçmişinde hafta sonları veya veri yayımlanmadığında boşluklar olabilir. Geçmiş ve güncel çevirme kurları farklı kaynaklardan gelebilir."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "В истории справочных курсов возможны пропуски в выходные и между публикациями. Источники исторических и текущих курсов могут отличаться."
+            "value": "В истории справочных курсов возможны пропуски в выходные или при отсутствии опубликованных данных. Источники исторических и текущих курсов могут отличаться."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "В історії довідкових курсів можливі прогалини у вихідні та між публікаціями. Джерела історичних і поточних курсів можуть відрізнятися."
+            "value": "В історії довідкових курсів можливі прогалини у вихідні або за відсутності опублікованих даних. Джерела історичних і поточних курсів можуть відрізнятися."
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Võrdluskursside ajaloos võib nädalavahetuste ja avaldamisgraafiku tõttu olla lünki. Ajalooliste ja praeguste vahetuskursside allikad võivad erineda."
+            "value": "Võrdluskursside ajaloos võib olla lünki nädalavahetustel või siis, kui andmeid ei avaldata. Ajalooliste ja praeguste vahetuskursside allikad võivad erineda."
           }
         }
       }
@@ -636,85 +636,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ %2$@ to %3$@ history"
+            "value": "%2$@ to %3$@ exchange-rate history · %1$@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ %2$@兑%3$@的历史"
+            "value": "%2$@兑%3$@的汇率历史 · %1$@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ %2$@から%3$@への履歴"
+            "value": "%2$@から%3$@への為替レートの履歴 · %1$@"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Historial de %1$@ %2$@ a %3$@"
+            "value": "Historial del tipo de cambio de %2$@ a %3$@ · %1$@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Verlauf von %1$@ %2$@ in %3$@"
+            "value": "Kursverlauf von %2$@ in %3$@ · %1$@"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Historique de %1$@ %2$@ en %3$@"
+            "value": "Historique du taux de change de %2$@ en %3$@ · %1$@"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Histórico de %1$@ %2$@ para %3$@"
+            "value": "Histórico da taxa de câmbio de %2$@ para %3$@ · %1$@"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ %2$@의 %3$@ 환산 가치 추이"
+            "value": "%2$@의 %3$@ 환산 가치 추이 · %1$@"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ %2$@兌%3$@的歷史"
+            "value": "%2$@兌%3$@的匯率歷史 · %1$@"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cronologia di %1$@ %2$@ in %3$@"
+            "value": "Cronologia del tasso di cambio da %2$@ a %3$@ · %1$@"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ %2$@ için %3$@ geçmişi"
+            "value": "%2$@ ile %3$@ arasındaki kur geçmişi · %1$@"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "История %1$@ %2$@ в %3$@"
+            "value": "История курса %2$@ к %3$@ · %1$@"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Історія %1$@ %2$@ у %3$@"
+            "value": "Історія курсу %2$@ до %3$@ · %1$@"
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ %2$@ väärtuse ajalugu valuutas %3$@"
+            "value": "Valuutapaari %2$@/%3$@ kursiajalugu · %1$@"
           }
         }
       }
@@ -1860,13 +1860,13 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tutto il disponibile"
+            "value": "Tutta la cronologia disponibile"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kullanılabilir tümü"
+            "value": "Kullanılabilir tüm geçmiş"
           }
         },
         "ru": {

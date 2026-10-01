@@ -188,85 +188,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Find your country’s currency and refresh it daily while the app or widgets are in use. Only the country and currency are saved."
+            "value": "Currency uses your location to find the local currency and update it daily while the app or widgets are in use. Only your country and currency are saved."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "查找您所在国家的货币，并在使用 App 或小组件时每日更新。仅保存国家和货币。"
+            "value": "Currency 使用您的位置查找当地货币，并在使用 App 或小组件时每日更新。仅保存您所在的国家和货币。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "現在の国の通貨を調べ、アプリやウィジェットの使用中に毎日更新します。国と通貨のみを保存します。"
+            "value": "Currencyは位置情報を使って現地通貨を調べ、アプリやウィジェットの使用中に毎日更新します。国と通貨のみを保存します。"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Busca la moneda de tu país y actualízala a diario mientras se usan la app o los widgets. Solo se guardan el país y la moneda."
+            "value": "Currency usa tu ubicación para encontrar la moneda local y actualizarla a diario mientras se usan la app o los widgets. Solo se guardan tu país y tu moneda."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ermittelt die Währung deines Landes und aktualisiert sie täglich, solange die App oder Widgets verwendet werden. Gespeichert werden nur Land und Währung."
+            "value": "Currency verwendet deinen Standort, um die lokale Währung zu ermitteln und sie täglich zu aktualisieren, solange die App oder Widgets verwendet werden. Gespeichert werden nur dein Land und deine Währung."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Trouve la devise de ton pays et l’actualise chaque jour pendant l’utilisation de l’app ou des widgets. Seuls le pays et la devise sont enregistrés."
+            "value": "Currency utilise ta position pour trouver la devise locale et l’actualiser chaque jour pendant l’utilisation de l’app ou des widgets. Seuls ton pays et ta devise sont enregistrés."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Encontre a moeda do seu país e atualize-a diariamente enquanto o app ou os widgets estiverem em uso. Apenas o país e a moeda são salvos."
+            "value": "O Currency usa sua localização para encontrar a moeda local e atualizá-la diariamente enquanto o app ou os widgets estiverem em uso. Apenas seu país e sua moeda são salvos."
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "현재 국가의 통화를 찾아 앱이나 위젯 사용 중 매일 갱신합니다. 국가와 통화만 저장됩니다."
+            "value": "Currency는 위치를 사용해 현지 통화를 찾고 앱이나 위젯 사용 중 매일 갱신합니다. 국가와 통화만 저장됩니다."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "尋找您所在國家的貨幣，並在使用 App 或小工具時每日更新。僅儲存國家和貨幣。"
+            "value": "Currency 使用您的位置尋找當地貨幣，並在使用 App 或小工具時每日更新。僅儲存您所在的國家和貨幣。"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Trova la valuta del tuo paese e aggiornala ogni giorno mentre usi l’app o i widget. Vengono salvati solo il paese e la valuta."
+            "value": "Currency usa la tua posizione per trovare la valuta locale e aggiornarla ogni giorno mentre usi l’app o i widget. Vengono salvati solo il tuo paese e la tua valuta."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ülkenizin para birimini bulun ve uygulama veya araç takımları kullanımdayken her gün güncelleyin. Yalnızca ülke ve para birimi kaydedilir."
+            "value": "Currency, yerel para birimini bulmak ve uygulama veya araç takımları kullanımdayken her gün güncellemek için konumunuzu kullanır. Yalnızca bulunduğunuz ülke ve para birimi kaydedilir."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Определять валюту вашей страны и обновлять её ежедневно, пока приложение или виджеты используются. Сохраняются только страна и валюта."
+            "value": "Currency использует ваше местоположение, чтобы определить местную валюту и обновлять её ежедневно, пока приложение или виджеты используются. Сохраняются только страна и валюта."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Визначати валюту вашої країни й оновлювати її щодня, поки програма або віджети використовуються. Зберігаються лише країна та валюта."
+            "value": "Currency використовує ваше розташування, щоб визначити місцеву валюту й оновлювати її щодня, поки програма або віджети використовуються. Зберігаються лише країна та валюта."
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Leia oma riigi valuuta ja värskenda seda iga päev, kui rakendus või vidinad on kasutusel. Salvestatakse ainult riik ja valuuta."
+            "value": "Currency kasutab sinu asukohta kohaliku valuuta leidmiseks ja värskendab seda iga päev, kui rakendus või vidinad on kasutusel. Salvestatakse ainult sinu riik ja valuuta."
           }
         }
       }

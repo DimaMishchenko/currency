@@ -22,7 +22,7 @@ import Testing
     #expect(String(localized: .LocalCurrency.localAddToApp) == "Add to app")
     #expect(
       String(localized: .LocalCurrency.localReadyAppCurrency("CZK"))
-        == "Add Local to follow the currency around you. Currently CZK.")
+        == "Add Local currency to use the currency at your current location. Currently CZK.")
     #expect(String(localized: .CurrencySelection.baseCurrency) == "Base currency")
     #expect(String(localized: .CurrencySelection.localCurrency) == "Local currency")
     #expect(
@@ -34,7 +34,7 @@ import Testing
     #expect(String(localized: .Details.unitConversion("BTC", "USD")) == "1 BTC in USD")
     #expect(
       String(localized: .Details.chartAccessibility("One week", "EUR", "USD"))
-        == "One week EUR to USD history")
+        == "EUR to USD exchange-rate history · One week")
     #expect(
       RateMessages.providerDescription(.init(provider: .fawaz, observation: .dailyRate))
         == "Fawaz · daily")
@@ -54,7 +54,7 @@ import Testing
 
   @Test func onboardingAccessorsResolveFeatureBundleAndSubstitutions() {
     #expect(String(localized: .Onboarding.welcomeTitle) == "Currency, at a glance")
-    #expect(String(localized: .Onboarding.baseTitle) == "Choose your base")
+    #expect(String(localized: .Onboarding.baseTitle) == "Choose your base currency")
     #expect(String(localized: .Onboarding.updated("today")) == "Last updated today")
     var resource = LocalizedStringResource.Onboarding.homeScreenTitle
     resource.locale = Locale(identifier: "ar_SA")
@@ -127,4 +127,29 @@ import Testing
     resource.locale = Locale(identifier: "ar_SA")
     #expect(String(localized: resource) == "1 EUR in USD")
   }
+
+  @Test(arguments: ["ru", "uk"])
+  func spokenResultCountsUsePluralForms(language: String) {
+    let forms =
+      language == "ru"
+      ? [
+        1: "Доступен ещё 1 результат.", 2: "Доступно ещё 2 результата.",
+        5: "Доступно ещё 5 результатов.", 11: "Доступно ещё 11 результатов.",
+        21: "Доступен ещё 21 результат.", 22: "Доступно ещё 22 результата."
+      ]
+      : [
+        1: "Доступний ще 1 результат.", 2: "Доступно ще 2 результати.",
+        5: "Доступно ще 5 результатів.", 11: "Доступно ще 11 результатів.",
+        21: "Доступний ще 21 результат.", 22: "Доступно ще 22 результати."
+      ]
+    for (count, expected) in forms {
+      let resource = LocalizedStringResource(
+        "\(count) more results are available.", locale: Locale(identifier: language),
+        bundle: .atURL(Bundle(for: LocalizationBundleMarker.self).bundleURL))
+      let value = String(localized: resource)
+      #expect(value == expected)
+    }
+  }
 }
+
+private final class LocalizationBundleMarker: NSObject {}

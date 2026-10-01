@@ -188,7 +188,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Use Default to follow your app currencies or choose a Custom list. Medium shows up to four currencies; large shows up to eight. Two currencies work as a pair calculator."
+            "value": "Use Default to follow your app currencies or choose a Custom list. Medium shows up to four currencies; large shows up to eight. With two currencies, the widget works as a pair calculator."
           }
         },
         "zh-Hans": {
@@ -206,25 +206,25 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Usa Predeterminado para seguir las monedas de tu app o elige una Lista personalizada. El tamaño mediano muestra hasta cuatro monedas; el grande, hasta ocho. Dos monedas funcionan como calculadora de un par."
+            "value": "Usa Predeterminado para seguir las monedas de tu app o elige una Lista personalizada. El tamaño mediano muestra hasta cuatro monedas; el grande, hasta ocho. Con dos monedas, el widget funciona como una calculadora para ese par."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Verwende Standard für die Währungen deiner App oder wähle eine Eigene Liste. Mittel zeigt bis zu vier Währungen, Groß bis zu acht. Zwei Währungen bilden einen Paarrechner."
+            "value": "Verwende „Standard“ für die Währungen deiner App oder wähle „Eigene Liste“. Die mittlere Größe zeigt bis zu vier Währungen, die große bis zu acht. Mit zwei Währungen funktioniert das Widget als Rechner für ein Währungspaar."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Utilise Par défaut pour suivre les devises de ton app ou choisis une Liste personnalisée. Le format moyen affiche jusqu’à quatre devises et le grand jusqu’à huit. Deux devises fonctionnent comme une calculatrice de paire."
+            "value": "Utilise Par défaut pour suivre les devises de ton app ou choisis une Liste personnalisée. Le format moyen affiche jusqu’à quatre devises et le grand jusqu’à huit. Avec deux devises, le widget sert de calculatrice pour cette paire."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Use Padrão para acompanhar as moedas do app ou escolha uma Lista personalizada. O tamanho médio mostra até quatro moedas; o grande, até oito. Duas moedas funcionam como uma calculadora de par."
+            "value": "Use Padrão para acompanhar as moedas do app ou escolha uma Lista personalizada. O tamanho médio mostra até quatro moedas; o grande, até oito. Com duas moedas, o widget funciona como uma calculadora para esse par."
           }
         },
         "ko": {
@@ -242,31 +242,31 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Usa Predefinito per seguire le valute dell’app o scegli un Elenco personalizzato. Il formato medio mostra fino a quattro valute, il grande fino a otto. Due valute funzionano come calcolatrice di coppia."
+            "value": "Usa Predefinito per seguire le valute dell’app o scegli un Elenco personalizzato. Il formato medio mostra fino a quattro valute, il grande fino a otto. Con due valute, il widget funziona come una calcolatrice per quella coppia."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Uygulamadaki para birimlerini izlemek için Varsayılan’ı kullanın veya Özel liste seçin. Orta boyutta dörde, büyük boyutta sekize kadar para birimi görünür. İki para birimiyle bir çift hesaplayıcı oluşur."
+            "value": "Uygulamadaki para birimlerini kullanmak için “Varsayılan”ı kullanın veya “Özel liste”yi seçin. Orta boyutta dörde, büyük boyutta sekize kadar para birimi görünür. İki para birimi seçildiğinde araç takımı bu çift için hesaplayıcı olarak çalışır."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Выберите «По умолчанию», чтобы использовать валюты приложения, или «Свой список». Средний размер показывает до четырёх валют, большой — до восьми. Две валюты работают как калькулятор пары."
+            "value": "Выберите «По умолчанию», чтобы использовать валюты приложения, или «Свой список». Средний размер показывает до четырёх валют, большой — до восьми. С двумя валютами виджет работает как калькулятор валютной пары."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Виберіть «Типово», щоб використовувати валюти програми, або «Власний список». Середній розмір показує до чотирьох валют, великий — до восьми. Дві валюти працюють як калькулятор пари."
+            "value": "Виберіть «Типово», щоб використовувати валюти програми, або «Власний список». Середній розмір показує до чотирьох валют, великий — до восьми. Із двома валютами віджет працює як калькулятор валютної пари."
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Rakenduse valuutade kasutamiseks vali Vaikimisi või vali Kohandatud loend. Keskmine vidin näitab kuni nelja, suur kuni kaheksat valuutat. Kahe valuutaga töötab see valuutapaari kalkulaatorina."
+            "value": "Rakenduse valuutade kasutamiseks vali Vaikimisi või vali Kohandatud loend. Keskmine vidin näitab kuni nelja, suur kuni kaheksat valuutat. Kahe valuutaga töötab vidin valuutapaari kalkulaatorina."
           }
         }
       }
@@ -728,85 +728,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A rounded multiply or divide rule for quick estimates."
+            "value": "Multiply or divide by a rounded number for quick estimates."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "用四舍五入的乘除规则快速估算。"
+            "value": "用近似数值进行乘除，快速估算。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ざっくり計算できる、丸めた掛け算・割り算のルール。"
+            "value": "丸めた数で掛け算や割り算をして、すばやく概算できます。"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Una regla redondeada de multiplicación o división para estimaciones rápidas."
+            "value": "Multiplica o divide por un número redondeado para hacer estimaciones rápidas."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Eine gerundete Multiplikations- oder Divisionsregel für schnelle Schätzungen."
+            "value": "Multipliziere oder teile durch eine gerundete Zahl, um Werte schnell abzuschätzen."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une règle arrondie de multiplication ou de division pour des estimations rapides."
+            "value": "Multiplie ou divise par un nombre arrondi pour obtenir une estimation rapide."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Uma regra arredondada de multiplicação ou divisão para estimativas rápidas."
+            "value": "Multiplique ou divida por um número arredondado para fazer estimativas rápidas."
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "빠르게 어림할 수 있는 반올림된 곱셈 또는 나눗셈 규칙입니다."
+            "value": "반올림한 수로 곱하거나 나누어 빠르게 어림할 수 있습니다."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "用四捨五入的乘除規則快速估算。"
+            "value": "用近似數值進行乘除，快速估算。"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Una regola di moltiplicazione o divisione arrotondata per stime rapide."
+            "value": "Moltiplica o dividi per un numero arrotondato per ottenere stime rapide."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Hızlı tahminler için yuvarlanmış bir çarpma veya bölme kuralı."
+            "value": "Hızlı tahminler için yuvarlanmış bir sayıyla çarpın veya bu sayıya bölün."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Округлённое правило умножения или деления для быстрых оценок."
+            "value": "Умножайте или делите на округлённое число для быстрой оценки."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Округлене правило множення або ділення для швидких оцінок."
+            "value": "Множте або діліть на округлене число для швидкої оцінки."
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ümardatud korrutus- või jagamisreegel kiireks hindamiseks."
+            "value": "Kiire hinnangu saamiseks korruta või jaga ümardatud arvuga."
           }
         }
       }
@@ -818,85 +818,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A base-first currency board. Default follows your app currencies; Custom list keeps its own selection."
+            "value": "Your base currency first, followed by your other currencies. Default follows your app currencies; Custom list keeps its own selection."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "基准货币置于首位的货币看板。“默认”与 App 中的货币列表同步；“自定列表”保留独立选择。"
+            "value": "首先显示基准货币，然后显示其他货币。“默认”与 App 中的货币列表同步；“自定列表”保留独立选择。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "基準通貨を先頭に表示する通貨ボード。「デフォルト」はアプリの通貨リストと連動し、「カスタムリスト」は独自の選択を保持します。"
+            "value": "基準通貨を先頭に、そのほかの通貨を続けて表示します。「デフォルト」はアプリの通貨リストと連動し、「カスタムリスト」は独自の選択を保持します。"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un panel con la moneda base primero. Predeterminado sigue las monedas de tu app; Lista personalizada mantiene su propia selección."
+            "value": "Tu moneda base primero, seguida de tus otras monedas. Predeterminado sigue las monedas de tu app; Lista personalizada mantiene su propia selección."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Eine Übersicht mit der Basiswährung zuerst. Standard folgt den Währungen deiner App; Eigene Liste behält ihre eigene Auswahl."
+            "value": "Zuerst deine Basiswährung, dann deine weiteren Währungen. „Standard“ verwendet die Währungen deiner App; „Eigene Liste“ behält eine separate Auswahl."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un tableau affichant la devise de base en premier. Par défaut suit les devises de ton app ; Liste personnalisée garde sa propre sélection."
+            "value": "Ta devise de base en premier, suivie de tes autres devises. Par défaut suit les devises de ton app ; Liste personnalisée garde sa propre sélection."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Um painel com a moeda base primeiro. Padrão acompanha as moedas do app; Lista personalizada mantém sua própria seleção."
+            "value": "Sua moeda base primeiro, seguida das outras moedas. Padrão acompanha as moedas do app; Lista personalizada mantém sua própria seleção."
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "기준 통화를 맨 앞에 표시하는 통화 보드입니다. 기본값은 앱의 통화 목록과 동기화되고 사용자 지정 목록은 별도 선택을 유지합니다."
+            "value": "기준 통화를 맨 앞에 표시하고 다른 통화를 이어서 표시합니다. 기본값은 앱의 통화 목록과 동기화되고 사용자 지정 목록은 별도 선택을 유지합니다."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "基準貨幣置於首位的貨幣看板。「預設」與 App 中的貨幣列表同步；「自訂列表」保留獨立選擇。"
+            "value": "首先顯示基準貨幣，然後顯示其他貨幣。「預設」與 App 中的貨幣列表同步；「自訂列表」保留獨立選擇。"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un tabellone con la valuta di base per prima. Predefinito segue le valute dell’app; Elenco personalizzato mantiene una selezione separata."
+            "value": "La tua valuta di base per prima, seguita dalle altre valute. Predefinito segue le valute dell’app; Elenco personalizzato mantiene una selezione separata."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Temel para birimini ilk sırada gösteren pano. Varsayılan uygulamadaki para birimlerini izler; Özel liste kendi seçimini korur."
+            "value": "Önce temel para biriminiz, ardından diğer para birimleriniz gösterilir. “Varsayılan” uygulamadaki para birimlerini kullanır; “Özel liste” ayrı bir seçim tutar."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Табло валют с базовой валютой первой. «По умолчанию» использует валюты приложения; «Свой список» сохраняет отдельный набор."
+            "value": "Сначала базовая валюта, затем остальные ваши валюты. «По умолчанию» использует валюты приложения; «Свой список» сохраняет отдельный набор."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Табло валют із базовою валютою першою. «Типово» використовує валюти програми; «Власний список» зберігає окремий набір."
+            "value": "Спочатку базова валюта, потім решта ваших валют. «Типово» використовує валюти програми; «Власний список» зберігає окремий набір."
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Valuutatabel, kus baasvaluuta on esimene. Vaikimisi kasutab rakenduse valuutasid; Kohandatud loend säilitab eraldi valiku."
+            "value": "Baasvaluuta on esimene, seejärel teised valuutad. Vaikimisi kasutab rakenduse valuutasid; Kohandatud loend säilitab eraldi valiku."
           }
         }
       }
@@ -1808,85 +1808,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A positive number, using a dot or comma for decimals, without grouping separators."
+            "value": "A positive number with a dot or comma as the decimal separator, without thousands separators."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "正数，小数可用点或逗号表示，不含千位分隔符。"
+            "value": "请输入不含千位分隔符的正数，并使用点或逗号作为小数分隔符。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "桁区切りなしの正の数。小数点には点またはカンマを使います。"
+            "value": "桁区切りなしの正の数を、小数点には点またはカンマを使って入力してください。"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un número positivo, con punto o coma para los decimales y sin separadores de miles."
+            "value": "Un número positivo, con punto o coma como separador decimal y sin separadores de miles."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Eine positive Zahl mit Punkt oder Komma für Dezimalstellen, ohne Tausendertrennzeichen."
+            "value": "Eine positive Zahl mit Punkt oder Komma als Dezimaltrennzeichen, ohne Tausendertrennzeichen."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un nombre positif, avec un point ou une virgule pour les décimales, sans séparateurs de milliers."
+            "value": "Un nombre positif, avec un point ou une virgule comme séparateur décimal, sans séparateurs de milliers."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Um número positivo, com ponto ou vírgula para os decimais, sem separadores de milhares."
+            "value": "Um número positivo, com ponto ou vírgula como separador decimal, sem separadores de milhares."
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "자릿수 구분 기호 없이 양수를 입력하세요. 소수에는 점이나 쉼표를 사용합니다."
+            "value": "천 단위 구분 기호 없이 소수 구분 기호로 점이나 쉼표를 사용하여 양수를 입력하세요."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "正數，小數可用點或逗號表示，不含千位分隔符。"
+            "value": "請輸入不含千位分隔符的正數，並使用點或逗號作為小數分隔符。"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un numero positivo, con punto o virgola per i decimali, senza separatori delle migliaia."
+            "value": "Un numero positivo, con punto o virgola come separatore decimale e senza separatori delle migliaia."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ondalıklar için nokta veya virgül kullanan, basamak ayırıcı içermeyen pozitif bir sayı."
+            "value": "Ondalık ayırıcı olarak nokta veya virgül kullanan, binlik ayırıcı içermeyen pozitif bir sayı."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Положительное число с точкой или запятой для дробной части, без разделителей разрядов."
+            "value": "Положительное число с точкой или запятой в качестве десятичного разделителя, без разделителей разрядов."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Додатне число з крапкою або комою для дробової частини, без роздільників розрядів."
+            "value": "Додатне число з крапкою або комою як десятковим роздільником, без роздільників розрядів."
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Positiivne arv, mille kümnendkohad on eraldatud punkti või komaga, ilma tuhandeliste eraldajateta."
+            "value": "Positiivne arv ilma tuhandeliste eraldajateta. Kümnendkoha eraldajana võib kasutada punkti või koma."
           }
         }
       }
@@ -3265,7 +3265,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le format moyen affiche les 4 premières devises. Les devises supplémentaires apparaissent en grand."
+            "value": "Le format moyen affiche les 4 premières devises. Les devises supplémentaires apparaissent dans le grand format."
           }
         },
         "pt-BR": {
@@ -3679,85 +3679,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Two currencies and their exchange-rate history. 1D refreshes hourly where available; other ranges daily."
+            "value": "Two currencies and their exchange-rate history. Crypto pairs with hourly data refresh hourly; other pairs refresh daily."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "两种货币及其汇率历史。支持时，1 日范围每小时更新，其他范围每日更新。"
+            "value": "两种货币及其汇率历史。有每小时数据的加密货币对每小时更新，其他货币对每日更新。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "2つの通貨と為替レートの履歴。1日は対応している場合に毎時更新し、その他の期間は毎日更新します。"
+            "value": "2つの通貨と為替レートの履歴。毎時データがある暗号資産のペアは毎時更新し、その他のペアは毎日更新します。"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dos monedas y el historial de su tipo de cambio. 1D se actualiza cada hora cuando está disponible; los demás periodos, a diario."
+            "value": "Dos monedas y el historial de su tipo de cambio. Los pares de criptomonedas con datos horarios se actualizan cada hora; los demás pares, a diario."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Zwei Währungen und ihr Wechselkursverlauf. 1T wird stündlich aktualisiert, sofern verfügbar; andere Zeiträume täglich."
+            "value": "Zwei Währungen und ihr Wechselkursverlauf. Kryptopaare mit stündlichen Daten werden stündlich aktualisiert, andere Paare täglich."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Deux devises et leur historique de taux de change. 1J s’actualise chaque heure si disponible ; les autres périodes chaque jour."
+            "value": "Deux devises et leur historique de taux de change. Les paires de cryptomonnaies disposant de données horaires s’actualisent chaque heure ; les autres paires, chaque jour."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Duas moedas e seu histórico de câmbio. 1D atualiza a cada hora quando disponível; os demais períodos, diariamente."
+            "value": "Duas moedas e o histórico de sua taxa de câmbio. Os pares de criptomoedas com dados por hora são atualizados a cada hora; os demais pares, diariamente."
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "두 통화의 환율 추이를 보여 줍니다. 1일은 지원되는 경우 매시간 갱신하며, 다른 기간은 매일 갱신합니다."
+            "value": "두 통화의 환율 추이를 보여 줍니다. 시간별 데이터가 있는 암호화폐 쌍은 매시간 갱신하며, 다른 통화 쌍은 매일 갱신합니다."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "兩種貨幣及其匯率歷史。支援時，1 日範圍每小時更新，其他範圍每日更新。"
+            "value": "兩種貨幣及其匯率歷史。有每小時資料的加密貨幣對每小時更新，其他貨幣對每日更新。"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Due valute e la cronologia del loro tasso di cambio. 1G si aggiorna ogni ora, dove disponibile; gli altri periodi ogni giorno."
+            "value": "Due valute e la cronologia del loro tasso di cambio. Le coppie di criptovalute con dati orari si aggiornano ogni ora; le altre coppie ogni giorno."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "İki para birimi ve döviz kuru geçmişleri. 1G, kullanılabildiğinde saatlik; diğer aralıklar günlük yenilenir."
+            "value": "İki para birimi ve döviz kuru geçmişleri. Saatlik verisi olan kripto para çiftleri saatlik, diğer çiftler günlük yenilenir."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Две валюты и история их курса обмена. За 1Д данные обновляются каждый час, где это доступно; за остальные периоды — ежедневно."
+            "value": "Две валюты и история их курса обмена. Криптовалютные пары с почасовыми данными обновляются каждый час, остальные — ежедневно."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Дві валюти та історія їхнього курсу обміну. За 1Д дані оновлюються щогодини, де це доступно; за інші періоди — щодня."
+            "value": "Дві валюти та історія їхнього курсу обміну. Криптовалютні пари з погодинними даними оновлюються щогодини, інші — щодня."
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kaks valuutat ja nende vahetuskursi ajalugu. 1p värskendatakse võimalusel iga tund, teisi perioode iga päev."
+            "value": "Kaks valuutat ja nende vahetuskursi ajalugu. Tunniandmetega krüptovaluutapaare värskendatakse iga tund, teisi valuutapaare iga päev."
           }
         }
       }
@@ -4489,85 +4489,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "1D refreshes hourly where available; other ranges daily."
+            "value": "Crypto pairs with hourly data refresh hourly; other pairs refresh daily."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "支持时，1 日范围每小时更新，其他范围每日更新。"
+            "value": "有每小时数据的加密货币对每小时更新，其他货币对每日更新。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "1日は対応している場合に毎時更新し、その他の期間は毎日更新します。"
+            "value": "毎時データがある暗号資産のペアは毎時更新し、その他のペアは毎日更新します。"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "1D se actualiza cada hora cuando está disponible; los demás periodos, a diario."
+            "value": "Los pares de criptomonedas con datos horarios se actualizan cada hora; los demás pares, a diario."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "1T wird stündlich aktualisiert, sofern verfügbar; andere Zeiträume täglich."
+            "value": "Kryptopaare mit stündlichen Daten werden stündlich aktualisiert, andere Paare täglich."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "1J s’actualise chaque heure si disponible ; les autres périodes chaque jour."
+            "value": "Les paires de cryptomonnaies disposant de données horaires s’actualisent chaque heure ; les autres paires, chaque jour."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "1D atualiza a cada hora quando disponível; os demais períodos, diariamente."
+            "value": "Os pares de criptomoedas com dados por hora são atualizados a cada hora; os demais pares, diariamente."
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "1일은 지원되는 경우 매시간 갱신하며, 다른 기간은 매일 갱신합니다."
+            "value": "시간별 데이터가 있는 암호화폐 쌍은 매시간 갱신하며, 다른 통화 쌍은 매일 갱신합니다."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "支援時，1 日範圍每小時更新，其他範圍每日更新。"
+            "value": "有每小時資料的加密貨幣對每小時更新，其他貨幣對每日更新。"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "1G si aggiorna ogni ora, dove disponibile; gli altri periodi ogni giorno."
+            "value": "Le coppie di criptovalute con dati orari si aggiornano ogni ora; le altre coppie ogni giorno."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "1G, kullanılabildiğinde saatlik; diğer aralıklar günlük yenilenir."
+            "value": "Saatlik verisi olan kripto para çiftleri saatlik, diğer çiftler günlük yenilenir."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "За 1Д данные обновляются каждый час, где это доступно; за остальные периоды — ежедневно."
+            "value": "Криптовалютные пары с почасовыми данными обновляются каждый час, остальные — ежедневно."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "За 1Д дані оновлюються щогодини, де це доступно; за інші періоди — щодня."
+            "value": "Криптовалютні пари з погодинними даними оновлюються щогодини, інші — щодня."
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "1p värskendatakse võimalusel iga tund, teisi perioode iga päev."
+            "value": "Tunniandmetega krüptovaluutapaare värskendatakse iga tund, teisi valuutapaare iga päev."
           }
         }
       }

@@ -224,7 +224,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ %@은(는) %@입니다."
+            "value": "%@ %@의 환산 결과는 %@입니다."
           }
         },
         "zh-Hant": {
@@ -312,7 +312,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ %@은(는) 약 %@입니다."
+            "value": "%@ %@의 환산 결과는 약 %@입니다."
           }
         },
         "zh-Hant": {
@@ -862,15 +862,63 @@
           }
         },
         "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Доступно ещё %lld результатов."
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Доступен ещё %lld результат."
+                }
+              },
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Доступно ещё %lld результата."
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Доступно ещё %lld результатов."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Доступно ещё %lld результатов."
+                }
+              }
+            }
           }
         },
         "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Доступно ще %lld результатів."
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Доступний ще %lld результат."
+                }
+              },
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Доступно ще %lld результати."
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Доступно ще %lld результатів."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Доступно ще %lld результатів."
+                }
+              }
+            }
           }
         },
         "et": {
@@ -1456,7 +1504,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "${source}에서 ${destination}로의 환율 확인"
+            "value": "${source}의 ${destination} 기준 환율 확인"
           }
         },
         "zh-Hant": {
@@ -1720,7 +1768,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "${amount}을(를) ${source}에서 ${destination}로 환산"
+            "value": "${source} 금액 ${amount}만큼을 ${destination} 기준으로 환산"
           }
         },
         "zh-Hant": {
@@ -1808,7 +1856,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "${amount}을(를) ${source}에서 현지 통화로 환산"
+            "value": "${source} 금액 ${amount}만큼을 현지 통화로 환산"
           }
         },
         "zh-Hant": {
@@ -1896,7 +1944,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "${amount}을(를) ${source}에서 내 통화로 환산"
+            "value": "${source} 금액 ${amount}만큼을 내 통화로 환산"
           }
         },
         "zh-Hant": {
@@ -2406,7 +2454,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "In Lokal umrechnen"
+            "value": "In lokale Währung umrechnen"
           }
         },
         "fr": {
@@ -2910,7 +2958,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Enter an amount without grouping, such as 100 or 12.50."
+            "value": "Enter an amount without thousands separators, such as 100 or 12.50."
           }
         },
         "zh-Hans": {
@@ -2934,7 +2982,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gib einen Betrag ohne Tausendertrennzeichen ein, etwa 100 oder 12.50."
+            "value": "Gib einen Betrag ohne Tausendertrennzeichen ein, zum Beispiel 100 oder 12.50."
           }
         },
         "fr": {
@@ -2952,7 +3000,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "100 또는 12.50처럼 자릿수 구분 기호 없이 금액을 입력하세요."
+            "value": "100 또는 12.50처럼 천 단위 구분 기호 없이 금액을 입력하세요."
           }
         },
         "zh-Hant": {
@@ -2970,7 +3018,7 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "100 veya 12.50 gibi, basamak ayırıcı içermeyen bir tutar girin."
+            "value": "100 veya 12.50 gibi, binlik ayırıcı içermeyen bir tutar girin."
           }
         },
         "ru": {
@@ -3180,7 +3228,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "从"
+            "value": "原始货币"
           }
         },
         "ja": {
@@ -3222,7 +3270,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "從"
+            "value": "原始貨幣"
           }
         },
         "it": {
@@ -5110,85 +5158,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "This calculation exceeds decimal precision"
+            "value": "This calculation can’t be completed accurately"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "此计算超出小数精度"
+            "value": "无法准确完成此计算"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "この計算は小数の精度を超えています"
+            "value": "この計算を正確に行うことができません"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Este cálculo supera la precisión decimal disponible"
+            "value": "Este cálculo no se puede completar con precisión"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Diese Berechnung überschreitet die Dezimalgenauigkeit"
+            "value": "Diese Berechnung kann nicht mit ausreichender Genauigkeit ausgeführt werden"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ce calcul dépasse la précision décimale"
+            "value": "Ce calcul ne peut pas être effectué avec précision"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Este cálculo excede a precisão decimal"
+            "value": "Não é possível concluir este cálculo com precisão"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "계산 결과가 소수 정밀도를 초과합니다"
+            "value": "이 계산을 정확하게 완료할 수 없습니다"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "此計算超出小數精度"
+            "value": "無法準確完成此計算"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Il calcolo supera la precisione decimale"
+            "value": "Impossibile completare questo calcolo con precisione"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bu hesaplama ondalık hassasiyeti aşıyor"
+            "value": "Bu hesaplama yeterli doğrulukla tamamlanamıyor"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Вычисление превышает десятичную точность"
+            "value": "Не удалось выполнить расчёт с достаточной точностью"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Обчислення перевищує десяткову точність"
+            "value": "Не вдалося виконати розрахунок із достатньою точністю"
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "See arvutus ületab kümnendarvu täpsuse"
+            "value": "Seda arvutust ei saa piisava täpsusega teha"
           }
         }
       }
@@ -5198,85 +5246,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "This calculation exceeds decimal precision."
+            "value": "This calculation can’t be completed accurately."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "此计算超出小数精度。"
+            "value": "无法准确完成此计算。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "この計算は小数の精度を超えています。"
+            "value": "この計算を正確に行うことができません。"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Este cálculo supera la precisión decimal disponible."
+            "value": "Este cálculo no se puede completar con precisión."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Diese Berechnung überschreitet die Dezimalgenauigkeit."
+            "value": "Diese Berechnung kann nicht mit ausreichender Genauigkeit ausgeführt werden."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ce calcul dépasse la précision décimale."
+            "value": "Ce calcul ne peut pas être effectué avec précision."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Este cálculo excede a precisão decimal."
+            "value": "Não é possível concluir este cálculo com precisão."
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "계산 결과가 소수 정밀도를 초과합니다."
+            "value": "이 계산을 정확하게 완료할 수 없습니다."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "此計算超出小數精度。"
+            "value": "無法準確完成此計算。"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Il calcolo supera la precisione decimale."
+            "value": "Impossibile completare questo calcolo con precisione."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bu hesaplama ondalık hassasiyeti aşıyor."
+            "value": "Bu hesaplama yeterli doğrulukla tamamlanamıyor."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Вычисление превышает десятичную точность."
+            "value": "Не удалось выполнить расчёт с достаточной точностью."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Обчислення перевищує десяткову точність."
+            "value": "Не вдалося виконати розрахунок із достатньою точністю."
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "See arvutus ületab kümnendarvu täpsuse."
+            "value": "Seda arvutust ei saa piisava täpsusega teha."
           }
         }
       }
@@ -5292,7 +5340,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "到"
+            "value": "目标货币"
           }
         },
         "ja": {
@@ -5334,7 +5382,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "到"
+            "value": "目標貨幣"
           }
         },
         "it": {
@@ -5644,7 +5692,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "您想换算多少金额？"
+            "value": "您想换算的金额是多少？"
           }
         },
         "ja": {
@@ -5686,7 +5734,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "您想換算多少金額？"
+            "value": "您想換算的金額是多少？"
           }
         },
         "it": {
@@ -6084,7 +6132,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "您指的是哪种来源货币？"
+            "value": "您指的是哪种原始货币？"
           }
         },
         "ja": {
@@ -6126,7 +6174,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "您指的是哪種來源貨幣？"
+            "value": "您指的是哪種原始貨幣？"
           }
         },
         "it": {
