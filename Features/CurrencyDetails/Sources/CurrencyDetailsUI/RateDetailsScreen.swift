@@ -55,7 +55,8 @@ struct RateDetailsScreen: View {
               .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
             Text(rateLabel(snapshot.convert(1, from: code, to: quote)))
               .font(.system(size: amountSize, weight: .light, design: .rounded)).monospacedDigit()
-              .lineLimit(1).minimumScaleFactor(0.4)
+              .lineLimit(1).minimumScaleFactor(0.25)
+              .accessibilityIdentifier("currency.details.rate")
             Text(CurrencyDisplay.details(snapshot, from: code, to: quote, locale: locale))
               .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
             if let observed = snapshot.quotes[code]?.observedAt {
@@ -78,12 +79,14 @@ struct RateDetailsScreen: View {
           VStack(alignment: .leading, spacing: AppStyle.Space.large) {
             Text(.Details.historyHeading).font(AppStyle.font(.caption2, weight: .semibold))
               .tracking(2)
-            Picker(.Details.historyRange, selection: $model.range) {
-              ForEach(model.availableRanges, id: \.self) { range in
-                Text(range.title).accessibilityLabel(range.accessibilityTitle).tag(range)
-              }
-            }
-            .pickerStyle(.segmented)
+            AdaptiveSegmentedPicker(
+              .Details.historyRange,
+              choices: model.availableRanges,
+              selection: $model.range,
+              optionTitle: { Text($0.title) },
+              fullTitle: { Text($0.accessibilityTitle) }
+            )
+            .accessibilityIdentifier("currency.details.historyRange")
             historyContent
             historyFooter
           }
@@ -153,6 +156,7 @@ struct RateDetailsScreen: View {
       ZStack(alignment: .leading) {
         VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
           Text(verbatim: "0.000000 \(quote)").font(AppStyle.font(.title3))
+            .lineLimit(1).minimumScaleFactor(0.25)
           Text(dayLabel(Date())).font(AppStyle.font(.caption))
         }
         .hidden().accessibilityHidden(true)
@@ -160,6 +164,7 @@ struct RateDetailsScreen: View {
           VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
             Text(verbatim: "\(rateLabel(Decimal(selected.value))) \(quote)")
               .font(AppStyle.font(.title3).monospacedDigit())
+              .lineLimit(1).minimumScaleFactor(0.25)
             Text(dayLabel(selected.date))
               .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
           }

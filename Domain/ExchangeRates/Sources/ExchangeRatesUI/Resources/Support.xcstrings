@@ -1852,7 +1852,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Algunos tipos de criptomonedas usan la alternativa diaria."
+            "value": "Algunos tipos de cambio de criptomonedas usan los datos diarios de respaldo."
           }
         },
         "de": {
@@ -1864,13 +1864,13 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Certains taux crypto utilisent la solution de repli quotidienne."
+            "value": "Certains taux de cryptomonnaies utilisent les données quotidiennes de secours."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Algumas taxas de criptomoedas usam a alternativa diária."
+            "value": "Algumas taxas de câmbio de criptomoedas usam os dados diários de reserva."
           }
         },
         "ko": {
@@ -2188,7 +2188,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "No se pueden actualizar los tipos diarios. Se muestran los guardados."
+            "value": "No se pueden actualizar los tipos de cambio diarios. Se muestran los guardados."
           }
         },
         "de": {
@@ -2296,7 +2296,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "내역을 갱신할 수 없습니다. 저장된 차트를 표시합니다."
+            "value": "과거 환율을 업데이트할 수 없습니다. 저장된 차트를 표시합니다."
           }
         },
         "zh-Hant": {
@@ -2379,7 +2379,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "법정 통화는 24시간 내역을 사용할 수 없습니다. 1주 이상의 기간을 선택하세요."
+            "value": "법정 통화는 24시간 환율 데이터를 제공하지 않습니다. 1주 이상의 기간을 선택하세요."
           }
         },
         "zh-Hant": {
@@ -2439,7 +2439,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "El historial se ha cargado, pero no se pudo guardar sin conexión."
+            "value": "El historial se ha cargado, pero no se pudo guardar para usarlo sin conexión."
           }
         },
         "de": {
@@ -2463,7 +2463,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "내역을 불러왔지만 오프라인으로 저장하지 못했습니다."
+            "value": "과거 환율을 불러왔지만 오프라인 사용을 위해 저장하지 못했습니다."
           }
         },
         "zh-Hant": {
@@ -2523,7 +2523,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "El historial no está disponible. Tu conversor sigue funcionando con los tipos guardados."
+            "value": "El historial no está disponible. Tu conversor sigue funcionando con los tipos de cambio guardados."
           }
         },
         "de": {
@@ -2547,7 +2547,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "내역을 사용할 수 없습니다. 저장된 환율로 환산은 계속 가능합니다."
+            "value": "과거 환율을 사용할 수 없습니다. 저장된 환율로 계속 환산할 수 있습니다."
           }
         },
         "zh-Hant": {
@@ -2631,7 +2631,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "이 통화 쌍의 내역을 사용할 수 없습니다."
+            "value": "이 통화 쌍의 과거 환율을 사용할 수 없습니다."
           }
         },
         "zh-Hant": {
@@ -2768,37 +2768,37 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ · 月内の最新終値"
+            "value": "%@ · 各月の最後に取得可能な終値"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ · último cierre mensual disponible"
+            "value": "%@ · último cierre disponible de cada mes"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ · letzter verfügbarer Monatsschlusskurs"
+            "value": "%@ · letzter verfügbarer Schlusskurs je Monat"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ · dernière clôture mensuelle disponible"
+            "value": "%@ · dernière clôture disponible de chaque mois"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ · último fechamento mensal disponível"
+            "value": "%@ · último fechamento disponível de cada mês"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ · 월별 마지막 가용 종가"
+            "value": "%@ · 각 월의 마지막 이용 가능한 종가"
           }
         },
         "zh-Hant": {

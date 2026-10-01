@@ -182,13 +182,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "使用“默认”跟随 App 的货币，或选择“自定列表”。中型最多显示四种货币，大型最多显示八种。两种货币可作为货币对计算器。"
+            "value": "选择“默认”以与 App 中的货币列表同步，或选择“自定列表”。中型最多显示四种货币，大型最多显示八种。选择两种货币即可在两者之间进行换算。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "「デフォルト」でアプリの通貨に従うか、「カスタムリスト」を選択します。中サイズは最大4通貨、大サイズは最大8通貨を表示。2通貨ならペア計算機になります。"
+            "value": "「デフォルト」でアプリの通貨リストと連動させるか、「カスタムリスト」で通貨を選択します。中サイズは最大4通貨、大サイズは最大8通貨を表示します。2通貨を選ぶと、そのペアの換算計算機になります。"
           }
         },
         "es": {
@@ -218,13 +218,13 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "기본값으로 앱 통화를 따르거나 사용자 지정 목록을 선택하세요. 중형은 최대 4개, 대형은 최대 8개 통화를 표시합니다. 통화 2개를 선택하면 쌍 계산기로 사용합니다."
+            "value": "기본값으로 앱의 통화 목록과 동기화하거나 사용자 지정 목록을 선택하세요. 중형은 최대 4개, 대형은 최대 8개 통화를 표시합니다. 통화 2개를 선택하면 두 통화 간 환산 계산기로 사용할 수 있습니다."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "使用「預設」跟隨 App 的貨幣，或選擇「自訂列表」。中型最多顯示四種貨幣，大型最多顯示八種。兩種貨幣可作為貨幣對計算機。"
+            "value": "選擇「預設」以與 App 中的貨幣列表同步，或選擇「自訂列表」。中型最多顯示四種貨幣，大型最多顯示八種。選擇兩種貨幣即可在兩者之間進行換算。"
           }
         },
         "it": {
@@ -326,13 +326,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Узнайте цену наличных"
+            "value": "Ваши наличные"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Дізнайтеся ціну готівки"
+            "value": "Ваша готівка"
           }
         }
       }
@@ -386,7 +386,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "일상적인 지폐나 금속 무게를 탭하여 참고 가치를 확인하세요."
+            "value": "일상에서 쓰는 지폐나 귀금속 무게를 탭하여 참고 가치를 확인하세요."
           }
         },
         "zh-Hant": {
@@ -404,19 +404,19 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Referans değerlerini görmek için günlük banknotlara veya metal ağırlıklarına dokunun."
+            "value": "Referans değerlerini görmek için yaygın banknotlara veya metal ağırlıklarına dokunun."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Нажимайте на привычные банкноты или массы металлов, чтобы увидеть их справочную стоимость."
+            "value": "Нажимайте на привычные банкноты или выбирайте массу металла, чтобы увидеть их справочную стоимость."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Торкайтеся звичних банкнот або мас металів, щоб побачити їхню довідкову вартість."
+            "value": "Торкайтеся звичних банкнот або вибирайте масу металу, щоб побачити їхню довідкову вартість."
           }
         }
       }
@@ -770,13 +770,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "基准货币置于首位的货币看板。“默认”跟随 App 的货币；“自定列表”保留独立选择。"
+            "value": "基准货币置于首位的货币看板。“默认”与 App 中的货币列表同步；“自定列表”保留独立选择。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "基準通貨が先頭の通貨ボード。「デフォルト」はアプリの通貨に従い、「カスタムリスト」は独自の選択を保持します。"
+            "value": "基準通貨を先頭に表示する通貨ボード。「デフォルト」はアプリの通貨リストと連動し、「カスタムリスト」は独自の選択を保持します。"
           }
         },
         "es": {
@@ -806,13 +806,13 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "기준 통화가 첫 번째인 통화 보드입니다. 기본값은 앱 통화를 따르고 사용자 지정 목록은 별도 선택을 유지합니다."
+            "value": "기준 통화를 맨 앞에 표시하는 통화 보드입니다. 기본값은 앱의 통화 목록과 동기화되고 사용자 지정 목록은 별도 선택을 유지합니다."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "基準貨幣置於首位的貨幣看板。「預設」跟隨 App 的貨幣；「自訂列表」保留獨立選擇。"
+            "value": "基準貨幣置於首位的貨幣看板。「預設」與 App 中的貨幣列表同步；「自訂列表」保留獨立選擇。"
           }
         },
         "it": {
@@ -974,7 +974,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "통화 또는 금속"
+            "value": "통화 또는 귀금속"
           }
         },
         "zh-Hant": {
@@ -1238,7 +1238,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Impostazioni di Il valore dei contanti"
+            "value": "Impostazioni del valore dei contanti"
           }
         },
         "tr": {
@@ -1250,13 +1250,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Настройки цены наличных"
+            "value": "Настройки «Ваши наличные»"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Параметри ціни готівки"
+            "value": "Параметри «Ваша готівка»"
           }
         }
       }
@@ -1694,7 +1694,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "正数，小数使用点或逗号，不含分组分隔符。"
+            "value": "正数，小数可用点或逗号表示，不含千位分隔符。"
           }
         },
         "ja": {
@@ -1736,7 +1736,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "正數，小數使用點或逗號，不含分組分隔符。"
+            "value": "正數，小數可用點或逗號表示，不含千位分隔符。"
           }
         },
         "it": {
@@ -2730,7 +2730,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "금속"
+            "value": "귀금속"
           }
         },
         "zh-Hant": {
@@ -2943,13 +2943,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "“默认”跟随 App 的货币。选择“自定列表”可编辑独立的选择。"
+            "value": "“默认”与 App 中的货币列表同步。选择“自定列表”可设置独立的货币列表。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "「デフォルト」はアプリの通貨に従います。別の通貨を選択するには「カスタムリスト」を選んでください。"
+            "value": "「デフォルト」はアプリの通貨リストと連動します。別の通貨を選ぶには「カスタムリスト」を選択してください。"
           }
         },
         "es": {
@@ -2979,13 +2979,13 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "기본값은 앱 통화를 따릅니다. 별도의 통화를 편집하려면 사용자 지정 목록을 선택하세요."
+            "value": "기본값은 앱의 통화 목록과 동기화됩니다. 별도의 통화를 선택하려면 사용자 지정 목록을 선택하세요."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "「預設」跟隨 App 的貨幣。選擇「自訂列表」可編輯獨立的選擇。"
+            "value": "「預設」與 App 中的貨幣列表同步。選擇「自訂列表」可設定獨立的貨幣列表。"
           }
         },
         "it": {
@@ -3391,7 +3391,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "내역"
+            "value": "환율 추이"
           }
         },
         "zh-Hant": {
@@ -3475,7 +3475,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "통화 2개와 환율 내역입니다. 1일은 지원되는 경우 매시간 갱신하며, 다른 기간은 매일 갱신합니다."
+            "value": "두 통화의 환율 추이를 보여 줍니다. 1일은 지원되는 경우 매시간 갱신하며, 다른 기간은 매일 갱신합니다."
           }
         },
         "zh-Hant": {
@@ -3559,7 +3559,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "내역 설정"
+            "value": "환율 추이 설정"
           }
         },
         "zh-Hant": {
@@ -3607,7 +3607,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "范围"
+            "value": "时段"
           }
         },
         "ja": {
@@ -3649,7 +3649,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "範圍"
+            "value": "期間"
           }
         },
         "it": {
@@ -4147,7 +4147,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "전체 내역"
+            "value": "전체 환율 기록"
           }
         },
         "zh-Hant": {

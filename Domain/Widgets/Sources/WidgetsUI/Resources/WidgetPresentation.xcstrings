@@ -470,7 +470,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "금속 무게 · 참고 추정치"
+            "value": "귀금속 무게 · 참고 추정치"
           }
         },
         "zh-Hant": {
@@ -938,7 +938,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "编辑此小组件并输入不含分组分隔符的数字。"
+            "value": "编辑此小组件，并输入不含千位分隔符的数字。"
           }
         },
         "ja": {
@@ -980,7 +980,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "編輯此小工具並輸入不含分組分隔符的數字。"
+            "value": "編輯此小工具，並輸入不含千位分隔符的數字。"
           }
         },
         "it": {
@@ -1890,7 +1890,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "저장된 내역"
+            "value": "저장된 과거 환율"
           }
         },
         "zh-Hant": {
@@ -1974,7 +1974,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "저장된 내역 · %@ 기준"
+            "value": "저장된 과거 환율 · %@ 기준"
           }
         },
         "zh-Hant": {
@@ -2226,7 +2226,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "이 통화 쌍의 내역 사용 불가"
+            "value": "이 통화 쌍의 과거 환율을 사용할 수 없음"
           }
         },
         "zh-Hant": {
@@ -2310,7 +2310,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "내역 사용 불가"
+            "value": "과거 환율을 사용할 수 없음"
           }
         },
         "zh-Hant": {
@@ -2442,7 +2442,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "1月"
+            "value": "1个月"
           }
         },
         "ja": {
@@ -2484,7 +2484,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "1月"
+            "value": "1個月"
           }
         },
         "it": {
@@ -2526,7 +2526,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "3月"
+            "value": "3个月"
           }
         },
         "ja": {
@@ -2568,7 +2568,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "3月"
+            "value": "3個月"
           }
         },
         "it": {
@@ -2700,7 +2700,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "すべて"
+            "value": "全期間"
           }
         },
         "es": {
@@ -2712,7 +2712,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Alles"
+            "value": "Alle"
           }
         },
         "fr": {
@@ -2760,7 +2760,7 @@
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Усі"
+            "value": "Усе"
           }
         }
       }
@@ -3150,7 +3150,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "사용 가능한 전체 내역"
+            "value": "사용 가능한 전체 환율 기록"
           }
         },
         "zh-Hant": {
@@ -3375,25 +3375,25 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Año"
+            "value": "YTD"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Lfd. Jahr"
+            "value": "YTD"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Année"
+            "value": "YTD"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ano"
+            "value": "YTD"
           }
         },
         "ko": {
@@ -3411,25 +3411,25 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Da inizio anno"
+            "value": "YTD"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Yıl başından beri"
+            "value": "YTD"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "С начала года"
+            "value": "С янв."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Від початку року"
+            "value": "З січ."
           }
         }
       }

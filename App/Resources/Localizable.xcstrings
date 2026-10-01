@@ -1172,7 +1172,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Consultar un cambio"
+            "value": "Consultar tipo de cambio"
           }
         },
         "de": {
@@ -1934,7 +1934,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "통화, 암호화폐 또는 금속 간 금액을 환산합니다."
+            "value": "통화, 암호화폐 또는 귀금속 간 금액을 환산합니다."
           }
         },
         "zh-Hant": {
@@ -2180,7 +2180,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "통화, 암호화폐 및 금속 환산"
+            "value": "통화, 암호화폐 및 귀금속 환산"
           }
         },
         "zh-Hant": {
@@ -2274,13 +2274,13 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Converti in locale"
+            "value": "Converti nella valuta locale"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Yerele çevir"
+            "value": "Yerel para birimine çevir"
           }
         },
         "ru": {
@@ -2648,7 +2648,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tipos diarios de criptomonedas"
+            "value": "Tipos de cambio diarios de criptomonedas"
           }
         },
         "de": {
@@ -2718,7 +2718,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "请输入不含分组符号的金额，例如 100 或 12.50。"
+            "value": "请输入不含千位分隔符的金额，例如 100 或 12.50。"
           }
         },
         "ja": {
@@ -2760,7 +2760,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "請輸入不含分組符號的金額，例如 100 或 12.50。"
+            "value": "請輸入不含千位分隔符的金額，例如 100 或 12.50。"
           }
         },
         "it": {
@@ -4066,7 +4066,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "Currency에서 통화의 환율과 내역을 확인합니다."
+            "value": "Currency에서 통화의 환율과 과거 환율 추이를 확인합니다."
           }
         },
         "zh-Hant": {
@@ -4780,7 +4780,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Este cálculo supera la precisión decimal"
+            "value": "Este cálculo supera la precisión decimal disponible"
           }
         },
         "de": {
@@ -4862,7 +4862,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Este cálculo supera la precisión decimal."
+            "value": "Este cálculo supera la precisión decimal disponible."
           }
         },
         "de": {

@@ -3020,7 +3020,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tipos de referencia fiduciarios diarios y tipos de cambio históricos."
+            "value": "Tipos de cambio de referencia diarios de monedas fiduciarias y tipos de cambio históricos."
           }
         },
         "de": {
@@ -3032,13 +3032,13 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Taux de référence fiduciaires quotidiens et taux de change historiques."
+            "value": "Taux de change de référence quotidiens des monnaies fiduciaires et taux de change historiques."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Taxas de referência fiduciárias diárias e taxas de câmbio históricas."
+            "value": "Taxas de câmbio de referência diárias de moedas fiduciárias e taxas de câmbio históricas."
           }
         },
         "ko": {
@@ -3103,7 +3103,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tipos de referencia fiduciarios diarios directos cuando la fuente principal no está disponible."
+            "value": "Tipos de cambio de referencia diarios de monedas fiduciarias, obtenidos directamente cuando la fuente principal no está disponible."
           }
         },
         "de": {
@@ -3115,13 +3115,13 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Taux de référence fiduciaires quotidiens directs lorsque la source principale est indisponible."
+            "value": "Taux de change de référence quotidiens des monnaies fiduciaires, obtenus directement lorsque la source principale est indisponible."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Taxas de referência fiduciárias diárias diretas quando a fonte principal está indisponível."
+            "value": "Taxas de câmbio de referência diárias de moedas fiduciárias, obtidas diretamente quando a fonte principal está indisponível."
           }
         },
         "ko": {
@@ -3186,7 +3186,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tipos diarios de criptomonedas y tipos de cambio de respaldo."
+            "value": "Tipos de cambio diarios de criptomonedas y tipos de cambio de respaldo."
           }
         },
         "de": {
@@ -3204,7 +3204,7 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Taxas diárias de criptomoedas e taxas de câmbio de reserva."
+            "value": "Taxas de câmbio diárias de criptomoedas e taxas de câmbio de reserva."
           }
         },
         "ko": {
@@ -3269,7 +3269,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tipos actuales de criptomonedas y velas históricas completadas en USD."
+            "value": "Tipos de cambio actuales de criptomonedas y velas históricas cerradas en USD."
           }
         },
         "de": {
@@ -3287,7 +3287,7 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Taxas atuais de criptomoedas e candles históricos concluídos em USD."
+            "value": "Taxas de câmbio atuais de criptomoedas e candles históricos fechados em USD."
           }
         },
         "ko": {
@@ -4016,7 +4016,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "No se pudieron actualizar los tipos. Inténtalo de nuevo."
+            "value": "No se pudieron actualizar los tipos de cambio. Inténtalo de nuevo."
           }
         },
         "de": {

@@ -302,10 +302,12 @@ struct WidgetPlayground: View {
         ScrollView {
           VStack(spacing: 20) {
             if kind.families.count > 1 {
-              Picker(.WidgetOnboarding.previewSize, selection: $family) {
-                ForEach(kind.families, id: \.self) { Text($0.showcaseTitle).tag($0) }
-              }
-              .pickerStyle(.segmented)
+              AdaptiveSegmentedPicker(
+                .WidgetOnboarding.previewSize,
+                choices: kind.families,
+                selection: $family,
+                optionTitle: { Text($0.showcaseTitle) }
+              )
               .onChange(of: family) { _, _ in AppHaptics.play(.transition) }
             }
             if kind == .icon {

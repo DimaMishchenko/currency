@@ -13,13 +13,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "货币，一目了然"
+            "value": "Currency，一目了然"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "通貨を、ひと目で"
+            "value": "Currencyを、ひと目で"
           }
         },
         "es": {
@@ -43,19 +43,19 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Currency, em um olhar"
+            "value": "Currency, de relance"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "통화를 한눈에"
+            "value": "Currency를 한눈에"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "貨幣，一目瞭然"
+            "value": "Currency，一目瞭然"
           }
         },
         "it": {
@@ -114,13 +114,13 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Deine Alltagswährungen, immer nah"
+            "value": "Deine Alltagswährungen, immer griffbereit"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tes devises du quotidien, toujours proches"
+            "value": "Tes devises du quotidien, toujours à portée de main"
           }
         },
         "pt-BR": {
@@ -262,7 +262,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "选择要换算为的货币"
+            "value": "选择要换算成的货币"
           }
         },
         "ja": {
@@ -304,7 +304,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "選擇要換算為的貨幣"
+            "value": "選擇要換算成的貨幣"
           }
         },
         "it": {
@@ -1561,7 +1561,7 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sürdür"
+            "value": "Devam et"
           }
         },
         "ru": {
@@ -1608,7 +1608,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Zeig mir wie"
+            "value": "Zeig mir, wie"
           }
         },
         "fr": {
@@ -2930,7 +2930,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Algunos tipos aún no están disponibles"
+            "value": "Algunos tipos de cambio aún no están disponibles"
           }
         },
         "de": {
@@ -4264,13 +4264,13 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Deine Währungen, immer nah."
+            "value": "Deine Währungen, immer griffbereit."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tes devises, toujours proches."
+            "value": "Tes devises, toujours à portée de main."
           }
         },
         "pt-BR": {
@@ -4335,7 +4335,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ようこそ"
+            "value": "Currencyへ"
           }
         },
         "es": {
@@ -4365,7 +4365,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "환영합니다"
+            "value": "Currency에"
           }
         },
         "zh-Hant": {
@@ -4383,7 +4383,7 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Hoş geldiniz"
+            "value": "Currency’ye"
           }
         },
         "ru": {
@@ -4418,7 +4418,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Currencyへ"
+            "value": "ようこそ"
           }
         },
         "es": {
@@ -4448,7 +4448,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "Currency에"
+            "value": "오신 것을 환영합니다"
           }
         },
         "zh-Hant": {
@@ -4466,7 +4466,7 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Currency’ye"
+            "value": "Hoş geldiniz"
           }
         },
         "ru": {

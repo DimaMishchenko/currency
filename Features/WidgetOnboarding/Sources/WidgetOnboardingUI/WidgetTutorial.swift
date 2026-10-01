@@ -405,11 +405,14 @@ struct WidgetTutorial: View {
   private var currencyConfigurationDemo: some View {
     VStack(alignment: .leading, spacing: 16) {
       if kind == .calculator || kind == .board {
-        Picker(.WidgetOnboarding.guideCurrencyList, selection: $custom) {
-          Text(.WidgetOnboarding.guideDefault).tag(false)
-          Text(.WidgetOnboarding.guideCustom).tag(true)
-        }
-        .pickerStyle(.segmented)
+        AdaptiveSegmentedPicker(
+          .WidgetOnboarding.guideCurrencyList,
+          choices: [false, true],
+          selection: $custom,
+          optionTitle: {
+            $0 ? Text(.WidgetOnboarding.guideCustom) : Text(.WidgetOnboarding.guideDefault)
+          }
+        )
       }
       if kind == .board && custom {
         currencyRow(String(localized: .WidgetOnboarding.guideBase), code: base) {

@@ -1795,13 +1795,13 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Eigene Auswahl"
+            "value": "Eigene Liste"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Personnalisé"
+            "value": "Personnalisée"
           }
         },
         "pt-BR": {
@@ -1855,19 +1855,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choose Comparison, then select Local in the Location section."
+            "value": "Choose Comparison, then select Local currency in the Location section."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "选择“比较”，然后在“位置”部分选择“当地”。"
+            "value": "选择“比较”，然后在“位置”部分选择“当地货币”。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "「比較」を選択し、「位置情報」セクションで「現地」を選択してください。"
+            "value": "「比較」を選択し、「位置情報」セクションで「現地通貨」を選択してください。"
           }
         },
         "es": {
@@ -1897,37 +1897,37 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "비교를 선택한 다음 위치 섹션에서 현지를 선택하세요."
+            "value": "비교를 선택한 다음 위치 섹션에서 현지 통화를 선택하세요."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "選擇「比較」，然後在「位置」區段選擇「當地」。"
+            "value": "選擇「比較」，然後在「位置」區段選擇「當地貨幣」。"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Scegli Confronto, poi seleziona Locale nella sezione Posizione."
+            "value": "Scegli Confronto, poi seleziona Valuta locale nella sezione Posizione."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Karşılaştırma’yı, ardından Konum bölümünde Yerel’i seçin."
+            "value": "Karşılaştırma’yı, ardından Konum bölümünde Yerel para birimi’ni seçin."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Выберите «Сравнение», затем «Местная» в разделе «Местоположение»."
+            "value": "Выберите «Сравнение», затем «Местная валюта» в разделе «Местоположение»."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Виберіть «Порівняння», потім «Місцева» в розділі «Розташування»."
+            "value": "Виберіть «Порівняння», потім «Місцева валюта» в розділі «Розташування»."
           }
         }
       }
@@ -1939,19 +1939,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choose Add currency, then select Local in the Location section. It stays a separate selection from fixed currencies."
+            "value": "Choose Add currency, then select Local currency in the Location section. It stays separate from currencies selected by code."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "选择“添加货币”，然后在“位置”部分选择“当地”。它将作为独立于固定货币的选择保留。"
+            "value": "选择“添加货币”，然后在“位置”部分选择“当地货币”。该选项与指定的固定货币相互独立。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "「通貨を追加」を選択し、「位置情報」セクションで「現地」を選択します。固定通貨とは別の選択として保持されます。"
+            "value": "「通貨を追加」を選択し、「位置情報」セクションで「現地通貨」を選択します。特定の通貨とは別の選択として保持されます。"
           }
         },
         "es": {
@@ -1981,37 +1981,37 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "통화 추가를 선택한 다음 위치 섹션에서 현지를 선택하세요. 고정 통화와 별도 선택으로 유지됩니다."
+            "value": "통화 추가를 선택한 다음 위치 섹션에서 현지 통화를 선택하세요. 특정 통화와는 별도로 선택됩니다."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "選擇「加入貨幣」，然後在「位置」區段選擇「當地」。它將作為獨立於固定貨幣的選擇保留。"
+            "value": "選擇「加入貨幣」，然後在「位置」區段選擇「當地貨幣」。此選項與指定的固定貨幣相互獨立。"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Scegli Aggiungi valuta, poi seleziona Locale nella sezione Posizione. Rimane una selezione separata dalle valute fisse."
+            "value": "Scegli Aggiungi valuta, poi seleziona Valuta locale nella sezione Posizione. Rimane una selezione separata dalle valute fisse."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Para birimi ekle’yi, ardından Konum bölümünde Yerel’i seçin. Sabit para birimlerinden ayrı bir seçim olarak kalır."
+            "value": "Para birimi ekle’yi, ardından Konum bölümünde Yerel para birimi’ni seçin. Sabit para birimlerinden ayrı bir seçim olarak kalır."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Выберите «Добавить валюту», затем «Местная» в разделе «Местоположение». Это отдельный выбор, независимый от фиксированных валют."
+            "value": "Выберите «Добавить валюту», затем «Местная валюта» в разделе «Местоположение». Этот выбор сохраняется отдельно от фиксированных валют."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Виберіть «Додати валюту», потім «Місцева» в розділі «Розташування». Це окремий вибір, незалежний від фіксованих валют."
+            "value": "Виберіть «Додати валюту», потім «Місцева валюта» в розділі «Розташування». Цей вибір зберігається окремо від фіксованих валют."
           }
         }
       }
@@ -2281,13 +2281,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "“默认”跟随 App 列表，包括当地货币。请在 App 的“添加货币”中添加“当地”。"
+            "value": "“默认”与 App 中的货币列表同步，包括当地货币。请在 App 的“添加货币”中添加“当地货币”。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "「デフォルト」は現地通貨を含むアプリのリストに従います。アプリの「通貨を追加」から「現地」を追加してください。"
+            "value": "「デフォルト」は現地通貨を含むアプリの通貨リストと連動します。アプリの「通貨を追加」から「現地通貨」を追加してください。"
           }
         },
         "es": {
@@ -2317,13 +2317,13 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "기본값은 현지를 포함한 앱 목록을 따릅니다. 앱의 통화 추가에서 현지를 추가하세요."
+            "value": "기본값은 현지 통화를 포함한 앱의 통화 목록과 동기화됩니다. 앱의 통화 추가에서 현지 통화를 추가하세요."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "「預設」跟隨 App 列表，包括當地貨幣。請在 App 的「加入貨幣」中加入「當地」。"
+            "value": "「預設」與 App 中的貨幣列表同步，包括當地貨幣。請在 App 的「加入貨幣」中加入「當地貨幣」。"
           }
         },
         "it": {
@@ -4129,13 +4129,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "“默认”跟随 App。“自定”使用独立列表。"
+            "value": "“默认”与 App 同步。“自定”使用独立列表。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "「デフォルト」はアプリに従い、「カスタム」は独自のリストを使用します。"
+            "value": "「デフォルト」はアプリの通貨リストと連動し、「カスタム」は独自のリストを使います。"
           }
         },
         "es": {
@@ -4147,13 +4147,13 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Standard folgt deiner App. Eigene Auswahl verwendet ihre eigene Liste."
+            "value": "Standard folgt deiner App. Eigene Liste verwendet eine separate Auswahl."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Par défaut suit ton app. Personnalisé utilise sa propre liste."
+            "value": "Par défaut suit ton app. Personnalisée utilise sa propre liste."
           }
         },
         "pt-BR": {
@@ -4165,37 +4165,37 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "기본값은 앱을 따릅니다. 사용자 지정은 자체 목록을 사용합니다."
+            "value": "기본값은 앱의 통화 목록과 동기화됩니다. 사용자 지정은 별도 목록을 사용합니다."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "「預設」跟隨 App。「自訂」使用獨立列表。"
+            "value": "「預設」與 App 同步。「自訂」使用獨立列表。"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Predefinito segue l’app. Personalizzato usa il proprio elenco."
+            "value": "Predefinito usa l’elenco di valute dell’app. Personalizzato usa il proprio elenco."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Varsayılan uygulamanızı izler. Özel kendi listesini kullanır."
+            "value": "Varsayılan, uygulamanızdaki para birimi listesini kullanır. Özel kendi listesini kullanır."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "«По умолчанию» использует приложение. «Свой» использует отдельный список."
+            "value": "«По умолчанию» использует список валют приложения. «Свой» использует отдельный список."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "«Типово» використовує програму. «Власний» використовує окремий список."
+            "value": "«Типово» використовує список валют програми. «Власний» використовує окремий список."
           }
         }
       }
@@ -5071,13 +5071,13 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Standard / Eigene Auswahl"
+            "value": "Standard / Eigene Liste"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Par défaut / Personnalisé"
+            "value": "Par défaut / Personnalisée"
           }
         },
         "pt-BR": {
@@ -5251,7 +5251,7 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Seguinte"
+            "value": "Próximo"
           }
         },
         "ko": {
@@ -6625,13 +6625,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Примерные курсы"
+            "value": "Пример курсов"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Прикладові курси"
+            "value": "Приклади курсів"
           }
         }
       }
@@ -6901,7 +6901,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "您的货币，汇集一览"
+            "value": "您的货币，尽收眼底"
           }
         },
         "ja": {
@@ -6931,7 +6931,7 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Suas moedas juntas, em um olhar"
+            "value": "Suas moedas juntas, de relance"
           }
         },
         "ko": {
@@ -6943,7 +6943,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "您的貨幣，匯集一覽"
+            "value": "您的貨幣，一目瞭然"
           }
         },
         "it": {
@@ -7381,13 +7381,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Узнайте цену наличных"
+            "value": "Ваши наличные"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Дізнайтеся ціну готівки"
+            "value": "Ваша готівка"
           }
         }
       }
@@ -7441,7 +7441,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "주변 가격을 위한 간단한 규칙"
+            "value": "주변 가격을 빠르게 어림하는 간단한 규칙"
           }
         },
         "zh-Hant": {
@@ -8532,7 +8532,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "예시 홈 화면의 통화 계산기, 참고 및 내역 위젯"
+            "value": "예시 홈 화면의 통화 계산기, 참고 환산 및 환율 추이 위젯"
           }
         },
         "zh-Hant": {
@@ -8948,7 +8948,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "내역"
+            "value": "환율 추이"
           }
         },
         "zh-Hant": {
@@ -9026,13 +9026,13 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Duas moedas, com seu histórico em um olhar"
+            "value": "Duas moedas e seu histórico, de relance"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "두 통화와 내역을 한눈에"
+            "value": "두 통화의 환율 추이를 한눈에"
           }
         },
         "zh-Hant": {
@@ -9116,7 +9116,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "예시 내역 · 설명용 환율"
+            "value": "예시 환율 추이 · 설명용 환율"
           }
         },
         "zh-Hant": {
@@ -9140,13 +9140,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Пример истории · иллюстративные курсы"
+            "value": "Пример истории · условные курсы"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Приклад історії · ілюстративні курси"
+            "value": "Приклад історії · умовні курси"
           }
         }
       }
@@ -9212,7 +9212,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Inizia con la base e la prima valuta dell’app. Scegli una delle due valute qui. Per le criptovalute, scegli USD come altra valuta."
+            "value": "Inizia con la base e la prima valuta dell’app. Qui puoi cambiare entrambe le valute. Per le criptovalute, scegli USD come altra valuta."
           }
         },
         "tr": {
@@ -9224,13 +9224,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Изначально используются базовая и первая валюты приложения. Здесь можно выбрать любую из них. Для криптовалют выберите USD второй валютой."
+            "value": "Изначально используются базовая и первая валюты приложения. Здесь можно изменить любую из двух валют. Для криптовалют выберите USD второй валютой."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Спочатку використовуються базова й перша валюти програми. Тут можна вибрати будь-яку з них. Для криптовалют виберіть USD другою валютою."
+            "value": "Спочатку використовуються базова й перша валюти програми. Тут можна змінити будь-яку з двох валют. Для криптовалют виберіть USD другою валютою."
           }
         }
       }
@@ -9248,7 +9248,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "范围"
+            "value": "时段"
           }
         },
         "ja": {
@@ -9290,7 +9290,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "範圍"
+            "value": "期間"
           }
         },
         "it": {
@@ -9368,7 +9368,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "1주, 1개월, 3개월, 1년 또는 전체 내역을 선택하세요. 위젯은 매일 갱신됩니다. 초록색은 환율 상승, 빨간색은 하락을 뜻합니다."
+            "value": "1주, 1개월, 3개월, 1년 또는 전체 환율 기록을 선택하세요. 위젯은 매일 갱신됩니다. 초록색은 환율 상승, 빨간색은 하락을 뜻합니다."
           }
         },
         "zh-Hant": {

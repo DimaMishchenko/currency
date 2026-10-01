@@ -49,7 +49,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "환율 내역 보기"
+            "value": "환율 추이 보기"
           }
         },
         "zh-Hant": {
@@ -1301,7 +1301,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "세부사항 및 내역"
+            "value": "상세 정보 및 환율 추이"
           }
         },
         "zh-Hant": {
@@ -1385,7 +1385,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "내역"
+            "value": "환율 추이"
           }
         },
         "zh-Hant": {
@@ -2201,7 +2201,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Los tipos se han actualizado, pero no se pudieron guardar sin conexión."
+            "value": "Los tipos de cambio se han actualizado, pero no se pudieron guardar para usarlos sin conexión."
           }
         },
         "de": {
@@ -2561,7 +2561,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ 세부사항 및 내역"
+            "value": "%@ 상세 정보 및 환율 추이"
           }
         },
         "zh-Hant": {

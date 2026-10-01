@@ -2410,7 +2410,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aggiungi Locale per seguire la valuta intorno a te. Attualmente %1$@."
+            "value": "Aggiungi Valuta locale per usare la valuta del luogo in cui ti trovi. Attualmente %1$@."
           }
         },
         "tr": {
@@ -2422,13 +2422,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Добавьте местную валюту, чтобы следовать за валютой вокруг вас. Сейчас — %1$@."
+            "value": "Добавьте местную валюту, чтобы использовать валюту вашего местоположения. Сейчас — %1$@."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Додайте місцеву валюту, щоб стежити за валютою навколо вас. Зараз — %1$@."
+            "value": "Додайте місцеву валюту, щоб використовувати валюту вашого розташування. Зараз — %1$@."
           }
         }
       }

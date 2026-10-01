@@ -31,14 +31,21 @@ saved currencies retain their existing behavior.
 6. Exercise Language → system Settings → preferred language → return to Currency;
    inspect longer text at accessibility sizes and representative widget/onboarding screens.
 
-The `NativeLocalizationTests` scheme runs production app screenshots in every language,
-Ukrainian widget/tutorial and accessibility text checks, and verifies that Language opens
-system Settings. Preferred-language selection is a separate system acceptance check.
+The `NativeLocalizationTests` scheme captures Home, Settings, currency categories and
+history in every language, exercises crypto-category and year-to-date selection, checks
+Ukrainian widget/tutorial and accessibility text sizes, and verifies that Language opens
+system Settings. Each language runs separately to keep native checks within CI timeouts.
+Preferred-language selection is a separate system acceptance check.
 
-Local simulator acceptance verified the language picker and a German relaunch after
-selecting Deutsch. Cold app-settings navigation remained on the Settings root on both
-iOS 26.5 and iOS 27 simulators despite receiving the correct app destination. Confirm
-cold navigation on a physical device before release; the app uses Apple's public URL.
+Preferred-language selection and German relaunch were verified in system Settings on
+simulator. Language navigation and switching were also confirmed on a physical device.
+Cold app-settings navigation on some simulators remains a system limitation.
+
+Currency names use sentence capitalization while preserving the rest of each localized
+name. Compact control labels have separate full accessibility descriptions. Segmented
+pickers use a native menu when the widest label cannot fit in every segment, and at
+accessibility text sizes. This applies to currency categories, history ranges and widget
+size/configuration choices.
 
 App Store listing copy is managed separately in App Store Connect. Shipping translated
 app resources does not publish translated listing text or screenshots.

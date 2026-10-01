@@ -50,7 +50,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "내역"
+            "value": "환율 추이"
           }
         },
         "zh-Hant": {
@@ -134,7 +134,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "사용 가능한 내역 없음"
+            "value": "과거 환율 데이터가 없습니다"
           }
         },
         "zh-Hant": {
@@ -182,7 +182,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "请尝试其他范围，或联网后再查看。"
+            "value": "请选择其他时段，或联网后再查看。"
           }
         },
         "ja": {
@@ -224,7 +224,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "請嘗試其他範圍，或連線後再查看。"
+            "value": "請選擇其他期間，或連線後再查看。"
           }
         },
         "it": {
@@ -260,79 +260,79 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Max shows all history available from this provider for this pair, grouped monthly. It may begin after the currency launched."
+            "value": "All shows all history available from this provider for this pair, grouped monthly. It may begin after the currency launched."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "“最大”按月分组显示此提供方对此货币对的全部可用历史。起始时间可能晚于货币推出时间。"
+            "value": "“全部”显示此数据来源提供的该货币对全部历史，按月汇总。历史可能从货币推出后的某个时间开始。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "「最大」は、このプロバイダが提供するこのペアの全履歴を月単位で表示します。通貨の開始日より後から始まる場合があります。"
+            "value": "「全期間」は、この提供元で利用できる通貨ペアのすべての履歴を月ごとにまとめて表示します。通貨の開始時点より後から始まる場合があります。"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Máx. muestra todo el historial disponible de este proveedor para este par, agrupado por meses. Puede comenzar después del lanzamiento de la moneda."
+            "value": "Todo muestra todo el historial disponible de este proveedor para este par, agrupado por meses. Puede comenzar después del lanzamiento de la moneda."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Max zeigt den gesamten verfügbaren Verlauf dieses Anbieters für dieses Paar, monatlich gruppiert. Er kann erst nach Einführung der Währung beginnen."
+            "value": "Alle zeigt den gesamten verfügbaren Verlauf dieses Anbieters für dieses Paar, monatlich gruppiert. Er kann erst nach Einführung der Währung beginnen."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Max affiche tout l’historique disponible chez ce fournisseur pour cette paire, regroupé par mois. Il peut commencer après le lancement de la devise."
+            "value": "Tout affiche tout l’historique disponible chez ce fournisseur pour cette paire, regroupé par mois. Il peut commencer après le lancement de la devise."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Máx. mostra todo o histórico disponível deste provedor para este par, agrupado por mês. Ele pode começar após o lançamento da moeda."
+            "value": "Tudo mostra todo o histórico disponível deste provedor para este par, agrupado por mês. Ele pode começar após o lançamento da moeda."
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "최대는 이 제공업체에서 지원하는 통화 쌍의 전체 내역을 월별로 표시합니다. 통화 출시 이후부터 시작할 수 있습니다."
+            "value": "전체는 이 제공업체에서 이용할 수 있는 해당 통화 쌍의 모든 과거 환율을 월별로 묶어 표시합니다. 통화 출시 이후의 시점부터 시작할 수 있습니다."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "「最大」按月分組顯示此提供者對此貨幣對的全部可用歷史。起始時間可能晚於貨幣推出時間。"
+            "value": "「全部」顯示此資料來源提供的該貨幣對所有歷史，按月彙整。歷史可能從貨幣推出後的某個時間開始。"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Max mostra tutta la cronologia disponibile da questo fornitore per la coppia, raggruppata per mese. Può iniziare dopo il lancio della valuta."
+            "value": "Tutto mostra tutta la cronologia disponibile da questo fornitore per la coppia, raggruppata per mese. Può iniziare dopo il lancio della valuta."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Maks., bu sağlayıcıdan bu çift için kullanılabilir tüm geçmişi aylık gruplar halinde gösterir. Para biriminin çıkışından sonra başlayabilir."
+            "value": "Tümü, bu sağlayıcıdan bu çift için kullanılabilir tüm geçmişi aylık gruplar halinde gösterir. Para biriminin çıkışından sonra başlayabilir."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "«Макс.» показывает всю историю, доступную у этого поставщика для этой пары, с группировкой по месяцам. Она может начинаться позже появления валюты."
+            "value": "«Все» показывает всю историю, доступную у этого поставщика для этой пары, с группировкой по месяцам. Она может начинаться позже появления валюты."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "«Макс.» показує всю історію, доступну в цього постачальника для цієї пари, з групуванням за місяцями. Вона може починатися пізніше появи валюти."
+            "value": "«Усе» показує всю історію, доступну в цього постачальника для цієї пари, з групуванням за місяцями. Вона може починатися пізніше появи валюти."
           }
         }
       }
@@ -361,7 +361,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "El historial usa velas completadas de Coinbase en USD; los días sin negociación no tienen observaciones. Las fuentes de las conversiones históricas y actuales pueden diferir."
+            "value": "El historial usa velas cerradas de Coinbase en USD; los días sin negociación no tienen observaciones. Las fuentes de los tipos de cambio históricos y actuales pueden diferir."
           }
         },
         "de": {
@@ -379,13 +379,13 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "O histórico usa candles concluídos da Coinbase em USD; dias sem negociação não têm observações. As fontes das conversões históricas e atuais podem diferir."
+            "value": "O histórico usa candles fechados da Coinbase em USD; dias sem negociação não têm observações. As fontes das taxas de câmbio históricas e atuais podem diferir."
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "내역은 Coinbase의 완료된 USD 캔들을 사용합니다. 거래일 데이터가 없으면 관측값도 없습니다. 과거와 현재 환산 데이터의 출처가 다를 수 있습니다."
+            "value": "과거 환율은 Coinbase의 마감된 USD 캔들을 사용합니다. 거래일 데이터가 없으면 관측값도 없습니다. 과거 환율과 현재 환율의 데이터 출처가 다를 수 있습니다."
           }
         },
         "zh-Hant": {
@@ -468,7 +468,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "참고 환율 내역에는 주말 및 발표 공백이 있을 수 있습니다. 과거와 현재 환산 데이터의 출처가 다를 수 있습니다."
+            "value": "과거 참고 환율에는 주말이나 발표 일정에 따른 공백이 있을 수 있습니다. 과거 환율과 현재 환율의 데이터 출처가 다를 수 있습니다."
           }
         },
         "zh-Hant": {
@@ -516,7 +516,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "历史范围"
+            "value": "历史汇率时段"
           }
         },
         "ja": {
@@ -552,13 +552,13 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "내역 기간"
+            "value": "환율 추이 기간"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "歷史範圍"
+            "value": "歷史匯率期間"
           }
         },
         "it": {
@@ -636,7 +636,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ %2$@에서 %3$@로의 내역"
+            "value": "%1$@ %2$@의 %3$@ 환산 가치 추이"
           }
         },
         "zh-Hant": {
@@ -1020,7 +1020,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "1月"
+            "value": "1个月"
           }
         },
         "ja": {
@@ -1062,7 +1062,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "1月"
+            "value": "1個月"
           }
         },
         "it": {
@@ -1104,7 +1104,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "3月"
+            "value": "3个月"
           }
         },
         "ja": {
@@ -1146,7 +1146,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "3月"
+            "value": "3個月"
           }
         },
         "it": {
@@ -1266,79 +1266,79 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Max"
+            "value": "All"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "最大"
+            "value": "全部"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "最大"
+            "value": "全期間"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Máx."
+            "value": "Todo"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Max"
+            "value": "Alle"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Max"
+            "value": "Tout"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Máx."
+            "value": "Tudo"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "최대"
+            "value": "전체"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "最大"
+            "value": "全部"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Max"
+            "value": "Tutto"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Maks."
+            "value": "Tümü"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Макс."
+            "value": "Все"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Макс."
+            "value": "Усе"
           }
         }
       }
@@ -1686,19 +1686,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "All available"
+            "value": "All available history"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "全部可用"
+            "value": "全部可用时段"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "利用可能なすべて"
+            "value": "利用可能な全期間"
           }
         },
         "es": {
@@ -1728,13 +1728,13 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "사용 가능한 전체"
+            "value": "사용 가능한 전체 기간"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "全部可用"
+            "value": "所有可用期間"
           }
         },
         "it": {
@@ -1979,7 +1979,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "내역 불러오는 중…"
+            "value": "과거 환율 불러오는 중…"
           }
         },
         "zh-Hant": {
@@ -2287,25 +2287,25 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Año"
+            "value": "YTD"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Lfd. Jahr"
+            "value": "YTD"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Année"
+            "value": "YTD"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ano"
+            "value": "YTD"
           }
         },
         "ko": {
@@ -2323,25 +2323,25 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Da inizio anno"
+            "value": "YTD"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Yıl başından beri"
+            "value": "YTD"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "С начала года"
+            "value": "С янв."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Від початку року"
+            "value": "З січ."
           }
         }
       }
@@ -2453,7 +2453,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "El historial fiduciario usa tipos de referencia diarios. Elige 1S o un periodo mayor."
+            "value": "El historial de monedas fiduciarias usa tipos de cambio de referencia diarios. Elige 1S o un periodo mayor."
           }
         },
         "de": {
@@ -2465,19 +2465,19 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "L’historique des devises fiduciaires utilise des taux de référence quotidiens. Choisis 1S ou une période plus longue."
+            "value": "L’historique des monnaies fiduciaires utilise des taux de change de référence quotidiens. Choisis 1S ou une période plus longue."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "O histórico de moedas fiduciárias usa taxas de referência diárias. Escolha 1S ou um período maior."
+            "value": "O histórico de moedas fiduciárias usa taxas de câmbio de referência diárias. Escolha 1S ou um período maior."
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "법정 통화 내역은 일일 참고 환율을 사용합니다. 1주 이상의 기간을 선택하세요."
+            "value": "법정 통화의 과거 데이터는 일일 참고 환율을 사용합니다. 1주 이상의 기간을 선택하세요."
           }
         },
         "zh-Hant": {

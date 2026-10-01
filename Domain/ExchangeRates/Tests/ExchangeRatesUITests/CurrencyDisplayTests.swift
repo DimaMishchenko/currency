@@ -4,6 +4,20 @@ import Testing
 @testable import ExchangeRatesUI
 
 @Suite struct CurrencyDisplayTests {
+  @Test func currencyNamesUseSentenceCapitalizationInRussianAndUkrainian() {
+    #expect(CurrencyDisplay.name("EUR", locale: Locale(identifier: "ru_RU")) == "Евро")
+    #expect(CurrencyDisplay.name("EUR", locale: Locale(identifier: "uk_UA")) == "Євро")
+    #expect(CurrencyDisplay.name("UAH", locale: Locale(identifier: "uk_UA")) == "Українська гривня")
+  }
+
+  @Test func capitalizationPreservesAcronymsAndUnknownCodes() {
+    let ukrainian = Locale(identifier: "uk_UA")
+    #expect(CurrencyDisplay.name("USD", locale: ukrainian).hasSuffix("США"))
+    #expect(CurrencyDisplay.name("USDC", locale: ukrainian) == "USD Coin")
+    #expect(CurrencyDisplay.name("XRP", locale: ukrainian) == "XRP")
+    #expect(CurrencyDisplay.name("not-a-code", locale: ukrainian) == "not-a-code")
+  }
+
   @Test func formattingFollowsLocaleWithoutChangingEditablePrecision() {
     let german = Locale(identifier: "de_DE")
     #expect(CurrencyDisplay.inputAmount("12.00", locale: german) == "12,00")
