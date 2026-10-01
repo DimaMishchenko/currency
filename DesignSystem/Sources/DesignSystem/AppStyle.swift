@@ -96,6 +96,9 @@ public final class AppAppearance {
 
 /// Shared styles for custom content. Native controls keep their platform defaults.
 public enum AppStyle {
+  /// Default app background, adapting to the system appearance.
+  public static var background: Color { Color(uiColor: .systemGroupedBackground) }
+
   /// Shared spacing scale in points.
   public enum Space {
     /// A 2-point gap.

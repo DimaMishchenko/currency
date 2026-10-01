@@ -1,4 +1,5 @@
 import Conversion
+import DesignSystem
 import ExchangeRates
 import Foundation
 import Onboarding
@@ -88,7 +89,7 @@ private struct OnboardingFlowContent<Widgets: View>: View {
       .id(model.step == .ready)
       .transition(.opacity)
     }
-    .background(Color(uiColor: .systemBackground))
+    .background(AppStyle.background)
     .animation(
       reduceMotion ? .easeOut(duration: 0.2) : .smooth(duration: 0.54), value: model.step == .ready
     )

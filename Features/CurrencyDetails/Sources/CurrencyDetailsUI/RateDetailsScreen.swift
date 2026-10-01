@@ -10,8 +10,6 @@ struct RateDetailsScreen: View {
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(\.locale) private var locale
   @ScaledMetric(relativeTo: .largeTitle) private var amountSize = 48
-  @ScaledMetric(relativeTo: .title2) private var titleBaselineOffset =
-    (UIFont.systemFont(ofSize: 22).ascender + UIFont.systemFont(ofSize: 22).descender) / 2
   @ScaledMetric(relativeTo: .caption2) private var scaledAxisWidth = 44
   private var axisWidth: CGFloat { min(scaledAxisWidth, 64) }
   private let axisLabelSpacing: CGFloat = 4
@@ -28,6 +26,7 @@ struct RateDetailsScreen: View {
   private var currencyName: String { CurrencyDisplay.name(code, locale: locale) }
 
   @State private var selectedDate: Date?
+  @State private var sourceDetailsExpanded = false
   private var quote: String { model.quote }
 
   private var selected: HistoryPoint? {
@@ -51,31 +50,26 @@ struct RateDetailsScreen: View {
       ScrollView {
         VStack(alignment: .leading, spacing: AppStyle.Space.section) {
           VStack(alignment: .leading, spacing: AppStyle.Space.small) {
+            Text(currencyName)
+              .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
+              .fixedSize(horizontal: false, vertical: true)
             Text(.Details.unitConversion(code, quote))
               .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
-            Text(rateLabel(snapshot.convert(1, from: code, to: quote)))
-              .font(.system(size: amountSize, weight: .light, design: .rounded)).monospacedDigit()
-              .lineLimit(1).minimumScaleFactor(0.25)
-              .accessibilityIdentifier("currency.details.rate")
-            Text(CurrencyDisplay.details(snapshot, from: code, to: quote, locale: locale))
-              .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
-            if let observed = snapshot.quotes[code]?.observedAt {
-              Text(
-                .Details.lastTrade(
-                  observed.formatted(.dateTime.day().month().year().hour().minute().locale(locale)))
-              )
-              .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
+            HStack(alignment: .firstTextBaseline, spacing: AppStyle.Space.small) {
+              Text(rateLabel(snapshot.convert(1, from: code, to: quote)))
+                .font(.system(size: amountSize, weight: .light, design: .rounded)).monospacedDigit()
+                .lineLimit(1).minimumScaleFactor(0.25)
+              Text(quote)
+                .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
+                .fixedSize()
             }
-            if let retrieved = snapshot.quotes[code]?.retrievedAt {
-              Text(
-                .Details.rateRetrieved(
-                  retrieved.formatted(.dateTime.day().month().year().hour().minute().locale(locale))
-                )
-              )
-              .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
-            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(.Details.unitConversion(code, quote))
+            .accessibilityValue(
+              Text(verbatim: "\(rateLabel(snapshot.convert(1, from: code, to: quote))) \(quote)")
+            )
+            .accessibilityIdentifier("currency.details.rate")
           }
-          Divider()
           VStack(alignment: .leading, spacing: AppStyle.Space.large) {
             Text(.Details.historyHeading).font(AppStyle.font(.caption2, weight: .semibold))
               .tracking(2)
@@ -88,44 +82,31 @@ struct RateDetailsScreen: View {
             )
             .accessibilityIdentifier("currency.details.historyRange")
             historyContent
-            historyFooter
+            detailsFooter
           }
         }
         .padding(AppStyle.Space.large)
       }
-      .toolbar(.hidden, for: .navigationBar)
-      .safeAreaInset(edge: .top, spacing: 0) {
-        HStack(alignment: .firstTextBaseline, spacing: AppStyle.Space.medium) {
-          HStack(alignment: .firstTextBaseline, spacing: AppStyle.Space.medium) {
-            CurrencyIcon(code, size: 36).accessibilityHidden(true)
-              .alignmentGuide(.firstTextBaseline) { $0.height / 2 }
-            Text(currencyName)
-              .font(AppStyle.font(.title2, weight: .semibold))
-              .fixedSize(horizontal: false, vertical: true)
-              .frame(maxWidth: .infinity, alignment: .leading)
-              .alignmentGuide(.firstTextBaseline) {
-                $0[.firstTextBaseline] - titleBaselineOffset
-              }
+      .background(AppStyle.background.ignoresSafeArea())
+      .navigationBarTitleDisplayMode(.inline)
+      .toolbar {
+        ToolbarItem(placement: .topBarLeading) {
+          HStack(spacing: AppStyle.Space.small) {
+            CurrencyIcon(code, size: 28).accessibilityHidden(true)
+            Text(code).font(AppStyle.font(.title, weight: .semibold))
+              .accessibilityAddTraits(.isHeader)
           }
-          .accessibilityElement(children: .ignore)
-          .accessibilityLabel(currencyName)
-          .accessibilityAddTraits(.isHeader)
+          .fixedSize()
+        }
+        .sharedBackgroundVisibility(.hidden)
+        ToolbarItem(placement: .topBarTrailing) {
           Button(.Details.close, systemImage: "xmark") {
             AppHaptics.play(.action); dismiss()
           }
           .labelStyle(.iconOnly)
           .accessibilityIdentifier("currency.details.close")
-          .font(AppStyle.font(.title2))
-          .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-          .frame(width: 44, height: 44)
-          .buttonStyle(.glass)
-          .buttonBorderShape(.circle)
           .tint(nil)
-          .alignmentGuide(.firstTextBaseline) { $0.height / 2 }
         }
-        .padding(.horizontal, AppStyle.Space.large)
-        .padding(.vertical, AppStyle.Space.small)
-        .background(.background)
       }
       .onChange(of: range) { _, _ in AppHaptics.play(.selection) }
       .onChange(of: selected?.date) { _, _ in
@@ -301,27 +282,9 @@ struct RateDetailsScreen: View {
     return format
   }
 
-  private var historyFooter: some View {
+  private var detailsFooter: some View {
     VStack(alignment: .leading, spacing: AppStyle.Space.medium) {
-      if let series, !series.points.isEmpty {
-        VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
-          Text(RateMessages.providerDescription(series.source, locale: locale))
-          if let first = series.points.first, let last = series.points.last {
-            Text(verbatim: "\(dayLabel(first.date)) – \(dayLabel(last.date))")
-          }
-          Text(
-            .Details.savedAt(
-              series.fetchedAt.formatted(
-                .dateTime.day().month().year().hour().minute().locale(locale))))
-        }
-      }
       if loading { Text(.Details.loadingHistory).accessibilityHidden(true) }
-      VStack(alignment: .leading, spacing: AppStyle.Space.small) {
-        if range == .all { Text(.Details.maxExplanation) }
-        Text(
-          CurrencyCatalog.crypto.contains(code)
-            ? .Details.cryptoExplanation : .Details.fiatExplanation)
-      }
       if let message, model.issue != .intradayUnavailable {
         Label {
           Text(message)
@@ -330,8 +293,58 @@ struct RateDetailsScreen: View {
         }
         .foregroundStyle(.primary)
       }
+      DisclosureGroup(isExpanded: $sourceDetailsExpanded) {
+        VStack(alignment: .leading, spacing: AppStyle.Space.medium) {
+          if let series, !series.points.isEmpty {
+            VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
+              if let first = series.points.first, let last = series.points.last {
+                Text(verbatim: "\(dayLabel(first.date)) – \(dayLabel(last.date))")
+              }
+              Text(
+                .Details.savedAt(
+                  series.fetchedAt.formatted(
+                    .dateTime.day().month().year().hour().minute().locale(locale))))
+            }
+          }
+          VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
+            if series?.points.isEmpty == false {
+              Text(CurrencyDisplay.details(snapshot, from: code, to: quote, locale: locale))
+            }
+            if let observed = snapshot.quotes[code]?.observedAt {
+              Text(
+                .Details.lastTrade(
+                  observed.formatted(.dateTime.day().month().year().hour().minute().locale(locale)))
+              )
+            }
+            if let retrieved = snapshot.quotes[code]?.retrievedAt {
+              Text(
+                .Details.rateRetrieved(
+                  retrieved.formatted(.dateTime.day().month().year().hour().minute().locale(locale))
+                )
+              )
+            }
+          }
+          VStack(alignment: .leading, spacing: AppStyle.Space.small) {
+            if range == .all { Text(.Details.maxExplanation) }
+            Text(
+              CurrencyCatalog.crypto.contains(code)
+                ? .Details.cryptoExplanation : .Details.fiatExplanation)
+          }
+          .font(AppStyle.font(.caption))
+        }
+      } label: {
+        Group {
+          if let series, !series.points.isEmpty {
+            Text(RateMessages.providerDescription(series.source, locale: locale))
+          } else {
+            Text(CurrencyDisplay.details(snapshot, from: code, to: quote, locale: locale))
+          }
+        }
+      }
+      .disclosureGroupStyle(SourceDetailsDisclosureStyle(reduceMotion: reduceMotion))
+      .accessibilityIdentifier("currency.details.sourceDisclosure")
     }
-    .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
+    .font(AppStyle.font(.footnote)).foregroundStyle(.secondary)
     .fixedSize(horizontal: false, vertical: true)
   }
 
@@ -351,6 +364,41 @@ struct RateDetailsScreen: View {
     formatter.timeStyle = range == .day ? .short : .none
     formatter.timeZone = TimeZone(secondsFromGMT: 0)
     return formatter.string(from: date)
+  }
+}
+
+private struct SourceDetailsDisclosureStyle: DisclosureGroupStyle {
+  let reduceMotion: Bool
+
+  func makeBody(configuration: Configuration) -> some View {
+    VStack(alignment: .leading, spacing: AppStyle.Space.small) {
+      Button {
+        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.2)) {
+          configuration.isExpanded.toggle()
+        }
+      } label: {
+        HStack(spacing: AppStyle.Space.small) {
+          configuration.label
+          Image(systemName: "chevron.right")
+            .font(AppStyle.font(.caption, weight: .semibold))
+            .foregroundStyle(.secondary)
+            .rotationEffect(.degrees(configuration.isExpanded ? 90 : 0))
+            .accessibilityHidden(true)
+        }
+        .frame(minHeight: 44, alignment: .leading)
+        .contentShape(Rectangle())
+      }
+      .buttonStyle(.plain)
+      .accessibilityValue(
+        Text(
+          configuration.isExpanded ? "sourceExpanded" : "sourceCollapsed",
+          tableName: "Details", bundle: .module))
+      if configuration.isExpanded {
+        configuration.content
+          .frame(maxWidth: .infinity, alignment: .leading)
+      }
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
   }
 }
 

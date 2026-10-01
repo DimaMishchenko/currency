@@ -118,7 +118,7 @@ struct HomeScreen: View {
         ToolbarTapDismissal(enabled: editingAmount) { dismissAmount(feedback: false) }
       }
       .background { outsideDismissal.accessibilityHidden(true) }
-      .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
+      .background(AppStyle.background.ignoresSafeArea())
       .toolbarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .topBarLeading) { sourcePicker.tint(nil) }

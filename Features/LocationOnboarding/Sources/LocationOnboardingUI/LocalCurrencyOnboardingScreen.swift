@@ -51,7 +51,7 @@ struct LocalCurrencyOnboardingScreen: View {
           .padding(24)
         }
       }
-      .background(Color(uiColor: .systemGroupedBackground))
+      .background(AppStyle.background)
       .safeAreaInset(edge: .bottom, spacing: 0) {
         if !textSize.isAccessibilitySize { actions }
       }
@@ -107,7 +107,7 @@ struct LocalCurrencyOnboardingScreen: View {
         .padding(.top, 4)
     }
     .padding(.horizontal, textSize.isAccessibilitySize ? 0 : 24).padding(.vertical, 12)
-    .background(Color(uiColor: .systemGroupedBackground))
+    .background(AppStyle.background)
   }
   private func refreshLocation() {
     model.refreshLocation()
