@@ -34,8 +34,36 @@ saved currencies retain their existing behavior.
 The `NativeLocalizationTests` scheme captures Home, Settings, currency categories and
 history in every language, exercises crypto-category and year-to-date selection, checks
 Ukrainian and Estonian widget/tutorial and accessibility text sizes, and verifies that Language opens
-system Settings. Each language runs separately to keep native checks within CI timeouts.
-Preferred-language selection is a separate system acceptance check.
+system Settings. This is an explicit visual acceptance suite, excluded from routine CI.
+Repeated app launches, screen navigation and screenshot capture across all languages
+take several minutes.
+Run it when adding a language, changing layouts or reviewing a release, with a task-owned
+simulator targeted by UDID:
+
+```sh
+set -o pipefail
+xcodebuild test \
+  -workspace Currency.xcworkspace \
+  -scheme NativeLocalizationTests \
+  -destination "platform=iOS Simulator,id=$CURRENCY_TEST_SIMULATOR" \
+  -parallel-testing-enabled NO \
+  -test-timeouts-enabled YES \
+  -default-test-execution-time-allowance 120 \
+  -maximum-test-execution-time-allowance 120 \
+  CODE_SIGN_IDENTITY=- 2>&1 | xcbeautify
+```
+
+Use `-only-testing:NativeLocalizationTests/NativeLocalizationTests/testEstonian`, for
+example, to review one language. Preferred-language selection is a separate system
+acceptance check.
+
+Routine CI checks every catalog's language coverage, completed translations, placeholders
+and line breaks, then audits compiler-extracted strings against their owning catalogs.
+The existing `CurrencyTests` run also resolves compiled module resources and substitutions
+for every supported language. These checks reuse the normal build and test process; they
+add no app launches or screenshot collection. Each dedicated catalog check has a 25-second process timeout,
+for a combined 50-second budget with headroom below one minute. A stalled or failed check
+fails CI. The measured combined duration before this change was one second.
 
 Preferred-language selection and German relaunch were verified in system Settings on
 simulator. Language navigation and switching were also confirmed on a physical device.

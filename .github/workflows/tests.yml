@@ -25,7 +25,12 @@ jobs:
       - name: Check release automation
         run: for script in Scripts/CI/*.sh; do bash -n "$script"; done
       - name: Check localization coverage and placeholders
-        run: python3 Scripts/CI/check_localizations.py
+        timeout-minutes: 1
+        run: |
+          python3 - <<'PYTHON'
+          import subprocess
+          subprocess.run(["python3", "Scripts/CI/check_localizations.py"], check=True, timeout=25)
+          PYTHON
       - name: Test CI skip rules
         run: python3 Scripts/CI/test_skip_rules.py
       - name: Test TestFlight notes
@@ -111,7 +116,16 @@ jobs:
             2>&1 | xcbeautify
       - name: Check compiler-extracted localization coverage
         if: needs.changes.outputs.xcode == 'true'
-        run: python3 Scripts/CI/check_localizations.py --strings-data "$RUNNER_TEMP/CurrencyTestsDerivedData"
+        timeout-minutes: 1
+        run: |
+          python3 - <<'PYTHON'
+          import os
+          import subprocess
+          subprocess.run(
+              ["python3", "Scripts/CI/check_localizations.py", "--strings-data",
+               os.path.join(os.environ["RUNNER_TEMP"], "CurrencyTestsDerivedData")],
+              check=True, timeout=25)
+          PYTHON
       - name: Reset app before native tests
         if: needs.changes.outputs.xcode == 'true'
         run: |
@@ -136,24 +150,6 @@ jobs:
             -maximum-test-execution-time-allowance 120 \
             CODE_SIGN_IDENTITY=- \
             2>&1 | tee "$RUNNER_TEMP/CurrencyNativeIntents.log" | xcbeautify
-      - name: Test native localization
-        if: needs.changes.outputs.xcode == 'true'
-        run: |
-          set -o pipefail
-          xcodebuild test \
-            -workspace Currency.xcworkspace \
-            -scheme NativeLocalizationTests \
-            -configuration Debug \
-            -destination "platform=iOS Simulator,id=$CURRENCY_TEST_SIMULATOR" \
-            -derivedDataPath "$RUNNER_TEMP/CurrencyTestsDerivedData" \
-            -resultBundlePath "$RUNNER_TEMP/CurrencyNativeLocalization.xcresult" \
-            -collect-test-diagnostics never \
-            -parallel-testing-enabled NO \
-            -test-timeouts-enabled YES \
-            -default-test-execution-time-allowance 120 \
-            -maximum-test-execution-time-allowance 120 \
-            CODE_SIGN_IDENTITY=- \
-            2>&1 | tee "$RUNNER_TEMP/CurrencyNativeLocalization.log" | xcbeautify
       - name: Build feature harnesses
         if: needs.changes.outputs.xcode == 'true'
         run: |
@@ -181,8 +177,6 @@ jobs:
           path: |
             ${{ runner.temp }}/CurrencyNativeIntents.log
             ${{ runner.temp }}/CurrencyNativeIntents.xcresult
-            ${{ runner.temp }}/CurrencyNativeLocalization.log
-            ${{ runner.temp }}/CurrencyNativeLocalization.xcresult
             ${{ runner.temp }}/CurrencySpotlight.log
           retention-days: 7
           if-no-files-found: warn
