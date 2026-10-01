@@ -9,8 +9,8 @@ final class NativeIntentTests: XCTestCase {
 
   override func setUp() async throws {
     continueAfterFailure = false
-    _ = launchReadyApp()
     if !Self.didInitializeApp {
+      _ = launchReadyApp()
       let deadline = Date().addingTimeInterval(15)
       while true {
         do {
@@ -65,7 +65,7 @@ final class NativeIntentTests: XCTestCase {
   }
 
   func testConversionsResolveAndRunAfterAppTerminationWithoutOpeningUI() async throws {
-    let app = launchReadyApp()
+    let app = configuredApp()
     let currencies = definitions.entities["CurrencyEntity"]
     let euro = currencies.makeReference(identifier: "EUR")
     let dollar = currencies.makeReference(identifier: "USD")
@@ -167,6 +167,7 @@ final class NativeIntentTests: XCTestCase {
   }
 
   func testLocalIsQueryableAndLabelsItsResult() async throws {
+    _ = launchReadyApp()
     let localChoices = try await definitions.entities["CurrencyEntity"]
       .entities(
         matching: "Local currency")
@@ -199,6 +200,7 @@ final class NativeIntentTests: XCTestCase {
   }
 
   func testCatalogChoicesAndSearchIncludeUnsavedFiatCryptoAndMetals() async throws {
+    _ = launchReadyApp()
     let definition = definitions.entities["CurrencyEntity"]
     let suggestions = try await definition.suggestedEntities()
     XCTAssertGreaterThan(suggestions.count, 150)
@@ -209,7 +211,7 @@ final class NativeIntentTests: XCTestCase {
   }
 
   func testExistingDetailsOpenFromColdAndWarmApp() async throws {
-    let app = launchReadyApp()
+    let app = configuredApp()
     app.terminate()
     XCTAssertEqual(app.state, .notRunning)
     for id in ["XAU", "JPY"] {
@@ -255,9 +257,14 @@ final class NativeIntentTests: XCTestCase {
     return result
   }
 
-  private func launchReadyApp() -> XCUIApplication {
+  private func configuredApp() -> XCUIApplication {
     let app = XCUIApplication(bundleIdentifier: "com.dimasike.currency")
     app.launchArguments = ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+    return app
+  }
+
+  private func launchReadyApp() -> XCUIApplication {
+    let app = configuredApp()
     app.launch()
     let primary = app.buttons["onboarding.primary"]
     let home = app.buttons["converter.widgets"]
