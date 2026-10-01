@@ -12,13 +12,7 @@ A simple SwiftUI currency converter for iPhone and iPad, running iOS 26 or later
 - Keep converting offline with saved rates.
 - Explore exchange-rate history and see rates on Home and Lock Screen widgets.
 
-## Screenshots
-
-<p>
-  <img src="Documentation/Screenshots/converter.png" alt="Currency converter with a personal currency list" width="220">
-  <img src="Documentation/Screenshots/history.png" alt="Euro exchange-rate details and history chart" width="220">
-  <img src="Documentation/Screenshots/history-widgets.png" alt="History widget previews in small and medium sizes, with light and dark appearances" width="220">
-</p>
+![Currency onboarding, converter, and widgets on iPhone](Documentation/Screenshots/currency.png)
 
 ## Run locally
 
