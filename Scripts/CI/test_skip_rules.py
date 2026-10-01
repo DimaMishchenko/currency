@@ -53,6 +53,7 @@ class SkipRulesTests(unittest.TestCase):
             ".github/dependabot.yml": (False, False),
             ".github/workflows/public-beta.yml": (False, False),
             "Scripts/CI/public_beta.sh": (False, False),
+            "Scripts/CI/testflight_notes.py": (False, True),
             "App/Tests/Integration.swift": (True, False),
             "App/Modules/CurrencyApplication/Tests/Test.swift": (True, False),
             "DesignSystem/Tests/Test.swift": (True, False),

@@ -62,6 +62,7 @@ The Tests workflow always checks CI shell syntax and skip-rule regressions. It c
 | --- | --- | --- |
 | Documentation, module READMEs, license, Git ignore rules | Skip | Skip |
 | Tests, development harnesses, Tests workflow, Swift formatting rules | Run | Skip |
+| TestFlight notes generator | Skip | Run |
 | Public-beta workflow and other CI helpers | Skip | Skip |
 | App/package code, resources, entitlements, manifests, signed-release workflow/helpers, unknown paths | Run | Run |
 
@@ -72,5 +73,7 @@ Missing comparison history runs both jobs. Failed or cancelled Tests runs cannot
 TestFlight Publish generates notes from the exact tested commit before uploading. Notes list app changes since the previous published build, with commit subjects, short hashes, and checks for the affected features. Commits that only change documentation, tests, CI, or dependency manifests are omitted. When the previous build has no recorded commit or usable history, notes explicitly describe a bounded selection of recent changes. A build with no app changes receives a short maintenance fallback.
 
 The `currency-release-build` artifact stores `CurrencyBuildId.txt`, `CurrencyCommit.txt`, and `CurrencyTestNotes.txt`. Publication writes the notes directly to the build's English TestFlight localization. Public Beta reuses the saved notes during promotion and retries, so later main-branch changes cannot alter an older build's description.
+
+Notes follow the [ASC text restrictions](https://github.com/rorkai/App-Store-Connect-CLI/blob/5.7.0/internal/cli/shared/test_notes.go), removing rejected characters including Gitmoji and variation selectors. The same sanitization applies when reading older artifacts. A notes-generator change triggers publication after the automation checks, so notes fixes reach TestFlight without requiring an app-code change.
 
 Run `python3 Scripts/CI/test_testflight_notes.py` alongside `python3 Scripts/CI/test_skip_rules.py` when changing this automation.

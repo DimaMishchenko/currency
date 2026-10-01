@@ -27,6 +27,8 @@ else
         ;;
       .swift-format|.github/workflows/tests.yml)
         xcode=true ;;
+      Scripts/CI/testflight_notes.py)
+        publish=true ;;
       .github/workflows/publish.yml|Scripts/CI/signing.sh|Scripts/CI/release.sh|Scripts/CI/verify_ipa.sh)
         xcode=true; publish=true ;;
       .github/*|Scripts/CI/*)
