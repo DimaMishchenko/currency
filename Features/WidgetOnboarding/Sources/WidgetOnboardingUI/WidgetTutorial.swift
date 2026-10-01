@@ -173,7 +173,7 @@ struct WidgetTutorial: View {
   }
 
   private var background: Color {
-    Color(uiColor: continuation ? .systemBackground : .systemGroupedBackground)
+    AppStyle.background
   }
 
   private var content: some View {

@@ -1,3 +1,4 @@
+import DesignSystem
 import Onboarding
 import SwiftUI
 
@@ -11,8 +12,9 @@ struct OnboardingSurface: View {
   var body: some View {
     RoundedRectangle(cornerRadius: radius)
       .fill(
-        Color(
-          uiColor: raised && colorScheme == .dark ? .secondarySystemBackground : .systemBackground)
+        raised
+          ? Color(uiColor: colorScheme == .dark ? .secondarySystemBackground : .systemBackground)
+          : AppStyle.background
       )
       .overlay {
         RoundedRectangle(cornerRadius: radius)

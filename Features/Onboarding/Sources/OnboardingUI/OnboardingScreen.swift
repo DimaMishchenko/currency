@@ -67,7 +67,7 @@ struct OnboardingScreen<Widgets: View>: View {
         }
       }
       .animation(.easeOut(duration: reduceMotion ? 0.16 : 0.32), value: needsWelcomeBootstrap)
-      .background(Color(uiColor: .systemBackground))
+      .background(AppStyle.background)
       .navigationBarTitleDisplayMode(.inline)
       .toolbarVisibility(.visible, for: .navigationBar)
       .toolbar { navigationControls }
@@ -189,7 +189,7 @@ struct OnboardingScreen<Widgets: View>: View {
       }
       .frame(maxWidth: 700).frame(maxWidth: .infinity)
       .frame(height: geometry.size.height, alignment: .top)
-      .background(Color(uiColor: .systemBackground))
+      .background(AppStyle.background)
       .onGeometryChange(for: Bool.self) { proxy in
         proxy.size.height < 700
       } action: {

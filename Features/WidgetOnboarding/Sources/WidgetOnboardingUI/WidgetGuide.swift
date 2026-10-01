@@ -70,7 +70,7 @@ struct WidgetGuide: View {
         }
         .scrollIndicators(.hidden)
       }
-      .background(Color(uiColor: .systemGroupedBackground))
+      .background(AppStyle.background)
       .safeAreaInset(edge: .bottom, spacing: 0) {
         if !textSize.isAccessibilitySize { actions }
       }
@@ -112,7 +112,7 @@ struct WidgetGuide: View {
       .font(AppStyle.font(.subheadline, weight: .medium)).frame(minHeight: 44)
     }
     .padding(.horizontal, 24).padding(.top, 8)
-    .background(Color(uiColor: .systemGroupedBackground))
+    .background(AppStyle.background)
   }
 
 }
@@ -235,7 +235,7 @@ private struct WidgetCollection: View {
         }
         .padding(24)
       }
-      .background(Color(uiColor: .systemGroupedBackground))
+      .background(AppStyle.background)
       .navigationTitle(.WidgetOnboarding.collectionTitle).navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .topBarTrailing) {
@@ -373,7 +373,7 @@ struct WidgetPlayground: View {
         }
         .scrollIndicators(.hidden)
       }
-      .background(Color(uiColor: .systemGroupedBackground))
+      .background(AppStyle.background)
       .safeAreaInset(edge: .bottom, spacing: 0) {
         if !textSize.isAccessibilitySize { actions }
       }
@@ -422,7 +422,7 @@ struct WidgetPlayground: View {
       }
     }
     .padding(.horizontal, textSize.isAccessibilitySize ? 0 : 24).padding(.top, 12)
-    .background(Color(uiColor: .systemGroupedBackground))
+    .background(AppStyle.background)
   }
   private var lockScreenPreview: some View {
     VStack(spacing: 8) {
