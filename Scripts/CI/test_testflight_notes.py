@@ -53,6 +53,25 @@ class TestingNotesTests(unittest.TestCase):
         for excluded in ["Change CI", "Bump dependencies", "Change tests", "Future onboarding"]:
             self.assertNotIn(excluded, result)
 
+    def test_real_gitmoji_subjects_are_safe_and_keep_international_text(self):
+        subjects = ["🐛 widgets: preserve history period", "✨ home: add contextual tips",
+                    "⚡️ rates: speed up refresh", "🎨 appearance: improve layout",
+                    "♻️ conversion: simplify update", "🔧 sélection: corriger Kč € 日本語 العربية हिन्दी"]
+        for subject in subjects:
+            head = self.commit("Features/Home/Sources/Home.swift", subject)
+        result = notes.generate_notes(head, self.base)
+        for subject in subjects:
+            self.assertIn(subject.split(":", 1)[1].strip(), result)
+        self.assertIsNone(notes.REJECTED_CHARACTERS.search(result))
+        self.assertNotIn("️", result)
+        self.assertIn("sélection", result)
+
+    def test_generation_limits_after_sanitization(self):
+        head = self.commit("Features/Home/Sources/Home.swift", "🐛" * 300 + "Fixed conversion")
+        result = notes.generate_notes(head, self.base)
+        self.assertIn(f"Fixed conversion ({head[:7]})", result)
+        self.assertNotIn("🐛", result)
+
     def test_baseline_excludes_already_published_changes(self):
         published = self.commit("Features/Home/Sources/Home.swift", "Old conversion")
         head = self.commit("Features/Search/Sources/Search.swift", "New currency search")
@@ -79,7 +98,7 @@ class TestingNotesTests(unittest.TestCase):
 
     def test_notes_limit_preserves_checks_and_counts_omissions(self):
         for index in range(25):
-            self.commit("App/Widgets/Sources/Widget.swift", f"Widget change {index} " + "🪙" * 230)
+            self.commit("App/Widgets/Sources/Widget.swift", f"Widget change {index} " + "x" * 230)
         result = notes.generate_notes(self.git("rev-parse", "HEAD"), self.base)
         self.assertLessEqual(len(result), 4000)
         self.assertIn("omitted to fit TestFlight", result)
@@ -168,6 +187,25 @@ else:
         self.assertIsNone(base)
         self.assertIn("No previous published commit", fallback)
 
+    def test_artifact_boundary_normalizes_unicode_before_length_validation(self):
+        path = self.root / "CurrencyTestNotes.txt"
+        text = "Cafe\u0301 Kč € 日本語 العربية हिन्दी ไทย שָׁלוֹם → ① ◇"
+        path.write_text("🐛✨⚡️🎨♻️\ue000\U000f0000\ufffd" + text + " <x\u0301")
+        self.assertEqual(notes.read_notes(path), "Café Kč € 日本語 العربية हिन्दी ไทย שָׁלוֹם → ① ◇ x")
+        path.write_text("🐛" * 4001 + "a" * 4000)
+        self.assertEqual(notes.read_notes(path), "a" * 4000)
+        path.write_text("🐛\ue000\ufe0f")
+        with self.assertRaises(ValueError):
+            notes.read_notes(path)
+
+    def test_rejected_range_edges_match_asc_contract(self):
+        for start, end in [(0x20D0, 0x20FF), (0x2400, 0x245F), (0x2500, 0x259F),
+                           (0x2600, 0x27EF), (0x2800, 0x28FF), (0x2980, 0x2BFF),
+                           (0xE000, 0xF8FF), (0xFE00, 0xFE0F), (0xFFFD, 0xFFFD),
+                           (0x10000, 0x10FFFF)]:
+            with self.subTest(start=start, end=end):
+                self.assertEqual(notes.sanitize_notes("Text" + chr(start) + chr(end)), "Text")
+
     def test_immutable_notes_and_legacy_promotion_fallback(self):
         path = self.root / "CurrencyTestNotes.txt"
         path.write_text("Published build notes\n")
@@ -201,6 +239,13 @@ if args[:2] == ["publish", "testflight"]:
     print(json.dumps({"buildId": "build-42", "processingState": os.environ.get("UPLOAD_STATE", "VALID")}))
     sys.exit(int(os.environ.get("UPLOAD_EXIT", "0")))
 if args[:3] == ["builds", "test-notes", "create"]:
+    value = args[args.index("--whats-new") + 1]
+    refused = [(0x20D0, 0x20FF), (0x2400, 0x245F), (0x2500, 0x259F), (0x2600, 0x27EF),
+               (0x2800, 0x28FF), (0x2980, 0x2BFF), (0xE000, 0xF8FF), (0xFE00, 0xFE0F),
+               (0xFFFD, 0xFFFD), (0x10000, 0x10FFFF)]
+    if any(start <= ord(character) <= end for character in value for start, end in refused):
+        print("What to Test notes contain rejected characters", file=sys.stderr)
+        sys.exit(2)
     sys.exit(int(os.environ.get("NOTES_EXIT", "0")))
 if args[:2] == ["builds", "wait"]:
     sys.exit(int(os.environ.get("WAIT_EXIT", "0")))
@@ -268,6 +313,50 @@ print(json.dumps(result))
 
     def test_legacy_public_beta_has_explicit_safe_fallback(self):
         self.assertEqual(self.promotion(legacy=True), notes.LEGACY_NOTES)
+
+    def test_generated_gitmoji_notes_upload_successfully(self):
+        repository = self.root / "git"
+        repository.mkdir()
+        def git(*args):
+            return subprocess.check_output(["git", *args], cwd=repository, text=True).strip()
+        git("init", "-q", "-b", "main")
+        git("config", "user.name", "CI Tests")
+        git("config", "user.email", "ci@example.invalid")
+        git("commit", "--allow-empty", "-qm", "base")
+        base = git("rev-parse", "HEAD")
+        source = repository / "Features/Home/Sources/Home.swift"
+        source.parent.mkdir(parents=True)
+        source.write_text("changed")
+        git("add", ".")
+        git("commit", "-qm", "🐛 home: fix conversion for Kč € 日本語")
+        head = git("rev-parse", "HEAD")
+        original_directory = Path.cwd()
+        try:
+            os.chdir(repository)
+            generated = notes.generate_notes(head, base)
+        finally:
+            os.chdir(original_directory)
+        (self.root / "CurrencyTestNotes.txt").write_text(generated)
+        result = self.upload()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        command = self.commands()[1]
+        submitted = command[command.index("--whats-new") + 1]
+        self.assertEqual(submitted, generated)
+        self.assertIn(f"home: fix conversion for Kč € 日本語 ({head[:7]})", submitted)
+
+    def test_upload_sanitizes_previous_unsafe_artifact(self):
+        (self.root / "CurrencyTestNotes.txt").write_text("🐛✨⚡️🎨♻️ " + self.text + "\ue000")
+        result = self.upload()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        command = self.commands()[1]
+        self.assertEqual(command[command.index("--whats-new") + 1], self.text)
+
+    def test_fake_asc_rejects_unsafe_notes(self):
+        result = subprocess.run([str(self.root / "bin" / "asc"), "builds", "test-notes", "create",
+                                 "--whats-new", "🐛 Unsafe notes"], env=self.environment,
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("rejected characters", result.stderr)
 
     def test_valid_build_gets_immutable_notes(self):
         result = self.upload()

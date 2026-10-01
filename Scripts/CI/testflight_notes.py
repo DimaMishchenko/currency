@@ -5,10 +5,17 @@ from pathlib import Path
 import re
 import subprocess
 import tempfile
+import unicodedata
 
 
 MAX_CHARACTERS = 4000
 RECENT_COMMITS = 50
+REJECTED_CHARACTERS = re.compile(
+    "[<\u20d0-\u20ff\u2400-\u245f\u2500-\u259f\u2600-\u27ef"
+    "\u2800-\u28ff\u2980-\u2bff\ue000-\uf8ff\ufe00-\ufe0f\ufffd\U00010000-\U0010ffff]"
+)
+GENERIC_MARK_RANGES = ((0x0300, 0x036F), (0x1AB0, 0x1AFF), (0x1DC0, 0x1DFF),
+                       (0x20D0, 0x20FF), (0xFE20, 0xFE2F))
 GENERAL_CHECK = "Convert an amount, switch currencies, and refresh rates; check the result and layout."
 LEGACY_NOTES = (
     "This build predates commit-based testing notes; its change list is unavailable.\n\n"
@@ -26,6 +33,14 @@ CHECKS = {
     "appearance": "Check the changed screen in light and dark appearance and with a larger text size.",
     "home": "Enter and edit an amount, switch the currency pair, and check the conversion and keypad.",
 }
+
+
+def sanitize_notes(text):
+    composed = unicodedata.normalize("NFC", text)
+    accepted = REJECTED_CHARACTERS.sub("", composed)
+    return "".join(character for character in accepted
+                   if not (unicodedata.category(character) == "Mn" and
+                           any(start <= ord(character) <= end for start, end in GENERIC_MARK_RANGES))).strip()
 
 
 def command(*args):
@@ -118,7 +133,7 @@ def generate_notes(head, base=None, fallback=None):
         if not visible_paths:
             continue
         subject = git("show", "-s", "--format=%s", revision)
-        subject = " ".join(subject.split())
+        subject = " ".join(sanitize_notes(subject).split()) or "App update"
         entries.append(f"- {subject[:240]} ({revision[:7]})")
         for check in checks_for(visible_paths, subject):
             if check not in checks:
@@ -132,7 +147,8 @@ def generate_notes(head, base=None, fallback=None):
         changes = "\n".join(entries)
     footer = "\n\nWhat to test\n" + "\n".join("- " + check for check in checks)
     footer += "\nReport unexpected results through TestFlight, including steps to reproduce."
-    prefix = provenance + "\n\n"
+    prefix = sanitize_notes(provenance) + "\n\n"
+    footer = "\n\n" + sanitize_notes(footer)
     kept = list(entries)
     while len(prefix + changes + footer) > MAX_CHARACTERS and kept:
         kept.pop()
@@ -144,7 +160,7 @@ def generate_notes(head, base=None, fallback=None):
 
 
 def read_notes(path):
-    notes = Path(path).read_text().strip() if Path(path).is_file() else LEGACY_NOTES
+    notes = sanitize_notes(Path(path).read_text() if Path(path).is_file() else LEGACY_NOTES)
     if not notes or len(notes) > MAX_CHARACTERS or "\0" in notes:
         raise ValueError("Testing notes must contain 1 to 4000 characters without NUL bytes.")
     return notes
