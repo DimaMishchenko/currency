@@ -4,47 +4,42 @@ import ExchangeRatesUI
 import Onboarding
 import SwiftUI
 
-/// A destination choice in the onboarding carousel.
 struct OnboardingCurrencyTile: View {
   let code: String
   let selected: Bool
   let available: Bool
-  let compact: Bool
   let identifier: String
   let action: () -> Void
   @Environment(\.locale) private var locale
   @Environment(\.dynamicTypeSize) private var textSize
+  @ScaledMetric(relativeTo: .subheadline) private var minimumHeight: CGFloat = 64
 
   var body: some View {
     Button {
       action()
     } label: {
-      VStack(spacing: 8) {
-        if compact {
-          HStack(spacing: 6) {
-            CurrencyIcon(code, size: 22)
-            Text(code).font(AppStyle.font(.subheadline, weight: .semibold))
-          }
-          .padding(.top, 8)
-        } else {
-          CurrencyIcon(code, size: 30).frame(height: 36)
-          Text(code).font(AppStyle.font(.headline))
+      HStack(spacing: 10) {
+        CurrencyIcon(code, size: 28).frame(width: 32)
+        VStack(alignment: .leading, spacing: 4) {
+          Text(code).font(AppStyle.font(.subheadline, weight: .semibold))
+          Text(
+            available
+              ? CurrencyDisplay.name(code, locale: locale)
+              : String(localized: .Onboarding.unavailable)
+          )
+          .font(AppStyle.font(.caption2)).foregroundStyle(.secondary)
+          .lineLimit(textSize.isAccessibilitySize ? nil : 2)
+          .fixedSize(horizontal: false, vertical: true)
+
         }
-        Text(
-          available
-            ? CurrencyDisplay.name(code, locale: locale)
-            : String(localized: .Onboarding.unavailable)
-        )
-        .font(AppStyle.font(.caption2)).foregroundStyle(.secondary)
-        .lineLimit(2).frame(height: textSize.isAccessibilitySize ? 52 : 30, alignment: .top)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        OnboardingSelectionMark().opacity(selected ? 1 : 0).frame(width: 20)
       }
-      .frame(width: textSize.isAccessibilitySize ? 152 : 96).padding(.vertical, 16)
+      .padding(12)
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .frame(minHeight: minimumHeight)
       .background { OnboardingSurface(radius: 18, selected: selected) }
-      .overlay(alignment: .topTrailing) {
-        if selected {
-          OnboardingSelectionMark().padding(6)
-        }
-      }
+
     }
     .buttonStyle(.plain).disabled(!available && !selected)
     .accessibilityElement(children: .ignore)
@@ -60,7 +55,6 @@ struct OnboardingCurrencyTile: View {
 
 }
 
-/// A shared selected state; unselected choices keep their content uncluttered.
 struct OnboardingSelectionMark: View {
   @Environment(AppAppearance.self) private var appearance
   @Environment(\.colorScheme) private var colorScheme
@@ -76,36 +70,50 @@ struct OnboardingSelectionMark: View {
   }
 }
 
-/// Opens the same destination picker as toolbar Search, using the carousel's card geometry.
 struct OnboardingMoreCurrenciesTile: View {
-  let compact: Bool
+  var fullWidth = false
   let action: () -> Void
   @Environment(\.dynamicTypeSize) private var textSize
+  @ScaledMetric(relativeTo: .subheadline) private var minimumHeight: CGFloat = 64
 
   var body: some View {
     Button(action: action) {
-      VStack(spacing: 8) {
-        if compact {
-          HStack(spacing: 6) {
-            Image(systemName: "magnifyingglass").font(.system(size: 20))
-              .frame(width: 22, height: 22)
-            Text(.Onboarding.more).font(AppStyle.font(.subheadline, weight: .semibold))
-          }
-          .padding(.top, 8)
-        } else {
-          Image(systemName: "magnifyingglass").font(.system(size: 24)).frame(height: 36)
-          Text(.Onboarding.more).font(AppStyle.font(.headline))
+      HStack(spacing: 10) {
+        Image(systemName: "magnifyingglass").font(.system(size: 24)).frame(width: 32)
+        VStack(alignment: .leading, spacing: 4) {
+          Text(.Onboarding.moreCurrencies)
+            .font(AppStyle.font(.subheadline, weight: .semibold))
+            .fixedSize(horizontal: false, vertical: true)
+
         }
-        Text(.Onboarding.fiat)
-          .font(AppStyle.font(.caption2)).foregroundStyle(.secondary)
-          .lineLimit(2).frame(height: textSize.isAccessibilitySize ? 52 : 30, alignment: .top)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        Color.clear.frame(width: 20)
       }
-      .frame(width: textSize.isAccessibilitySize ? 152 : 96).padding(.vertical, 16)
+      .padding(12)
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .frame(minHeight: fullWidth ? minimumHeight * 0.75 : minimumHeight)
       .background { OnboardingSurface(radius: 18) }
+
     }
     .buttonStyle(.plain)
     .accessibilityElement(children: .ignore)
     .accessibilityLabel(Text(.Onboarding.moreCurrencies))
     .accessibilityIdentifier("onboarding.destinationsMore")
+  }
+}
+
+struct OnboardingRecommendationList<Content: View>: View {
+  @ViewBuilder let content: Content
+  @Environment(\.dynamicTypeSize) private var textSize
+
+  var body: some View {
+    LazyVGrid(
+      columns: [
+        GridItem(textSize.isAccessibilitySize ? .flexible() : .adaptive(minimum: 220), spacing: 8)
+      ], spacing: 8
+    ) {
+      content
+    }
+    .padding(.horizontal, 24)
   }
 }

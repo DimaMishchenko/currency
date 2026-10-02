@@ -13,6 +13,7 @@ struct WidgetGuide: View {
   @Environment(\.dismiss) private var dismiss
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(\.dynamicTypeSize) private var textSize
+  @Environment(\.layoutDirection) private var layoutDirection
   @State private var selection: WidgetShowcaseKind?
   @State private var selectedFamily: WidgetFamily = .systemMedium
   @State private var selectedSource = ""
@@ -23,57 +24,24 @@ struct WidgetGuide: View {
   var body: some View {
     NavigationStack {
       GeometryReader { geometry in
-        ScrollView {
-          VStack(spacing: 12) {
-            WidgetGalleryWall(
-              moving: !paused && selection == nil && !tutorial && !collection,
-              selection: $selection, selectedFamily: $selectedFamily,
-              selectedSource: $selectedSource, expansion: expansion
-            )
-            .frame(
-              height: textSize.isAccessibilitySize ? 220 : max(160, geometry.size.height - 208)
-            )
-            .accessibilityRepresentation {
-              Button(.WidgetOnboarding.guideExploreCollection) {
-                AppHaptics.play(.action); collection = true
-              }
-            }
-            .overlay(alignment: .bottomTrailing) {
-              if !reduceMotion {
-                Button(
-                  paused
-                    ? String(localized: .WidgetOnboarding.guidePlayMotion)
-                    : String(localized: .WidgetOnboarding.guidePauseMotion),
-                  systemImage: paused ? "play.fill" : "pause.fill"
-                ) {
-                  AppHaptics.play(.selection)
-                  paused.toggle()
-                }
-                .font(.subheadline).labelStyle(.iconOnly)
-                .buttonStyle(.plain).frame(width: 44, height: 44)
-                .background(.thinMaterial, in: .circle)
-                .padding(.trailing, 24).padding(.bottom, 8)
-              }
-            }
-            VStack(spacing: 12) {
-              Text(.WidgetOnboarding.guideHeadline)
-                .font(AppStyle.font(.largeTitle, weight: .semibold))
-                .tracking(-0.8).lineSpacing(-2)
-                .accessibilityAddTraits(.isHeader)
-              Text(.WidgetOnboarding.guideSummary)
-                .font(AppStyle.font(.body)).foregroundStyle(.secondary)
-            }
-            .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
-            .padding(.horizontal, 24).padding(.bottom, 20)
-            if textSize.isAccessibilitySize { actions }
+        let wide =
+          !textSize.isAccessibilitySize
+          && (geometry.size.width >= 700
+            || (geometry.size.width >= 550 && geometry.size.width > geometry.size.height * 1.2))
+        AdaptivePairLayout(
+          division: activeDivision(in: geometry), wide: wide,
+          rightToLeft: layoutDirection == .rightToLeft
+        ) {
+          galleryWall
+          ViewThatFits(in: .vertical) {
+            introduction
+            ScrollView { introduction }
+              .scrollBounceBehavior(.basedOnSize)
           }
+          .frame(maxWidth: .infinity, maxHeight: wide ? .infinity : nil)
         }
-        .scrollIndicators(.hidden)
       }
       .background(AppStyle.background)
-      .safeAreaInset(edge: .bottom, spacing: 0) {
-        if !textSize.isAccessibilitySize { actions }
-      }
       .navigationTitle(.WidgetOnboarding.widgets).navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .topBarTrailing) {
@@ -95,6 +63,62 @@ struct WidgetGuide: View {
       }
     }
   }
+  private func activeDivision(in geometry: GeometryProxy) -> CGRect? {
+    if #available(iOS 27.1, *) {
+      return geometry.reservedRegions(kind: .division, layoutDirectionBehavior: .fixed).first?.frame
+    }
+    return nil
+  }
+
+  private var galleryWall: some View {
+    WidgetGalleryWall(
+      moving: !paused && selection == nil && !tutorial && !collection,
+      selection: $selection, selectedFamily: $selectedFamily,
+      selectedSource: $selectedSource, expansion: expansion
+    )
+    .accessibilityRepresentation {
+      Button(.WidgetOnboarding.guideExploreCollection) {
+        AppHaptics.play(.action); collection = true
+      }
+    }
+    .overlay(alignment: .bottomTrailing) {
+      if !reduceMotion {
+        Button(
+          paused
+            ? String(localized: .WidgetOnboarding.guidePlayMotion)
+            : String(localized: .WidgetOnboarding.guidePauseMotion),
+          systemImage: paused ? "play.fill" : "pause.fill"
+        ) {
+          AppHaptics.play(.selection)
+          paused.toggle()
+        }
+        .font(.subheadline).labelStyle(.iconOnly)
+        .buttonStyle(.plain).frame(width: 44, height: 44)
+        .background(.thinMaterial, in: .circle)
+        .padding(.trailing, 24).padding(.bottom, 8)
+      }
+    }
+  }
+
+  private var introduction: some View {
+    VStack(spacing: 20) {
+      VStack(spacing: 12) {
+        Text(.WidgetOnboarding.guideHeadline)
+          .font(AppStyle.font(.largeTitle, weight: .semibold))
+          .tracking(-0.8).lineSpacing(-2)
+          .accessibilityAddTraits(.isHeader)
+        Text(.WidgetOnboarding.guideSummary)
+          .font(AppStyle.font(.body)).foregroundStyle(.secondary)
+      }
+      .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+      .padding(.horizontal, 24)
+      actions
+    }
+    .frame(maxWidth: 480)
+    .frame(maxWidth: .infinity)
+    .padding(.vertical, 20)
+  }
+
   private var actions: some View {
     VStack(spacing: 4) {
       Button {
@@ -117,7 +141,6 @@ struct WidgetGuide: View {
 
 }
 
-/// A continuous gallery of real widgets. Each column loops at its own measured height.
 private struct WidgetGalleryWall: View {
   let moving: Bool
   @Binding var selection: WidgetShowcaseKind?

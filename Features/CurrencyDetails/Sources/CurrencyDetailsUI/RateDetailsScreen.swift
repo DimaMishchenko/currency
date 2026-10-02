@@ -9,6 +9,7 @@ struct RateDetailsScreen: View {
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(\.locale) private var locale
+  @Environment(\.layoutDirection) private var layoutDirection
   @ScaledMetric(relativeTo: .largeTitle) private var amountSize = 48
   @ScaledMetric(relativeTo: .caption2) private var scaledAxisWidth = 44
   private var axisWidth: CGFloat { min(scaledAxisWidth, 64) }
@@ -27,6 +28,7 @@ struct RateDetailsScreen: View {
 
   @State private var selectedDate: Date?
   @State private var sourceDetailsExpanded = false
+  @State private var historySelectionHeight: CGFloat = 48
   private var quote: String { model.quote }
 
   private var selected: HistoryPoint? {
@@ -47,45 +49,66 @@ struct RateDetailsScreen: View {
 
   var body: some View {
     NavigationStack {
-      ScrollView {
-        VStack(alignment: .leading, spacing: AppStyle.Space.section) {
-          VStack(alignment: .leading, spacing: AppStyle.Space.small) {
-            Text(currencyName)
-              .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
-              .fixedSize(horizontal: false, vertical: true)
-            Text(.Details.unitConversion(code, quote))
-              .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
-            HStack(alignment: .firstTextBaseline, spacing: AppStyle.Space.small) {
-              Text(rateLabel(snapshot.convert(1, from: code, to: quote)))
-                .font(.system(size: amountSize, weight: .light, design: .rounded)).monospacedDigit()
-                .lineLimit(1).minimumScaleFactor(0.25)
-              Text(quote)
-                .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
-                .fixedSize()
+      GeometryReader { geometry in
+        let division = activeDivision(in: geometry)
+        let wide = geometry.size.width >= (dynamicTypeSize.isAccessibilitySize ? 1100 : 900)
+        if division != nil || wide {
+          AdaptivePairLayout(
+            division: division, wide: wide, rightToLeft: layoutDirection == .rightToLeft
+          ) {
+            GeometryReader { graph in
+              ScrollView {
+                historyContent(
+                  chartHeight: min(
+                    480,
+                    max(
+                      120,
+                      graph.size.height - historySelectionHeight - AppStyle.Space.medium
+                        - AppStyle.Space.large * 2))
+                )
+                .padding(AppStyle.Space.large)
+                .frame(maxWidth: 760)
+                .frame(maxWidth: .infinity, alignment: .top)
+              }
+              .scrollBounceBehavior(.basedOnSize)
             }
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(.Details.unitConversion(code, quote))
-            .accessibilityValue(
-              Text(verbatim: "\(rateLabel(snapshot.convert(1, from: code, to: quote))) \(quote)")
-            )
-            .accessibilityIdentifier("currency.details.rate")
+            GeometryReader { controls in
+              ScrollView {
+                VStack(alignment: .leading, spacing: AppStyle.Space.large) {
+                  rateSummary(
+                    compact: controls.size.width >= 500 && !dynamicTypeSize.isAccessibilitySize)
+                  historyHeading
+                  historyRangePicker
+                  detailsFooter
+                }
+                .padding(AppStyle.Space.large)
+                .frame(maxWidth: 760)
+                .frame(maxWidth: .infinity, alignment: .top)
+              }
+              .scrollBounceBehavior(.basedOnSize)
+            }
           }
-          VStack(alignment: .leading, spacing: AppStyle.Space.large) {
-            Text(.Details.historyHeading).font(AppStyle.font(.caption2, weight: .semibold))
-              .tracking(2)
-            AdaptiveSegmentedPicker(
-              .Details.historyRange,
-              choices: model.availableRanges,
-              selection: $model.range,
-              optionTitle: { Text($0.title) },
-              fullTitle: { Text($0.accessibilityTitle) }
-            )
-            .accessibilityIdentifier("currency.details.historyRange")
-            historyContent
-            detailsFooter
+        } else {
+          let compactSummary =
+            geometry.size.width >= 500 && geometry.size.height < 500
+            && !dynamicTypeSize.isAccessibilitySize
+          ScrollView {
+            VStack(alignment: .leading, spacing: AppStyle.Space.large) {
+              rateSummary(compact: compactSummary)
+              if !compactSummary {
+                historyHeading
+                historyRangePicker
+              }
+              historyContent(chartHeight: max(220, min(360, geometry.size.height * 0.5)))
+              if compactSummary { historyRangePicker }
+              detailsFooter
+            }
+            .padding(AppStyle.Space.large)
+            .frame(maxWidth: 760)
+            .frame(maxWidth: .infinity, alignment: .top)
           }
+          .scrollBounceBehavior(.basedOnSize)
         }
-        .padding(AppStyle.Space.large)
       }
       .background(AppStyle.background.ignoresSafeArea())
       .navigationBarTitleDisplayMode(.inline)
@@ -132,7 +155,73 @@ struct RateDetailsScreen: View {
     }
   }
 
-  private var historyContent: some View {
+  private func activeDivision(in geometry: GeometryProxy) -> CGRect? {
+    if #available(iOS 27.1, *) {
+      let bounds = CGRect(origin: .zero, size: geometry.size)
+      return geometry.reservedRegions(kind: .division, layoutDirectionBehavior: .fixed)
+        .map { $0.frame.intersection(bounds) }
+        .first { frame in
+          !frame.isNull
+            && (frame.height > frame.width
+              ? frame.minX > 0 && frame.maxX < bounds.width
+              : frame.minY > 0 && frame.maxY < bounds.height)
+        }
+    }
+    return nil
+  }
+
+  private func rateSummary(compact: Bool) -> some View {
+    let arrangement =
+      compact
+      ? AnyLayout(HStackLayout(alignment: .center, spacing: AppStyle.Space.large))
+      : AnyLayout(VStackLayout(alignment: .leading, spacing: AppStyle.Space.small))
+    return arrangement {
+      VStack(alignment: .leading, spacing: AppStyle.Space.small) {
+        Text(currencyName)
+          .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
+          .fixedSize(horizontal: false, vertical: true)
+        Text(.Details.unitConversion(code, quote))
+          .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
+      }
+      .frame(maxWidth: compact ? .infinity : nil, alignment: .leading)
+      HStack(alignment: .firstTextBaseline, spacing: AppStyle.Space.small) {
+        Text(rateLabel(snapshot.convert(1, from: code, to: quote)))
+          .font(
+            .system(
+              size: compact ? min(amountSize, 32) : amountSize, weight: .light, design: .rounded)
+          )
+          .monospacedDigit()
+          .lineLimit(1).minimumScaleFactor(0.25)
+        Text(quote)
+          .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
+          .fixedSize()
+      }
+      .accessibilityElement(children: .ignore)
+      .accessibilityLabel(.Details.unitConversion(code, quote))
+      .accessibilityValue(
+        Text(verbatim: "\(rateLabel(snapshot.convert(1, from: code, to: quote))) \(quote)")
+      )
+      .accessibilityIdentifier("currency.details.rate")
+    }
+  }
+
+  private var historyHeading: some View {
+    Text(.Details.historyHeading).font(AppStyle.font(.caption2, weight: .semibold))
+      .tracking(2)
+  }
+
+  private var historyRangePicker: some View {
+    AdaptiveSegmentedPicker(
+      .Details.historyRange,
+      choices: model.availableRanges,
+      selection: $model.range,
+      optionTitle: { Text($0.title) },
+      fullTitle: { Text($0.accessibilityTitle) }
+    )
+    .accessibilityIdentifier("currency.details.historyRange")
+  }
+
+  private func historyContent(chartHeight: CGFloat) -> some View {
     VStack(alignment: .leading, spacing: AppStyle.Space.medium) {
       ZStack(alignment: .leading) {
         VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
@@ -158,17 +247,22 @@ struct RateDetailsScreen: View {
         }
       }
       .frame(minHeight: 48, alignment: .leading)
+      .onGeometryChange(for: CGFloat.self) {
+        $0.size.height
+      } action: {
+        historySelectionHeight = $0
+      }
       Group {
         if loading {
           HistorySkeleton(
             reduceMotion: reduceMotion, axisWidth: axisWidth, axisLabelSpacing: axisLabelSpacing,
             singleDateLabel: dynamicTypeSize.isAccessibilitySize
           )
-          .frame(height: 220)
+          .frame(height: chartHeight)
           .accessibilityElement(children: .ignore)
           .accessibilityLabel(.Details.loadingHistory)
         } else if let series, !series.points.isEmpty {
-          historyChart(series).frame(height: 220)
+          historyChart(series).frame(height: chartHeight)
         } else {
           ContentUnavailableView(
             .Details.noHistory, systemImage: "chart.xyaxis.line",
@@ -179,7 +273,7 @@ struct RateDetailsScreen: View {
           .fixedSize(horizontal: false, vertical: true)
         }
       }
-      .frame(minHeight: 220)
+      .frame(minHeight: chartHeight)
     }
   }
 

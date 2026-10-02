@@ -39,8 +39,10 @@ struct HomeScreen: View {
   @Environment(\.horizontalSizeClass) private var horizontalSizeClass
   @Environment(\.verticalSizeClass) private var verticalSizeClass
   @Environment(\.locale) private var locale
+  @Environment(\.layoutDirection) private var layoutDirection
   @Environment(AppAppearance.self) private var appearance
   @State private var refreshRequest: UUID?
+  @State private var sourcePanelHeight: CGFloat = 160
   @State private var editingAmount = false
   @State private var listPosition = ScrollPosition(idType: String.self)
   @State private var picker: PickerPurpose?
@@ -57,7 +59,6 @@ struct HomeScreen: View {
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @ScaledMetric(relativeTo: .largeTitle) private var amountSize = 68
-  @ScaledMetric(relativeTo: .largeTitle) private var editingAmountSize = 48
   private var motion: Animation? {
     reduceMotion ? nil : .spring(response: 0.42, dampingFraction: 0.86)
   }
@@ -88,31 +89,50 @@ struct HomeScreen: View {
   public var body: some View {
     Group {
       GeometryReader { geometry in
-        if verticalSizeClass == .compact {
-          HStack(spacing: AppStyle.Space.large) {
-            VStack(spacing: AppStyle.Space.small) {
-              decoratedCurrency(model.input.source, content: AnyView(source))
-                .padding(.horizontal, AppStyle.Space.large)
-
-              Spacer(minLength: 0)
-              inputDock(bottomSafeArea: geometry.safeAreaInsets.bottom)
-            }
-            .frame(width: geometry.size.width * 0.48)
-            currencyList(bottomSafeArea: geometry.safeAreaInsets.bottom)
-          }
-          .padding(.top, AppStyle.Space.small)
-          .ignoresSafeArea(.container, edges: editingAmount ? .bottom : [])
-        } else {
-          VStack(spacing: 0) {
-            decoratedCurrency(model.input.source, content: AnyView(source))
-              .padding(.horizontal, AppStyle.Space.large)
-              .padding(.vertical, AppStyle.Space.large)
+        let division = division(in: geometry)
+        let mode = ConverterLayout.mode(
+          size: geometry.size, division: division, accessible: dynamicTypeSize.isAccessibilitySize)
+        let persistentKeypad = !mode.isStacked && (geometry.size.height >= 440 || division != nil)
+        let controls = ConverterLayout(mode: mode).regions(in: geometry.size).controls
+        let compactSource = controls.height < 360
+        ConverterLayout(mode: mode, rightToLeft: layoutDirection == .rightToLeft) {
+          ScrollView {
+            decoratedCurrency(model.input.source, content: AnyView(source(compact: compactSource)))
               .frame(maxWidth: 580)
-            currencyList(bottomSafeArea: geometry.safeAreaInsets.bottom)
+              .padding(.horizontal, AppStyle.Space.large)
+              .padding(
+                .vertical,
+                verticalSizeClass == .compact ? AppStyle.Space.small : AppStyle.Space.large
+              )
+              .frame(maxWidth: .infinity)
+              .fixedSize(horizontal: false, vertical: true)
+              .onGeometryChange(for: CGFloat.self) {
+                $0.size.height
+              } action: { height in
+                sourcePanelHeight = height
+              }
           }
-          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-          .ignoresSafeArea(.container, edges: editingAmount ? .bottom : [])
+          .scrollBounceBehavior(.basedOnSize)
+          .scrollIndicators(.hidden)
+          .frame(idealHeight: sourcePanelHeight)
+          currencyList(embeddedDock: mode.isStacked, bottomSafeArea: geometry.safeAreaInsets.bottom)
+          ZStack {
+            if !mode.isStacked {
+              ScrollView {
+                inputDock(
+                  persistent: persistentKeypad, bottomSafeArea: geometry.safeAreaInsets.bottom
+                )
+                .padding(.horizontal, AppStyle.Space.section)
+              }
+              .scrollBounceBehavior(.basedOnSize)
+              .padding(.horizontal, -AppStyle.Space.section)
+              .defaultScrollAnchor(.bottom, for: .alignment)
+              .padding(
+                .bottom, -(editingAmount || persistentKeypad ? geometry.safeAreaInsets.bottom : 0))
+            }
+          }
         }
+
       }
       .background {
         ToolbarTapDismissal(enabled: editingAmount) { dismissAmount(feedback: false) }
@@ -210,6 +230,13 @@ struct HomeScreen: View {
     }
   }
 
+  private func division(in geometry: GeometryProxy) -> CGRect? {
+    if #available(iOS 27.1, *) {
+      return geometry.reservedRegions(kind: .division, layoutDirectionBehavior: .fixed).first?.frame
+    }
+    return nil
+  }
+
   private func openRequestedLocalCurrency() {
     guard opensLocalCurrencyAfterPicker else { return }
     opensLocalCurrencyAfterPicker = false
@@ -233,7 +260,7 @@ struct HomeScreen: View {
     picker == nil && !showManage ? currencyDecoration(id, content) : content
   }
 
-  private func currencyList(bottomSafeArea: CGFloat) -> some View {
+  private func currencyList(embeddedDock: Bool, bottomSafeArea: CGFloat) -> some View {
     GeometryReader { viewport in
       ScrollView {
         // Keep the first row mounted while UIKit collapses the pull-to-refresh inset.
@@ -264,7 +291,9 @@ struct HomeScreen: View {
           }
         }
         .scrollTargetLayout()
-        .frame(maxWidth: 580).frame(maxWidth: .infinity)
+        .frame(maxWidth: 580)
+        .padding(.horizontal, AppStyle.Space.large)
+        .frame(maxWidth: .infinity)
         .background {
           if !editingAmount {
             CurrencyRefreshAttachment(refreshing: model.manuallyRefreshing, enabled: true) {
@@ -283,16 +312,16 @@ struct HomeScreen: View {
         TapGesture().onEnded { dismissAmount() },
         including: editingAmount ? .all : .subviews
       )
-      .padding(.horizontal, AppStyle.Space.large)
-      // Inset the scroll content while keeping its backdrop behind the floating glass shape.
+
       .safeAreaInset(edge: .bottom, spacing: 0) {
         VStack(spacing: 0) {
           if let warning = model.warningText {
             Text(warning).font(AppStyle.font(.caption)).foregroundStyle(.secondary)
               .multilineTextAlignment(.center).padding(.horizontal, AppStyle.Space.large)
           }
-          if verticalSizeClass != .compact {
+          if embeddedDock {
             inputDock(bottomSafeArea: bottomSafeArea)
+              .padding(.bottom, editingAmount ? -bottomSafeArea : 0)
           }
         }
       }
@@ -372,12 +401,12 @@ struct HomeScreen: View {
   }
 
   @ViewBuilder
-  private var source: some View {
-    if verticalSizeClass == .compact {
-      amountEntry
+  private func source(compact: Bool) -> some View {
+    if compact {
+      amountEntry(compact: true)
     } else {
       VStack(alignment: .leading, spacing: AppStyle.Space.large) {
-        amountEntry
+        amountEntry(compact: false)
         HStack {
           Text(CurrencyDisplay.name(model.input.source, locale: locale))
             .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
@@ -418,7 +447,7 @@ struct HomeScreen: View {
     .accessibilityIdentifier("converter.source")
   }
 
-  private var amountEntry: some View {
+  private func amountEntry(compact: Bool) -> some View {
     Button {
       if editingAmount {
         dismissAmount()
@@ -429,22 +458,15 @@ struct HomeScreen: View {
       HStack(alignment: .firstTextBaseline, spacing: AppStyle.Space.small) {
         Text(amountLabel)
           .font(
-            verticalSizeClass == .compact
-              ? AppStyle.font(
-                .title2,
-                weight: editingAmount && model.editingSelectionID == model.input.source
-                  ? .semibold : .regular)
-              : .system(
-                size: editingAmount ? editingAmountSize : amountSize,
-                weight: editingAmount && model.editingSelectionID == model.input.source
-                  ? .semibold : .regular, design: .rounded)
+            .system(
+              size: compact ? min(amountSize, 42) : amountSize,
+              weight: editingAmount && model.editingSelectionID == model.input.source
+                ? .semibold : .regular, design: .rounded)
           )
-          .tracking(-3).lineLimit(1).minimumScaleFactor(0.25).contentTransition(.numericText())
+          .tracking(compact ? -1 : -2)
+          .lineLimit(1).minimumScaleFactor(0.4).contentTransition(.numericText())
         Text(verbatim: model.input.source)
-          .font(
-            AppStyle.font(
-              verticalSizeClass == .compact ? .caption : .title3, weight: .medium)
-          )
+          .font(AppStyle.font(compact ? .subheadline : .title3, weight: .medium))
           .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
           .fixedSize()
           .accessibilityHidden(true)
@@ -479,6 +501,7 @@ struct HomeScreen: View {
         VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
           HStack(spacing: AppStyle.Space.xs) {
             Text(code).font(AppStyle.font(.body, weight: .medium))
+              .lineLimit(1).fixedSize(horizontal: true, vertical: false)
               .matchedGeometryEffect(id: row.id, in: currencyMotion)
             if row.isLocal {
               Image(systemName: "location.fill")
@@ -498,6 +521,7 @@ struct HomeScreen: View {
           .foregroundStyle(.secondary)
           .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
         }
+        .frame(minWidth: 64, alignment: .leading)
         if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: AppStyle.Space.medium) }
         Text(
           editingAmount && model.editingSelectionID == row.id
@@ -591,19 +615,16 @@ struct HomeScreen: View {
       : [["1", "2", "3"], ["4", "5", "6"], ["7", "8", "9"], [".", "0", "⌫"]]
   }
 
-  private var keypadShape: UnevenRoundedRectangle {
-    let bottomRadius: CGFloat =
-      horizontalSizeClass == .compact && verticalSizeClass != .compact ? 64 : 32
-    return .rect(
-      topLeadingRadius: 32,
-      bottomLeadingRadius: bottomRadius,
-      bottomTrailingRadius: bottomRadius,
-      topTrailingRadius: 32)
+  private var keypadShape: ConcentricRectangle {
+    ConcentricRectangle(
+      uniformTopCorners: .fixed(24),
+      bottomLeadingCorner: .concentric(minimum: .fixed(24)),
+      bottomTrailingCorner: .concentric(minimum: .fixed(24)))
   }
 
-  private func inputDock(bottomSafeArea: CGFloat) -> some View {
+  private func inputDock(persistent: Bool = false, bottomSafeArea: CGFloat) -> some View {
     GlassEffectContainer(spacing: AppStyle.Space.section) {
-      if editingAmount {
+      if editingAmount || persistent {
         VStack(spacing: AppStyle.Space.xs) {
           Group {
             HStack(spacing: 0) {
@@ -652,14 +673,23 @@ struct HomeScreen: View {
                   CurrencyDisplay.name(model.editingCode, locale: locale))
               )
               Button {
-                dismissAmount()
+                if editingAmount && !persistent {
+                  dismissAmount()
+                } else {
+                  dismissAmount(feedback: false)
+                  AppHaptics.play(.action)
+                  picker = .add
+                }
               } label: {
-                Image(systemName: "checkmark")
+                Image(systemName: editingAmount && !persistent ? "checkmark" : "plus")
                   .frame(width: 44, height: 44)
                   .contentShape(Rectangle())
               }
               .frame(maxWidth: .infinity, alignment: .trailing)
-              .accessibilityLabel(.Converter.doneEntering)
+              .accessibilityLabel(
+                editingAmount && !persistent ? .Converter.doneEntering : .Converter.addCurrency
+              )
+              .matchedTransitionSource(id: PickerPurpose.add.id, in: pickerMotion)
             }
             .padding(.horizontal, AppStyle.Space.large)
             .font(AppStyle.font(.caption, weight: .semibold))
@@ -701,6 +731,8 @@ struct HomeScreen: View {
           .padding(.bottom, AppStyle.Space.small + bottomSafeArea)
           .padding(.top, verticalSizeClass == .compact ? AppStyle.Space.small : 0)
         }
+        .frame(maxWidth: 640)
+        .frame(maxWidth: .infinity)
         .contentShape(keypadShape)
         .onTapGesture { /* Keep taps in the keypad's header and gaps inside the pad. */  }
         .glassEffect(.regular, in: keypadShape)
@@ -712,7 +744,6 @@ struct HomeScreen: View {
         }
         .glassEffectID("amount-dock", in: keypadMotion)
         .glassEffectTransition(.matchedGeometry)
-        .padding(.bottom, AppStyle.Space.small)
 
       } else {
         HStack(spacing: 0) {
@@ -753,8 +784,8 @@ struct HomeScreen: View {
     }
     .padding(.horizontal, AppStyle.Space.small)
     .padding(.top, AppStyle.Space.small)
-    .padding(.bottom, editingAmount ? 0 : AppStyle.Space.small)
-    .frame(maxWidth: editingAmount && horizontalSizeClass == .compact ? .infinity : 540)
+    .padding(.bottom, AppStyle.Space.small)
+    .frame(maxWidth: editingAmount || persistent ? .infinity : 540)
     .frame(maxWidth: .infinity)
     .background {
       if editingAmount {
@@ -798,6 +829,10 @@ struct HomeScreen: View {
   }
 
   private func key(_ key: String) {
+    if !editingAmount {
+      beginEditing(model.input.source)
+      guard editingAmount else { return }
+    }
     keypadInteractionStarted = true
     withAnimation(reduceMotion ? nil : .snappy(duration: 0.22)) {
       if model.press(key) {

@@ -4,20 +4,19 @@ import ExchangeRatesUI
 import Onboarding
 import SwiftUI
 
-/// A single draft choice, confirmed separately from destination selection.
 struct BaseCurrencyStep: View {
   let model: OnboardingModel
   let progress: CGFloat
   let reduced: Bool
   let compact: Bool
+  let heroHeight: CGFloat
   let openPicker: () -> Void
   @Environment(\.locale) private var locale
   @Environment(\.dynamicTypeSize) private var textSize
-  @ScaledMetric(relativeTo: .largeTitle) private var codeSize: CGFloat = 56
+  @ScaledMetric(relativeTo: .largeTitle) private var codeSize: CGFloat = 40
 
   var body: some View {
-    VStack(spacing: compact ? 20 : 28) {
-      Spacer(minLength: compact ? 12 : 28)
+    VStack(spacing: compact ? 12 : 20) {
       VStack(spacing: 8) {
         Text(model.draft.source)
           .font(
@@ -33,7 +32,7 @@ struct BaseCurrencyStep: View {
         }
       }
       .padding(.horizontal, 24)
-      .frame(minHeight: textSize.isAccessibilitySize ? 0 : compact ? 100 : 140)
+      .frame(minHeight: heroHeight)
       .accessibilityElement(children: .combine)
       .accessibilityLabel(Text(.Onboarding.baseCurrency))
       .accessibilityValue(
@@ -50,67 +49,31 @@ struct BaseCurrencyStep: View {
         .multilineTextAlignment(.center).padding(.horizontal, 24)
       }
 
-      VStack(spacing: 20) {
-        if !textSize.isAccessibilitySize {
-          VStack(alignment: .leading, spacing: 10) {
-            Text(.Onboarding.popularCurrencies)
-              .font(AppStyle.font(.headline, weight: .bold))
-              .padding(.horizontal, 24)
-            ScrollView(.horizontal) {
-              HStack(spacing: 8) {
-                ForEach(OnboardingRecommendations.currencies, id: \.self) { code in
-                  quickChoice(code)
-                }
-                Button(action: openPicker) {
-                  HStack(spacing: 6) {
-                    Image(systemName: "magnifyingglass")
-                    Text(.Onboarding.more)
-                  }
-                  .font(AppStyle.font(.subheadline, weight: .medium))
-                  .frame(width: 104, height: 44)
-                  .background { OnboardingSurface(radius: 22) }
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(Text(.Onboarding.moreCurrencies))
-                .accessibilityIdentifier("onboarding.baseMore")
-              }
-              .padding(.horizontal, 24)
+      if !textSize.isAccessibilitySize {
+        VStack(alignment: .leading, spacing: 12) {
+          Text(.Onboarding.popularCurrencies)
+            .font(AppStyle.font(.headline, weight: .bold))
+            .padding(.horizontal, 24)
+          OnboardingRecommendationList {
+            ForEach(OnboardingRecommendations.currencies, id: \.self) { code in
+              quickChoice(code)
             }
-            .scrollIndicators(.hidden)
-            .accessibilityIdentifier("onboarding.baseRecommendations")
           }
+          .accessibilityIdentifier("onboarding.baseRecommendations")
+          OnboardingMoreCurrenciesTile(fullWidth: true, action: openPicker)
+            .padding(.horizontal, 24)
+            .accessibilityIdentifier("onboarding.baseMore")
         }
       }
-      Spacer(minLength: compact ? 12 : 28)
     }
+    .padding(.vertical, 12)
     .modifier(OnboardingReveal(progress: progress, offset: 24, scale: 0.96, reduced: reduced))
   }
 
   private func quickChoice(_ code: String) -> some View {
-    let selected = model.draft.source == code
-    let available = model.canUseAsBase(code)
-    return Button {
-      model.changeBase(code)
-    } label: {
-      HStack(spacing: 6) {
-        CurrencyIcon(code, size: 22)
-        Text(code).font(AppStyle.font(.subheadline, weight: .medium))
-        if selected {
-          OnboardingSelectionMark()
-        }
-      }
-      .frame(width: 104, height: 44)
-      .background { OnboardingSurface(radius: 22, selected: selected) }
-      .contentShape(.capsule)
-    }
-    .buttonStyle(.plain).disabled(!available)
-    .accessibilityLabel("\(CurrencyDisplay.name(code, locale: locale)), \(code)")
-    .accessibilityValue(
-      selected
-        ? Text(.Onboarding.selected)
-        : available ? Text(.Onboarding.notSelected) : Text(.Onboarding.unavailable)
-    )
-    .accessibilityAddTraits(selected ? .isSelected : [])
-    .accessibilityIdentifier("onboarding.baseChoice.\(code)")
+    OnboardingCurrencyTile(
+      code: code, selected: model.draft.source == code, available: model.canUseAsBase(code),
+      identifier: "onboarding.baseChoice.\(code)"
+    ) { model.changeBase(code) }
   }
 }

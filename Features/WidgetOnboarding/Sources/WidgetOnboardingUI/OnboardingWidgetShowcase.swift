@@ -40,32 +40,37 @@ public struct OnboardingWidgetShowcase: View {
   public var body: some View {
     GeometryReader { geometry in
       let accessible = textSize.isAccessibilitySize
-      let heroHeight = max(156, geometry.size.height - (accessible ? 320 : 218))
-      VStack(spacing: AppStyle.Space.medium) {
-        carousel(width: geometry.size.width, height: heroHeight)
-        VStack(spacing: AppStyle.Space.xs) {
-          Text(selected.title)
-            .font(AppStyle.font(.headline)).accessibilityAddTraits(.isHeader)
-          Text(interactionDetail)
-            .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
-            .fixedSize(horizontal: false, vertical: true)
-          if OnboardingWidgetConfiguration(kind: selected, snapshot: snapshot, input: input)
-            .isSample
-          {
-            Text(.WidgetOnboarding.previewSampleRates)
-              .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
+      let heroHeight = max(120, min(380, geometry.size.height - (accessible ? 320 : 218)))
+      ScrollView {
+        VStack(spacing: AppStyle.Space.medium) {
+          carousel(width: geometry.size.width, height: heroHeight)
+          VStack(spacing: AppStyle.Space.xs) {
+            Text(selected.title)
+              .font(AppStyle.font(.headline)).accessibilityAddTraits(.isHeader)
+            Text(interactionDetail)
+              .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
+              .fixedSize(horizontal: false, vertical: true)
+            if OnboardingWidgetConfiguration(kind: selected, snapshot: snapshot, input: input)
+              .isSample
+            {
+              Text(.WidgetOnboarding.previewSampleRates)
+                .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
+            }
           }
-        }
-        .multilineTextAlignment(.center).padding(.horizontal, AppStyle.Space.section)
-        familyControl
-          .padding(.horizontal, AppStyle.Space.section)
-        pageControl
-        Text(.WidgetOnboarding.moreWidgetsInApp)
-          .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
-          .fixedSize(horizontal: false, vertical: true)
           .multilineTextAlignment(.center).padding(.horizontal, AppStyle.Space.section)
+          familyControl
+            .padding(.horizontal, AppStyle.Space.section)
+          pageControl
+          Text(.WidgetOnboarding.moreWidgetsInApp)
+            .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+            .multilineTextAlignment(.center).padding(.horizontal, AppStyle.Space.section)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(minHeight: geometry.size.height, alignment: .center)
       }
-      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+      .scrollBounceBehavior(.basedOnSize)
+      .scrollIndicators(.hidden)
     }
     .onChange(of: page) { _, _ in AppHaptics.play(.selection) }
     .navigationDestination(isPresented: $guideRequested) {
@@ -90,9 +95,9 @@ public struct OnboardingWidgetShowcase: View {
   }
 
   private func carousel(width: CGFloat, height: CGFloat) -> some View {
-    let cardWidth = min(420, max(240, width - 64))
+    let cardWidth = min(420, max(1, width - 48))
     return ScrollView(.horizontal) {
-      HStack(spacing: AppStyle.Space.large) {
+      HStack(spacing: 0) {
         ForEach(featured) { kind in
           let chosenFamily = family(for: kind)
           let configuration = OnboardingWidgetConfiguration(
@@ -101,13 +106,13 @@ public struct OnboardingWidgetShowcase: View {
             kind: kind, family: chosenFamily, configuration: configuration,
             width: cardWidth, height: height
           )
+          .frame(width: width)
           .id(kind)
         }
       }
       .scrollTargetLayout()
     }
-    .contentMargins(.horizontal, (width - cardWidth) / 2, for: .scrollContent)
-    .scrollTargetBehavior(.viewAligned)
+    .scrollTargetBehavior(.paging)
     .scrollPosition(id: $page)
     .scrollIndicators(.hidden)
     .frame(height: height)
@@ -183,7 +188,7 @@ private struct OnboardingWidgetCard: View {
 
   var body: some View {
     preview
-      .frame(width: width, height: max(120, height - 16), alignment: .bottom)
+      .frame(width: width, height: max(1, height - 16), alignment: .bottom)
       .padding(.bottom, 16)
       .shadow(color: .black.opacity(0.07), radius: 12, y: 7)
       .accessibilityElement(children: kind.interactive ? .contain : .ignore)
@@ -193,7 +198,7 @@ private struct OnboardingWidgetCard: View {
   }
 
   @ViewBuilder private var preview: some View {
-    let availableHeight = max(120, height - 16)
+    let availableHeight = max(1, height - 16)
     if kind == .calculator {
       let fittedWidth = min(
         width, availableHeight * family.previewSize.width / family.previewSize.height)

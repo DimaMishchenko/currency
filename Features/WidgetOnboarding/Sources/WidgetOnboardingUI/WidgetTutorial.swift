@@ -24,6 +24,7 @@ struct WidgetTutorial: View {
   @Environment(\.dismiss) private var dismiss
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(\.dynamicTypeSize) private var textSize
+  @Environment(\.layoutDirection) private var layoutDirection
   @State private var step = 0
   @State private var replay = 0
   @State private var custom = false
@@ -178,58 +179,64 @@ struct WidgetTutorial: View {
 
   private var content: some View {
     GeometryReader { geometry in
-      let illustrationWidth: CGFloat =
-        editing && step == 2
-        ? 200 : min(340, max(210, (geometry.size.height - 200) * 1.03))
-      let canvasWidth: CGFloat = editing && step == 2 ? 340 : illustrationWidth
-      let centered = continuation && !textSize.isAccessibilitySize
-      ScrollViewReader { scroll in
-        ScrollView {
-          VStack(spacing: 24) {
-            HStack(spacing: 4) {
-              ForEach(steps.indices, id: \.self) { index in
-                Capsule()
-                  .fill(
-                    index <= step
-                      ? AnyShapeStyle(.tint) : AnyShapeStyle(Color.primary.opacity(0.12))
-                  )
-                  .frame(height: 3)
+      let division = activeDivision(in: geometry)
+      let wide =
+        !textSize.isAccessibilitySize
+        && (geometry.size.width >= 700
+          || (geometry.size.width >= 550 && geometry.size.width > geometry.size.height * 1.2))
+      AdaptivePairLayout(
+        division: division, wide: wide, rightToLeft: layoutDirection == .rightToLeft
+      ) {
+        GeometryReader { preview in
+          let canvasWidth: CGFloat = 340
+          let illustrationWidth = max(
+            1, min(preview.size.width - 48, (preview.size.height - 76) * 1.03, 440))
+          ScrollViewReader { scroll in
+            ScrollView {
+              VStack(spacing: 24) {
+                HStack(spacing: 4) {
+                  ForEach(steps.indices, id: \.self) { index in
+                    Capsule()
+                      .fill(
+                        index <= step
+                          ? AnyShapeStyle(.tint) : AnyShapeStyle(Color.primary.opacity(0.12))
+                      )
+                      .frame(height: 3)
+                  }
+                }
+                .accessibilityLabel(.WidgetOnboarding.guideStep(step + 1, steps.count))
+                .id("tutorialStart")
+                MiniHomeScreen(
+                  kind: kind, family: family, step: step, editing: editing, lockScreen: lockScreen,
+                  codes: previewCodes, amount: kind == .board && custom ? amount : nil,
+                  synchronized: kind == .calculator && !custom,
+                  paused: currencyPicker != nil
+                )
+                .id(replay)
+                .frame(width: canvasWidth, height: canvasWidth / 1.03)
+                .scaleEffect(illustrationWidth / canvasWidth)
+                .frame(width: illustrationWidth, height: illustrationWidth / 1.03)
+                .accessibilityHidden(true)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
               }
+              .frame(minHeight: max(0, preview.size.height - 48))
+              .padding(24)
             }
-            .accessibilityLabel(.WidgetOnboarding.guideStep(step + 1, steps.count))
-            .id("tutorialStart")
-            MiniHomeScreen(
-              kind: kind, family: family, step: step, editing: editing, lockScreen: lockScreen,
-              codes: previewCodes, amount: kind == .board && custom ? amount : nil,
-              synchronized: kind == .calculator && !custom,
-              paused: currencyPicker != nil
-            )
-            .id(replay)
-            .frame(width: canvasWidth, height: canvasWidth / 1.03)
-            .scaleEffect(illustrationWidth / canvasWidth)
-            .frame(width: illustrationWidth, height: illustrationWidth / 1.03)
-            .accessibilityHidden(true)
-            .frame(maxWidth: .infinity, maxHeight: centered ? .infinity : nil)
-            if !continuation { guideCopy }
-            if editing && !lockScreen && step == 2 { configurationDemo }
-            if textSize.isAccessibilitySize {
-              if continuation { onboardingFooter } else { actions }
+            .scrollBounceBehavior(.basedOnSize)
+            .onChange(of: step) { _, _ in
+              if textSize.isAccessibilitySize { scroll.scrollTo("tutorialStart", anchor: .top) }
             }
           }
-          .frame(minHeight: centered ? max(0, geometry.size.height - 48) : nil)
-          .padding(24)
         }
-        .onChange(of: step) { _, _ in
-          if textSize.isAccessibilitySize { scroll.scrollTo("tutorialStart", anchor: .top) }
+        ViewThatFits(in: .vertical) {
+          tutorialControls
+          ScrollView { tutorialControls }
+            .scrollBounceBehavior(.basedOnSize)
         }
+        .frame(maxWidth: .infinity, maxHeight: wide || division != nil ? .infinity : nil)
       }
     }
     .background(background)
-    .safeAreaInset(edge: .bottom, spacing: 0) {
-      if !textSize.isAccessibilitySize {
-        if continuation { onboardingFooter } else { actions }
-      }
-    }
     .navigationTitle(
       lockScreen
         ? String(localized: .WidgetOnboarding.guideLockTitle)
@@ -282,6 +289,28 @@ struct WidgetTutorial: View {
       }
     }
   }
+  private func activeDivision(in geometry: GeometryProxy) -> CGRect? {
+    if #available(iOS 27.1, *) {
+      return geometry.reservedRegions(kind: .division, layoutDirectionBehavior: .fixed).first?.frame
+    }
+    return nil
+  }
+
+  private var tutorialControls: some View {
+    VStack(spacing: 16) {
+      if editing && !lockScreen && step == 2 { configurationDemo }
+      if continuation {
+        onboardingFooter
+      } else {
+        guideCopy.padding(.horizontal, 24)
+        actions
+      }
+    }
+    .frame(maxWidth: 480)
+    .frame(maxWidth: .infinity)
+    .padding(.vertical, 16)
+  }
+
   private var guideCopy: some View {
     VStack(spacing: continuation ? 8 : 12) {
       Text(steps[step].title)
@@ -580,7 +609,7 @@ private struct MiniHomeScreen: View {
           .frame(width: w * 0.77).offset(x: -w * 0.04, y: editing ? h * 0.47 : 60)
           .transition(.scale(scale: 0.6, anchor: .topLeading).combined(with: .opacity))
         }
-        if gallery { galleryCard(height: h) }
+        if gallery { galleryCard(width: w, height: h) }
         if editing && step == 2 {
           VStack(spacing: 12) {
             Text(kind.title).font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -753,7 +782,7 @@ private struct MiniHomeScreen: View {
       }
     }
   }
-  private func galleryCard(height: CGFloat) -> some View {
+  private func galleryCard(width: CGFloat, height: CGFloat) -> some View {
     VStack(spacing: 14) {
       Capsule().fill(.tertiary).frame(width: 30, height: 4)
       if lockScreen {
@@ -787,8 +816,13 @@ private struct MiniHomeScreen: View {
         Spacer(minLength: 0)
       } else {
         Text(kind.title).font(.system(size: 14, weight: .semibold, design: .rounded))
+        let availableHeight = max(60, height * 0.94 - 142)
+        let widgetWidth = min(
+          width - 32,
+          availableHeight * family.previewSize.width / family.previewSize.height)
         widgetSlot.frame(
-          maxWidth: family == .systemSmall ? 116 : family == .systemLarge ? 174 : .infinity)
+          width: widgetWidth,
+          height: widgetWidth * family.previewSize.height / family.previewSize.width)
         HStack(spacing: 4) {
           ForEach(0..<3) { index in
             Circle().fill(.primary.opacity(index == 1 ? 0.8 : 0.15)).frame(width: 4, height: 4)
