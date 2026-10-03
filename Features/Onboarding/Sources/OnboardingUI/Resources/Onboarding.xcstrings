@@ -452,85 +452,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your currencies, on your Home Screen"
+            "value": "On your Home Screen. More widgets in the app."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "您的货币，在主屏幕上"
+            "value": "您的货币，在主屏幕上. 在 App 中探索更多小组件"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "自分の通貨をホーム画面に"
+            "value": "自分の通貨をホーム画面に. アプリでもっとウィジェットを探す"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tus monedas en tu pantalla de inicio"
+            "value": "Tus monedas en tu pantalla de inicio. Explora aún más widgets en la app"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Deine Währungen auf deinem Home-Bildschirm"
+            "value": "Deine Währungen auf deinem Home-Bildschirm. Entdecke noch mehr Widgets in der App"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tes devises sur ton écran d’accueil"
+            "value": "Tes devises sur ton écran d’accueil. Découvre encore plus de widgets dans l’app"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Suas moedas na Tela de Início"
+            "value": "Suas moedas na Tela de Início. Explore ainda mais widgets no app"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "홈 화면에 내 통화를"
+            "value": "홈 화면에 내 통화를. 앱에서 더 많은 위젯 살펴보기"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "您的貨幣，在主畫面上"
+            "value": "您的貨幣，在主畫面上. 在 App 中探索更多小工具"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le tue valute sulla schermata Home"
+            "value": "Le tue valute sulla schermata Home. Esplora ancora più widget nell’app"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Para birimleriniz Ana Ekranınızda"
+            "value": "Para birimleriniz Ana Ekranınızda. Uygulamada daha fazla araç takımı keşfedin"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ваши валюты на экране «Домой»"
+            "value": "Ваши валюты на экране «Домой». Откройте ещё больше виджетов в приложении"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ваші валюти на початковому екрані"
+            "value": "Ваші валюти на початковому екрані. Перегляньте ще більше віджетів у програмі"
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sinu valuutad avakuval"
+            "value": "Sinu valuutad avakuval. Avasta rakenduses veel rohkem vidinaid"
           }
         }
       }

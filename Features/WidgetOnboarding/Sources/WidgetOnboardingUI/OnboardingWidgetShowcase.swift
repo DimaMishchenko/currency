@@ -79,10 +79,6 @@ public struct OnboardingWidgetShowcase: View {
       familyControl
         .padding(.horizontal, AppStyle.Space.section)
       pageControl
-      Text(.WidgetOnboarding.moreWidgetsInApp)
-        .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
-        .fixedSize(horizontal: false, vertical: true)
-        .multilineTextAlignment(.center).padding(.horizontal, AppStyle.Space.section)
     }
     .frame(maxWidth: .infinity)
     .fixedSize(horizontal: false, vertical: true)

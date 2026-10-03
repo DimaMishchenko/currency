@@ -280,10 +280,12 @@ struct OnboardingScreen<Widgets: View>: View {
             }
             .scrollBounceBehavior(.basedOnSize, axes: .vertical)
           } else {
-            stagedScene(step, height: sceneHeight, previewOnly: previewOnly)
-              .offset(
-                y: lowerComposition && sceneHeight >= 320 && !textSize.isAccessibilitySize
-                  && (step == .baseCurrency || step == .selection) ? 16 : 0)
+            stagedScene(
+              step, height: sceneHeight, previewOnly: previewOnly, centerChoices: lowerComposition
+            )
+            .offset(
+              y: lowerComposition && sceneHeight >= 320 && !textSize.isAccessibilitySize
+                && (step == .baseCurrency || step == .selection) ? 16 : 0)
           }
         }
         .frame(height: sceneHeight, alignment: .top)
@@ -299,11 +301,11 @@ struct OnboardingScreen<Widgets: View>: View {
   }
 
   private func stagedScene(
-    _ step: OnboardingModel.Step, height: CGFloat, previewOnly: Bool
+    _ step: OnboardingModel.Step, height: CGFloat, previewOnly: Bool, centerChoices: Bool = false
   ) -> some View {
     sceneContent(
       step, progress: step == displayedStep ? arrival : 1, compact: height < 460,
-      previewOnly: previewOnly
+      previewOnly: previewOnly, centerChoices: centerChoices
     )
     .frame(maxWidth: step == .baseCurrency || step == .selection ? 640 : .infinity)
     .frame(height: step == .homeScreen || step == .widgets || step == .ready ? height : nil)
@@ -318,7 +320,8 @@ struct OnboardingScreen<Widgets: View>: View {
 
   @ViewBuilder
   private func sceneContent(
-    _ step: OnboardingModel.Step, progress: CGFloat, compact: Bool, previewOnly: Bool
+    _ step: OnboardingModel.Step, progress: CGFloat, compact: Bool, previewOnly: Bool,
+    centerChoices: Bool
   ) -> some View {
     switch step {
     case .welcome:
@@ -343,10 +346,14 @@ struct OnboardingScreen<Widgets: View>: View {
         selectionPreview(compact: compact)
           .frame(minHeight: textSize.isAccessibilitySize ? nil : compact ? 96 : 188)
         if !previewOnly {
-          selectionChoices(compact: compact)
-            .frame(minHeight: textSize.isAccessibilitySize ? nil : compact ? 140 : 190)
+          VStack(spacing: 0) {
+            if centerChoices { Spacer(minLength: 0) }
+            selectionChoices(compact: compact)
+              .frame(minHeight: textSize.isAccessibilitySize ? nil : compact ? 140 : 190)
+            if centerChoices { Spacer(minLength: 0) }
+          }
         }
-        Spacer(minLength: 0)
+        if !centerChoices { Spacer(minLength: 0) }
       }
       .frame(maxHeight: textSize.isAccessibilitySize ? nil : 520)
       .frame(maxHeight: .infinity)
