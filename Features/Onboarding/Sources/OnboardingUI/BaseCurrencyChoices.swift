@@ -80,6 +80,7 @@ struct BaseCurrencyChoices: View {
         .padding(.horizontal, 24)
       }
       .clipped()
+      .modifier(OnboardingRailFade())
       .scrollIndicators(.hidden)
       .accessibilityIdentifier("onboarding.baseRecommendations")
     }

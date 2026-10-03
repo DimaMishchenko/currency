@@ -228,12 +228,16 @@ struct WidgetTutorial: View {
             }
           }
         }
-        ViewThatFits(in: .vertical) {
-          tutorialControls
-          ScrollView { tutorialControls }
-            .scrollBounceBehavior(.basedOnSize)
+        if wide && geometry.size.width > geometry.size.height && division == nil {
+          landscapeControls
+        } else {
+          ViewThatFits(in: .vertical) {
+            tutorialControls
+            ScrollView { tutorialControls }
+              .scrollBounceBehavior(.basedOnSize)
+          }
+          .frame(maxWidth: .infinity, maxHeight: wide || division != nil ? .infinity : nil)
         }
-        .frame(maxWidth: .infinity, maxHeight: wide || division != nil ? .infinity : nil)
       }
     }
     .background(background)
@@ -311,6 +315,26 @@ struct WidgetTutorial: View {
     .padding(.vertical, 16)
   }
 
+  private var landscapeControls: some View {
+    VStack(spacing: 0) {
+      GeometryReader { labels in
+        ScrollView {
+          VStack(spacing: 16) {
+            if editing && !lockScreen && step == 2 { configurationDemo }
+            guideCopy.padding(.horizontal, 24)
+          }
+          .frame(maxWidth: .infinity)
+          .frame(minHeight: labels.size.height)
+        }
+        .scrollBounceBehavior(.basedOnSize)
+      }
+      onboardingActions.padding(.horizontal, 24)
+    }
+    .frame(maxWidth: 480)
+    .frame(maxWidth: .infinity)
+    .padding(.vertical, 24)
+  }
+
   private var guideCopy: some View {
     VStack(spacing: continuation ? 8 : 12) {
       Text(steps[step].title)
@@ -331,16 +355,20 @@ struct WidgetTutorial: View {
   private var onboardingFooter: some View {
     VStack(spacing: 16) {
       guideCopy
-      VStack(spacing: 0) {
-        primaryAction
-        replayAction
-          .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
-          .frame(maxWidth: .infinity, minHeight: 44)
-      }
+      onboardingActions
     }
     .padding(.horizontal, textSize.isAccessibilitySize ? 0 : 24).padding(.top, 16)
     .frame(maxWidth: 700).frame(maxWidth: .infinity)
     .background(background)
+  }
+
+  private var onboardingActions: some View {
+    VStack(spacing: 0) {
+      primaryAction
+      replayAction
+        .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
+        .frame(maxWidth: .infinity, minHeight: 44)
+    }
   }
 
   private var primaryAction: some View {

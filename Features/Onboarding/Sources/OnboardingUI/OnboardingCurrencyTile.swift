@@ -90,3 +90,15 @@ struct OnboardingMoreCurrenciesTile: View {
     .accessibilityIdentifier("onboarding.destinationsMore")
   }
 }
+
+struct OnboardingRailFade: ViewModifier {
+  func body(content: Content) -> some View {
+    content.mask {
+      HStack(spacing: 0) {
+        Rectangle()
+        LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing)
+          .frame(width: 24)
+      }
+    }
+  }
+}

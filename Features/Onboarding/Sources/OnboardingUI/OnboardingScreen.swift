@@ -168,7 +168,7 @@ struct OnboardingScreen<Widgets: View>: View {
         GeometryReader { viewport in
           scene(
             height: viewport.size.height, includesFooter: accessible && !split,
-            previewOnly: choicesBelow)
+            previewOnly: choicesBelow, lowerComposition: !split)
         }
         if !accessible || split {
           if split {
@@ -255,7 +255,9 @@ struct OnboardingScreen<Widgets: View>: View {
     model.step == .baseCurrency || model.step == .selection
   }
 
-  private func scene(height: CGFloat, includesFooter: Bool, previewOnly: Bool) -> some View {
+  private func scene(
+    height: CGFloat, includesFooter: Bool, previewOnly: Bool, lowerComposition: Bool
+  ) -> some View {
     ZStack(alignment: .top) {
       if !textSize.isAccessibilitySize && model.step != .ready {
         CurrencyDepthField(moving: moving, sparse: model.step != .welcome, appeared: appeared)
@@ -279,6 +281,9 @@ struct OnboardingScreen<Widgets: View>: View {
             .scrollBounceBehavior(.basedOnSize, axes: .vertical)
           } else {
             stagedScene(step, height: sceneHeight, previewOnly: previewOnly)
+              .offset(
+                y: lowerComposition && sceneHeight >= 320 && !textSize.isAccessibilitySize
+                  && (step == .baseCurrency || step == .selection) ? 16 : 0)
           }
         }
         .frame(height: sceneHeight, alignment: .top)
@@ -462,6 +467,7 @@ struct OnboardingScreen<Widgets: View>: View {
             accessibilitySummary: String(localized: .Onboarding.conversionPreview)
           )
           .frame(height: compact ? tickerHeight * 0.75 : tickerHeight)
+          .modifier(OnboardingRailFade())
         }
       }
     }
@@ -528,6 +534,7 @@ struct OnboardingScreen<Widgets: View>: View {
           }
           .scrollIndicators(.hidden)
           .clipped()
+          .modifier(OnboardingRailFade())
           .accessibilityIdentifier("onboarding.recommendations")
         }
       }
@@ -588,8 +595,8 @@ struct OnboardingScreen<Widgets: View>: View {
     let footerStep = fixedStep ?? displayedStep
     let steps = fixedStep.map { [$0] } ?? [leavingStep, displayedStep].compactMap { $0 }
     return VStack(spacing: 16) {
+      if fillHeight != nil { Spacer(minLength: 0) }
       if footerStep == .ready {
-        if fillHeight != nil { Spacer(minLength: 0) }
         if let error = model.saveError {
           Text(saveMessage(error)).font(AppStyle.font(.subheadline))
             .foregroundStyle(.secondary).multilineTextAlignment(.center)
@@ -644,7 +651,6 @@ struct OnboardingScreen<Widgets: View>: View {
           }
         }
       }
-      if footerStep == .ready && fillHeight != nil { Spacer(minLength: 0) }
     }
     .padding(.horizontal, 24).padding(.top, footerStep == .ready ? 0 : 16)
     .frame(minHeight: fillHeight, alignment: .top)
