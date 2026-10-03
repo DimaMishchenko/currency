@@ -4,20 +4,15 @@ import ExchangeRatesUI
 import Onboarding
 import SwiftUI
 
-/// A single draft choice, confirmed separately from destination selection.
-struct BaseCurrencyStep: View {
+struct BaseCurrencyPreview: View {
   let model: OnboardingModel
-  let progress: CGFloat
-  let reduced: Bool
   let compact: Bool
-  let openPicker: () -> Void
   @Environment(\.locale) private var locale
   @Environment(\.dynamicTypeSize) private var textSize
   @ScaledMetric(relativeTo: .largeTitle) private var codeSize: CGFloat = 56
 
   var body: some View {
-    VStack(spacing: compact ? 20 : 28) {
-      Spacer(minLength: compact ? 12 : 28)
+    VStack(spacing: 20) {
       VStack(spacing: 8) {
         Text(model.draft.source)
           .font(
@@ -33,7 +28,7 @@ struct BaseCurrencyStep: View {
         }
       }
       .padding(.horizontal, 24)
-      .frame(minHeight: textSize.isAccessibilitySize ? 0 : compact ? 100 : 140)
+      .frame(minHeight: textSize.isAccessibilitySize ? 0 : compact ? 80 : 140)
       .accessibilityElement(children: .combine)
       .accessibilityLabel(Text(.Onboarding.baseCurrency))
       .accessibilityValue(
@@ -50,40 +45,45 @@ struct BaseCurrencyStep: View {
         .multilineTextAlignment(.center).padding(.horizontal, 24)
       }
 
-      VStack(spacing: 20) {
-        if !textSize.isAccessibilitySize {
-          VStack(alignment: .leading, spacing: 10) {
-            Text(.Onboarding.popularCurrencies)
-              .font(AppStyle.font(.headline, weight: .bold))
-              .padding(.horizontal, 24)
-            ScrollView(.horizontal) {
-              HStack(spacing: 8) {
-                ForEach(OnboardingRecommendations.currencies, id: \.self) { code in
-                  quickChoice(code)
-                }
-                Button(action: openPicker) {
-                  HStack(spacing: 6) {
-                    Image(systemName: "magnifyingglass")
-                    Text(.Onboarding.more)
-                  }
-                  .font(AppStyle.font(.subheadline, weight: .medium))
-                  .frame(width: 104, height: 44)
-                  .background { OnboardingSurface(radius: 22) }
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(Text(.Onboarding.moreCurrencies))
-                .accessibilityIdentifier("onboarding.baseMore")
-              }
-              .padding(.horizontal, 24)
-            }
-            .scrollIndicators(.hidden)
-            .accessibilityIdentifier("onboarding.baseRecommendations")
-          }
-        }
-      }
-      Spacer(minLength: compact ? 12 : 28)
     }
-    .modifier(OnboardingReveal(progress: progress, offset: 24, scale: 0.96, reduced: reduced))
+  }
+}
+
+struct BaseCurrencyChoices: View {
+  let model: OnboardingModel
+  let openPicker: () -> Void
+  @Environment(\.locale) private var locale
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 10) {
+      Text(.Onboarding.popularCurrencies)
+        .font(AppStyle.font(.headline, weight: .bold))
+        .padding(.horizontal, 24)
+      ScrollView(.horizontal) {
+        HStack(spacing: 8) {
+          ForEach(OnboardingRecommendations.currencies, id: \.self) { code in
+            quickChoice(code)
+          }
+          Button(action: openPicker) {
+            HStack(spacing: 6) {
+              Image(systemName: "magnifyingglass")
+              Text(.Onboarding.more)
+            }
+            .font(AppStyle.font(.subheadline, weight: .medium))
+            .frame(width: 104, height: 44)
+            .background { OnboardingSurface(radius: 22) }
+          }
+          .buttonStyle(.plain)
+          .accessibilityLabel(Text(.Onboarding.moreCurrencies))
+          .accessibilityIdentifier("onboarding.baseMore")
+        }
+        .padding(.horizontal, 24)
+      }
+      .clipped()
+      .modifier(OnboardingRailFade())
+      .scrollIndicators(.hidden)
+      .accessibilityIdentifier("onboarding.baseRecommendations")
+    }
   }
 
   private func quickChoice(_ code: String) -> some View {

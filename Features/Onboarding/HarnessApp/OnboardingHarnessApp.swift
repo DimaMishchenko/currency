@@ -20,17 +20,37 @@ private final class OnboardingHarnessFixture {
     let now = Date.now
     rates = RateSnapshot(
       quotes: [
-        "EUR": ExchangeRate(1, published: "2026-09-19", source: .init(provider: .ecb)),
-        "USD": ExchangeRate(1.08, published: "2026-09-19", source: .init(provider: .ecb)),
-        "GBP": ExchangeRate(0.84, published: "2026-09-19", source: .init(provider: .ecb))
+        "EUR": ExchangeRate(1, published: "2026-10-02", source: .init(provider: .ecb)),
+        "USD": ExchangeRate(1.08, published: "2026-10-02", source: .init(provider: .ecb)),
+        "GBP": ExchangeRate(0.84, published: "2026-10-02", source: .init(provider: .ecb))
       ], fetchedAt: now)
+    if name != "partial-rates" {
+      var quotes = rates.quotes
+      for (code, value) in [
+        ("CZK", 24.8), ("UAH", 50.7), ("JPY", 162.0), ("CHF", 0.94), ("CAD", 1.48), ("AUD", 1.63),
+        ("CNY", 7.8),
+        ("BTC", 0.00001), ("ETH", 0.0003), ("XAU", 0.0003), ("XAG", 0.03)
+      ] {
+        quotes[code] = ExchangeRate(
+          Decimal(value), published: "2026-10-02", source: .init(provider: .ecb))
+      }
+      rates = RateSnapshot(quotes: quotes, fetchedAt: now)
+    }
     if ["loading", "offline", "interrupted"].contains(name) { rates = RateSnapshot() }
     var draft = input
     draft.setAmount("100")
-    if name == "selection" || name == "save-failure" {
+    if name == "selection" || name == "partial-rates" || name == "save-failure" {
       progress = OnboardingProgress(draft: draft, step: .selection)
     }
-    if name == "finale" { progress = OnboardingProgress(draft: draft, step: .ready) }
+    let requestedStep: OnboardingModel.Step? =
+      switch name {
+      case "base": .baseCurrency
+      case "home-screen": .homeScreen
+      case "widgets": .widgets
+      case "finale": .ready
+      default: nil
+      }
+    if let requestedStep { progress = OnboardingProgress(draft: draft, step: requestedStep) }
   }
 
   var dependencies: OnboardingDependencies {
@@ -70,6 +90,7 @@ private final class OnboardingHarnessFixture {
 @main
 struct OnboardingHarnessApp: App {
   @State private var flowID = UUID()
+  @State private var completed = false
   @State private var fixture: OnboardingHarnessFixture
   @State private var appearance = AppAppearance(
     theme: .system, accent: .primary, onThemeChange: { _ in }, onAccentChange: { _ in })
@@ -84,13 +105,35 @@ struct OnboardingHarnessApp: App {
 
   var body: some Scene {
     WindowGroup {
-      OnboardingEntry(flowID: flowID, onOutput: { _ in }) {
-        scene, snapshot, input, guide, finished in
-        if scene == .homeScreen {
-          OnboardingHomeScreen(snapshot: snapshot, input: input)
+      Group {
+        if completed {
+          ContentUnavailableView {
+            Label("Onboarding completed", systemImage: "checkmark.circle")
+          } description: {
+            Text("Validation only. The production app opens the converter here.")
+          } actions: {
+            Button("Restart validation") {
+              fixture = OnboardingHarnessFixture(name: "normal")
+              flowID = UUID()
+              completed = false
+            }
+            .buttonStyle(.borderedProminent)
+          }
         } else {
-          OnboardingWidgetShowcase(
-            snapshot: snapshot, input: input, guideRequested: guide, onGuideFinished: finished)
+          OnboardingEntry(
+            flowID: flowID,
+            onOutput: { output in
+              if case .completed = output { completed = true }
+            }
+          ) {
+            scene, snapshot, input, guide, finished in
+            if scene == .homeScreen {
+              OnboardingHomeScreen(snapshot: snapshot, input: input)
+            } else {
+              OnboardingWidgetShowcase(
+                snapshot: snapshot, input: input, guideRequested: guide, onGuideFinished: finished)
+            }
+          }
         }
       }
       .environment(\.widgetOnboardingDependencies, WidgetOnboardingDependencies(output: { _ in }))

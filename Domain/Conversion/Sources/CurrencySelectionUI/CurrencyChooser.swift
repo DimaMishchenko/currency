@@ -17,6 +17,7 @@ public enum PickerPurpose: String, Identifiable {
 /// A searchable currency picker shared by app features.
 public struct CurrencyChooser: View {
   @Environment(\.locale) private var locale
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   let purpose: PickerPurpose
   let selected: [String]
   let homeCurrencies: [String]
@@ -75,13 +76,27 @@ public struct CurrencyChooser: View {
     NavigationStack {
       VStack(spacing: 0) {
         if search.isEmpty {
-          AdaptiveSegmentedPicker(
-            .CurrencySelection.assetCategory,
-            choices: categories,
-            selection: $category,
-            optionTitle: { Text($0.title) },
-            fullTitle: { Text($0.accessibilityTitle) }
-          )
+          Group {
+            if dynamicTypeSize.isAccessibilitySize {
+              AdaptiveSegmentedPicker(
+                .CurrencySelection.assetCategory,
+                choices: categories,
+                selection: $category,
+                optionTitle: { Text($0.title) },
+                fullTitle: { Text($0.accessibilityTitle) }
+              )
+            } else {
+              Picker(selection: $category) {
+                ForEach(categories, id: \.self) { category in
+                  Text(category.title).accessibilityLabel(Text(category.accessibilityTitle))
+                    .tag(category)
+                }
+              } label: {
+                Text(.CurrencySelection.assetCategory)
+              }
+              .pickerStyle(.segmented)
+            }
+          }
           .accessibilityIdentifier("currency.picker.category")
           .padding(.horizontal)
           .padding(.vertical, AppStyle.Space.small)
@@ -93,6 +108,8 @@ public struct CurrencyChooser: View {
 
       }
 
+      .frame(maxWidth: 760)
+      .frame(maxWidth: .infinity)
       .searchable(text: $search, prompt: Text(.CurrencySelection.search))
       .autocorrectionDisabled()
       .textInputAutocapitalization(.never)

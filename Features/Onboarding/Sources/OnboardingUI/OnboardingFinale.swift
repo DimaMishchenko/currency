@@ -52,8 +52,8 @@ struct OnboardingFinale: View {
       let clock = elapsed + (moving ? context.date.timeIntervalSince(started) : 0)
       let time = reduceMotion ? 3 : clock
       GeometryReader { geometry in
-        let diameter = min(360, geometry.size.width - 40, geometry.size.height - 32)
-        let radius = max(80, (diameter - 36) / 2)
+        let diameter = max(1, min(360, geometry.size.width - 40, geometry.size.height - 32))
+        let radius = max(0, (diameter - 40) / 2)
         let orbit = spin.angle(at: clock)
         ZStack {
           ForEach(Array(currencies.enumerated()), id: \.element) { index, code in
@@ -82,7 +82,7 @@ struct OnboardingFinale: View {
               .font(AppStyle.font(.title3)).foregroundStyle(.secondary)
           }
           .lineLimit(1).minimumScaleFactor(0.5)
-          .frame(width: max(150, diameter - 100))
+          .frame(width: max(1, diameter - 64))
           .opacity(titleProgress)
           .offset(y: reduceMotion ? 0 : (1 - titleProgress) * 12)
         }

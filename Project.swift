@@ -102,6 +102,10 @@ let project = Project(
         "UISupportedInterfaceOrientations": [
           "UIInterfaceOrientationPortrait", "UIInterfaceOrientationLandscapeLeft",
           "UIInterfaceOrientationLandscapeRight"
+        ],
+        "UISupportedInterfaceOrientations~ipad": [
+          "UIInterfaceOrientationPortrait", "UIInterfaceOrientationPortraitUpsideDown",
+          "UIInterfaceOrientationLandscapeLeft", "UIInterfaceOrientationLandscapeRight"
         ]
       ]),
       buildableFolders: ["App/Sources", "App/Resources"],

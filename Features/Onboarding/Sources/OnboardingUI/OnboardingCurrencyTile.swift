@@ -4,7 +4,6 @@ import ExchangeRatesUI
 import Onboarding
 import SwiftUI
 
-/// A destination choice in the onboarding carousel.
 struct OnboardingCurrencyTile: View {
   let code: String
   let selected: Bool
@@ -19,17 +18,9 @@ struct OnboardingCurrencyTile: View {
     Button {
       action()
     } label: {
-      VStack(spacing: 8) {
-        if compact {
-          HStack(spacing: 6) {
-            CurrencyIcon(code, size: 22)
-            Text(code).font(AppStyle.font(.subheadline, weight: .semibold))
-          }
-          .padding(.top, 8)
-        } else {
-          CurrencyIcon(code, size: 30).frame(height: 36)
-          Text(code).font(AppStyle.font(.headline))
-        }
+      VStack(spacing: compact ? 6 : 8) {
+        CurrencyIcon(code, size: compact ? 24 : 30).frame(height: compact ? 28 : 36)
+        Text(code).font(AppStyle.font(.headline))
         Text(
           available
             ? CurrencyDisplay.name(code, locale: locale)
@@ -38,7 +29,7 @@ struct OnboardingCurrencyTile: View {
         .font(AppStyle.font(.caption2)).foregroundStyle(.secondary)
         .lineLimit(2).frame(height: textSize.isAccessibilitySize ? 52 : 30, alignment: .top)
       }
-      .frame(width: textSize.isAccessibilitySize ? 152 : 96).padding(.vertical, 16)
+      .frame(width: textSize.isAccessibilitySize ? 152 : 96).padding(.vertical, compact ? 10 : 16)
       .background { OnboardingSurface(radius: 18, selected: selected) }
       .overlay(alignment: .topTrailing) {
         if selected {
@@ -60,7 +51,6 @@ struct OnboardingCurrencyTile: View {
 
 }
 
-/// A shared selected state; unselected choices keep their content uncluttered.
 struct OnboardingSelectionMark: View {
   @Environment(AppAppearance.self) private var appearance
   @Environment(\.colorScheme) private var colorScheme
@@ -76,7 +66,6 @@ struct OnboardingSelectionMark: View {
   }
 }
 
-/// Opens the same destination picker as toolbar Search, using the carousel's card geometry.
 struct OnboardingMoreCurrenciesTile: View {
   let compact: Bool
   let action: () -> Void
@@ -84,28 +73,32 @@ struct OnboardingMoreCurrenciesTile: View {
 
   var body: some View {
     Button(action: action) {
-      VStack(spacing: 8) {
-        if compact {
-          HStack(spacing: 6) {
-            Image(systemName: "magnifyingglass").font(.system(size: 20))
-              .frame(width: 22, height: 22)
-            Text(.Onboarding.more).font(AppStyle.font(.subheadline, weight: .semibold))
-          }
-          .padding(.top, 8)
-        } else {
-          Image(systemName: "magnifyingglass").font(.system(size: 24)).frame(height: 36)
-          Text(.Onboarding.more).font(AppStyle.font(.headline))
-        }
+      VStack(spacing: compact ? 6 : 8) {
+        Image(systemName: "magnifyingglass").font(.system(size: 24))
+          .frame(height: compact ? 28 : 36)
+        Text(.Onboarding.more).font(AppStyle.font(.headline))
         Text(.Onboarding.fiat)
           .font(AppStyle.font(.caption2)).foregroundStyle(.secondary)
           .lineLimit(2).frame(height: textSize.isAccessibilitySize ? 52 : 30, alignment: .top)
       }
-      .frame(width: textSize.isAccessibilitySize ? 152 : 96).padding(.vertical, 16)
+      .frame(width: textSize.isAccessibilitySize ? 152 : 96).padding(.vertical, compact ? 10 : 16)
       .background { OnboardingSurface(radius: 18) }
     }
     .buttonStyle(.plain)
     .accessibilityElement(children: .ignore)
     .accessibilityLabel(Text(.Onboarding.moreCurrencies))
     .accessibilityIdentifier("onboarding.destinationsMore")
+  }
+}
+
+struct OnboardingRailFade: ViewModifier {
+  func body(content: Content) -> some View {
+    content.mask {
+      HStack(spacing: 0) {
+        Rectangle()
+        LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing)
+          .frame(width: 24)
+      }
+    }
   }
 }

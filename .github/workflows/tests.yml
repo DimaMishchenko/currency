@@ -48,6 +48,8 @@ jobs:
     if: always()
     runs-on: ${{ needs.changes.outputs.xcode == 'true' && 'xcode-27' || 'ubuntu-latest' }}
     timeout-minutes: 60
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_27.1.app/Contents/Developer
     permissions:
       contents: read
       id-token: write

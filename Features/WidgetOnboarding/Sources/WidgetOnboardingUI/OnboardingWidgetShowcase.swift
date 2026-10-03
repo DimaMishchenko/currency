@@ -16,7 +16,6 @@ public struct OnboardingWidgetShowcase: View {
   private let onGuideFinished: () -> Void
   @Binding private var guideRequested: Bool
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
-  @Environment(\.dynamicTypeSize) private var textSize
   @State private var page: WidgetShowcaseKind? = .calculator
   private let featured: [WidgetShowcaseKind] = [.calculator, .history, .board]
   @State private var families: [WidgetShowcaseKind: WidgetFamily] = [:]
@@ -39,33 +38,17 @@ public struct OnboardingWidgetShowcase: View {
   /// A paging showcase with family controls and an installation guide in the same navigation stack.
   public var body: some View {
     GeometryReader { geometry in
-      let accessible = textSize.isAccessibilitySize
-      let heroHeight = max(156, geometry.size.height - (accessible ? 320 : 218))
-      VStack(spacing: AppStyle.Space.medium) {
-        carousel(width: geometry.size.width, height: heroHeight)
-        VStack(spacing: AppStyle.Space.xs) {
-          Text(selected.title)
-            .font(AppStyle.font(.headline)).accessibilityAddTraits(.isHeader)
-          Text(interactionDetail)
-            .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
-            .fixedSize(horizontal: false, vertical: true)
-          if OnboardingWidgetConfiguration(kind: selected, snapshot: snapshot, input: input)
-            .isSample
-          {
-            Text(.WidgetOnboarding.previewSampleRates)
-              .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
+      ScrollView {
+        WidgetShowcaseLayout(availableHeight: geometry.size.height) {
+          GeometryReader { preview in
+            carousel(width: preview.size.width, height: preview.size.height)
           }
+          showcaseControls
         }
-        .multilineTextAlignment(.center).padding(.horizontal, AppStyle.Space.section)
-        familyControl
-          .padding(.horizontal, AppStyle.Space.section)
-        pageControl
-        Text(.WidgetOnboarding.moreWidgetsInApp)
-          .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
-          .fixedSize(horizontal: false, vertical: true)
-          .multilineTextAlignment(.center).padding(.horizontal, AppStyle.Space.section)
+        .frame(width: geometry.size.width)
       }
-      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+      .scrollBounceBehavior(.basedOnSize)
+      .scrollIndicators(.hidden)
     }
     .onChange(of: page) { _, _ in AppHaptics.play(.selection) }
     .navigationDestination(isPresented: $guideRequested) {
@@ -75,6 +58,30 @@ public struct OnboardingWidgetShowcase: View {
         }
       }
     }
+  }
+
+  private var showcaseControls: some View {
+    VStack(spacing: AppStyle.Space.small) {
+      VStack(spacing: AppStyle.Space.xs) {
+        Text(selected.title)
+          .font(AppStyle.font(.headline)).accessibilityAddTraits(.isHeader)
+        Text(interactionDetail)
+          .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
+          .fixedSize(horizontal: false, vertical: true)
+        if OnboardingWidgetConfiguration(kind: selected, snapshot: snapshot, input: input)
+          .isSample
+        {
+          Text(.WidgetOnboarding.previewSampleRates)
+            .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
+        }
+      }
+      .multilineTextAlignment(.center).padding(.horizontal, AppStyle.Space.section)
+      familyControl
+        .padding(.horizontal, AppStyle.Space.section)
+      pageControl
+    }
+    .frame(maxWidth: .infinity)
+    .fixedSize(horizontal: false, vertical: true)
   }
 
   private var interactionDetail: String {
@@ -90,9 +97,9 @@ public struct OnboardingWidgetShowcase: View {
   }
 
   private func carousel(width: CGFloat, height: CGFloat) -> some View {
-    let cardWidth = min(420, max(240, width - 64))
+    let cardWidth = min(420, max(1, width - 48))
     return ScrollView(.horizontal) {
-      HStack(spacing: AppStyle.Space.large) {
+      HStack(spacing: 0) {
         ForEach(featured) { kind in
           let chosenFamily = family(for: kind)
           let configuration = OnboardingWidgetConfiguration(
@@ -101,13 +108,13 @@ public struct OnboardingWidgetShowcase: View {
             kind: kind, family: chosenFamily, configuration: configuration,
             width: cardWidth, height: height
           )
+          .frame(width: width)
           .id(kind)
         }
       }
       .scrollTargetLayout()
     }
-    .contentMargins(.horizontal, (width - cardWidth) / 2, for: .scrollContent)
-    .scrollTargetBehavior(.viewAligned)
+    .scrollTargetBehavior(.paging)
     .scrollPosition(id: $page)
     .scrollIndicators(.hidden)
     .frame(height: height)
@@ -156,6 +163,46 @@ public struct OnboardingWidgetShowcase: View {
   }
 }
 
+private struct WidgetShowcaseLayout: Layout {
+  let availableHeight: CGFloat
+  private let spacing = AppStyle.Space.medium
+  private let bottomInset = AppStyle.Space.section
+  private let minimumPreviewHeight: CGFloat = 104
+  private let maximumPreviewHeight: CGFloat = 380
+
+  func sizeThatFits(
+    proposal: ProposedViewSize, subviews: Subviews, cache: inout ()
+  ) -> CGSize {
+    let width = proposal.width ?? 0
+    guard subviews.count == 2 else { return CGSize(width: width, height: availableHeight) }
+    let controls = subviews[1].sizeThatFits(ProposedViewSize(width: width, height: nil))
+    return CGSize(
+      width: width,
+      height: max(availableHeight, minimumPreviewHeight + spacing + controls.height + bottomInset))
+  }
+
+  func placeSubviews(
+    in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()
+  ) {
+    guard subviews.count == 2 else { return }
+    let controls = subviews[1].sizeThatFits(ProposedViewSize(width: bounds.width, height: nil))
+    let previewHeight = min(
+      maximumPreviewHeight,
+      max(minimumPreviewHeight, bounds.height - spacing - controls.height - bottomInset))
+    let topInset = max(
+      0, (bounds.height - previewHeight - spacing - controls.height - bottomInset) / 2)
+    subviews[0]
+      .place(
+        at: CGPoint(x: bounds.minX, y: bounds.minY + topInset), anchor: .topLeading,
+        proposal: ProposedViewSize(width: bounds.width, height: previewHeight))
+    subviews[1]
+      .place(
+        at: CGPoint(x: bounds.minX, y: bounds.minY + topInset + previewHeight + spacing),
+        anchor: .topLeading,
+        proposal: ProposedViewSize(width: bounds.width, height: controls.height))
+  }
+}
+
 private struct OnboardingWidgetCard: View {
   let kind: WidgetShowcaseKind
   let family: WidgetFamily
@@ -183,7 +230,7 @@ private struct OnboardingWidgetCard: View {
 
   var body: some View {
     preview
-      .frame(width: width, height: max(120, height - 16), alignment: .bottom)
+      .frame(width: width, height: max(1, height - 16), alignment: .bottom)
       .padding(.bottom, 16)
       .shadow(color: .black.opacity(0.07), radius: 12, y: 7)
       .accessibilityElement(children: kind.interactive ? .contain : .ignore)
@@ -193,7 +240,7 @@ private struct OnboardingWidgetCard: View {
   }
 
   @ViewBuilder private var preview: some View {
-    let availableHeight = max(120, height - 16)
+    let availableHeight = max(1, height - 16)
     if kind == .calculator {
       let fittedWidth = min(
         width, availableHeight * family.previewSize.width / family.previewSize.height)

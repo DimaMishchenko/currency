@@ -49,6 +49,8 @@ struct LocalCurrencyOnboardingScreen: View {
             if textSize.isAccessibilitySize { actions }
           }
           .padding(24)
+          .frame(maxWidth: 600)
+          .frame(maxWidth: .infinity)
         }
       }
       .background(AppStyle.background)
@@ -107,6 +109,8 @@ struct LocalCurrencyOnboardingScreen: View {
         .padding(.top, 4)
     }
     .padding(.horizontal, textSize.isAccessibilitySize ? 0 : 24).padding(.vertical, 12)
+    .frame(maxWidth: 600)
+    .frame(maxWidth: .infinity)
     .background(AppStyle.background)
   }
   private func refreshLocation() {

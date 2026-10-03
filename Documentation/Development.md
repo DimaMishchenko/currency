@@ -37,6 +37,8 @@ Use `tuist generate --no-open --cache-profile none` to keep dependencies as sour
 
 Before delivery, run the relevant tests, check affected UI, and verify formatting with `swift format lint --recursive --strict App Domain Features DesignSystem Infrastructure` and `git diff --check`. Outstanding device and release checks live in [GitHub Issues](https://github.com/DimaMishchenko/currency/issues?q=is%3Aissue+is%3Aopen+label%3Averification).
 
+See [Adaptive layouts](AdaptiveLayouts.md) for Duo and iPad behavior and the remaining native acceptance matrix.
+
 Run native intent tests with `xcodebuild test -workspace Currency.xcworkspace -scheme NativeIntentTests -destination 'platform=iOS Simulator,id=<owned-UDID>' -derivedDataPath <isolated-directory>`, using the output formatting above. CI runs this scheme separately from the unit suite. AppIntentsTesting verifies structured outputs, decimal coercion, chaining, full-catalog queries, indexed code searches, cold/warm detail opening, and visible entity annotations. Annotation tests verify what the app exposes; physical Siri conversations and onscreen interpretation still need device acceptance. Spotlight presentation and ranking remain system controlled.
 
 ## Dependency updates
