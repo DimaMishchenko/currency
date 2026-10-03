@@ -64,9 +64,12 @@ struct WidgetGuide: View {
     }
   }
   private func activeDivision(in geometry: GeometryProxy) -> CGRect? {
-    if #available(iOS 27.1, *) {
-      return geometry.reservedRegions(kind: .division, layoutDirectionBehavior: .fixed).first?.frame
-    }
+    #if canImport(SwiftUI, _version: 8.0.85.27)
+      if #available(iOS 27.1, *) {
+        return geometry.reservedRegions(kind: .division, layoutDirectionBehavior: .fixed).first?
+          .frame
+      }
+    #endif
     return nil
   }
 

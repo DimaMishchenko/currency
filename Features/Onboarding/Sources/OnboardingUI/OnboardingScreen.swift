@@ -203,9 +203,12 @@ struct OnboardingScreen<Widgets: View>: View {
   }
 
   private func activeDivision(in geometry: GeometryProxy) -> CGRect? {
-    if #available(iOS 27.1, *) {
-      return geometry.reservedRegions(kind: .division, layoutDirectionBehavior: .fixed).first?.frame
-    }
+    #if canImport(SwiftUI, _version: 8.0.85.27)
+      if #available(iOS 27.1, *) {
+        return geometry.reservedRegions(kind: .division, layoutDirectionBehavior: .fixed).first?
+          .frame
+      }
+    #endif
     return nil
   }
 
@@ -227,11 +230,15 @@ struct OnboardingScreen<Widgets: View>: View {
       }
       .sharedBackgroundVisibility(model.step == .welcome ? .hidden : .automatic)
     }
-    if #available(iOS 27.1, *) {
-      searchControl.axisBehavior(.verticalPreferred)
-    } else {
+    #if canImport(SwiftUI, _version: 8.0.85.27)
+      if #available(iOS 27.1, *) {
+        searchControl.axisBehavior(.verticalPreferred)
+      } else {
+        searchControl
+      }
+    #else
       searchControl
-    }
+    #endif
   }
 
   private var searchControl: some ToolbarContent {

@@ -156,17 +156,19 @@ struct RateDetailsScreen: View {
   }
 
   private func activeDivision(in geometry: GeometryProxy) -> CGRect? {
-    if #available(iOS 27.1, *) {
-      let bounds = CGRect(origin: .zero, size: geometry.size)
-      return geometry.reservedRegions(kind: .division, layoutDirectionBehavior: .fixed)
-        .map { $0.frame.intersection(bounds) }
-        .first { frame in
-          !frame.isNull
-            && (frame.height > frame.width
-              ? frame.minX > 0 && frame.maxX < bounds.width
-              : frame.minY > 0 && frame.maxY < bounds.height)
-        }
-    }
+    #if canImport(SwiftUI, _version: 8.0.85.27)
+      if #available(iOS 27.1, *) {
+        let bounds = CGRect(origin: .zero, size: geometry.size)
+        return geometry.reservedRegions(kind: .division, layoutDirectionBehavior: .fixed)
+          .map { $0.frame.intersection(bounds) }
+          .first { frame in
+            !frame.isNull
+              && (frame.height > frame.width
+                ? frame.minX > 0 && frame.maxX < bounds.width
+                : frame.minY > 0 && frame.maxY < bounds.height)
+          }
+      }
+    #endif
     return nil
   }
 
