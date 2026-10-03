@@ -637,85 +637,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Add to Home Screen"
+            "value": "How to add to Home Screen"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "添加到主屏幕"
+            "value": "如何添加到主屏幕"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ホーム画面に追加"
+            "value": "ホーム画面への追加方法"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Añadir a pantalla de inicio"
+            "value": "Cómo añadir a la pantalla de inicio"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Zum Home-Bildschirm hinzufügen"
+            "value": "So fügst du es zum Home-Bildschirm hinzu"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ajouter à l’écran d’accueil"
+            "value": "Comment ajouter à l’écran d’accueil"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Adicionar à Tela de Início"
+            "value": "Como adicionar à Tela de Início"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "홈 화면에 추가"
+            "value": "홈 화면에 추가하는 방법"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "加入主畫面"
+            "value": "如何加入主畫面"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aggiungi alla schermata Home"
+            "value": "Come aggiungere alla schermata Home"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ana Ekran’a ekle"
+            "value": "Ana Ekran’a nasıl eklenir"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Добавить на экран «Домой»"
+            "value": "Как добавить на экран «Домой»"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Додати на початковий екран"
+            "value": "Як додати на початковий екран"
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Lisa avakuvale"
+            "value": "Kuidas avakuvale lisada"
           }
         }
       }
@@ -727,85 +727,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Add to Lock Screen"
+            "value": "How to add to Lock Screen"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "添加到锁定屏幕"
+            "value": "如何添加到锁定屏幕"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ロック画面に追加"
+            "value": "ロック画面への追加方法"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Añadir a pantalla de bloqueo"
+            "value": "Cómo añadir a la pantalla de bloqueo"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Zum Sperrbildschirm hinzufügen"
+            "value": "So fügst du es zum Sperrbildschirm hinzu"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ajouter à l’écran verrouillé"
+            "value": "Comment ajouter à l’écran verrouillé"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Adicionar à Tela Bloqueada"
+            "value": "Como adicionar à Tela Bloqueada"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "잠금 화면에 추가"
+            "value": "잠금 화면에 추가하는 방법"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "加入鎖定畫面"
+            "value": "如何加入鎖定畫面"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aggiungi alla schermata di blocco"
+            "value": "Come aggiungere alla schermata di blocco"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kilitli Ekran’a ekle"
+            "value": "Kilitli Ekran’a nasıl eklenir"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Добавить на экран блокировки"
+            "value": "Как добавить на экран блокировки"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Додати на замкнений екран"
+            "value": "Як додати на замкнений екран"
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Lisa lukustuskuvale"
+            "value": "Kuidas lukustuskuvale lisada"
           }
         }
       }
@@ -817,85 +817,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Add a widget"
+            "value": "How to add your widget"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "添加小组件"
+            "value": "如何添加小组件"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ウィジェットを追加"
+            "value": "ウィジェットの追加方法"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Añadir un widget"
+            "value": "Cómo añadir tu widget"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Widget hinzufügen"
+            "value": "So fügst du dein Widget hinzu"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ajouter un widget"
+            "value": "Comment ajouter votre widget"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Adicionar um widget"
+            "value": "Como adicionar seu widget"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "위젯 추가"
+            "value": "위젯을 추가하는 방법"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "加入小工具"
+            "value": "如何加入小工具"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aggiungi un widget"
+            "value": "Come aggiungere il tuo widget"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Araç takımı ekle"
+            "value": "Araç takımınızı nasıl eklersiniz"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Добавить виджет"
+            "value": "Как добавить виджет"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Додати віджет"
+            "value": "Як додати віджет"
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Lisa vidin"
+            "value": "Kuidas oma vidinat lisada"
           }
         }
       }
@@ -2617,85 +2617,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Edit a widget"
+            "value": "How to edit your widget"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "编辑小组件"
+            "value": "如何编辑小组件"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ウィジェットを編集"
+            "value": "ウィジェットの編集方法"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Editar un widget"
+            "value": "Cómo editar tu widget"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Widget bearbeiten"
+            "value": "So bearbeitest du dein Widget"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Modifier un widget"
+            "value": "Comment modifier votre widget"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Editar um widget"
+            "value": "Como editar seu widget"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "위젯 편집"
+            "value": "위젯을 편집하는 방법"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "編輯小工具"
+            "value": "如何編輯小工具"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Modifica un widget"
+            "value": "Come modificare il tuo widget"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Araç takımını düzenle"
+            "value": "Araç takımınızı nasıl düzenlersiniz"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Изменить виджет"
+            "value": "Как изменить виджет"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Змінити віджет"
+            "value": "Як змінити віджет"
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Muuda vidinat"
+            "value": "Kuidas oma vidinat muuta"
           }
         }
       }
