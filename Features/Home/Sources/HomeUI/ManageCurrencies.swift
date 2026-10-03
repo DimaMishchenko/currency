@@ -55,7 +55,7 @@ struct ManageCurrencies: View {
           Text(warning).font(AppStyle.font(.caption)).foregroundStyle(.secondary).padding()
         }
       }
-      .navigationTitle(.Converter.manageCurrencies)
+      .navigationTitle(.Converter.currenciesTitle)
       .navigationBarTitleDisplayMode(.large)
       .toolbar {
         ToolbarItem(placement: .topBarLeading) {

@@ -12,3 +12,4 @@ Select the `SettingsHarness` scheme and add launch arguments under **Run → Arg
 | --- | --- |
 | No arguments | Normal Settings flow. |
 | `failure` | Refresh and replay actions fail when invoked. |
+| `dated` | Fixed retrieved and checked timestamps for localization and layout checks. |

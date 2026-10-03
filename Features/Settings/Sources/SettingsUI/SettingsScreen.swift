@@ -5,7 +5,6 @@ import Settings
 import SwiftUI
 import UIKit
 
-/// App preferences, rate provenance, and setup entry points.
 struct SettingsScreen: View {
   @Bindable var model: SettingsModel
   private var snapshot: RateSnapshot { model.rates.snapshot }
@@ -20,7 +19,6 @@ struct SettingsScreen: View {
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @State private var replayFailed = false
 
-  /// Presents app preferences, rate information, credits, and setup replay.
   var body: some View {
     List {
       appearanceControls
@@ -47,9 +45,9 @@ struct SettingsScreen: View {
         }
       }
       Section {
-        HStack {
+        settingsValueRow {
           Label(.Settings.sendFeedback, systemImage: "bubble.left.and.bubble.right")
-          Spacer(minLength: AppStyle.Space.medium)
+        } value: {
           Text(.Settings.comingSoon)
         }
         .foregroundStyle(.secondary)
@@ -127,7 +125,15 @@ struct SettingsScreen: View {
 
   private var appearanceControls: some View {
     Section(.Settings.appearance) {
+      themeControl
+      accentControl
+    }
+  }
+
+  private var themeControl: some View {
+    Menu {
       Picker(
+        .Settings.theme,
         selection: Binding(
           get: { model.preferences.theme },
           set: { value in model.setTheme(value) }
@@ -136,66 +142,81 @@ struct SettingsScreen: View {
         ForEach(SettingsTheme.allCases) { theme in
           Text(theme.title).tag(theme)
         }
-      } label: {
+      }
+      .pickerStyle(.inline)
+    } label: {
+      settingsValueRow {
         Label {
           Text(.Settings.theme).foregroundStyle(Color.primary)
         } icon: {
           Image(systemName: "circle.lefthalf.filled").foregroundStyle(.tint)
         }
+      } value: {
+        HStack(spacing: AppStyle.Space.small) {
+          Text(model.preferences.theme.title)
+          Image(systemName: "chevron.up.chevron.down")
+            .font(AppStyle.font(.caption, weight: .semibold))
+            .accessibilityHidden(true)
+        }
+        .foregroundStyle(.tint)
       }
-      .pickerStyle(.menu)
-      .accessibilityIdentifier("settings.theme")
-      accentControl
+      .contentShape(Rectangle())
     }
+    .buttonStyle(.plain)
+    .accessibilityLabel(.Settings.theme)
+    .accessibilityIdentifier("settings.theme")
+    .accessibilityValue(Text(model.preferences.theme.title))
   }
 
   private var accentControl: some View {
-    adaptiveLayout {
-      Label {
-        Text(.Settings.accentColor).foregroundStyle(Color.primary)
-      } icon: {
-        Image(systemName: "paintpalette").foregroundStyle(.tint)
-      }
-      if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: AppStyle.Space.medium) }
-      Menu {
-        Picker(
-          .Settings.accentColor,
-          selection: Binding(
-            get: { model.preferences.accent },
-            set: { value in model.setAccent(value) }
-          )
-        ) {
-          ForEach(SettingsAccent.allCases) { accent in
-            Label {
-              Text(accent.title)
-            } icon: {
-              if let symbol = UIImage(systemName: "circle.fill") {
-                Image(
-                  uiImage: symbol.withTintColor(
-                    UIColor(accent.color), renderingMode: .alwaysOriginal)
-                )
-                .renderingMode(.original)
-              }
+    Menu {
+      Picker(
+        .Settings.accentColor,
+        selection: Binding(
+          get: { model.preferences.accent },
+          set: { value in model.setAccent(value) }
+        )
+      ) {
+        ForEach(SettingsAccent.allCases) { accent in
+          Label {
+            Text(accent.title)
+          } icon: {
+            if let symbol = UIImage(systemName: "circle.fill") {
+              Image(
+                uiImage: symbol.withTintColor(
+                  UIColor(accent.color), renderingMode: .alwaysOriginal)
+              )
+              .renderingMode(.original)
             }
-            .tag(accent)
           }
+          .tag(accent)
         }
-        .pickerStyle(.inline)
-      } label: {
+      }
+      .pickerStyle(.inline)
+    } label: {
+      settingsValueRow {
+        Label {
+          Text(.Settings.accentColor).foregroundStyle(Color.primary)
+        } icon: {
+          Image(systemName: "paintpalette").foregroundStyle(.tint)
+        }
+      } value: {
         HStack(spacing: AppStyle.Space.small) {
           Circle().fill(model.preferences.accent.color).frame(width: 18, height: 18)
           Text(model.preferences.accent.title)
           Image(systemName: "chevron.up.chevron.down")
             .font(AppStyle.font(.caption, weight: .semibold))
+            .accessibilityHidden(true)
         }
         .foregroundStyle(.tint)
-        .contentShape(Rectangle())
       }
-      .accessibilityLabel(.Settings.accentColor)
-      .accessibilityIdentifier("settings.accent")
-      .accessibilityValue(Text(model.preferences.accent.title))
-      .onChange(of: model.preferences.accent) { _, _ in AppHaptics.play(.selection) }
+      .contentShape(Rectangle())
     }
+    .buttonStyle(.plain)
+    .accessibilityLabel(.Settings.accentColor)
+    .accessibilityIdentifier("settings.accent")
+    .accessibilityValue(Text(model.preferences.accent.title))
+    .onChange(of: model.preferences.accent) { _, _ in AppHaptics.play(.selection) }
   }
 
   private func restartOnboarding() {
@@ -207,10 +228,26 @@ struct SettingsScreen: View {
     }
   }
 
-  private var adaptiveLayout: AnyLayout {
-    dynamicTypeSize.isAccessibilitySize
-      ? AnyLayout(VStackLayout(alignment: .leading, spacing: AppStyle.Space.xs))
-      : AnyLayout(HStackLayout(spacing: AppStyle.Space.small))
+  private func settingsValueRow<Title: View, Value: View>(
+    @ViewBuilder title: () -> Title,
+    @ViewBuilder value: () -> Value
+  ) -> some View {
+    ViewThatFits(in: .horizontal) {
+      if !dynamicTypeSize.isAccessibilitySize {
+        HStack(spacing: AppStyle.Space.medium) {
+          title().fixedSize()
+          Spacer(minLength: 0)
+          value().fixedSize()
+        }
+      }
+      VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
+        title().fixedSize(horizontal: false, vertical: true)
+        value().fixedSize(horizontal: false, vertical: true)
+      }
+      .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    .labelStyle(.titleAndIcon)
+    .multilineTextAlignment(.leading)
   }
 
   private func timestamp(_ date: Date) -> String {
@@ -218,9 +255,9 @@ struct SettingsScreen: View {
   }
 
   private func timestampRow(_ title: LocalizedStringResource, date: Date?) -> some View {
-    adaptiveLayout {
+    settingsValueRow {
       Text(title)
-      if !dynamicTypeSize.isAccessibilitySize { Spacer() }
+    } value: {
       Text(date.map(timestamp) ?? String(localized: .Settings.unavailable))
         .foregroundStyle(.secondary)
     }
