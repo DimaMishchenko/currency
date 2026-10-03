@@ -159,7 +159,7 @@ struct OnboardingScreen<Widgets: View>: View {
       let division = activeDivision(in: geometry)
       let wide =
         geometry.size.width > geometry.size.height && !accessible
-        && !(displayedStep == .ready && geometry.size.height < 500)
+        && displayedStep != .ready
       let split = wide || division != nil
       let choicesBelow = division.map { $0.width > $0.height } ?? false
       AdaptivePairLayout(
