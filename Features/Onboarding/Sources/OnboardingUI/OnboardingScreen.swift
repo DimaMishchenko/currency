@@ -27,9 +27,8 @@ struct OnboardingScreen<Widgets: View>: View {
   @State private var search: SearchDestination?
   @State private var guide = false
   @State private var expandedRecommendations = false
-  @State private var compactHeight = false
   @State private var sceneHeights: [OnboardingModel.Step: CGFloat] = [:]
-  @ScaledMetric(relativeTo: .largeTitle) private var amountSize = 40
+  @ScaledMetric(relativeTo: .largeTitle) private var amountSize = 64
   @ScaledMetric(relativeTo: .subheadline) private var tickerHeight = 44
   private enum SearchDestination: String, Identifiable {
     case base, destinations; var id: String { rawValue }
@@ -162,25 +161,28 @@ struct OnboardingScreen<Widgets: View>: View {
         geometry.size.width > geometry.size.height && !accessible
         && !(displayedStep == .ready && geometry.size.height < 500)
       let split = wide || division != nil
+      let choicesBelow = division.map { $0.width > $0.height } ?? false
       AdaptivePairLayout(
         division: division, wide: wide, rightToLeft: layoutDirection == .rightToLeft
       ) {
         GeometryReader { viewport in
-          scene(height: viewport.size.height, includesFooter: accessible && !split)
-        }
-        .onGeometryChange(for: Bool.self) { proxy in
-          proxy.size.height < 500
-        } action: {
-          compactHeight = $0
+          scene(
+            height: viewport.size.height, includesFooter: accessible && !split,
+            previewOnly: choicesBelow)
         }
         if !accessible || split {
           if split {
             GeometryReader { viewport in
               ScrollView {
-                footer(fillHeight: max(0, viewport.size.height - 48))
-                  .frame(maxWidth: 480)
-                  .frame(maxWidth: .infinity)
-                  .padding(.vertical, 24)
+                VStack(spacing: 24) {
+                  if choicesBelow { stagedChoices }
+                  footer(fillHeight: choicesBelow ? nil : max(0, viewport.size.height - 48))
+                    .frame(maxWidth: 480)
+                }
+                .frame(maxWidth: choicesBelow ? 640 : .infinity)
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: max(0, viewport.size.height - 48))
+                .padding(.vertical, 24)
               }
               .scrollBounceBehavior(.basedOnSize)
             }
@@ -253,7 +255,7 @@ struct OnboardingScreen<Widgets: View>: View {
     model.step == .baseCurrency || model.step == .selection
   }
 
-  private func scene(height: CGFloat, includesFooter: Bool) -> some View {
+  private func scene(height: CGFloat, includesFooter: Bool, previewOnly: Bool) -> some View {
     ZStack(alignment: .top) {
       if !textSize.isAccessibilitySize && model.step != .ready {
         CurrencyDepthField(moving: moving, sparse: model.step != .welcome, appeared: appeared)
@@ -261,20 +263,25 @@ struct OnboardingScreen<Widgets: View>: View {
       }
       ForEach([leavingStep, displayedStep].compactMap { $0 }, id: \.self) { step in
         let sceneHeight = step == displayedStep ? height : sceneHeights[step] ?? height
-        ScrollView {
-          VStack(spacing: 0) {
-            stagedScene(step, height: sceneHeight)
-            if includesFooter {
-              footer(fillHeight: nil, fixedStep: step)
-                .padding(.top, 32)
-                .opacity(step == displayedStep ? arrival : 1 - departure)
+        Group {
+          if textSize.isAccessibilitySize || (step != .baseCurrency && step != .selection) {
+            ScrollView {
+              VStack(spacing: 0) {
+                stagedScene(step, height: sceneHeight, previewOnly: previewOnly)
+                if includesFooter {
+                  footer(fillHeight: nil, fixedStep: step)
+                    .padding(.top, 32)
+                    .opacity(step == displayedStep ? arrival : 1 - departure)
+                }
+              }
+              .frame(minHeight: sceneHeight, alignment: .top)
             }
+            .scrollBounceBehavior(.basedOnSize, axes: .vertical)
+          } else {
+            stagedScene(step, height: sceneHeight, previewOnly: previewOnly)
           }
-          .frame(minHeight: sceneHeight, alignment: .top)
         }
         .frame(height: sceneHeight, alignment: .top)
-        .scrollBounceBehavior(.basedOnSize, axes: .vertical)
-        .scrollIndicators(.automatic)
         .accessibilityHidden(step != displayedStep)
         .allowsHitTesting(step == displayedStep && !navigating)
         .zIndex(step == displayedStep ? 1 : 0)
@@ -286,31 +293,59 @@ struct OnboardingScreen<Widgets: View>: View {
     .onChange(of: displayedStep) { _, step in sceneHeights[step] = height }
   }
 
-  private func stagedScene(_ step: OnboardingModel.Step, height: CGFloat) -> some View {
-    sceneContent(step, progress: step == displayedStep ? arrival : 1)
-      .frame(maxWidth: step == .baseCurrency || step == .selection ? 640 : .infinity)
-      .frame(height: step == .homeScreen || step == .widgets || step == .ready ? height : nil)
-      .frame(minHeight: height, alignment: .top)
-      .modifier(
-        OnboardingDeparture(
-          progress: step == leavingStep ? departure : 0,
-          forward: forward, reduced: reduceMotion || textSize.isAccessibilitySize)
-      )
-      .allowsHitTesting(step == displayedStep && !navigating)
+  private func stagedScene(
+    _ step: OnboardingModel.Step, height: CGFloat, previewOnly: Bool
+  ) -> some View {
+    sceneContent(
+      step, progress: step == displayedStep ? arrival : 1, compact: height < 460,
+      previewOnly: previewOnly
+    )
+    .frame(maxWidth: step == .baseCurrency || step == .selection ? 640 : .infinity)
+    .frame(height: step == .homeScreen || step == .widgets || step == .ready ? height : nil)
+    .frame(minHeight: height, alignment: .top)
+    .modifier(
+      OnboardingDeparture(
+        progress: step == leavingStep ? departure : 0,
+        forward: forward, reduced: reduceMotion || textSize.isAccessibilitySize)
+    )
+    .allowsHitTesting(step == displayedStep && !navigating)
   }
 
   @ViewBuilder
-  private func sceneContent(_ step: OnboardingModel.Step, progress: CGFloat) -> some View {
+  private func sceneContent(
+    _ step: OnboardingModel.Step, progress: CGFloat, compact: Bool, previewOnly: Bool
+  ) -> some View {
     switch step {
     case .welcome:
       welcome.modifier(reveal(progress, offset: 24, scale: 0.96))
     case .baseCurrency:
-      BaseCurrencyStep(
-        model: model, progress: progress, reduced: reduceMotion || textSize.isAccessibilitySize,
-        compact: compactHeight, heroHeight: heroHeight
-      ) { search = .base }
+      VStack(spacing: compact ? 12 : 20) {
+        Spacer(minLength: 0)
+        BaseCurrencyPreview(model: model, compact: compact)
+          .frame(minHeight: textSize.isAccessibilitySize ? nil : compact ? 96 : 188)
+        if !previewOnly && !textSize.isAccessibilitySize {
+          BaseCurrencyChoices(model: model) { search = .base }
+            .frame(height: compact ? 140 : 190)
+        }
+        Spacer(minLength: 0)
+      }
+      .frame(maxHeight: textSize.isAccessibilitySize ? nil : 520)
+      .frame(maxHeight: .infinity)
+      .modifier(reveal(progress, offset: 24, scale: 0.96))
     case .selection:
-      selection(progress: progress)
+      VStack(spacing: compact ? 12 : 20) {
+        Spacer(minLength: 0)
+        selectionPreview(compact: compact)
+          .frame(minHeight: textSize.isAccessibilitySize ? nil : compact ? 96 : 188)
+        if !previewOnly {
+          selectionChoices(compact: compact)
+            .frame(minHeight: textSize.isAccessibilitySize ? nil : compact ? 140 : 190)
+        }
+        Spacer(minLength: 0)
+      }
+      .frame(maxHeight: textSize.isAccessibilitySize ? nil : 520)
+      .frame(maxHeight: .infinity)
+      .modifier(reveal(progress, offset: 24, scale: 0.96))
     case .homeScreen, .widgets:
       widgets(step, model.snapshot, model.draft, $guide) {
         navigate { model.continueFromWidgets() }
@@ -380,38 +415,60 @@ struct OnboardingScreen<Widgets: View>: View {
     }
   }
 
-  private var heroHeight: CGFloat { textSize.isAccessibilitySize ? 0 : compactHeight ? 80 : 96 }
-
-  private func selection(progress: CGFloat) -> some View {
-    VStack(spacing: compactHeight ? 12 : 20) {
-      VStack(spacing: 8) {
-        HStack(spacing: 8) {
-          CurrencyIcon(model.draft.source, size: 24).accessibilityHidden(true)
-          Text("\(CurrencyDisplay.inputAmount("100", locale: locale)) \(model.draft.source)")
-            .font(
-              .system(
-                size: compactHeight ? amountSize * 0.8 : amountSize, weight: .semibold,
-                design: .rounded)
-            )
+  private func selectionPreview(compact: Bool) -> some View {
+    VStack(spacing: 16) {
+      if compact && !textSize.isAccessibilitySize {
+        HStack(spacing: 10) {
+          Text(CurrencyDisplay.inputAmount("100", locale: locale))
+            .font(.system(size: amountSize * 0.6, weight: .semibold, design: .rounded))
             .monospacedDigit().lineLimit(1).minimumScaleFactor(0.5)
+          HStack(spacing: 6) {
+            CurrencyIcon(model.draft.source, size: 22).accessibilityHidden(true)
+            Text(model.draft.source).font(AppStyle.font(.headline))
+          }
         }
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("onboarding.baseContext")
-        Group {
-          if tickerQuotes.isEmpty {
-            Text(.Onboarding.emptySelection).font(AppStyle.font(.subheadline))
-              .foregroundStyle(.secondary)
-              .frame(maxWidth: .infinity, minHeight: tickerHeight)
-          } else {
-            ConversionTicker(
-              quotes: tickerQuotes, moving: moving && !navigating,
-              accessibilitySummary: String(localized: .Onboarding.conversionPreview)
-            )
-            .frame(height: tickerHeight)
+      } else {
+        VStack(spacing: 8) {
+          Text(.Onboarding.baseContext).font(AppStyle.font(.caption)).foregroundStyle(.secondary)
+          VStack(spacing: 4) {
+            Text(CurrencyDisplay.inputAmount("100", locale: locale))
+              .font(
+                .system(
+                  size: compact ? amountSize * 0.875 : amountSize, weight: .semibold,
+                  design: .rounded
+                )
+              )
+              .monospacedDigit().lineLimit(1).minimumScaleFactor(0.5)
+            HStack(spacing: 8) {
+              CurrencyIcon(model.draft.source, size: 24).accessibilityHidden(true)
+              Text(model.draft.source).font(AppStyle.font(.title2, weight: .semibold))
+            }
           }
+          .foregroundStyle(Color.primary)
+          .accessibilityElement(children: .combine)
+          .accessibilityIdentifier("onboarding.baseContext")
         }
       }
-      .frame(minHeight: heroHeight)
+      Group {
+        if tickerQuotes.isEmpty {
+          Text(.Onboarding.emptySelection).font(AppStyle.font(.subheadline))
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, minHeight: tickerHeight)
+        } else {
+          ConversionTicker(
+            quotes: tickerQuotes, moving: moving && !navigating,
+            accessibilitySummary: String(localized: .Onboarding.conversionPreview)
+          )
+          .frame(height: compact ? tickerHeight * 0.75 : tickerHeight)
+        }
+      }
+    }
+  }
+
+  private func selectionChoices(compact: Bool) -> some View {
+    VStack(spacing: 16) {
       if model.shouldOfferRateRetry {
         HStack(spacing: 8) {
           VStack(alignment: .leading, spacing: 4) {
@@ -461,22 +518,44 @@ struct OnboardingScreen<Widgets: View>: View {
         VStack(alignment: .leading, spacing: 12) {
           Text(.Onboarding.popularCurrencies).font(AppStyle.font(.headline, weight: .bold))
             .padding(.horizontal, 24)
-          OnboardingRecommendationList {
-            ForEach(recommendations, id: \.self) { code in recommendation(code) }
-            if !recommendations.count.isMultiple(of: 2) {
-              OnboardingMoreCurrenciesTile { search = .destinations }
+          ScrollView(.horizontal) {
+            HStack(spacing: 10) {
+              ForEach(recommendations, id: \.self) { code in recommendation(code, compact: compact)
+              }
+              OnboardingMoreCurrenciesTile(compact: compact) { search = .destinations }
             }
+            .padding(.horizontal, 24)
           }
+          .scrollIndicators(.hidden)
+          .clipped()
           .accessibilityIdentifier("onboarding.recommendations")
-          if recommendations.count.isMultiple(of: 2) {
-            OnboardingMoreCurrenciesTile(fullWidth: true) { search = .destinations }
-              .padding(.horizontal, 24)
-          }
         }
       }
     }
-    .padding(.vertical, 12)
-    .modifier(reveal(progress, offset: 24, scale: 0.96))
+    .padding(.vertical, compact ? 0 : 12)
+  }
+
+  private var stagedChoices: some View {
+    ZStack(alignment: .top) {
+      ForEach([leavingStep, displayedStep].compactMap { $0 }, id: \.self) { step in
+        Group {
+          if step == .baseCurrency && !textSize.isAccessibilitySize {
+            BaseCurrencyChoices(model: model) { search = .base }
+          } else if step == .selection {
+            selectionChoices(compact: false)
+          }
+        }
+        .frame(minHeight: textSize.isAccessibilitySize ? nil : 190, alignment: .top)
+        .modifier(reveal(step == displayedStep ? arrival : 1, offset: 24, scale: 0.96))
+        .modifier(
+          OnboardingDeparture(
+            progress: step == leavingStep ? departure : 0,
+            forward: forward, reduced: reduceMotion || textSize.isAccessibilitySize)
+        )
+        .accessibilityHidden(step != displayedStep)
+        .allowsHitTesting(step == displayedStep && !navigating)
+      }
+    }
   }
 
   private var recommendations: [String] {
@@ -493,10 +572,10 @@ struct OnboardingScreen<Widgets: View>: View {
           locale: locale))
     }
   }
-  private func recommendation(_ code: String) -> some View {
+  private func recommendation(_ code: String, compact: Bool) -> some View {
     OnboardingCurrencyTile(
       code: code, selected: model.draft.manualDestinations.contains(code),
-      available: model.isAvailable(code),
+      available: model.isAvailable(code), compact: compact,
       identifier: "onboarding.recommendation.\(code)"
     ) { model.toggle(code) }
   }
