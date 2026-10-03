@@ -16,7 +16,6 @@ public struct OnboardingWidgetShowcase: View {
   private let onGuideFinished: () -> Void
   @Binding private var guideRequested: Bool
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
-  @Environment(\.dynamicTypeSize) private var textSize
   @State private var page: WidgetShowcaseKind? = .calculator
   private let featured: [WidgetShowcaseKind] = [.calculator, .history, .board]
   @State private var families: [WidgetShowcaseKind: WidgetFamily] = [:]
@@ -39,35 +38,14 @@ public struct OnboardingWidgetShowcase: View {
   /// A paging showcase with family controls and an installation guide in the same navigation stack.
   public var body: some View {
     GeometryReader { geometry in
-      let accessible = textSize.isAccessibilitySize
-      let heroHeight = max(120, min(380, geometry.size.height - (accessible ? 320 : 218)))
       ScrollView {
-        VStack(spacing: AppStyle.Space.medium) {
-          carousel(width: geometry.size.width, height: heroHeight)
-          VStack(spacing: AppStyle.Space.xs) {
-            Text(selected.title)
-              .font(AppStyle.font(.headline)).accessibilityAddTraits(.isHeader)
-            Text(interactionDetail)
-              .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
-              .fixedSize(horizontal: false, vertical: true)
-            if OnboardingWidgetConfiguration(kind: selected, snapshot: snapshot, input: input)
-              .isSample
-            {
-              Text(.WidgetOnboarding.previewSampleRates)
-                .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
-            }
+        WidgetShowcaseLayout(availableHeight: geometry.size.height) {
+          GeometryReader { preview in
+            carousel(width: preview.size.width, height: preview.size.height)
           }
-          .multilineTextAlignment(.center).padding(.horizontal, AppStyle.Space.section)
-          familyControl
-            .padding(.horizontal, AppStyle.Space.section)
-          pageControl
-          Text(.WidgetOnboarding.moreWidgetsInApp)
-            .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
-            .fixedSize(horizontal: false, vertical: true)
-            .multilineTextAlignment(.center).padding(.horizontal, AppStyle.Space.section)
+          showcaseControls
         }
-        .frame(maxWidth: .infinity)
-        .frame(minHeight: geometry.size.height, alignment: .center)
+        .frame(width: geometry.size.width)
       }
       .scrollBounceBehavior(.basedOnSize)
       .scrollIndicators(.hidden)
@@ -80,6 +58,34 @@ public struct OnboardingWidgetShowcase: View {
         }
       }
     }
+  }
+
+  private var showcaseControls: some View {
+    VStack(spacing: AppStyle.Space.small) {
+      VStack(spacing: AppStyle.Space.xs) {
+        Text(selected.title)
+          .font(AppStyle.font(.headline)).accessibilityAddTraits(.isHeader)
+        Text(interactionDetail)
+          .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
+          .fixedSize(horizontal: false, vertical: true)
+        if OnboardingWidgetConfiguration(kind: selected, snapshot: snapshot, input: input)
+          .isSample
+        {
+          Text(.WidgetOnboarding.previewSampleRates)
+            .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
+        }
+      }
+      .multilineTextAlignment(.center).padding(.horizontal, AppStyle.Space.section)
+      familyControl
+        .padding(.horizontal, AppStyle.Space.section)
+      pageControl
+      Text(.WidgetOnboarding.moreWidgetsInApp)
+        .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
+        .multilineTextAlignment(.center).padding(.horizontal, AppStyle.Space.section)
+    }
+    .frame(maxWidth: .infinity)
+    .fixedSize(horizontal: false, vertical: true)
   }
 
   private var interactionDetail: String {
@@ -158,6 +164,46 @@ public struct OnboardingWidgetShowcase: View {
         .accessibilityIdentifier("onboarding.widget.\(kind.rawValue)")
       }
     }
+  }
+}
+
+private struct WidgetShowcaseLayout: Layout {
+  let availableHeight: CGFloat
+  private let spacing = AppStyle.Space.medium
+  private let bottomInset = AppStyle.Space.section
+  private let minimumPreviewHeight: CGFloat = 104
+  private let maximumPreviewHeight: CGFloat = 380
+
+  func sizeThatFits(
+    proposal: ProposedViewSize, subviews: Subviews, cache: inout ()
+  ) -> CGSize {
+    let width = proposal.width ?? 0
+    guard subviews.count == 2 else { return CGSize(width: width, height: availableHeight) }
+    let controls = subviews[1].sizeThatFits(ProposedViewSize(width: width, height: nil))
+    return CGSize(
+      width: width,
+      height: max(availableHeight, minimumPreviewHeight + spacing + controls.height + bottomInset))
+  }
+
+  func placeSubviews(
+    in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()
+  ) {
+    guard subviews.count == 2 else { return }
+    let controls = subviews[1].sizeThatFits(ProposedViewSize(width: bounds.width, height: nil))
+    let previewHeight = min(
+      maximumPreviewHeight,
+      max(minimumPreviewHeight, bounds.height - spacing - controls.height - bottomInset))
+    let topInset = max(
+      0, (bounds.height - previewHeight - spacing - controls.height - bottomInset) / 2)
+    subviews[0]
+      .place(
+        at: CGPoint(x: bounds.minX, y: bounds.minY + topInset), anchor: .topLeading,
+        proposal: ProposedViewSize(width: bounds.width, height: previewHeight))
+    subviews[1]
+      .place(
+        at: CGPoint(x: bounds.minX, y: bounds.minY + topInset + previewHeight + spacing),
+        anchor: .topLeading,
+        proposal: ProposedViewSize(width: bounds.width, height: controls.height))
   }
 }
 

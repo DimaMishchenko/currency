@@ -210,34 +210,33 @@ struct OnboardingScreen<Widgets: View>: View {
   private var navigationControls: some ToolbarContent {
     if !guide {
       ToolbarItem(placement: .topBarLeading) {
-        if model.step == .welcome {
-          Color.clear.frame(width: 44, height: 44)
-            .allowsHitTesting(false).accessibilityHidden(true)
-        } else {
+        HStack(spacing: 0) {
           Button(.Onboarding.back, systemImage: "chevron.backward") {
             settleTransition()
             navigate { model.back() }
           }
           .labelStyle(.iconOnly).tint(nil)
+          .frame(width: 44, height: 44)
+          .opacity(model.step == .welcome ? 0 : 1)
+          .disabled(model.step == .welcome)
+          .accessibilityHidden(model.step == .welcome)
           .accessibilityIdentifier("onboarding.back")
+          if hasSearch {
+            Button(.Onboarding.searchAction, systemImage: "magnifyingglass") {
+              settleTransition()
+              search = model.step == .baseCurrency ? .base : .destinations
+            }
+            .labelStyle(.iconOnly).tint(nil)
+            .frame(width: 44, height: 44)
+            .matchedTransitionSource(id: "search", in: searchMotion)
+            .accessibilityIdentifier(
+              model.step == .baseCurrency ? "onboarding.baseSearch" : "onboarding.search")
+          }
         }
+        .frame(width: hasSearch ? 88 : 44, height: 44)
       }
       .sharedBackgroundVisibility(model.step == .welcome ? .hidden : .automatic)
     }
-    ToolbarItem(placement: .topBarTrailing) {
-      Button(.Onboarding.searchAction, systemImage: "magnifyingglass") {
-        settleTransition()
-        search = model.step == .baseCurrency ? .base : .destinations
-      }
-      .labelStyle(.iconOnly).tint(nil)
-      .matchedTransitionSource(id: "search", in: searchMotion)
-      .opacity(hasSearch ? 1 : 0)
-      .disabled(!hasSearch)
-      .accessibilityHidden(!hasSearch)
-      .accessibilityIdentifier(
-        model.step == .baseCurrency ? "onboarding.baseSearch" : "onboarding.search")
-    }
-    .sharedBackgroundVisibility(hasSearch ? .automatic : .hidden)
   }
 
   private var hasSearch: Bool {
@@ -280,6 +279,7 @@ struct OnboardingScreen<Widgets: View>: View {
   private func stagedScene(_ step: OnboardingModel.Step, height: CGFloat) -> some View {
     sceneContent(step, progress: step == displayedStep ? arrival : 1)
       .frame(maxWidth: step == .baseCurrency || step == .selection ? 640 : .infinity)
+      .frame(height: step == .homeScreen || step == .widgets || step == .ready ? height : nil)
       .frame(minHeight: height, alignment: .top)
       .modifier(
         OnboardingDeparture(
