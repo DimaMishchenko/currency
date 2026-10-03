@@ -131,41 +131,24 @@ struct SettingsScreen: View {
   }
 
   private var themeControl: some View {
-    Menu {
-      Picker(
-        .Settings.theme,
-        selection: Binding(
-          get: { model.preferences.theme },
-          set: { value in model.setTheme(value) }
-        )
-      ) {
-        ForEach(SettingsTheme.allCases) { theme in
-          Text(theme.title).tag(theme)
-        }
+    Picker(
+      selection: Binding(
+        get: { model.preferences.theme },
+        set: { value in model.setTheme(value) }
+      )
+    ) {
+      ForEach(SettingsTheme.allCases) { theme in
+        Text(theme.title).tag(theme)
       }
-      .pickerStyle(.inline)
     } label: {
-      settingsValueRow {
-        Label {
-          Text(.Settings.theme).foregroundStyle(Color.primary)
-        } icon: {
-          Image(systemName: "circle.lefthalf.filled").foregroundStyle(.tint)
-        }
-      } value: {
-        HStack(spacing: AppStyle.Space.small) {
-          Text(model.preferences.theme.title)
-          Image(systemName: "chevron.up.chevron.down")
-            .font(AppStyle.font(.caption, weight: .semibold))
-            .accessibilityHidden(true)
-        }
-        .foregroundStyle(.tint)
+      Label {
+        Text(.Settings.theme).foregroundStyle(Color.primary)
+      } icon: {
+        Image(systemName: "circle.lefthalf.filled").foregroundStyle(.tint)
       }
-      .contentShape(Rectangle())
     }
-    .buttonStyle(.plain)
-    .accessibilityLabel(.Settings.theme)
+    .pickerStyle(.menu)
     .accessibilityIdentifier("settings.theme")
-    .accessibilityValue(Text(model.preferences.theme.title))
   }
 
   private var accentControl: some View {
@@ -216,6 +199,7 @@ struct SettingsScreen: View {
     .accessibilityLabel(.Settings.accentColor)
     .accessibilityIdentifier("settings.accent")
     .accessibilityValue(Text(model.preferences.accent.title))
+    .id(model.preferences.accent)
     .onChange(of: model.preferences.accent) { _, _ in AppHaptics.play(.selection) }
   }
 
@@ -232,22 +216,28 @@ struct SettingsScreen: View {
     @ViewBuilder title: () -> Title,
     @ViewBuilder value: () -> Value
   ) -> some View {
-    ViewThatFits(in: .horizontal) {
-      if !dynamicTypeSize.isAccessibilitySize {
-        HStack(spacing: AppStyle.Space.medium) {
-          title().fixedSize()
-          Spacer(minLength: 0)
-          value().fixedSize()
+    Group {
+      if dynamicTypeSize.isAccessibilitySize {
+        VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
+          title().fixedSize(horizontal: false, vertical: true)
+          value().fixedSize(horizontal: false, vertical: true)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .multilineTextAlignment(.leading)
+      } else {
+        HStack(spacing: AppStyle.Space.medium) {
+          title()
+            .fixedSize(horizontal: false, vertical: true)
+            .multilineTextAlignment(.leading)
+          Spacer(minLength: 0)
+          value()
+            .fixedSize(horizontal: false, vertical: true)
+            .multilineTextAlignment(.trailing)
+        }
+        .fixedSize(horizontal: false, vertical: true)
       }
-      VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
-        title().fixedSize(horizontal: false, vertical: true)
-        value().fixedSize(horizontal: false, vertical: true)
-      }
-      .frame(maxWidth: .infinity, alignment: .leading)
     }
     .labelStyle(.titleAndIcon)
-    .multilineTextAlignment(.leading)
   }
 
   private func timestamp(_ date: Date) -> String {

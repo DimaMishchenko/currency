@@ -34,6 +34,12 @@ import SwiftUI
   var body: some Scene {
     WindowGroup {
       NavigationStack { SettingsEntry(flowID: flowID) }
+        .environment(
+          \.locale,
+          Locale(
+            identifier: UserDefaults.standard.string(forKey: "AppleLocale")
+              ?? Locale.current.identifier)
+        )
         .environment(appearance)
         .tint(appearance.accent)
         .preferredColorScheme(appearance.theme.colorScheme)
