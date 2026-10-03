@@ -80,9 +80,3 @@ Production and harness builds, strict formatting, all 36 Onboarding tests, and i
 Portrait currency selection moves down 16 points where the scene has sufficient height. Horizontal choice rails and the conversion ticker use a short trailing fade. Landscape onboarding and widget tutorial center their copy above bottom-aligned primary and secondary actions; tutorial copy can scroll independently when needed.
 
 Production and harness builds, strict formatting, diff checks, and independent review passed. Native Duo checks covered closed portrait spacing, closed landscape fading, matching open-landscape onboarding/tutorial alignment, and tutorial Next navigation. Evidence is in `.validation/alignment-20261003/`. This spacing-only pass did not rerun the test suite or exhaustive accessibility/localization checks.
-
-### SDK compatibility
-
-The physical-division and vertical-toolbar APIs require the iOS 27.1 SDK, whose SwiftUI module version is 8.0.85.27. Compile-time module guards supplement runtime availability checks so CI can compile with the iOS 27.0 SDK. Both installed Xcodes report Swift 6.4, so a compiler-version guard cannot distinguish them.
-
-Build with the iOS 27.1 SDK to retain physical-fold detection and vertical toolbar preferences. Older-SDK builds use the standard geometry and toolbar fallbacks on every OS, including iOS 27.1. The guard does not alter the newer-SDK layout implementations.
