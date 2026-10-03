@@ -182,8 +182,7 @@ struct WidgetTutorial: View {
       let division = activeDivision(in: geometry)
       let wide =
         !textSize.isAccessibilitySize
-        && (geometry.size.width >= 700
-          || (geometry.size.width >= 550 && geometry.size.width > geometry.size.height * 1.2))
+        && geometry.size.width >= 550 && geometry.size.width > geometry.size.height
       AdaptivePairLayout(
         division: division, wide: wide, rightToLeft: layoutDirection == .rightToLeft
       ) {
