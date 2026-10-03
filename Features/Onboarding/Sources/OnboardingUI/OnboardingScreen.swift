@@ -160,6 +160,7 @@ struct OnboardingScreen<Widgets: View>: View {
       let division = activeDivision(in: geometry)
       let wide =
         geometry.size.width > geometry.size.height && !accessible
+        && !(displayedStep == .ready && geometry.size.height < 500)
       let split = wide || division != nil
       AdaptivePairLayout(
         division: division, wide: wide, rightToLeft: layoutDirection == .rightToLeft
@@ -224,6 +225,14 @@ struct OnboardingScreen<Widgets: View>: View {
       }
       .sharedBackgroundVisibility(model.step == .welcome ? .hidden : .automatic)
     }
+    if #available(iOS 27.1, *) {
+      searchControl.axisBehavior(.verticalPreferred)
+    } else {
+      searchControl
+    }
+  }
+
+  private var searchControl: some ToolbarContent {
     ToolbarItem(placement: .topBarTrailing) {
       Button(.Onboarding.searchAction, systemImage: "magnifyingglass") {
         settleTransition()
