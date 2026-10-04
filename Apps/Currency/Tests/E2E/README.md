@@ -132,7 +132,7 @@ All seven cases were selected and executed on each profile with the same Debug a
 
 The iPad picker failure was traced to regular snapshot projection discarding the toolbar's equal-frame sibling and parent. A small upstream driver patch preserves that geometry in TypeScript and Swift without changing occlusion rules. With that patch, all five core journeys passed together in **5m 50s**, plus **1.4s** preparation. The two destination-addition goals now explicitly preserve the source currency on every device. No app code or iPad-specific journey was added. Patch and evidence: `.validation/e2e/ipad-picker-fix`.
 
-The published `agent-device` 0.21.20 override does not include this projection fix. The local dependency swap was removed after validation; adopt the upstream release when available. Both iPad widget cases still fail at initial USD-value readiness because widget descendants are missing from the snapshot. Their recheck took **1m 27s**, with no model calls. No numerical assertion was bypassed.
+The published `agent-device` 0.21.20 does not include this projection fix. The local dependency swap was removed after validation; adopt the upstream release when available. Both iPad widget cases still fail at initial USD-value readiness because widget descendants are missing from the snapshot. Their recheck took **1m 27s**, with no model calls. No numerical assertion was bypassed.
 
 The clarified currency-management journey also passed on iPhone with the published driver in **2m 28s**, plus **50s** cold preparation. Five obsolete recordings for the old destination-addition goals were removed after both devices passed; all 52 retained entries pass the runner's trace schema validation.
 
@@ -157,4 +157,4 @@ AGENT_DEVICE_STATE_DIR="$PWD/.local/agent-device" npx agent-device daemon stop
 xcrun simctl shutdown "$CURRENCY_E2E_UDID"
 ```
 
-The driver override supplies the [iOS toolbar occlusion fix](https://github.com/callstack/agent-device/pull/3097); [upstream E2E PR](https://github.com/tester-army/e2e/pull/791) proposes the dependency update. The state directory keeps this suite’s helper separate from other tasks. Revisit the dependency override after the upstream update is released. Unauthenticated replay is not a supported suite configuration; cache context rejection remains a known limitation.
+`@e2e-dev/mobile` 0.9.2 ships `agent-device` 0.21.20 with the [iOS toolbar occlusion fix](https://github.com/callstack/agent-device/pull/3097), following [upstream E2E PR](https://github.com/tester-army/e2e/pull/791). No dependency override is needed. The state directory keeps this suite’s helper separate from other tasks. Unauthenticated replay is not a supported suite configuration; cache context rejection remains a known limitation.

@@ -12,14 +12,9 @@
     "typecheck": "tsc --noEmit",
     "test:e2e:widgets": "AGENT_DEVICE_STATE_DIR=$PWD/.local/agent-device e2e run --tag widgets"
   },
-  "overrides": {
-    "@e2e-dev/mobile": {
-      "agent-device": "0.21.20"
-    }
-  },
   "devDependencies": {
     "@ai-sdk/openai": "4.0.71",
-    "@e2e-dev/mobile": "0.9.1",
+    "@e2e-dev/mobile": "0.9.2",
     "@types/node": "26.6.2",
     "ai": "7.0.107",
     "e2e": "0.16.0",
