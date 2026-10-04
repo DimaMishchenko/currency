@@ -1,0 +1,120 @@
+{
+  "schemaVersion": "trace-1",
+  "createdAt": "2026-10-03T22:49:48.061Z",
+  "payload": {
+    "actions": [
+      {
+        "name": "tap",
+        "summary": "tap button \"Continue\"",
+        "target": {
+          "role": "button",
+          "name": "Continue",
+          "testId": "onboarding.primary",
+          "selector": "id=onboarding.primary"
+        }
+      },
+      {
+        "name": "tap",
+        "summary": "tap button \"Back\"",
+        "target": {
+          "role": "button",
+          "name": "Back",
+          "testId": "onboarding.back",
+          "selector": "id=onboarding.back"
+        }
+      },
+      {
+        "name": "tap",
+        "summary": "tap button \"Continue\"",
+        "target": {
+          "role": "button",
+          "name": "Continue",
+          "testId": "onboarding.primary",
+          "selector": "id=onboarding.primary"
+        }
+      },
+      {
+        "name": "tap",
+        "summary": "tap button \"Explore widgets\"",
+        "target": {
+          "role": "button",
+          "name": "Explore widgets",
+          "testId": "onboarding.primary",
+          "selector": "id=onboarding.primary"
+        }
+      },
+      {
+        "name": "tap",
+        "summary": "tap button \"Later\"",
+        "target": {
+          "role": "button",
+          "name": "Later",
+          "testId": "onboarding.later",
+          "selector": "id=onboarding.later"
+        }
+      },
+      {
+        "name": "tap",
+        "summary": "tap button \"Get started\"",
+        "target": {
+          "role": "button",
+          "name": "Get started",
+          "testId": "onboarding.primary",
+          "selector": "id=onboarding.primary"
+        }
+      }
+    ],
+    "executor": {
+      "name": "e2e-default-agent",
+      "version": "2"
+    },
+    "recordedFor": {
+      "testId": "tests/onboarding.e2e.ts::onboarding%20keeps%20currency%20choices%20when%20going%20back%20and%20after%20restart",
+      "targetId": "owned-iphone",
+      "instructionDigest": "a9d55279dca7fe3af1f429e9d9e20f98b109e235eccbcfdbc0bc00580d36ce11"
+    },
+    "summary": "Kept CHF as the base with EUR and USD destinations, skipped widget setup using Later, and tapped Get started. The onboarding finished and the converter is now visible with CHF, EUR, and USD.",
+    "startPath": "com.dimasike.currency / Back",
+    "endPath": "com.dimasike.currency / Source currency, Swiss Franc",
+    "endAnchors": [
+      {
+        "role": "image",
+        "name": "Go Down",
+        "testId": "chevron.down"
+      },
+      {
+        "role": "image",
+        "name": "Grid View",
+        "testId": "square.grid.2x2"
+      },
+      {
+        "role": "image",
+        "name": "More",
+        "testId": "ellipsis"
+      },
+      {
+        "role": "text",
+        "name": "Swiss Franc"
+      },
+      {
+        "role": "text",
+        "name": "Enter amount"
+      },
+      {
+        "role": "image",
+        "name": "Keyboard",
+        "testId": "keyboard"
+      },
+      {
+        "role": "button",
+        "name": "Add currency",
+        "testId": "plus"
+      },
+      {
+        "role": "other",
+        "name": "Source currency, Swiss Franc"
+      }
+    ],
+    "endWaitMs": 13759
+  }
+}

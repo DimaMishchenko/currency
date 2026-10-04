@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "trace-1",
+  "createdAt": "2026-10-04T11:09:08.611Z",
+  "payload": {
+    "actions": [
+      {
+        "name": "tap",
+        "summary": "tap button \"Edit amount in EUR\"",
+        "target": {
+          "role": "button",
+          "name": "Edit amount in EUR"
+        }
+      },
+      {
+        "name": "tap",
+        "summary": "tap button \"4\"",
+        "target": {
+          "role": "button",
+          "name": "4"
+        }
+      },
+      {
+        "name": "tap",
+        "summary": "tap button \"2\"",
+        "target": {
+          "role": "button",
+          "name": "2"
+        }
+      },
+      {
+        "name": "tap",
+        "summary": "tap button \"Done entering amount\"",
+        "target": {
+          "role": "button",
+          "name": "Done entering amount",
+          "testId": "checkmark",
+          "selector": "id=checkmark"
+        }
+      }
+    ],
+    "executor": {
+      "name": "e2e-default-agent",
+      "version": "2"
+    },
+    "recordedFor": {
+      "testId": "tests/converter.e2e.ts::converted%20amount%20and%20currency%20choices%20survive%20restart",
+      "targetId": "ipad",
+      "instructionDigest": "43211767434cddcd6a8db0f469206344b40e7656a3ea99e873ea60da1ff2992e"
+    },
+    "summary": "Replaced the Euro source amount using keypad taps 4 then 2, verified the converter shows 42 EUR (84 USD), and finished with the keypad toolbar checkmark. The keypad is closed and the converter remains open.",
+    "startPath": "com.dimasike.currency / 🇪🇺",
+    "endPath": "com.dimasike.currency / 🇪🇺",
+    "endAnchors": [
+      {
+        "role": "button",
+        "name": "US Dollar, 84"
+      }
+    ],
+    "endWaitMs": 16986
+  }
+}

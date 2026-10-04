@@ -1,0 +1,28 @@
+{
+  "name": "currency-local-agent-e2e",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "test:e2e": "AGENT_DEVICE_STATE_DIR=$PWD/.local/agent-device e2e run --tag core",
+    "test:e2e:extended": "AGENT_DEVICE_STATE_DIR=$PWD/.local/agent-device e2e run --tag extended",
+    "typecheck": "tsc --noEmit",
+    "test:e2e:widgets": "AGENT_DEVICE_STATE_DIR=$PWD/.local/agent-device e2e run --tag widgets"
+  },
+  "overrides": {
+    "@e2e-dev/mobile": {
+      "agent-device": "0.21.20"
+    }
+  },
+  "devDependencies": {
+    "@ai-sdk/openai": "4.0.71",
+    "@e2e-dev/mobile": "0.9.1",
+    "@types/node": "26.6.2",
+    "ai": "7.0.107",
+    "e2e": "0.16.0",
+    "typescript": "7.0.2"
+  }
+}

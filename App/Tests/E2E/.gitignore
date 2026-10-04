@@ -1,0 +1,4 @@
+node_modules/
+.local/
+.e2e/*
+!.e2e/cache/

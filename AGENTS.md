@@ -1,0 +1,9 @@
+# Functional verification
+
+Maintain the real-app journeys in `App/Tests/E2E` instead of repeating manual screen tours for covered behavior. Use `Documentation/FeatureMap.md` for the app-wide capabilities and expected outcomes, including features without E2E coverage. Follow the E2E README for setup, test mapping and limitations.
+
+When a change adds, removes or changes app functionality, update `Documentation/FeatureMap.md` with the current entry points and expected outcomes, preserving existing feature IDs. Update the E2E README mapping when coverage changes.
+
+For functional changes, extend or add a user-visible outcome check, build the current worktree when app code/resources change, run the affected journey during iteration, and run the core suite before handoff. Manual exploration is useful for diagnosis or new coverage; turn the discovered regression into a maintained journey. Do not accept a replacement cache recording until the expected outcome is proven. Report failures/skips and separate warm test duration from build/cold preparation.
+
+Choose verification targets from the changed behavior. Use one owned iPhone by default; add iPad checks for layout, sizing or tablet-specific behavior, and widget journeys for widget or shared-data changes. Run additional profiles when relevant or explicitly requested. Keep journeys shared across devices unless the user flow differs. Consult the E2E README for current driver limitations and report blocked checks. Duo verification is deferred.

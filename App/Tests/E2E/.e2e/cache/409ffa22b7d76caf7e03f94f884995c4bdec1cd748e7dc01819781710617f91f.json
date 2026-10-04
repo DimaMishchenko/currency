@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "trace-1",
+  "createdAt": "2026-10-03T23:28:46.705Z",
+  "payload": {
+    "actions": [
+      {
+        "name": "tap",
+        "summary": "tap button \"US Dollar, 2\"",
+        "target": {
+          "role": "button",
+          "name": "US Dollar, 2"
+        }
+      },
+      {
+        "name": "tap",
+        "summary": "tap button \"US Dollar details and history\"",
+        "target": {
+          "role": "button",
+          "name": "US Dollar details and history",
+          "testId": "converter.history",
+          "selector": "id=converter.history"
+        }
+      }
+    ],
+    "executor": {
+      "name": "e2e-default-agent",
+      "version": "2"
+    },
+    "recordedFor": {
+      "testId": "tests/converter-details.e2e.ts::converter%20state%20survives%20inspecting%20history%20and%20rate%20sources",
+      "targetId": "duo-closed",
+      "instructionDigest": "b1c12ef5fe04eeaffc5faef5398dfbf464120c7e0e8c1af01c543ac187f3695d"
+    },
+    "summary": "Opened Details & history for the US Dollar destination currency. The USD details view is displayed with exchange-rate history.",
+    "startPath": "com.dimasike.currency / 🇪🇺",
+    "endPath": "com.dimasike.currency / 🇺🇸",
+    "endAnchors": [
+      {
+        "role": "other",
+        "name": "dismiss popup",
+        "testId": "PopoverDismissRegion"
+      },
+      {
+        "role": "text",
+        "name": "1 USD in EUR"
+      },
+      {
+        "role": "text",
+        "name": "0.5"
+      },
+      {
+        "role": "text",
+        "name": "HISTORY"
+      },
+      {
+        "role": "tab",
+        "name": "One week"
+      },
+      {
+        "role": "tab",
+        "name": "One month"
+      },
+      {
+        "role": "tab",
+        "name": "Three months"
+      },
+      {
+        "role": "tab",
+        "name": "Year to date"
+      }
+    ],
+    "endWaitMs": 13611
+  }
+}

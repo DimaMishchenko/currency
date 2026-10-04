@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "trace-1",
+  "createdAt": "2026-10-03T19:33:09.133Z",
+  "payload": {
+    "actions": [
+      {
+        "name": "tap",
+        "summary": "tap button \"Add currency\"",
+        "target": {
+          "role": "button",
+          "name": "Add currency",
+          "testId": "plus",
+          "selector": "id=plus"
+        }
+      },
+      {
+        "name": "tap",
+        "summary": "tap textbox \"Search\"",
+        "target": {
+          "role": "textbox",
+          "name": "Search",
+          "placeholder": "Search"
+        }
+      },
+      {
+        "name": "type",
+        "summary": "type \"CHF\" into textbox \"Search\"",
+        "target": {
+          "role": "textbox",
+          "name": "Search",
+          "placeholder": "Search"
+        },
+        "value": "CHF"
+      },
+      {
+        "name": "tap",
+        "summary": "tap button \"CHF, Swiss Franc\"",
+        "target": {
+          "role": "button",
+          "name": "CHF, Swiss Franc",
+          "testId": "currency.picker.CHF",
+          "selector": "id=currency.picker.CHF"
+        }
+      }
+    ],
+    "executor": {
+      "name": "e2e-default-agent",
+      "version": "2"
+    },
+    "recordedFor": {
+      "testId": "tests/app-to-widget.e2e.ts::app%20amount%20and%20currency%20additions%20update%20the%20Home%20Screen%20calculator",
+      "targetId": "owned-iphone",
+      "instructionDigest": "5be7c0ee1f9a266b5dd661671c901b826964d3ddbba10a8fab8b1a9923dc68a1"
+    },
+    "summary": "Searched for CHF, selected Swiss Franc (CHF), and returned to the converter. The converter shows 42 EUR, with the existing US Dollar destination and Swiss Franc added.",
+    "startPath": "com.dimasike.currency / 🇪🇺",
+    "endPath": "com.dimasike.currency / 🇪🇺",
+    "endAnchors": [
+      {
+        "role": "text",
+        "name": "🇨🇭"
+      },
+      {
+        "role": "text",
+        "name": "CHF"
+      },
+      {
+        "role": "text",
+        "name": "Swiss Franc"
+      },
+      {
+        "role": "button",
+        "name": "Swiss Franc, 21"
+      }
+    ],
+    "endWaitMs": 15843
+  }
+}

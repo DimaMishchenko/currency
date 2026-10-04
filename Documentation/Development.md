@@ -1,5 +1,7 @@
 # Development
 
+The [feature map](FeatureMap.md) inventories app capabilities and acceptance outcomes. Use it to select verification; the [agent E2E guide](../App/Tests/E2E/README.md) maps implemented journeys and their coverage gaps.
+
 ## Working locally
 
 Use Xcode and the Tuist version pinned in `.mise.toml`. With [mise](https://mise.jdx.dev/), run `mise install` and use `mise exec --` before Tuist commands, or activate mise in your shell. Toolchain and deployment requirements live in the manifests.

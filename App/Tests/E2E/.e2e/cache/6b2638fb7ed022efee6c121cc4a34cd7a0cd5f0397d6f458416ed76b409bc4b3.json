@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "trace-1",
+  "createdAt": "2026-10-04T11:21:40.124Z",
+  "payload": {
+    "actions": [
+      {
+        "name": "tap",
+        "summary": "tap button \"Continue\"",
+        "target": {
+          "role": "button",
+          "name": "Continue",
+          "testId": "onboarding.primary",
+          "selector": "id=onboarding.primary"
+        }
+      }
+    ],
+    "executor": {
+      "name": "e2e-default-agent",
+      "version": "2"
+    },
+    "recordedFor": {
+      "testId": "tests/onboarding.e2e.ts::onboarding%20keeps%20currency%20choices%20when%20going%20back%20and%20after%20restart",
+      "targetId": "ipad",
+      "instructionDigest": "9b5008a6d5fba086d69250ec9ad20ad3b44ec319e13012dfa41031ed2114eb01"
+    },
+    "summary": "Tapped Continue on the base currency screen. The destination-currency screen is displayed with CHF as the conversion base and both EUR and USD still marked Selected.",
+    "startPath": "com.dimasike.currency / Back",
+    "endPath": "com.dimasike.currency / Back",
+    "endAnchors": [
+      {
+        "role": "text",
+        "name": "Converting from"
+      },
+      {
+        "role": "other",
+        "name": "Vertical scroll bar, 1 page"
+      },
+      {
+        "role": "text",
+        "name": "US Dollar"
+      },
+      {
+        "role": "text",
+        "name": "Euro"
+      },
+      {
+        "role": "text",
+        "name": "Unavailable"
+      },
+      {
+        "role": "text",
+        "name": "🇦🇺"
+      },
+      {
+        "role": "text",
+        "name": "AUD"
+      },
+      {
+        "role": "text",
+        "name": "Add your currencies"
+      }
+    ],
+    "endWaitMs": 17262
+  }
+}

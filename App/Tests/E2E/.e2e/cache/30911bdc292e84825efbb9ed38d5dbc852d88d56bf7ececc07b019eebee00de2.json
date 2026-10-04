@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "trace-1",
+  "createdAt": "2026-10-04T11:19:51.651Z",
+  "payload": {
+    "actions": [
+      {
+        "name": "tap",
+        "summary": "tap button \"Add currency\"",
+        "target": {
+          "role": "button",
+          "name": "Add currency",
+          "testId": "plus",
+          "selector": "id=plus"
+        }
+      },
+      {
+        "name": "type",
+        "summary": "type \"CZK\" into textbox \"Search\"",
+        "target": {
+          "role": "textbox",
+          "name": "Search",
+          "placeholder": "Search"
+        },
+        "value": "CZK"
+      },
+      {
+        "name": "tap",
+        "summary": "tap button \"CZK, Czech Koruna\"",
+        "target": {
+          "role": "button",
+          "name": "CZK, Czech Koruna",
+          "testId": "currency.picker.CZK",
+          "selector": "id=currency.picker.CZK"
+        }
+      }
+    ],
+    "executor": {
+      "name": "e2e-default-agent",
+      "version": "2"
+    },
+    "recordedFor": {
+      "testId": "tests/currency-selection.e2e.ts::source%20changes%20and%20added%20or%20removed%20currencies%20survive%20restart",
+      "targetId": "ipad",
+      "instructionDigest": "e0abf1f1bc63690c9eb807f9bab288076c3bc7674b8bff27c7227553fe8bae31"
+    },
+    "summary": "Searched CZK in Add currency and selected Czech Koruna. Returned to the converter with US Dollar as the source and EUR, CHF, and CZK destination rows visible.",
+    "startPath": "com.dimasike.currency / 🇺🇸",
+    "endPath": "com.dimasike.currency / 🇺🇸",
+    "endAnchors": [
+      {
+        "role": "text",
+        "name": "🇨🇿"
+      },
+      {
+        "role": "text",
+        "name": "CZK"
+      },
+      {
+        "role": "text",
+        "name": "12.5"
+      },
+      {
+        "role": "text",
+        "name": "Czech Koruna"
+      },
+      {
+        "role": "button",
+        "name": "Czech Koruna, 12.5"
+      }
+    ],
+    "endWaitMs": 14097
+  }
+}

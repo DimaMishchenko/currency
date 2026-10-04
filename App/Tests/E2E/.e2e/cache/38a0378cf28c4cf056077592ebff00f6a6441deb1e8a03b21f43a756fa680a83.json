@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "trace-1",
+  "createdAt": "2026-10-03T22:50:44.370Z",
+  "payload": {
+    "actions": [
+      {
+        "name": "tap",
+        "summary": "tap button \"Dark\"",
+        "target": {
+          "role": "button",
+          "name": "Dark"
+        }
+      }
+    ],
+    "executor": {
+      "name": "e2e-default-agent",
+      "version": "2"
+    },
+    "recordedFor": {
+      "testId": "tests/preferences.e2e.ts::appearance%20preference%20survives%20app%20restart",
+      "targetId": "owned-iphone",
+      "instructionDigest": "305e1e8da3428254310f36f4fee8503250baa1fe913ba528d008876c6468162e"
+    },
+    "summary": "Dark is selected on Settings (the Theme row reads “Theme, Dark”), and the theme menu is closed.",
+    "startPath": "com.dimasike.currency",
+    "endPath": "com.dimasike.currency / Back",
+    "endAnchors": [
+      {
+        "role": "button",
+        "name": "Back",
+        "testId": "BackButton"
+      },
+      {
+        "role": "text",
+        "name": "Settings"
+      },
+      {
+        "role": "text",
+        "name": "Appearance"
+      },
+      {
+        "role": "text",
+        "name": "Dark"
+      },
+      {
+        "role": "image",
+        "name": "Circle With The Left Half Filled",
+        "testId": "circle.lefthalf.filled"
+      },
+      {
+        "role": "text",
+        "name": "Theme"
+      },
+      {
+        "role": "image",
+        "name": "Paint Palette",
+        "testId": "paintpalette"
+      },
+      {
+        "role": "text",
+        "name": "Accent color"
+      }
+    ],
+    "endWaitMs": 23320
+  }
+}

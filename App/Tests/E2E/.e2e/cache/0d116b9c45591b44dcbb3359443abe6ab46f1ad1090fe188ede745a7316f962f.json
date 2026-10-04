@@ -1,0 +1,82 @@
+{
+  "schemaVersion": "trace-1",
+  "createdAt": "2026-10-04T11:29:12.823Z",
+  "payload": {
+    "actions": [
+      {
+        "name": "tap",
+        "summary": "tap button \"Add currency\"",
+        "target": {
+          "role": "button",
+          "name": "Add currency",
+          "testId": "plus",
+          "selector": "id=plus"
+        }
+      },
+      {
+        "name": "tap",
+        "summary": "tap textbox \"Search\"",
+        "target": {
+          "role": "textbox",
+          "name": "Search",
+          "placeholder": "Search"
+        }
+      },
+      {
+        "name": "type",
+        "summary": "type \"CHF\" into textbox \"Search\"",
+        "target": {
+          "role": "textbox",
+          "name": "Search",
+          "placeholder": "Search"
+        },
+        "value": "CHF"
+      },
+      {
+        "name": "tap",
+        "summary": "tap button \"CHF, Swiss Franc\"",
+        "target": {
+          "role": "button",
+          "name": "CHF, Swiss Franc",
+          "testId": "currency.picker.CHF",
+          "selector": "id=currency.picker.CHF"
+        }
+      }
+    ],
+    "executor": {
+      "name": "e2e-default-agent",
+      "version": "2"
+    },
+    "recordedFor": {
+      "testId": "tests/currency-selection.e2e.ts::source%20changes%20and%20added%20or%20removed%20currencies%20survive%20restart",
+      "targetId": "owned-iphone",
+      "instructionDigest": "db1e1c43ebcccf19a9887a0ce1d3c522fcf16513a9a7e6f2eb55eebfc9ec6b0c"
+    },
+    "summary": "Used Add currency and its Search field to search CHF, selected Swiss Franc, and returned to the converter. US Dollar remains the source; Swiss Franc (CHF) is now listed as a destination.",
+    "startPath": "com.dimasike.currency / 🇺🇸",
+    "endPath": "com.dimasike.currency / 🇺🇸",
+    "endAnchors": [
+      {
+        "role": "text",
+        "name": "🇨🇭"
+      },
+      {
+        "role": "text",
+        "name": "CHF"
+      },
+      {
+        "role": "text",
+        "name": "0.25"
+      },
+      {
+        "role": "text",
+        "name": "Swiss Franc"
+      },
+      {
+        "role": "button",
+        "name": "Swiss Franc, 0.25"
+      }
+    ],
+    "endWaitMs": 13092
+  }
+}

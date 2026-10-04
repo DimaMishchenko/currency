@@ -24,7 +24,7 @@ final class AppComposition {
   let progress: OnboardingProgressStore
   let discovery: HomeDiscoveryStore
   let history: HistoryService
-  let service = RateService()
+  let service: RateService
   let appearance: AppearancePreferences
   let systemActions: SystemActionComposition
   lazy var searchIndex = CurrencySearchIndex.live(composition: systemActions)
@@ -39,10 +39,24 @@ final class AppComposition {
       refreshLocalCurrency: { [weak self] in await self?.foregroundLocation.refreshIfNeeded() },
       changed: { [weak self] in self?.changed() }))
 
+  static func launch() -> AppComposition {
+    #if DEBUG && targetEnvironment(simulator)
+      do {
+        if let service = try CurrencyE2EStartup.prepare() {
+          return AppComposition(service: service)
+        }
+      } catch {
+        fatalError("Currency E2E startup failed: \(error)")
+      }
+    #endif
+    return AppComposition()
+  }
+
   init(
     directory: URL = AppGroup.directory, appearance: AppearancePreferences? = nil,
-    discoveryDefaults: UserDefaults = .standard
+    discoveryDefaults: UserDefaults = .standard, service: RateService = RateService()
   ) {
+    self.service = service
     self.appearance = appearance ?? AppearancePreferences(defaults: .standard)
     rates = RateStore(directory: directory)
     conversion = ConversionStore(directory: directory)
@@ -50,7 +64,7 @@ final class AppComposition {
     progress = OnboardingProgressStore(directory: directory)
     discovery = HomeDiscoveryStore(defaults: discoveryDefaults)
     history = HistoryService(directory: directory)
-    systemActions = SystemActionComposition(directory: directory, service: service)
+    systemActions = SystemActionComposition(directory: directory, service: self.service)
     let actions = systemActions
     AppDependencyManager.shared.add(dependency: actions)
     let index = searchIndex

@@ -1,0 +1,79 @@
+{
+  "schemaVersion": "trace-1",
+  "createdAt": "2026-10-04T11:14:16.612Z",
+  "payload": {
+    "actions": [
+      {
+        "name": "tap",
+        "summary": "tap button \"Options\"",
+        "target": {
+          "role": "button",
+          "name": "Options",
+          "testId": "converter.options",
+          "selector": "id=converter.options"
+        }
+      },
+      {
+        "name": "tap",
+        "summary": "tap button \"Settings\" in \"Gear shape\"",
+        "target": {
+          "role": "button",
+          "name": "Settings",
+          "testId": "converter.settings",
+          "selector": "id=converter.settings",
+          "within": "Gear shape"
+        }
+      }
+    ],
+    "executor": {
+      "name": "e2e-default-agent",
+      "version": "2"
+    },
+    "recordedFor": {
+      "testId": "tests/preferences.e2e.ts::appearance%20preference%20survives%20app%20restart",
+      "targetId": "ipad",
+      "instructionDigest": "fd421954fa5838093e88ec6d9b23ff8d526a2eee11bce21d23502456c21282a9"
+    },
+    "summary": "Opened Options from the converter, selected Settings, and verified the Settings screen is open. Staying on Settings.",
+    "startPath": "com.dimasike.currency / Source currency, Euro",
+    "endPath": "com.dimasike.currency / Back",
+    "endAnchors": [
+      {
+        "role": "button",
+        "name": "Back",
+        "testId": "BackButton"
+      },
+      {
+        "role": "text",
+        "name": "Settings"
+      },
+      {
+        "role": "text",
+        "name": "Appearance"
+      },
+      {
+        "role": "text",
+        "name": "System"
+      },
+      {
+        "role": "image",
+        "name": "Circle With The Left Half Filled",
+        "testId": "circle.lefthalf.filled"
+      },
+      {
+        "role": "text",
+        "name": "Theme"
+      },
+      {
+        "role": "image",
+        "name": "Paint Palette",
+        "testId": "paintpalette"
+      },
+      {
+        "role": "text",
+        "name": "Accent color"
+      }
+    ],
+    "endWaitMs": 13912
+  }
+}

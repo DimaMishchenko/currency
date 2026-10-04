@@ -111,6 +111,7 @@ let project = Project(
       buildableFolders: ["App/Sources", "App/Resources"],
       entitlements: .file(path: "App/Configuration/Currency.entitlements"),
       dependencies: [
+        .external(name: "CoordinatedFiles"),
         .external(name: "Conversion"), .external(name: "CurrencyDetails"),
         .external(name: "CurrencyDetailsUI"), .external(name: "DesignSystem"),
         .external(name: "ExchangeRates"), .external(name: "ExchangeRatesUI"),
@@ -311,6 +312,7 @@ let project = Project(
       ],
       resources: ["App/Resources/Localizable.xcstrings"],
       dependencies: [
+        .external(name: "CoordinatedFiles"),
         .external(name: "CurrencyDetailsUI"), .external(name: "CurrencySelectionUI"),
         .external(name: "ExchangeRates"), .external(name: "ExchangeRatesUI"),
         .external(name: "HomeUI"), .external(name: "LocationOnboardingUI"),

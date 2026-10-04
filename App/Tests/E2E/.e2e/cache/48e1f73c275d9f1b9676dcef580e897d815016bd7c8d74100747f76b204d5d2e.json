@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "trace-1",
+  "createdAt": "2026-10-03T23:23:33.399Z",
+  "payload": {
+    "actions": [
+      {
+        "name": "tap",
+        "summary": "tap button \"Medium-sized widget\" in \"Medium widget frame\"",
+        "target": {
+          "role": "button",
+          "name": "Medium-sized widget",
+          "within": "Medium widget frame"
+        }
+      }
+    ],
+    "executor": {
+      "name": "e2e-default-agent",
+      "version": "2"
+    },
+    "recordedFor": {
+      "testId": "tests/home-screen-widget.e2e.ts::Home%20Screen%20calculator%20updates%20the%20shared%20converter%20amount",
+      "targetId": "duo-closed",
+      "instructionDigest": "f2c2b2d545a307d54fa81c76ee4ff17be95564b4d49b77ad41e0b51ba4031dc3"
+    },
+    "summary": "Selected the Medium-sized widget option. The Currency Calculator medium widget is visible on the normal Home Screen, and no editing controls remain.",
+    "startPath": "com.apple.springboard",
+    "endPath": "com.apple.springboard",
+    "endAnchors": [
+      {
+        "role": "other",
+        "name": "Suggestions",
+        "testId": "Recent icon list view"
+      },
+      {
+        "role": "other",
+        "name": "Utilities",
+        "testId": "utilities icon list view"
+      },
+      {
+        "role": "other",
+        "name": "Options"
+      },
+      {
+        "role": "element(44)",
+        "name": "Settings"
+      },
+      {
+        "role": "text",
+        "name": "🇺🇸"
+      },
+      {
+        "role": "text",
+        "name": "USD"
+      },
+      {
+        "role": "text",
+        "name": ","
+      },
+      {
+        "role": "other",
+        "testId": "label-view"
+      }
+    ],
+    "endWaitMs": 21473
+  }
+}

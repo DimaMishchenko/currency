@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "trace-1",
+  "createdAt": "2026-10-03T23:49:08.020Z",
+  "payload": {
+    "actions": [
+      {
+        "name": "tap",
+        "summary": "tap button \"Edit amount in EUR\"",
+        "target": {
+          "role": "button",
+          "name": "Edit amount in EUR"
+        }
+      },
+      {
+        "name": "tap",
+        "summary": "tap button \"4\"",
+        "target": {
+          "role": "button",
+          "name": "4"
+        }
+      },
+      {
+        "name": "tap",
+        "summary": "tap button \"2\"",
+        "target": {
+          "role": "button",
+          "name": "2"
+        }
+      },
+      {
+        "name": "tap",
+        "summary": "tap button \"Done entering amount\"",
+        "target": {
+          "role": "button",
+          "name": "Done entering amount",
+          "testId": "checkmark",
+          "selector": "id=checkmark"
+        }
+      }
+    ],
+    "executor": {
+      "name": "e2e-default-agent",
+      "version": "2"
+    },
+    "recordedFor": {
+      "testId": "tests/converter.e2e.ts::converted%20amount%20and%20currency%20choices%20survive%20restart",
+      "targetId": "owned-iphone",
+      "instructionDigest": "43211767434cddcd6a8db0f469206344b40e7656a3ea99e873ea60da1ff2992e"
+    },
+    "summary": "Replaced the Euro amount with 42 using keypad digits 4 then 2, confirmed with the keypad checkmark, and remained on the converter showing 42 EUR.",
+    "startPath": "com.dimasike.currency / Source currency, Euro",
+    "endPath": "com.dimasike.currency / Source currency, Euro",
+    "endAnchors": [
+      {
+        "role": "scroll-view",
+        "name": "US Dollar, 84"
+      },
+      {
+        "role": "other",
+        "name": "US Dollar, 84"
+      },
+      {
+        "role": "button",
+        "name": "US Dollar, 84"
+      }
+    ],
+    "endWaitMs": 14402
+  }
+}
