@@ -1,18 +1,24 @@
 import { expect, type Locator } from 'e2e';
 import { test as base } from './widget-gallery-fixtures.js';
+import { widgetSetupMethod } from './simulator-widgets.js';
 
 export const test = base.extend<{ calculator: Locator }>({
   calculator: async ({ start, device, installedWidget, screen }, use) => {
-    await start('ready-converter');
-    await expect(screen.getByRole('button', 'Edit amount in EUR')).toHaveValue('1');
-    await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2');
-    await device.home();
-    await device.openApp('com.apple.springboard');
-    let calculator = device.locator('id=Currency value=Widget');
-    const box = await calculator.count() === 1 ? await calculator.boundingBox() : null;
-    if (!box || box.width / box.height < 1.7 || box.width / box.height > 2
-      || await calculator.getByRole('button', /^US Dollar, USD/i).count() === 0) {
+    let calculator: Locator;
+    if (widgetSetupMethod() === 'private') {
       calculator = await installedWidget('Currency Calculator', 'Medium');
+    } else {
+      calculator = device.locator('id=Currency value=Widget');
+      await start('ready-converter');
+      await expect(screen.getByRole('button', 'Edit amount in EUR')).toHaveValue('1');
+      await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2');
+      await device.home();
+      await device.openApp('com.apple.springboard');
+      const box = await calculator.count() === 1 ? await calculator.boundingBox() : null;
+      if (!box || box.width / box.height < 1.7 || box.width / box.height > 2
+        || await calculator.getByRole('button', /^US Dollar, USD/i).count() === 0) {
+        calculator = await installedWidget('Currency Calculator', 'Medium');
+      }
     }
     await expect(calculator).toBeVisible();
     await expect(calculator).toHaveValue('Widget');

@@ -53,6 +53,7 @@ class SkipRulesTests(unittest.TestCase):
             "Foundation/DesignSystem/README.md": (False, False),
             "Foundation/CoordinatedFiles/README.md": (False, False),
             "Apps/Currency/Tests/Integration.swift": (True, False),
+            "Tools/SimulatorWidgets/widget-place.py": (True, False),
             "Apps/Currency/Modules/CurrencyApplication/Tests/Test.swift": (True, False),
             "AppExtensions/CurrencyWidgets/Tests/WidgetIntegrationTests/Test.swift": (True, False),
             "Foundation/DesignSystem/Tests/Test.swift": (True, False),

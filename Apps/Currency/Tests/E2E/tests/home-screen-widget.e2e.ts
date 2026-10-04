@@ -1,3 +1,4 @@
+import { unloadWidgetHelper } from '../simulator-widgets.js';
 import { test, tapCalculatorControl } from '../widget-fixtures.js';
 import { expect } from 'e2e';
 
@@ -18,4 +19,8 @@ test('Home Screen calculator updates the shared converter amount', { tags: ['ext
   await expect(screen.getByRole('button', 'Edit amount in EUR')).toHaveValue('42');
   await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 84');
   await app.screenshot('converter-shared-widget-amount');
+});
+
+test.afterAll(async () => {
+  await unloadWidgetHelper();
 });

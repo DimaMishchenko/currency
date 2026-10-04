@@ -1,14 +1,17 @@
+import { unloadWidgetHelper } from '../simulator-widgets.js';
 import { expect } from 'e2e';
 import { test } from '../widget-gallery-fixtures.js';
 
 const displayTags = ['extended', 'widgets', 'widget-display'];
 const sizeTags = ['extended', 'widget-sizes'];
-const loadedContent = 'The installed Currency widget is on the normal Home Screen and has fully loaded content. It has no redacted placeholders, missing-value dashes, "Open app to load rates", "History unavailable", "Add a currency in the app", or Local currency setup or permission prompt.';
+const contentWarnings = 'It has no redacted placeholders, missing-value dashes, "Open app to load rates", "History unavailable", "Add a currency in the app", or Local currency setup or permission prompt.';
+const loadedContent = `The installed Currency widget is on the normal Home Screen and has fully loaded content. ${contentWarnings}`;
+const boardLayout = `The installed Currency widget is on the normal Home Screen. ${contentWarnings} Empty space below the displayed currency entries is expected. Medium and large families arrange entries side by side.`;
 
 test('medium Currency board displays default amounts and follows app amount changes', { tags: displayTags }, async ({ installedWidget, app, agent, device, screen }) => {
   const board = await installedWidget('Currency board', 'Medium');
   await expect(board).toBeVisible();
-  await agent.waitFor(`${loadedContent} The medium Currency board shows an EUR row with exactly 1 and a USD row with exactly 2. Both rows and their complete amounts are readable.`, { vision: 'only', timeout: 30_000 });
+  await agent.waitFor(`${boardLayout} The medium Currency board shows an EUR entry with exactly 1 and a USD entry with exactly 2. Both entries and their complete amounts are readable.`, { vision: 'only', timeout: 30_000 });
   await app.screenshot('widget-board-medium-eur-1-usd-2');
 
   await app.restart();
@@ -20,7 +23,7 @@ test('medium Currency board displays default amounts and follows app amount chan
   await device.home();
   await device.openApp('com.apple.springboard');
   await expect(board).toBeVisible();
-  await agent.waitFor(`${loadedContent} The medium Currency board now shows an EUR row with exactly 42 and a USD row with exactly 84. It no longer shows the old EUR 1 and USD 2 amounts.`, { vision: 'only', timeout: 30_000 });
+  await agent.waitFor(`${boardLayout} The medium Currency board now shows an EUR entry with exactly 42 and a USD entry with exactly 84. It no longer shows the old EUR 1 and USD 2 amounts.`, { vision: 'only', timeout: 30_000 });
   await app.screenshot('widget-board-medium-eur-42-usd-84');
 
   await app.restart();
@@ -54,7 +57,7 @@ test('medium History displays the actual seeded EUR USD rate and one month graph
   await expect(history).toBeVisible();
   await expect(history.getByLabel('Rate change over the selected range', { exact: true })).toHaveValue(/^\+11[.,]11%$/, { timeout: 30_000 });
   await expect(history.getByLabel('One month', { exact: true })).toBeVisible();
-  await agent.waitFor(`${loadedContent} The medium History widget shows the EUR row with exactly 1 and the USD row with current rate exactly 2 (the formatted value of 2.0). It shows exactly +11.11% (or +11,11% with a decimal comma) and the one month range label 1M. A rising historical graph is visibly drawn behind the loaded currency data. Its displayed observation date is ${new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', timeZone: 'UTC' }).format(new Date(Date.now() - 86_400_000))}.`, { vision: 'only', timeout: 30_000 });
+  await agent.waitFor(`${loadedContent} The medium History widget shows the EUR row with exactly 1 and the USD row with current rate exactly 2 (the formatted value of 2.0). It shows exactly +11.11% (or +11,11% with a decimal comma) and the one month range label 1M. A rising historical graph is visibly drawn behind the loaded currency data. Its displayed observation date is ${new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', timeZone: 'UTC' }).format(new Date(Date.now() - 86_400_000))}, displayed in abbreviated form such as day followed by month (for example 3 Oct). The widget does not display the year.`, { vision: 'only', timeout: 30_000 });
   await app.screenshot('widget-history-medium-eur-usd-2-plus-11-11');
 });
 
@@ -70,14 +73,14 @@ test('large Currency Calculator displays default EUR 1 and USD 2 with its keypad
 test('small Currency board keeps default EUR 1 and USD 2 readable', { tags: sizeTags }, async ({ installedWidget, app, agent }) => {
   const board = await installedWidget('Currency board', 'Small');
   await expect(board).toBeVisible();
-  await agent.waitFor(`${loadedContent} The small Currency board shows an EUR row with exactly 1 and a USD row with exactly 2. Both currency codes and their complete amounts fit inside the small widget and are readable without clipping.`, { vision: 'only', timeout: 30_000 });
+  await agent.waitFor(`${boardLayout} The small Currency board shows an EUR entry with exactly 1 and a USD entry with exactly 2. Both currency codes and their complete amounts fit inside the small widget and are readable without clipping.`, { vision: 'only', timeout: 30_000 });
   await app.screenshot('widget-board-small-eur-1-usd-2');
 });
 
 test('large Currency board keeps default EUR 1 and USD 2 readable', { tags: sizeTags }, async ({ installedWidget, app, agent }) => {
   const board = await installedWidget('Currency board', 'Large');
   await expect(board).toBeVisible();
-  await agent.waitFor(`${loadedContent} The large Currency board shows an EUR row with exactly 1 and a USD row with exactly 2. Both currency codes and their complete amounts fit inside the large widget and are readable without clipping.`, { vision: 'only', timeout: 30_000 });
+  await agent.waitFor(`${boardLayout} The large Currency board shows an EUR entry with exactly 1 and a USD entry with exactly 2. Both currency codes and their complete amounts fit inside the large widget and are readable without clipping.`, { vision: 'only', timeout: 30_000 });
   await app.screenshot('widget-board-large-eur-1-usd-2');
 });
 
@@ -88,4 +91,8 @@ test('small History keeps the actual EUR USD rate and percentage change readable
   await expect(history.getByLabel('One month', { exact: true })).toBeVisible();
   await agent.waitFor(`${loadedContent} The small History widget shows EUR with exactly 1, USD with current rate exactly 2 (the formatted value of 2.0), change exactly +11.11% (or +11,11% with a decimal comma), and the range 1M. The rising graph is visible behind the content, and the codes, amounts, change and range remain readable within the small widget without clipping.`, { vision: 'only', timeout: 30_000 });
   await app.screenshot('widget-history-small-eur-usd-2-plus-11-11');
+});
+
+test.afterAll(async () => {
+  await unloadWidgetHelper();
 });
