@@ -10,7 +10,7 @@ let package = Package(
     .library(name: "CurrencyDetailsUI", targets: ["CurrencyDetailsUI"])
   ],
   dependencies: [
-    .package(path: "../../Domain/ExchangeRates"), .package(path: "../../DesignSystem")
+    .package(path: "../../Domain/ExchangeRates"), .package(path: "../../Foundation/DesignSystem")
   ],
   targets: [
     .target(

@@ -53,6 +53,55 @@ class TestingNotesTests(unittest.TestCase):
         for excluded in ["Change CI", "Bump dependencies", "Change tests", "Future onboarding"]:
             self.assertNotIn(excluded, result)
 
+    def test_migrated_paths_and_historical_rename_notes(self):
+        historical = self.commit("App/Widgets/Sources/Widget.swift", "Fix widget refresh")
+        target = Path("AppExtensions/CurrencyWidgets/Sources/Widget.swift")
+        target.parent.mkdir(parents=True)
+        self.git("mv", "App/Widgets/Sources/Widget.swift", str(target))
+        self.git("commit", "-qm", "Move widget sources")
+        renamed = self.git("rev-parse", "HEAD")
+        app = self.commit("Apps/Currency/App/Sources/App.swift", "Improve conversion")
+        appearance = self.commit("Foundation/DesignSystem/Sources/Colors.swift", "Adjust theme")
+        self.commit("Apps/Currency/Tests/Test.swift", "Update app tests")
+        self.commit("AppExtensions/CurrencyWidgets/Tests/WidgetIntegrationTests/Test.swift", "Update widget tests")
+        head = self.git("rev-parse", "HEAD")
+        result = notes.generate_notes(head, self.base)
+        for subject, revision in (("Fix widget refresh", historical), ("Move widget sources", renamed),
+                                  ("Improve conversion", app), ("Adjust theme", appearance)):
+            self.assertIn(f"{subject} ({revision[:7]})", result)
+        self.assertIn(notes.CHECKS["widgets"], result)
+        self.assertIn(notes.CHECKS["appearance"], result)
+        self.assertNotIn("Update app tests", result)
+        self.assertNotIn("Update widget tests", result)
+
+    def test_legacy_and_migrated_production_paths_remain_user_facing(self):
+        for path in (
+            "App/Sources/App.swift",
+            "App/Resources/Localizable.xcstrings",
+            "App/Modules/CurrencyApplication/Sources/Application.swift",
+            "App/Widgets/Sources/Widget.swift",
+            "App/Widgets/Resources/Widget.xcstrings",
+            "DesignSystem/Sources/DesignSystem/Colors.swift",
+            "Infrastructure/CoordinatedFiles/Sources/CoordinatedFiles/File.swift",
+            "Apps/Currency/App/Sources/App.swift",
+            "Apps/Currency/App/Resources/Localizable.xcstrings",
+            "Apps/Currency/Modules/CurrencyApplication/Sources/Application.swift",
+            "AppExtensions/CurrencyWidgets/Sources/Widget.swift",
+            "AppExtensions/CurrencyWidgets/Resources/Widget.xcstrings",
+            "Foundation/DesignSystem/Sources/DesignSystem/Colors.swift",
+            "Foundation/CoordinatedFiles/Sources/CoordinatedFiles/File.swift",
+        ):
+            with self.subTest(path=path):
+                self.assertTrue(notes.user_facing(path))
+                self.assertFalse(notes.user_facing(str(Path(path).with_suffix(".md"))))
+
+    def test_app_and_extension_configuration_are_user_facing(self):
+        for path in ("Apps/Currency/App/Configuration/Currency.entitlements",
+                     "AppExtensions/CurrencyWidgets/Configuration/Currency.entitlements",
+                     "App/Configuration/Currency.entitlements"):
+            with self.subTest(path=path):
+                self.assertTrue(notes.user_facing(path))
+
     def test_real_gitmoji_subjects_are_safe_and_keep_international_text(self):
         subjects = ["🐛 widgets: preserve history period", "✨ home: add contextual tips",
                     "⚡️ rates: speed up refresh", "🎨 appearance: improve layout",

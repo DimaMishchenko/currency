@@ -28,6 +28,6 @@ Open the `Currency` scheme and choose an iOS 26+ simulator. No Tuist account is 
 
 ## Development
 
-`App/` composes the app and widgets, `Features/` owns screens, `Domain/` owns reusable logic, and `DesignSystem/` holds shared UI primitives.
+`Apps/` contains app executables and their internal modules, `AppExtensions/` contains extensions, `Features/` owns user capabilities, `Domain/` owns reusable business logic, and `Foundation/` holds DesignSystem and CoordinatedFiles.
 
 [Development guide](Documentation/Development.md) · [Architecture](Documentation/Architecture.md) · [Decisions](Documentation/Decisions.md) · [Third-party assets](Documentation/ThirdPartyAssets.md)

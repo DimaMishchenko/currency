@@ -1,5 +1,3 @@
-"""Exercise skip decisions against real Git diffs and mocked release history."""
-
 import os
 from pathlib import Path
 import subprocess
@@ -48,6 +46,27 @@ class SkipRulesTests(unittest.TestCase):
             "README.md": (False, False),
             "Domain/ExchangeRates/README.md": (False, False),
             "App/Modules/CurrencyApplication/README.md": (False, False),
+            "Apps/Currency/README.md": (False, False),
+            "Apps/Currency/App/README.md": (False, False),
+            "Apps/Currency/Modules/CurrencyApplication/README.md": (False, False),
+            "AppExtensions/CurrencyWidgets/README.md": (False, False),
+            "Foundation/DesignSystem/README.md": (False, False),
+            "Foundation/CoordinatedFiles/README.md": (False, False),
+            "Apps/Currency/Tests/Integration.swift": (True, False),
+            "Apps/Currency/Modules/CurrencyApplication/Tests/Test.swift": (True, False),
+            "AppExtensions/CurrencyWidgets/Tests/WidgetIntegrationTests/Test.swift": (True, False),
+            "Foundation/DesignSystem/Tests/Test.swift": (True, False),
+            "Foundation/CoordinatedFiles/Tests/Test.swift": (True, False),
+            "Domain/Widgets/HarnessApp/App.swift": (True, False),
+            "Apps/Currency/App/Sources/App.swift": (True, True),
+            "Apps/Currency/App/Resources/README.md": (True, True),
+            "Apps/Currency/App/Configuration/Currency.entitlements": (True, True),
+            "Apps/Currency/Modules/CurrencyApplication/Sources/App.swift": (True, True),
+            "AppExtensions/CurrencyWidgets/Sources/Widget.swift": (True, True),
+            "AppExtensions/CurrencyWidgets/Resources/icon.png": (True, True),
+            "AppExtensions/CurrencyWidgets/Configuration/Currency.entitlements": (True, True),
+            "Foundation/DesignSystem/Sources/View.swift": (True, True),
+            "Foundation/CoordinatedFiles/Package.swift": (True, True),
             ".swift-format": (True, False),
             ".github/ISSUE_TEMPLATE/bug.yml": (False, False),
             ".github/dependabot.yml": (False, False),
@@ -98,6 +117,15 @@ class SkipRulesTests(unittest.TestCase):
         self.git("mv", "App/Sources/App.swift", "Documentation/Removed.swift")
         self.git("commit", "-qm", "rename")
         self.assertEqual(self.classify(base), "xcode=true\npublish=true\n")
+
+    def test_migrated_test_rename_does_not_publish(self):
+        self.commit_file("App/Tests/WidgetIntegrationTests/Test.swift")
+        base = self.git("rev-parse", "HEAD")
+        target = self.repo / "AppExtensions/CurrencyWidgets/Tests/WidgetIntegrationTests/Test.swift"
+        target.parent.mkdir(parents=True)
+        self.git("mv", "App/Tests/WidgetIntegrationTests/Test.swift", str(target.relative_to(self.repo)))
+        self.git("commit", "-qm", "Move widget tests")
+        self.assertEqual(self.classify(base), "xcode=true\npublish=false\n")
 
     def test_missing_history_and_empty_diff(self):
         for base in ("", "0" * 40, "f" * 40):

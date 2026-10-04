@@ -30,7 +30,7 @@ def values(localization):
 def check(root):
     failures = []
     entries = 0
-    catalogs = sorted(path for owner in ("App", "Domain", "Features") for path in (root / owner).rglob("*.xcstrings"))
+    catalogs = sorted(path for owner in ("Apps", "AppExtensions", "Domain", "Features", "Foundation") for path in (root / owner).rglob("*.xcstrings"))
     for path in catalogs:
         catalog = json.loads(path.read_text())
         if catalog["sourceLanguage"] != "en":
@@ -77,10 +77,10 @@ def resource_directory(root, source):
         return None
     if "Tests" in parts or "HarnessApp" in parts or "DerivedSources" in parts:
         return None
-    if parts[:3] == ("App", "Widgets", "Sources"):
-        return root / "App/Widgets/Resources"
-    if parts[:2] == ("App", "Sources"):
-        return root / "App/Resources"
+    if parts[:3] == ("AppExtensions", "CurrencyWidgets", "Sources"):
+        return root / "AppExtensions/CurrencyWidgets/Resources"
+    if parts[:4] == ("Apps", "Currency", "App", "Sources"):
+        return root / "Apps/Currency/App/Resources"
     if len(parts) >= 5 and parts[0] in {"Features", "Domain"} and parts[2] == "Sources":
         return root.joinpath(*parts[:4], "Resources")
     return None

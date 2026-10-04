@@ -8,7 +8,8 @@ let package = Package(
     .library(name: "ExchangeRatesUI", targets: ["ExchangeRatesUI"])
   ],
   dependencies: [
-    .package(path: "../../DesignSystem"), .package(path: "../../Infrastructure/CoordinatedFiles")
+    .package(path: "../../Foundation/DesignSystem"),
+    .package(path: "../../Foundation/CoordinatedFiles")
   ],
   targets: [
     .target(

@@ -4,6 +4,19 @@ Currency is a modular SwiftUI app with a widget extension. Organize code around 
 
 This page defines how to make architecture decisions. Build manifests and source code describe the concrete modules and public APIs; [Decisions](Decisions.md) records product invariants and non-obvious constraints.
 
+## Repository structure
+
+The Xcode navigator mirrors physical ownership. One Tuist project defines the app, extension, library, test, and harness targets; local packages are not imported as separate generated Xcode projects.
+
+- `Apps/Currency/App` owns the executable sources, resources, and configuration.
+- `Apps/Currency/Modules` contains CurrencyApplication, ForegroundRefresh, and AppearancePreferences, each with its own sources and tests.
+- `Apps/Currency/Tests` covers application assembly and native intent execution.
+- `AppExtensions/CurrencyWidgets` owns WidgetKit entry points, timelines, intents, resources, configuration, and adapter integration tests.
+- `Features/<Capability>` and `Domain/<Capability>` contain their logic, optional UI, resources, tests, and optional `HarnessApp`. Harnesses remain separate runnable targets alongside their owner.
+- `Foundation` contains DesignSystem and CoordinatedFiles. It is a folder category, not a Swift module.
+
+SwiftPM manifests remain beside feature, domain, and foundation packages for standalone use. Their product names and dependencies match the native Tuist targets. Supporting files, including READMEs, package manifests, documentation, scripts, and project configuration, appear once under their physical locations in Xcode.
+
 ## Ownership before structure
 
 The application assembles dependencies and coordinates the user journey. It owns startup decisions, scene navigation, deep links, and sequencing between features. Keep application components cohesive and name them for their responsibility. A high-level application model is a valid owner; a generic collection of services is not. Small wiring belongs near composition rather than in a module of its own.
@@ -54,7 +67,7 @@ A successful UI outcome follows a successful commit. Onboarding drafts and widge
 
 Keep canonical widget configuration independent of the visible layout. Resizing must not discard hidden selections or input. Preserve the distinction between default synchronized widgets and custom independent input, and between a fixed currency and dynamic Local intent. Further persistence, privacy, and rate-provenance constraints live in [Decisions](Decisions.md).
 
-`Infrastructure/CoordinatedFiles` contains only Foundation file coordination and an absent-file read primitive used by the four domain stores and onboarding progress. Record formats, recovery, and lock ordering stay with each domain; this is not a repository abstraction or a place for business services.
+`Foundation/CoordinatedFiles` contains only Foundation file coordination and an absent-file read primitive used by the four domain stores and onboarding progress. Record formats, recovery, and lock ordering stay with each domain; this is not a repository abstraction or a place for business services.
 
 Display reads may fall back when a record cannot be read, but mutation reads default only for absent files. Unreadable or incompatible input is preserved and reported as a failed save. Local currency stores permission, observation, throttle, and generation in one versioned atomic record; migration retains the old state until legacy observation/status files are removed successfully.
 
