@@ -2,7 +2,7 @@
 
 Widget configuration, input state, commands, and persistence. `WidgetsUI` contains reusable production layouts and their resources.
 
-Keep canonical selections independent of widget size. Default widgets share app input; custom widgets retain independent input. Hosts supply button actions, while the executable's native intents and timelines live under [App/Widgets](../../App/Widgets).
+Keep canonical selections independent of widget size. Default widgets share app input; custom widgets retain independent input. Hosts supply button actions, while the executable's native intents and timelines live under [AppExtensions/CurrencyWidgets](../../AppExtensions/CurrencyWidgets).
 
 ## History widget
 

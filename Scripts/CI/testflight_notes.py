@@ -96,13 +96,13 @@ def previous_release(head, repository, current_run):
 
 def user_facing(path):
     parts = Path(path).parts
-    if not parts or parts[0] not in {"App", "Features", "Domain", "DesignSystem", "Infrastructure"}:
+    if not parts or parts[0] not in {"Apps", "AppExtensions", "Foundation", "App", "Features", "Domain", "DesignSystem", "Infrastructure"}:
         return False
     if Path(path).suffix.lower() in {".md", ".rst"}:
         return False
     if "Sources" in parts or "Resources" in parts:
         return True
-    return parts[0] == "App" and Path(path).suffix in {".entitlements", ".plist", ".xcprivacy"}
+    return parts[0] in {"App", "Apps", "AppExtensions"} and Path(path).suffix in {".entitlements", ".plist", ".xcprivacy"}
 
 
 def checks_for(paths, subject):

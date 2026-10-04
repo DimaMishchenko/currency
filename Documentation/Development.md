@@ -4,7 +4,7 @@
 
 Use Xcode and the Tuist version pinned in `.mise.toml`. With [mise](https://mise.jdx.dev/), run `mise install` and use `mise exec --` before Tuist commands, or activate mise in your shell. Toolchain and deployment requirements live in the manifests.
 
-Run `tuist install` after changing package dependencies, then `tuist generate` to open `Currency.xcworkspace`. Regenerate after changing manifests or package sources so Tuist can update dependency cache hashes. Changes inside existing app buildable folders do not require regeneration.
+Run `tuist generate` to open `Currency.xcworkspace`. Regenerate after changing Tuist manifests or dependencies. Changes inside existing buildable folders do not require regeneration. UI library targets use source/resource globs because Tuist 4.209 otherwise duplicates static-framework resources beside synchronized folders; regenerate after adding or removing files in those targets. Resource-bearing static UI targets retain the `SWIFT_PACKAGE` compilation condition so Xcode-generated string-catalog symbols use the owning `Bundle.module`, supplied by Tuist, instead of the executable bundle. Feature, domain, and foundation packages retain `Package.swift` for standalone SwiftPM builds; keep their dependencies aligned with the native targets in `Project.swift`. Run `tuist install` when external dependencies are added or changed.
 
 - `Currency` builds the app and widget extension.
 - `CurrencyTests` builds the shipping app and extension and runs the combined test suite, including rate-core tests.
@@ -20,14 +20,14 @@ For command-line Xcode builds, use `set -o pipefail` and pipe combined output th
 
 ## Dependency cache
 
-Tuist integrates local Swift packages through `Tuist/Package.swift` and automatically substitutes available cached dependencies during generation. Normal development does not require authentication or custom build scripts.
+Tuist defines repository modules as native targets in a single Currency project and automatically substitutes available cached modules during generation. `Tuist/Package.swift` is reserved for external dependencies. Normal development does not require authentication or custom build scripts.
 
 Without authentication, Tuist reuses locally cached binaries; downloading shared binaries requires login. `tuist cache` creates binaries; ordinary Xcode builds only consume them.
 
 To warm dependencies on your machine without uploading:
 
 ```sh
-mise exec -- tuist cache --cache-profile only-external --configuration Debug --no-upload
+mise exec -- tuist cache --cache-profile all-possible --configuration Debug --no-upload
 mise exec -- tuist generate --no-open
 ```
 
@@ -35,7 +35,9 @@ To upload newly built binaries, authenticate before warming and omit `--no-uploa
 
 Use `tuist generate --no-open --cache-profile none` to keep dependencies as source. Signed release archives always use this mode.
 
-Before delivery, run the relevant tests, check affected UI, and verify formatting with `swift format lint --recursive --strict App Domain Features DesignSystem Infrastructure` and `git diff --check`. Outstanding device and release checks live in [GitHub Issues](https://github.com/DimaMishchenko/currency/issues?q=is%3Aissue+is%3Aopen+label%3Averification).
+After generation, run `python3 Scripts/CI/check_project_structure.py` to verify one workspace project, complete tracked-file coverage, and no duplicate navigator paths. CI runs the same check.
+
+Before delivery, run the relevant tests, check affected UI, and verify formatting with `swift format lint --recursive --strict Apps AppExtensions Domain Features Foundation` and `git diff --check`. Outstanding device and release checks live in [GitHub Issues](https://github.com/DimaMishchenko/currency/issues?q=is%3Aissue+is%3Aopen+label%3Averification).
 
 See [Adaptive layouts](AdaptiveLayouts.md) for Duo and iPad behavior and the remaining native acceptance matrix.
 

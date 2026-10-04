@@ -7,18 +7,16 @@ base=${1:-}
 files=$(mktemp)
 trap 'rm -f "$files"' EXIT
 
-# Missing history (including a new branch) must run the full pipeline.
 if [[ -z "$base" || "$base" =~ ^0+$ ]] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
   xcode=true
   publish=true
 else
-  # Include both sides of renames and the whole push, not just its final commit.
   git diff --no-renames --name-only -z "$base" HEAD > "$files"
   while IFS= read -r -d '' file; do
-    if [[ "$file" =~ ^(App|DesignSystem|Domain/[^/]+|Features/[^/]+|App/Modules/[^/]+)/README\.md$ ]]; then
+    if [[ "$file" =~ ^(App|DesignSystem|Domain/[^/]+|Features/[^/]+|App/Modules/[^/]+|Apps/Currency|Apps/Currency/App|Apps/Currency/Modules/[^/]+|AppExtensions/[^/]+|Foundation/[^/]+)/README\.md$ ]]; then
       continue
     fi
-    if [[ "$file" =~ ^(App/Tests/|App/Modules/[^/]+/Tests/|(DesignSystem|Domain/[^/]+|Features/[^/]+)/Tests/|(Domain/[^/]+|Features/[^/]+)/HarnessApp/) ]]; then
+    if [[ "$file" =~ ^(App/Tests/|App/Modules/[^/]+/Tests/|Apps/Currency/Tests/|Apps/Currency/Modules/[^/]+/Tests/|AppExtensions/[^/]+/Tests/|Foundation/[^/]+/Tests/|(DesignSystem|Domain/[^/]+|Features/[^/]+)/Tests/|(Domain/[^/]+|Features/[^/]+)/HarnessApp/) ]]; then
       xcode=true
       continue
     fi
