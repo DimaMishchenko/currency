@@ -330,7 +330,7 @@ struct SettingsScreen: View {
     }
   }
 
-  private var acknowledgements: some View {
+  @ViewBuilder private var acknowledgements: some View {
     Section(.Settings.artwork) {
       sourceCredit(
         "Web3 Icons", description: .Settings.web3Credit,
@@ -346,6 +346,13 @@ struct SettingsScreen: View {
         licenseURL:
           "https://github.com/spothq/cryptocurrency-icons/blob/1a63530be6e374711a8554f31b17e4cb92c25fa5/LICENSE.md"
       )
+    }
+    Section(.Settings.testing) {
+      sourceCredit(
+        "e2e", description: .Settings.testingCredit,
+        website: "https://github.com/tester-army/e2e",
+        license: "Apache 2.0",
+        licenseURL: "https://github.com/tester-army/e2e/blob/main/LICENSE")
     }
   }
 }

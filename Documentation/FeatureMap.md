@@ -52,7 +52,7 @@ Owners: [Settings](../Features/Settings/Sources/Settings/SettingsModel.swift), A
 | PREF-01 | Settings → Theme: System, Light, Dark | The selected appearance applies and survives restart; System follows the platform appearance. |
 | PREF-02 | Settings → Accent color | The chosen supported accent applies and persists independently of theme. |
 | PREF-03 | Settings → Language → system Settings | iOS owns language selection; returning/relaunching uses localized UI and region formatting while currency identities remain stable. |
-| PREF-04 | Settings → Rates, Sources, Acknowledgements, version | Current information and attribution are accessible; rate refresh has visible success/failure behavior. |
+| PREF-04 | Settings → Rates, Sources, Acknowledgements, version | Current information, artwork credits and testing-tool attribution are accessible; rate refresh has visible success/failure behavior. |
 | LOC-01 | Onboarding, Local row/picker, Settings → Location | Opt-in, system authorization, retry and skip paths work; denied, restricted, disabled, timeout and unavailable states offer the appropriate guidance. |
 | LOC-02 | Local currency selected in app or widget configuration | A resolved location supplies the applicable currency; unresolved Local remains identifiable and directs the user to setup rather than presenting a false rate. |
 | LOC-03 | Foreground/location refresh and return from system Settings | Permission/location changes reconcile across the app and shared widget data without discarding unrelated selections. |
