@@ -76,38 +76,42 @@ struct ConvertToMyCurrenciesIntent: AppIntent {
   }
 }
 
-struct ConvertToLocalIntent: AppIntent {
-  static let title: LocalizedStringResource = "Convert to Local currency"
-  static let description = IntentDescription("Convert an amount to the currency for your location.")
-  static var supportedModes: IntentModes { .background }
-  @Parameter(
-    title: "Amount", description: "The amount to convert.",
-    requestValueDialog: "What amount would you like to convert?",
-    resolvers: {
-      NumericAmountText(); IntegerAmountText()
-    }) var amount: String
-  @Parameter(
-    title: "From", requestValueDialog: "Which currency are you converting from?",
-    requestDisambiguationDialog: "Which source currency did you mean?",
-    query: CurrencyEntityQuery(allowsLocal: false)
-  ) var source: CurrencyEntity
-  @AppDependency private var composition: SystemActionComposition
-  static var parameterSummary: some ParameterSummary {
-    Summary("Convert \(\.$amount) from \(\.$source) to Local currency")
-  }
-  func perform() async throws -> some IntentResult & ReturnsValue<ConversionResultEntity>
-    & ProvidesDialog
-  {
-    guard ExactAmount.parse(amount) != nil else {
-      throw $amount.needsValueError("Enter an amount without grouping, such as 100 or 12.50.")
+#if os(iOS)
+  struct ConvertToLocalIntent: AppIntent {
+    static let title: LocalizedStringResource = "Convert to Local currency"
+    static let description = IntentDescription(
+      "Convert an amount to the currency for your location.")
+    static var supportedModes: IntentModes { .background }
+    @Parameter(
+      title: "Amount", description: "The amount to convert.",
+      requestValueDialog: "What amount would you like to convert?",
+      resolvers: {
+        NumericAmountText(); IntegerAmountText()
+      }) var amount: String
+    @Parameter(
+      title: "From", requestValueDialog: "Which currency are you converting from?",
+      requestDisambiguationDialog: "Which source currency did you mean?",
+      query: CurrencyEntityQuery(allowsLocal: false)
+    ) var source: CurrencyEntity
+    @AppDependency private var composition: SystemActionComposition
+    static var parameterSummary: some ParameterSummary {
+      Summary("Convert \(\.$amount) from \(\.$source) to Local currency")
     }
-    let evaluation = try await calculate(
-      composition, amount: amount, source: source.id, destination: CurrencySelection.localID)
-    return .result(
-      value: ConversionResultEntity(result: evaluation.results[0], evaluation: evaluation),
-      dialog: ConversionPresentation.dialog(evaluation))
+    func perform() async throws -> some IntentResult & ReturnsValue<ConversionResultEntity>
+      & ProvidesDialog
+    {
+      guard ExactAmount.parse(amount) != nil else {
+        throw $amount.needsValueError("Enter an amount without grouping, such as 100 or 12.50.")
+      }
+      let evaluation = try await calculate(
+        composition, amount: amount, source: source.id, destination: CurrencySelection.localID)
+      return .result(
+        value: ConversionResultEntity(result: evaluation.results[0], evaluation: evaluation),
+        dialog: ConversionPresentation.dialog(evaluation))
+    }
   }
-}
+
+#endif
 
 struct CheckRateIntent: AppIntent {
   static let title: LocalizedStringResource = "Check exchange rate"

@@ -28,6 +28,49 @@ struct CurrencyDetailsTests {
     }
   }
 
+  @Test(arguments: [("BTC", "EUR"), ("EUR", "BTC"), ("BTC", "ETH")])
+  func explicitlyRequestedPairPreservesChartAndRateQuote(code: String, reference: String) async {
+    var requested: [String] = []
+    let model = CurrencyDetailsModel(
+      input: .init(
+        code: code, reference: reference, snapshot: RateSnapshot(), referencePolicy: .requestedPair),
+      dependencies: .init { base, quote, _ in
+        requested = [base, quote]
+        return HistoryResult(series: nil, issue: .unavailable)
+      })
+    #expect(model.quote == reference)
+    await model.load()
+    #expect(requested == (code == "EUR" ? [reference, code] : [code, reference]))
+  }
+
+  @Test func requestedFiatCryptoPairInvertsProviderSeriesAndRetainsProvenance() async {
+    let date = Date(timeIntervalSince1970: 1_700_000_000)
+    let source = RateSource(provider: .coinbase, observation: .hourlyClose, timeZone: .gmt)
+    let received = HistorySeries(
+      points: [
+        HistoryPoint(date: date, value: 40_000),
+        HistoryPoint(date: date.addingTimeInterval(3600), value: 50_000)
+      ],
+      source: source, fetchedAt: date.addingTimeInterval(7200))
+    let model = CurrencyDetailsModel(
+      input: .init(
+        code: "EUR", reference: "BTC", snapshot: RateSnapshot(), referencePolicy: .requestedPair),
+      dependencies: .init { base, quote, _ in
+        #expect(base == "BTC")
+        #expect(quote == "EUR")
+        return HistoryResult(series: received, issue: .usingCachedSeries)
+      })
+    #expect(model.availableRanges.contains(.day))
+    model.range = .day
+    await model.load()
+    #expect(model.quote == "BTC")
+    #expect(model.series?.points.map(\.value) == [1.0 / 40_000, 1.0 / 50_000])
+    #expect(model.series?.points.map(\.date) == received.points.map(\.date))
+    #expect(model.series?.source == source)
+    #expect(model.series?.fetchedAt == received.fetchedAt)
+    #expect(model.issue == .usingCachedSeries)
+  }
+
   @Test(arguments: CurrencyDetailsModel.ranges)
   func historyCapabilityReceivesBaseThenQuote(range: HistoryRange) async {
     var requestedBase: String?

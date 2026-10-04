@@ -1,4 +1,5 @@
 import AppearancePreferences
+import CompanionSync
 import Conversion
 import ExchangeRates
 import Foundation
@@ -9,6 +10,51 @@ import Testing
 
 @MainActor
 struct AppCompositionTests {
+  @Test(arguments: [false, true])
+  func unreadableInputPreservesPublishedFavorites(unreadable: Bool) throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    let suite = UUID().uuidString
+    let defaults = try #require(UserDefaults(suiteName: suite))
+    defer {
+      try? FileManager.default.removeItem(at: directory)
+      defaults.removePersistentDomain(forName: suite)
+    }
+    let composition = AppComposition(
+      directory: directory,
+      appearance: AppearancePreferences(defaults: defaults), discoveryDefaults: defaults)
+    try composition.conversion.updateInput { $0.setDestinations(["JPY"]) }
+    composition.startCompanionSync()
+    let metadata = CompanionSyncStateStore(directory: directory)
+    let loaded = try metadata.load()
+    let published = try #require(loaded)
+    #expect(published.outgoing?.codes == ["EUR", "JPY"])
+    #expect(published.outgoing?.revision == 1)
+    let record = directory.appendingPathComponent("input.json")
+    let confirmed = try Data(contentsOf: record)
+    if unreadable {
+      try FileManager.default.removeItem(at: record)
+      try FileManager.default.createDirectory(at: record, withIntermediateDirectories: false)
+    } else {
+      try Data("invalid".utf8).write(to: record)
+    }
+    composition.changed()
+    #expect(composition.companionIssue == .commitFailed)
+    #expect(try metadata.load() == published)
+    if unreadable {
+      let attributes = try FileManager.default.attributesOfItem(atPath: record.path)
+      #expect(attributes[.type] as? FileAttributeType == .typeDirectory)
+      try FileManager.default.removeItem(at: record)
+    } else {
+      #expect(try Data(contentsOf: record) == Data("invalid".utf8))
+    }
+    try confirmed.write(to: record)
+    _ = try composition.edit { $0.setDestinations(["CZK"]) }
+    let recovered = try #require(metadata.load()?.outgoing)
+    #expect(recovered.senderID == published.senderID)
+    #expect(recovered.revision == 2)
+    #expect(recovered.codes == ["EUR", "CZK"])
+  }
+
   @Test func sharedContainerResolutionRequiresEntitlement() throws {
     #expect(throws: AppGroup.ResolutionError.missingEntitlement) {
       try AppGroup.resolve(using: { _ in nil })

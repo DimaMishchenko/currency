@@ -8,14 +8,27 @@ public struct CurrencyDetailsInput: Sendable {
   public let code: String
   /// The originating workspace's base currency.
   public let reference: String
+  /// Whether a caller requests its exact pair or the standard details reference policy.
+  public enum ReferencePolicy: Sendable {
+    /// Uses the usual fiat reference for crypto and self references.
+    case automatic
+    /// Preserves the distinct supported pair validated by the caller.
+    case requestedPair
+  }
+  /// The reference policy selected for this flow.
+  public let referencePolicy: ReferencePolicy
   /// The current rate snapshot supplied by the caller.
   public let snapshot: RateSnapshot
 
   /// Creates the immutable context of a details flow.
-  public init(code: String, reference: String, snapshot: RateSnapshot) {
+  public init(
+    code: String, reference: String, snapshot: RateSnapshot,
+    referencePolicy: ReferencePolicy = .automatic
+  ) {
     self.code = code
     self.reference = reference
     self.snapshot = snapshot
+    self.referencePolicy = referencePolicy
   }
 }
 
@@ -41,8 +54,9 @@ public final class CurrencyDetailsModel {
 
   /// Fiat providers publish daily reference rates without intraday observations.
   public var availableRanges: [HistoryRange] {
-    Self.ranges.filter {
-      $0 != .day || HistoryService.supportsIntraday(base: input.code, quote: quote)
+    let request = historyRequest
+    return Self.ranges.filter {
+      $0 != .day || HistoryService.supportsIntraday(base: request.base, quote: request.quote)
     }
   }
 
@@ -70,8 +84,9 @@ public final class CurrencyDetailsModel {
     self.dependencies = dependencies
   }
 
-  /// Historical crypto quotes remain USD; invalid self/crypto references use a fiat alternative.
+  /// Explicit pairs retain their quote; automatic references use the standard fiat policy.
   public var quote: String {
+    if input.referencePolicy == .requestedPair { return input.reference }
     let currency = CurrencyCode(rawValue: input.code)
     let referenceCurrency = CurrencyCode(rawValue: input.reference)
     if currency?.isCryptocurrency == true { return CurrencyCode.usd.rawValue }
@@ -79,6 +94,13 @@ public final class CurrencyDetailsModel {
       return currency == .eur ? CurrencyCode.usd.rawValue : CurrencyCode.eur.rawValue
     }
     return input.reference
+  }
+
+  private var historyRequest: (base: String, quote: String, inverted: Bool) {
+    if !CurrencyCatalog.crypto.contains(input.code), CurrencyCatalog.crypto.contains(quote) {
+      return (quote, input.code, true)
+    }
+    return (input.code, quote, false)
   }
 
   /// Replaces an older range request; cancellation and identity both guard publication.
@@ -89,12 +111,23 @@ public final class CurrencyDetailsModel {
     phase = .loading
     series = nil
     issue = nil
-    let result = await dependencies.loadHistory(input.code, quote, requestedRange)
+    let request = historyRequest
+    let result = await dependencies.loadHistory(request.base, request.quote, requestedRange)
     guard !Task.isCancelled, requestID == identity, range == requestedRange else {
       if requestID == identity { phase = .idle }
       return
     }
-    series = result.series
+    if request.inverted, let received = result.series {
+      let points = received.points.map { HistoryPoint(date: $0.date, value: 1 / $0.value) }
+      guard points.allSatisfy({ $0.value.isFinite && $0.value > 0 }) else {
+        issue = .unavailable
+        phase = .loaded
+        return
+      }
+      series = HistorySeries(points: points, source: received.source, fetchedAt: received.fetchedAt)
+    } else {
+      series = result.series
+    }
     issue = result.issue
     phase = .loaded
   }

@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
   name: "Onboarding",
   defaultLocalization: "en",
-  platforms: [.iOS("26.0")],
+  platforms: [.iOS("26.0"), .watchOS("26.0")],
   products: [
     .library(name: "Onboarding", targets: ["Onboarding"]),
     .library(name: "OnboardingUI", targets: ["OnboardingUI"])

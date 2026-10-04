@@ -2,13 +2,13 @@
 import PackageDescription
 
 let package = Package(
-  name: "ExchangeRates", defaultLocalization: "en", platforms: [.macOS(.v14), .iOS("26.0")],
+  name: "ExchangeRates", defaultLocalization: "en",
+  platforms: [.macOS(.v14), .iOS("26.0"), .watchOS("26.0")],
   products: [
     .library(name: "ExchangeRates", targets: ["ExchangeRates"]),
     .library(name: "ExchangeRatesUI", targets: ["ExchangeRatesUI"])
   ],
   dependencies: [
-    .package(path: "../../Foundation/DesignSystem"),
     .package(path: "../../Foundation/CoordinatedFiles")
   ],
   targets: [
@@ -18,7 +18,7 @@ let package = Package(
       exclude: ["README.md"]),
     .target(
       name: "ExchangeRatesUI",
-      dependencies: ["ExchangeRates", .product(name: "DesignSystem", package: "DesignSystem")],
+      dependencies: ["ExchangeRates"],
       resources: [.process("Resources")]),
     .testTarget(name: "ExchangeRatesTests", dependencies: ["ExchangeRates"]),
     .testTarget(name: "ExchangeRatesUITests", dependencies: ["ExchangeRatesUI", "ExchangeRates"])

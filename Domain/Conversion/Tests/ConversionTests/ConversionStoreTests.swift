@@ -36,6 +36,7 @@ import Testing
     #expect(!invoked)
     #expect(try Data(contentsOf: url) == original)
     #expect(store.input() == ConverterState())
+    #expect(throws: (any Error).self) { try store.readInput() }
   }
 
   @Test func unreadableRecordDoesNotBecomeFreshInput() throws {
@@ -48,7 +49,22 @@ import Testing
       try ConversionStore(directory: directory).updateInput { _ in invoked = true }
     }
     #expect(!invoked)
+    #expect(throws: (any Error).self) {
+      try ConversionStore(directory: directory).readInput()
+    }
     #expect(try url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory == true)
+  }
+
+  @Test func confirmedInputDefaultsOnlyForAbsentRecord() throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = ConversionStore(directory: directory)
+    #expect(try store.readInput() == ConverterState())
+    let committed = try store.updateInput {
+      $0.setAmount("42")
+      $0.setDestinations(["JPY"])
+    }
+    #expect(try store.readInput() == committed)
   }
 
 }

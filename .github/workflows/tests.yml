@@ -23,7 +23,9 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: bash Scripts/CI/changes.sh "$BASE_SHA"
       - name: Check release automation
-        run: for script in Scripts/CI/*.sh; do bash -n "$script"; done
+        run: |
+          for script in Scripts/CI/*.sh; do bash -n "$script"; done
+          python3 Scripts/CI/test_release_configuration.py
       - name: Check localization coverage and placeholders
         timeout-minutes: 1
         run: |
@@ -120,6 +122,18 @@ jobs:
             -destination "platform=iOS Simulator,id=$CURRENCY_TEST_SIMULATOR" \
             -derivedDataPath "$RUNNER_TEMP/CurrencyTestsDerivedData" \
             -collect-test-diagnostics never \
+            CODE_SIGN_IDENTITY=- \
+            2>&1 | xcbeautify
+      - name: Build watchOS 26 app and complications
+        if: needs.changes.outputs.xcode == 'true'
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -workspace Currency.xcworkspace \
+            -scheme CurrencyWatch \
+            -configuration Debug \
+            -destination 'generic/platform=watchOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/CurrencyTestsDerivedData" \
             CODE_SIGN_IDENTITY=- \
             2>&1 | xcbeautify
       - name: Check compiler-extracted localization coverage

@@ -33,4 +33,19 @@ struct CurrencyCatalogTests {
         "ceska", locale: Locale(identifier: "cs_CZ"), name: { names[$0] ?? $0 }) == ["CZK"])
     #expect(CurrencyCatalog.search("koruna", name: { names[$0] ?? $0 }) == ["CZK", "SEK"])
   }
+  @Test func assetSearchUsesCanonicalNamesWhenLocaleDoesNotDescribeCrypto() {
+    let locale = Locale(identifier: "en_US")
+    let name: (String) -> String = {
+      CurrencyCatalog.assetName($0) ?? locale.localizedString(forCurrencyCode: $0) ?? $0
+    }
+    #expect(CurrencyCatalog.assetName("BTC") == "Bitcoin")
+    #expect(CurrencyCatalog.assetName("SOL") == "Solana")
+    #expect(CurrencyCatalog.assetName("EUR") == nil)
+    #expect(CurrencyCatalog.assetName("UNKNOWN") == nil)
+    #expect(CurrencyCatalog.search("Bitcoin", name: name) == ["BTC", "BCH"])
+    #expect(CurrencyCatalog.search("solana", name: name) == ["SOL"])
+    #expect(CurrencyCatalog.search("bit", allowedCodes: ["BCH"], name: name) == ["BCH"])
+    #expect(CurrencyCatalog.crypto.allSatisfy { CurrencyCatalog.assetName($0) != nil })
+  }
+
 }

@@ -90,7 +90,10 @@ class MigratedResourceTests(unittest.TestCase):
     def test_compiler_strings_map_to_migrated_resource_owners(self):
         owners = {
             "Apps/Currency/App/Sources/App.swift": "Apps/Currency/App/Resources",
+            "Apps/CurrencyWatch/App/Sources/Watch.swift": "Apps/CurrencyWatch/App/Resources",
             "AppExtensions/CurrencyWidgets/Sources/Widget.swift": "AppExtensions/CurrencyWidgets/Resources",
+            "AppExtensions/CurrencyWatchWidgets/Sources/Widget.swift": "AppExtensions/CurrencyWatchWidgets/Resources",
+            "Features/Home/Sources/HomeWatchUI/Watch.swift": "Features/Home/Sources/HomeWatchUI/Resources",
             "Features/Home/Sources/Home/View.swift": "Features/Home/Sources/Home/Resources",
             "Domain/Widgets/Sources/Widgets/Widget.swift": "Domain/Widgets/Sources/Widgets/Resources",
         }
@@ -105,7 +108,7 @@ class MigratedResourceTests(unittest.TestCase):
             (derived / f"{index}.stringsdata").write_text(json.dumps({
                 "source": source, "tables": {"Localizable": [{"key": "Hello"}]},
             }))
-        self.assertEqual(check_strings_data(self.root, derived), (4, 4, 0, []))
+        self.assertEqual(check_strings_data(self.root, derived), (len(owners), len(owners), 0, []))
         (derived / "0.stringsdata").write_text(json.dumps({
             "source": next(iter(owners)), "tables": {"Localizable": [{"key": "Missing"}]},
         }))
@@ -115,6 +118,8 @@ class MigratedResourceTests(unittest.TestCase):
     def test_test_and_harness_strings_remain_excluded(self):
         for source in (
             "Apps/Currency/Tests/IntegrationTests/Test.swift",
+            "Apps/CurrencyWatch/Tests/WatchTests/Test.swift",
+            "Apps/CurrencyWatch/Modules/Favorites/Tests/Test.swift",
             "AppExtensions/CurrencyWidgets/Tests/WidgetIntegrationTests/Test.swift",
             "Features/Home/HarnessApp/App.swift",
             "Domain/Widgets/HarnessApp/App.swift",

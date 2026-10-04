@@ -5,6 +5,8 @@ let supportedLanguages: Plist.Value = [
   "en", "zh-Hans", "ja", "es", "de", "fr", "pt-BR", "ko", "zh-Hant", "it", "tr", "ru", "uk", "et"
 ]
 let appProfile = Environment.currencyAppProfileUuid.getString(default: "")
+let watchProfile = Environment.currencyWatchProfileUuid.getString(default: "")
+let watchWidgetProfile = Environment.currencyWatchWidgetProfileUuid.getString(default: "")
 let widgetProfile = Environment.currencyWidgetProfileUuid.getString(default: "")
 let currencyUnitTestTargets: [TargetReference] = [
   "DesignSystemPackageTests", "ExchangeRatesPackageTests", "LocalCurrencyPackageTests",
@@ -12,7 +14,7 @@ let currencyUnitTestTargets: [TargetReference] = [
   "OnboardingPackageTests", "CurrencyDetailsPackageTests", "SettingsPackageTests",
   "LocationOnboardingPackageTests", "WidgetOnboardingPackageTests",
   "CurrencyApplicationTests", "ForegroundRefreshTests", "AppearancePreferencesTests",
-  "WidgetIntegrationTests", "ApplicationIntegrationTests"
+  "WidgetIntegrationTests", "ApplicationIntegrationTests", "CompanionSyncTests"
 ]
 
 func releaseSigning(profile: String) -> Settings? {
@@ -29,12 +31,15 @@ func releaseSigning(profile: String) -> Settings? {
   ])
 }
 
-func module(name: String, owner: String, dependencies: [String] = []) -> Target {
+func module(name: String, owner: String, dependencies: [String] = [], watch: Bool = false) -> Target
+{
   let sourcePath = "\(owner)/Sources/\(name)"
   let containsResources = name.hasSuffix("UI")
   return .target(
-    name: name, destinations: .iOS, product: .staticFramework,
-    bundleId: "com.dimasike.currency.\(name.lowercased())", deploymentTargets: .iOS("26.0"),
+    name: name, destinations: watch ? Destinations.iOS.union(Destinations.watchOS) : .iOS,
+    product: .staticFramework,
+    bundleId: "com.dimasike.currency.\(name.lowercased())",
+    deploymentTargets: watch ? .multiplatform(iOS: "26.0", watchOS: "26.0") : .iOS("26.0"),
     infoPlist: .default,
     sources: containsResources ? .sourceFilesList(globs: [.glob("\(sourcePath)/**.swift")]) : nil,
     resources: containsResources ? .resources([.glob(pattern: "\(sourcePath)/Resources/**")]) : nil,
@@ -50,24 +55,32 @@ func module(name: String, owner: String, dependencies: [String] = []) -> Target 
 }
 
 let modules: [Target] = [
-  module(name: "CoordinatedFiles", owner: "Foundation/CoordinatedFiles"),
+  module(
+    name: "HomeWatchUI", owner: "Features/Home",
+    dependencies: ["Home", "Conversion", "ExchangeRates", "ExchangeRatesUI"], watch: true),
+  module(
+    name: "CurrencyDetailsWatchUI", owner: "Features/CurrencyDetails",
+    dependencies: ["CurrencyDetails", "ExchangeRates", "ExchangeRatesUI"], watch: true),
+  module(name: "CoordinatedFiles", owner: "Foundation/CoordinatedFiles", watch: true),
   module(name: "DesignSystem", owner: "Foundation/DesignSystem"),
-  module(name: "ExchangeRates", owner: "Domain/ExchangeRates", dependencies: ["CoordinatedFiles"]),
+  module(
+    name: "ExchangeRates", owner: "Domain/ExchangeRates", dependencies: ["CoordinatedFiles"],
+    watch: true),
   module(
     name: "ExchangeRatesUI", owner: "Domain/ExchangeRates",
-    dependencies: ["ExchangeRates", "DesignSystem"]),
+    dependencies: ["ExchangeRates"], watch: true),
   module(
     name: "LocalCurrency", owner: "Domain/LocalCurrency",
-    dependencies: ["ExchangeRates", "CoordinatedFiles"]),
+    dependencies: ["ExchangeRates", "CoordinatedFiles"], watch: true),
   module(
     name: "Conversion", owner: "Domain/Conversion",
-    dependencies: ["CoordinatedFiles", "ExchangeRates", "LocalCurrency"]),
+    dependencies: ["CoordinatedFiles", "ExchangeRates", "LocalCurrency"], watch: true),
   module(
     name: "CurrencySelectionUI", owner: "Domain/Conversion",
     dependencies: ["Conversion", "ExchangeRates", "ExchangeRatesUI", "DesignSystem"]),
   module(
     name: "Widgets", owner: "Domain/Widgets",
-    dependencies: ["CoordinatedFiles", "ExchangeRates", "LocalCurrency", "Conversion"]),
+    dependencies: ["CoordinatedFiles", "ExchangeRates", "LocalCurrency", "Conversion"], watch: true),
   module(
     name: "WidgetsUI", owner: "Domain/Widgets",
     dependencies: [
@@ -75,7 +88,7 @@ let modules: [Target] = [
     ]),
   module(
     name: "Home", owner: "Features/Home",
-    dependencies: ["Conversion", "LocalCurrency", "ExchangeRates"]),
+    dependencies: ["Conversion", "LocalCurrency", "ExchangeRates"], watch: true),
   module(
     name: "HomeUI", owner: "Features/Home",
     dependencies: [
@@ -84,7 +97,7 @@ let modules: [Target] = [
     ]),
   module(
     name: "Onboarding", owner: "Features/Onboarding",
-    dependencies: ["CoordinatedFiles", "ExchangeRates", "Conversion"]),
+    dependencies: ["CoordinatedFiles", "ExchangeRates", "Conversion"], watch: true),
   module(
     name: "OnboardingUI", owner: "Features/Onboarding",
     dependencies: [
@@ -92,7 +105,8 @@ let modules: [Target] = [
       "CurrencySelectionUI"
     ]),
   module(
-    name: "CurrencyDetails", owner: "Features/CurrencyDetails", dependencies: ["ExchangeRates"]),
+    name: "CurrencyDetails", owner: "Features/CurrencyDetails", dependencies: ["ExchangeRates"],
+    watch: true),
   module(
     name: "CurrencyDetailsUI", owner: "Features/CurrencyDetails",
     dependencies: ["CurrencyDetails", "ExchangeRatesUI", "DesignSystem", "ExchangeRates"]),
@@ -127,6 +141,76 @@ let project = Project(
   ]),
   targets: modules + [
     .target(
+      name: "CompanionSync", destinations: Destinations.iOS.union(Destinations.watchOS),
+      product: .staticFramework,
+      bundleId: "com.dimasike.currency.companionsync",
+      deploymentTargets: .multiplatform(iOS: "26.0", watchOS: "26.0"),
+      infoPlist: .default, buildableFolders: ["Apps/Currency/Modules/CompanionSync/Sources"],
+      dependencies: [.target(name: "Conversion"), .target(name: "ExchangeRates")]),
+    .target(
+      name: "CurrencyWatchWidgets", destinations: .watchOS, product: .appExtension,
+      bundleId: "com.dimasike.currency.watchkitapp.widgets", deploymentTargets: .watchOS("26.0"),
+      infoPlist: .extendingDefault(with: [
+        "CFBundleDisplayName": "Currency", "CFBundleShortVersionString": "$(MARKETING_VERSION)",
+        "CFBundleVersion": "$(CURRENT_PROJECT_VERSION)",
+        "NSExtension": ["NSExtensionPointIdentifier": "com.apple.widgetkit-extension"]
+      ]),
+      buildableFolders: [
+        .folder(
+          "AppExtensions/CurrencyWatchWidgets/Sources",
+          exceptions: [
+            .exception(
+              target: "CurrencyWatch",
+              included: ["WatchWidgetActions.swift", "WatchWidgetConfiguration.swift"])
+          ]),
+        .folder(
+          "AppExtensions/CurrencyWatchWidgets/Resources",
+          exceptions: [.exception(target: "CurrencyWatch", included: ["WatchWidgets.xcstrings"])])
+      ],
+      entitlements: .file(
+        path: "AppExtensions/CurrencyWatchWidgets/Configuration/CurrencyWatchWidgets.entitlements"),
+      dependencies: [
+        .target(name: "Conversion"), .target(name: "ExchangeRates"),
+        .target(name: "ExchangeRatesUI"), .target(name: "Widgets")
+      ],
+      settings: releaseSigning(profile: watchWidgetProfile)),
+    .target(
+      name: "CurrencyWatch", destinations: .watchOS, product: .app,
+      bundleId: "com.dimasike.currency.watchkitapp", deploymentTargets: .watchOS("26.0"),
+      infoPlist: .extendingDefault(with: [
+        "CFBundleDisplayName": "Currency", "CFBundleShortVersionString": "$(MARKETING_VERSION)",
+        "CFBundleVersion": "$(CURRENT_PROJECT_VERSION)", "WKApplication": true,
+        "WKCompanionAppBundleIdentifier": "com.dimasike.currency",
+        "WKRunsIndependentlyOfCompanionApp": true,
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleURLTypes": [["CFBundleURLSchemes": ["currency-watch"]]]
+      ]),
+      buildableFolders: [
+        .folder(
+          "Apps/CurrencyWatch/App/Sources",
+          exceptions: [
+            .exception(
+              target: "CurrencyWatchWidgets",
+              included: ["OpenWatchCurrencyIntent.swift"])
+          ]), "Apps/CurrencyWatch/App/Resources"
+      ],
+      entitlements: .file(path: "Apps/CurrencyWatch/App/Configuration/Currency.entitlements"),
+      dependencies: [
+        .target(name: "Home"), .target(name: "HomeWatchUI"), .target(name: "CurrencyDetails"),
+        .target(name: "CurrencyDetailsWatchUI"), .target(name: "Conversion"),
+        .target(name: "ExchangeRates"), .target(name: "Widgets"),
+        .target(name: "LocalCurrency"), .target(name: "CurrencyApplication"),
+        .target(name: "CompanionSync"),
+        .target(name: "CurrencyWatchWidgets")
+      ], settings: releaseSigning(profile: watchProfile)),
+    .target(
+      name: "CompanionSyncTests", destinations: .iOS, product: .unitTests,
+      bundleId: "com.dimasike.currency.companionsynctests", deploymentTargets: .iOS("26.0"),
+      infoPlist: .default, buildableFolders: ["Apps/Currency/Modules/CompanionSync/Tests"],
+      dependencies: [
+        .target(name: "CompanionSync"), .target(name: "Conversion"), .target(name: "ExchangeRates")
+      ]),
+    .target(
       name: "NativeIntentTests", destinations: .iOS, product: .uiTests,
       bundleId: "com.dimasike.currency.nativeintenttests", deploymentTargets: .iOS("27.0"),
       infoPlist: .default, buildableFolders: ["Apps/Currency/Tests/NativeIntentTests"],
@@ -135,8 +219,10 @@ let project = Project(
         "FRAMEWORK_SEARCH_PATHS": "$(inherited) $(PLATFORM_DIR)/Developer/Library/Frameworks"
       ])),
     .target(
-      name: "CurrencyApplication", destinations: .iOS, product: .staticFramework,
-      bundleId: "com.dimasike.currency.currencyapplication", deploymentTargets: .iOS("26.0"),
+      name: "CurrencyApplication", destinations: Destinations.iOS.union(Destinations.watchOS),
+      product: .staticFramework,
+      bundleId: "com.dimasike.currency.currencyapplication",
+      deploymentTargets: .multiplatform(iOS: "26.0", watchOS: "26.0"),
       infoPlist: .default, buildableFolders: ["Apps/Currency/Modules/CurrencyApplication/Sources"],
       dependencies: [
         .target(name: "Home"), .target(name: "Onboarding"),
@@ -222,6 +308,8 @@ let project = Project(
           "Apps/Currency/App/Sources",
           exceptions: [
             .exception(
+              target: "CurrencyWatch", included: ["SystemActions/ConversionIntents.swift"]),
+            .exception(
               target: "ApplicationIntegrationTests",
               included: [
                 "Composition/AppComposition.swift",
@@ -253,7 +341,8 @@ let project = Project(
         .target(name: "SettingsUI"), .target(name: "WidgetOnboarding"),
         .target(name: "WidgetOnboardingUI"), .target(name: "AppearancePreferences"),
         .target(name: "CurrencyApplication"), .target(name: "ForegroundRefresh"),
-        .target(name: "CurrencyWidgets")
+        .target(name: "CurrencyWidgets"), .target(name: "CurrencyWatch"),
+        .target(name: "CompanionSync")
       ],
       settings: releaseSigning(profile: appProfile)),
     .target(
@@ -445,10 +534,12 @@ let project = Project(
         .target(name: "LocationOnboarding"),
         .target(name: "Onboarding"), .target(name: "Settings"),
         .target(name: "AppearancePreferences"), .target(name: "CurrencyApplication"),
-        .target(name: "ForegroundRefresh")
+        .target(name: "ForegroundRefresh"), .target(name: "CompanionSync")
       ])
   ],
   schemes: [
+    .scheme(
+      name: "CurrencyWatch", shared: true, buildAction: .buildAction(targets: ["CurrencyWatch"])),
     .scheme(
       name: "NativeIntentTests", shared: true,
       buildAction: .buildAction(targets: ["Currency", "NativeIntentTests"]),
@@ -474,6 +565,9 @@ let project = Project(
     "Tuist/Package.swift", "Apps/Currency/README.md", "Apps/Currency/App/Configuration/**",
     "Apps/Currency/Modules/*/README.md", "AppExtensions/CurrencyWidgets/README.md",
     "AppExtensions/CurrencyWidgets/Configuration/**", "Foundation/*/Package.swift",
+    "Apps/CurrencyWatch/README.md", "Apps/CurrencyWatch/App/Configuration/**",
+    "AppExtensions/CurrencyWatchWidgets/README.md",
+    "AppExtensions/CurrencyWatchWidgets/Configuration/**",
     "Foundation/*/README.md", "Domain/*/Package.swift", "Domain/*/README.md",
     "Features/*/Package.swift", "Features/*/README.md", "Features/*/.swift-format"
   ]
