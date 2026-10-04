@@ -1,6 +1,6 @@
 {
   "schemaVersion": "trace-1",
-  "createdAt": "2026-10-04T18:47:02.860Z",
+  "createdAt": "2026-10-04T23:22:28.510Z",
   "payload": {
     "actions": [
       {
@@ -47,23 +47,15 @@
       "targetId": "owned-iphone",
       "instructionDigest": "43211767434cddcd6a8db0f469206344b40e7656a3ea99e873ea60da1ff2992e"
     },
-    "summary": "Entered 4 then 2 on the calculator keypad, verified the Euro amount is exactly 42, and finished with the keypad checkmark. The converter remains open showing EUR 42 and USD 84.",
-    "startPath": "com.dimasike.currency / Source currency, Euro",
-    "endPath": "com.dimasike.currency / Source currency, Euro",
+    "summary": "Entered 4 then 2 using the calculator keypad and tapped its toolbar checkmark. The converter remains open showing EUR 42 (and USD 84).",
+    "startPath": "com.dimasike.currency / 🇪🇺",
+    "endPath": "com.dimasike.currency / 🇪🇺",
     "endAnchors": [
-      {
-        "role": "scroll-view",
-        "name": "US Dollar, 84"
-      },
-      {
-        "role": "other",
-        "name": "US Dollar, 84"
-      },
       {
         "role": "button",
         "name": "US Dollar, 84"
       }
     ],
-    "endWaitMs": 13519
+    "endWaitMs": 16229
   }
 }

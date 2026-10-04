@@ -18,6 +18,7 @@
     "@types/node": "26.6.2",
     "ai": "7.0.107",
     "e2e": "0.16.0",
-    "typescript": "7.0.2"
+    "typescript": "7.0.2",
+    "widgetctl": "github:DimaMishchenko/widgetctl#982613e8477fb0cb644ca72454ff1fef7242de5b"
   }
 }
