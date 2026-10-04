@@ -1,17 +1,18 @@
 import { expect, type Locator } from 'e2e';
-import { test as base } from './fixtures.js';
+import { test as base } from './widget-gallery-fixtures.js';
 
 export const test = base.extend<{ calculator: Locator }>({
-  calculator: async ({ start, device, agent, screen }, use) => {
+  calculator: async ({ start, device, installedWidget, screen }, use) => {
     await start('ready-converter');
     await expect(screen.getByRole('button', 'Edit amount in EUR')).toHaveValue('1');
     await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2');
     await device.home();
     await device.openApp('com.apple.springboard');
-    const calculator = device.locator('id=Currency value=Widget');
-    if (await calculator.count() === 0) {
-      await screen.getByTestId('Home screen icons').getByLabel('Currency', { exact: true }).longPress({ duration: 1500 });
-      await agent.act('The Currency app icon context menu is open. Select its Medium-sized widget option to place the medium Currency Calculator on the Home Screen. If editing controls remain, finish editing with Done. Keep the installed widget visible on the normal Home Screen.');
+    let calculator = device.locator('id=Currency value=Widget');
+    const box = await calculator.count() === 1 ? await calculator.boundingBox() : null;
+    if (!box || box.width / box.height < 1.7 || box.width / box.height > 2
+      || await calculator.getByRole('button', /^US Dollar, USD/i).count() === 0) {
+      calculator = await installedWidget('Currency Calculator', 'Medium');
     }
     await expect(calculator).toBeVisible();
     await expect(calculator).toHaveValue('Widget');

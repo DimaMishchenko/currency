@@ -1,6 +1,6 @@
 {
   "schemaVersion": "trace-1",
-  "createdAt": "2026-10-04T13:19:34.765Z",
+  "createdAt": "2026-10-04T15:41:09.988Z",
   "payload": {
     "actions": [
       {
@@ -34,9 +34,9 @@
       "targetId": "owned-iphone",
       "instructionDigest": "f0627508d4a7628eb1badff0687a30f8e8efcf280f9a0be69aaf4e7b3beb3311"
     },
-    "summary": "Opened Options and tapped Settings. The Settings screen is open, with Theme and Accent color visible.",
-    "startPath": "com.dimasike.currency / Source currency, Euro",
-    "endPath": "com.dimasike.currency / Back",
+    "summary": "Opened Options, tapped Settings, and verified the Settings screen shows Theme and Accent color.",
+    "startPath": "com.dimasike.currency / 🇪🇺",
+    "endPath": "com.dimasike.currency / Settings",
     "endAnchors": [
       {
         "role": "button",
@@ -74,6 +74,6 @@
         "name": "Accent color"
       }
     ],
-    "endWaitMs": 15337
+    "endWaitMs": 14479
   }
 }

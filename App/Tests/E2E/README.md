@@ -34,7 +34,6 @@ From `App/Tests/E2E`:
 npm ci
 npx e2e login openai
 npm run typecheck
-npm run test:e2e
 npm run test:e2e -- tests/converter.e2e.ts
 ```
 
@@ -56,7 +55,7 @@ Run profiles sequentially on this host. Give each profile its own helper state a
 ```sh
 export CURRENCY_E2E_TARGET=ipad
 export CURRENCY_E2E_UDID=<your-owned-ipad-simulator-uuid>
-AGENT_DEVICE_STATE_DIR=$PWD/.local/agent-device-$CURRENCY_E2E_TARGET npx e2e run --output .e2e/$CURRENCY_E2E_TARGET
+AGENT_DEVICE_STATE_DIR=$PWD/.local/agent-device-$CURRENCY_E2E_TARGET npx e2e run tests/converter.e2e.ts --output .e2e/$CURRENCY_E2E_TARGET
 ```
 
 Target names keep action recordings separate by profile. Stop the matching helper and simulator after the batch using the shutdown commands below with that profile's state directory.
@@ -74,16 +73,18 @@ The app-wide [feature map](../../../Documentation/FeatureMap.md) owns capabiliti
 | PREF-01 | [preferences.e2e.ts](tests/preferences.e2e.ts), `ready-converter` | System → Dark persists after restart, converter unchanged; passed live and cached (core). Light/System-following and accent/location/replay paths are not covered |
 | WID-02, WID-10, CONV-05 | [home-screen-widget.e2e.ts](tests/home-screen-widget.e2e.ts), `ready-converter` | Default medium Calculator keypad → EUR 42 / USD 84 on Home Screen → same values after app restart (extended) |
 | WID-02, WID-10, CONV-05 | [app-to-widget.e2e.ts](tests/app-to-widget.e2e.ts), `ready-converter` | App amount 42 EUR and CHF addition → installed Calculator shows EUR 42 / USD 84 / CHF 21 (extended) |
+| WID-04–08, WID-10 | [widget-display.e2e.ts](tests/widget-display.e2e.ts), `ready-converter` | System gallery installation; Board 1/2 and app edit 42/84, Cash CZK 100 ≈ EUR 4, Pocket EUR 5 ≈ USD 10, Mental Math ×2, History rate 2 / +11.11% and visible graph. Additional Calculator/Board/History sizes use `widget-sizes` |
+| WID-09, WID-10 | [widget-lock-screen.e2e.ts](tests/widget-lock-screen.e2e.ts), `ready-converter` | Default Dollar Currency Icon installation/reuse and saved Lock Screen display; custom-symbol editing remains uncovered |
 
 Features absent from this table still belong to the app. Select new tests from the feature map when changing their functionality; choose integrated user outcomes and retain numerical/failure-path combinations in native tests. Core replay reliability remains provisional.
 
-Run extended cases separately with `npm run test:e2e:extended`, optionally followed by a file path. Run both widget cases with `npm run test:e2e:widgets`. Keep them outside core while system-widget automation reliability is provisional. To run all seven locally:
+Run extended cases separately with `npm run test:e2e:extended`, optionally followed by a file path. Run representative widget cases with `npm run test:e2e:widgets`. Run the additional Home Screen sizes with `AGENT_DEVICE_STATE_DIR=$PWD/.local/agent-device npx e2e run --tag widget-sizes`. Keep widgets outside core: system gallery setup takes roughly one to three minutes per kind even with a warm simulator and cache enabled. Run the affected widget when its behavior changes, both Calculator sharing journeys for shared-data changes, and the complete widget matrix only for changes affecting every kind or when explicitly requested. Use native tests for the larger configuration and numerical matrix. To run every journey locally:
 
 ```sh
 AGENT_DEVICE_STATE_DIR=$PWD/.local/agent-device npx e2e run
 ```
 
-The widget fixture installs a medium Calculator through the Currency icon’s context menu when absent, then reuses it across cases and runs. The icon is scoped to the Home Screen grid to exclude iPad Dock suggestions; Done is used only when editing controls remain. Use exactly one Default medium Calculator on this owned simulator. Each case resets the app’s real shared stores and requests a widget timeline reload; it verifies app EUR 1 / USD 2, then waits up to 30 seconds for the widget’s initial USD 2 value. App launch arguments do not configure widget extension providers. Full system gallery navigation, Edit Widget, removal, Custom lists and other widget kinds/families remain uncovered. Device-specific gaps are recorded below.
+The shared widget fixture adds the requested kind and size through the system gallery, including when the Currency app icon is absent. It removes only the previous Currency widget on the owned Home Screen; other apps/widgets remain in place. Keep one Currency widget visible at a time on that simulator. Calculator journeys reuse an existing medium Calculator when its bounds and native currency-button structure match, otherwise install it through the same gallery path. Home Screen cases reset the app’s real shared stores and request a timeline reload. Fixed current rates seed EUR 1 / USD 2; History also gets a fresh one-month EUR/USD series from 1.8 to 2, ending yesterday. App launch arguments do not configure widget extension providers. These journeys check default configurations; Custom lists, arbitrary pairs, Local currency states, independent calculator instances and custom Lock Screen symbols still need coverage. The Lock Screen case opens Notification Center, long-presses the clock and uses Customise; the owned simulator has no Wallpaper entry in Settings. It requires a fresh visual absence check before adding the default Dollar icon, then checks exactly one icon on the saved screen.
 
 The pinned driver exposes widget descendants with local frames interpreted as screen coordinates, hiding some controls and misdirecting taps. `widget-fixtures.ts` temporarily taps four controls relative to the installed widget’s bounding box using the public Locator API. This is limited to the verified medium, two-currency, English/default-text-size layout on the base iPhone. The aspect-ratio check rejects other families but does not establish support for arbitrary layouts. Native USD 0 → 8 → 84 checks prove each keypad step; the app then must retain EUR 42 / USD 84. Revisit this fallback when widget frame handling is corrected upstream. Three-currency output uses native CHF 21 readiness and a visual assertion for all three amounts because the driver omits the USD node in that layout.
 
@@ -97,27 +98,25 @@ Current reliability limitation: the original onboarding/converter pilot has pass
 
 Commit reviewed `.e2e/cache` entries, checking recorded text and actions. Keep goal wording and test/target identity stable when behavior is unchanged. Bump `app.identity` when fixture semantics change. Reports, helper state and dependencies are ignored. Do not share a mutable cache directory across worktrees.
 
-For functional changes, run the affected journey during iteration and the core suite before handoff. Use manual simulator exploration for missing coverage or diagnosis, then capture the regression in a maintained case. Report the binary used, test selection, failures/skips, warm duration and cache handoffs separately from build/cold preparation. Keep detailed calculations/provider edge cases in Swift tests.
+For functional changes, select only affected journeys from the feature map and coverage table, including dependent shared-data flows. Run that selection during iteration and before handoff. Do not run the full core or widget suite by default; expand coverage when the change affects it or the user explicitly requests it. Use manual simulator exploration for missing coverage or diagnosis, then capture the regression in a maintained case. Report the binary used, test selection, failures/skips, warm duration and cache handoffs separately from build/cold preparation. Keep detailed calculations/provider edge cases in Swift tests.
 
 ## Latest verification
 
-All seven journeys passed together on `main` (`6eb6ca2`) plus these local changes on the owned iPhone 18 Pro / iOS 27.0 simulator. The current Debug app SHA-256 is `9e53bd322c724b45ca8038fcbe6270b6966b3733bcb7c089676c884d3fd2d5e2` (`Currency.debug.dylib`). Debug and Release builds, TypeScript checks, all 33 native application integration tests and independent review passed.
+The expanded coverage uses the owned iPhone 18 Pro / iOS 27.0 simulator. The current Debug app SHA-256 is `89677df62786ea2f359734af83fda0bca1ffd7742eee4cda17641fe9d6571705` (`Currency.debug.dylib`). The Debug build, TypeScript checks, scoped Swift formatting, all 35 native application integration test declarations (49 parameterized executions) and independent review passed. The prior Release build passed before the additive DEBUG-only history fixture.
 
-The final polished run took **10m 30s** wall time excluding build: **9m 52s** for tests, **34s** for driver preparation and approximately 4s of runner overhead. All seven passed without retries or skips. Default cache remained enabled: **7 goals replayed, 1 handed off and 11 missed**, with **50 model calls**. The two final widget vision assertions used the model; initial widget readiness uses native assertions. This is not a deterministic or zero-model run.
+All 17 journeys have passing evidence across separate batches and focused rechecks; this is not a single green full-suite invocation. The five representative Home Screen display cases initially took **11m 47s**: Board, Cash, Pocket and Mental Math passed, while History failed because the simulator displayed a decimal comma. The corrected exact percentage check accepts either separator; its focused recheck passed in **95s**, plus **15s** driver preparation. The default Lock Screen icon installation passed in **128s**. Its final reuse check, with fresh visual presence/absence guards before adding, passed in **187s**, plus **7s** preparation; exactly one dollar icon remained. An attempted native guard failed because the driver omitted the editor controls despite their presence in the screenshot.
 
-| Journey | Duration |
+The regression batch passed all 11 selected cases (five core, two Calculator sharing cases and four additional sizes) in **15m 30s**: **15m 9s** tests and runner overhead, plus **21s** engine preparation on an already booted device. No selected case failed or retried. Default cache remained enabled: **12 goals replayed, 1 handed off and 6 missed**, with **35 model calls**. Vision checks require the model; this is not a deterministic or zero-model run.
+
+| Selection | Test duration |
 | --- | ---: |
-| App amount/currency → Home Screen widget | 108s |
-| Details/range/source/close | 53s |
-| Converter amount/restart | 35s |
-| Source/add/remove/restart | 142s |
-| Widget keypad → shared app amount | 53s |
-| Onboarding/back/restart | 144s |
-| Theme/restart | 56s |
+| Five core app journeys | 5m 54s |
+| Two Calculator sharing journeys, including gallery fallback | 3m 41s |
+| Four additional Home Screen sizes | 5m 54s |
 
-Both widget cases took **160s** combined with the medium Calculator already installed. Installation was exercised in an earlier run; these timings cover reuse. Details and converter replayed without model calls. The revised app-to-widget amount goal recorded a new trace, while currency selection, onboarding and Settings needed model recovery. One obsolete amount-entry recording was removed after the replacement passed.
+Gallery installation/removal dominates the display journeys. Missing-widget setup passed without relying on a Currency app icon. The current driver still exposes some widget descendants with incorrect local frames; visual checks require exact expected currencies, numbers and readable layout where native accessibility cannot establish the outcome.
 
-Preserved evidence is `.validation/e2e/final-polish-report.json`, `final-polish-summary.md`, `final-polish-timing.json` and `final-polish-artifacts`. Build and native validation logs are alongside them. Cache reliability remains provisional; this suite is not a release gate. System-gallery/configuration/removal, other widget kinds/families and chart correctness remain uncovered.
+Reports and screenshots are preserved under `.validation/e2e/widget-display-native-gallery`, `widget-history`, `widget-expansion-regression`, `widget-lock-screen-passed` and `widget-lock-screen-final`; build and native test logs are alongside them. Default data is checked for all seven kinds and all ten Home Screen kind/family combinations. Arbitrary configuration, custom symbols, Local currency, independent instances and every preset interaction remain uncovered. Cache and system-widget automation reliability remain provisional.
 
 ### iPad and Duo trial
 

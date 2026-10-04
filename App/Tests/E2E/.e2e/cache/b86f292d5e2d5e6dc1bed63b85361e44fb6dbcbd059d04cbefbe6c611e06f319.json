@@ -1,6 +1,6 @@
 {
   "schemaVersion": "trace-1",
-  "createdAt": "2026-10-04T12:53:53.685Z",
+  "createdAt": "2026-10-04T15:37:53.098Z",
   "payload": {
     "actions": [
       {
@@ -43,22 +43,13 @@
       "targetId": "owned-iphone",
       "instructionDigest": "8f582a1c84f511a31f134fc8651e3ff89767ccfbd03b1d68d9f80d7aa874f3d5"
     },
-    "summary": "Opened the source currency picker, searched for USD, selected the US Dollar result, and returned to the converter. The amount remains 1, now displayed in USD.",
-    "startPath": "com.dimasike.currency / Source currency, Euro",
-    "endPath": "com.dimasike.currency / Source currency, US Dollar",
+    "summary": "Opened the source currency picker, searched for USD, selected US Dollar, and returned to the converter. The amount remains 1; the source now shows US Dollar (USD).",
+    "startPath": "com.dimasike.currency / 🇪🇺",
+    "endPath": "com.dimasike.currency / 🇺🇸",
     "endAnchors": [
       {
         "role": "text",
         "name": "0.5"
-      },
-      {
-        "role": "other",
-        "name": "Source currency, US Dollar"
-      },
-      {
-        "role": "navigation",
-        "name": "Source currency, US Dollar",
-        "testId": "_TtGC7SwiftUI32NavigationStackHosting"
       },
       {
         "role": "button",
@@ -66,22 +57,14 @@
         "testId": "converter.source"
       },
       {
-        "role": "other",
-        "name": "Edit amount in USD"
-      },
-      {
-        "role": "scroll-view",
-        "name": "Edit amount in USD"
-      },
-      {
         "role": "button",
         "name": "Edit amount in USD"
       },
       {
-        "role": "scroll-view",
+        "role": "button",
         "name": "Euro, 0.5"
       }
     ],
-    "endWaitMs": 15191
+    "endWaitMs": 13240
   }
 }

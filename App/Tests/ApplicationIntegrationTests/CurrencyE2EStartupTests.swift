@@ -68,6 +68,53 @@
       }
     }
 
+    @Test(arguments: ["ready-converter", "fresh-onboarding"])
+    func resetReplacesHistoryWithFreshDeterministicSeries(state: String) async throws {
+      try await withFixture { directory, defaults in
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let file = directory.appendingPathComponent("history-EUR-USD-30.json")
+        try Data("invalid previous history".utf8).write(to: file)
+        let now = Date(timeIntervalSince1970: 1_791_000_000)
+        _ = try CurrencyE2EStartup.prepare(
+          arguments: ["-CurrencyE2E", "-CurrencyE2EState", state],
+          directory: { directory }, defaults: defaults, resetTips: {}, now: now)
+        let series = try JSONDecoder().decode(HistorySeries.self, from: Data(contentsOf: file))
+        #expect(
+          series.points == [
+            HistoryPoint(date: now.addingTimeInterval(-7 * 86400), value: 1.8),
+            HistoryPoint(date: now.addingTimeInterval(-86400), value: 2)
+          ])
+        #expect(series.fetchedAt == now)
+        #expect(series.source == RateSource(provider: .ecb, observation: .dailyReference))
+        let result = await HistoryService(directory: directory, client: UnexpectedHistoryClient())
+          .load(
+            base: "EUR", quote: "USD", range: .month,
+            now: now.addingTimeInterval(86399), cacheLifetime: 86400)
+        #expect(result.issue == nil)
+        #expect(result.series?.points == series.points)
+      }
+    }
+
+    @Test func launchWithoutExplicitResetPreservesHistory() async throws {
+      try await withFixture { directory, defaults in
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let file = directory.appendingPathComponent("history-EUR-USD-30.json")
+        let previous = Data("existing history".utf8)
+        try previous.write(to: file)
+        for arguments in [["-AppleLanguages", "(en)"], ["-CurrencyE2E"]] {
+          var accessedState = false
+          _ = try CurrencyE2EStartup.prepare(
+            arguments: arguments,
+            directory: {
+              accessedState = true
+              return directory
+            }, defaults: defaults, resetTips: { accessedState = true })
+          #expect(!accessedState)
+          #expect(try Data(contentsOf: file) == previous)
+        }
+      }
+    }
+
     @Test func steadyFixtureLaunchPreservesEditsAndOnboardingCompletion() async throws {
       try await withFixture { directory, defaults in
         _ = try ConversionStore(directory: directory).updateInput { $0.setAmount("99") }
@@ -161,6 +208,13 @@
         defaults.removePersistentDomain(forName: suite)
       }
       try await body(directory, defaults)
+    }
+  }
+
+  private struct UnexpectedHistoryClient: HTTPClient {
+    func get(_ url: URL) async throws -> Data {
+      Issue.record("Fresh seeded history must not request \(url)")
+      throw RateError.unavailable
     }
   }
 #endif

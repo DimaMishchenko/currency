@@ -1,6 +1,6 @@
 {
   "schemaVersion": "trace-1",
-  "createdAt": "2026-10-04T13:15:26.720Z",
+  "createdAt": "2026-10-04T15:37:53.101Z",
   "payload": {
     "actions": [
       {
@@ -41,26 +41,6 @@
           "testId": "currency.picker.CHF",
           "selector": "id=currency.picker.CHF"
         }
-      },
-      {
-        "name": "tap",
-        "summary": "tap button \"Swiss Franc, 0.25\"",
-        "target": {
-          "role": "button",
-          "name": "Swiss Franc, 0.25"
-        }
-      },
-      {
-        "name": "tap",
-        "summary": "tap button \"Done entering amount\" (1 of 2)",
-        "target": {
-          "role": "button",
-          "name": "Done entering amount",
-          "position": {
-            "index": 0,
-            "of": 2
-          }
-        }
       }
     ],
     "executor": {
@@ -72,9 +52,9 @@
       "targetId": "owned-iphone",
       "instructionDigest": "db1e1c43ebcccf19a9887a0ce1d3c522fcf16513a9a7e6f2eb55eebfc9ec6b0c"
     },
-    "summary": "Added CHF by searching for CHF and selecting the Swiss Franc result. Finished on the converter with Swiss Franc (CHF) as a destination and US Dollar (USD) still the source.",
-    "startPath": "com.dimasike.currency / Source currency, US Dollar",
-    "endPath": "com.dimasike.currency / Source currency, US Dollar",
+    "summary": "Used Add currency, searched for CHF, selected the Swiss Franc result, and returned to the converter. Swiss Franc (CHF) is now listed as a destination, while US Dollar (USD) remains the source.",
+    "startPath": "com.dimasike.currency / 🇺🇸",
+    "endPath": "com.dimasike.currency / 🇺🇸",
     "endAnchors": [
       {
         "role": "text",
@@ -97,6 +77,6 @@
         "name": "Swiss Franc, 0.25"
       }
     ],
-    "endWaitMs": 13917
+    "endWaitMs": 14064
   }
 }

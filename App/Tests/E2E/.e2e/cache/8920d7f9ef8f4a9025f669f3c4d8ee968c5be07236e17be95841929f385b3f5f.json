@@ -1,13 +1,13 @@
 {
   "schemaVersion": "trace-1",
-  "createdAt": "2026-10-04T13:15:26.724Z",
+  "createdAt": "2026-10-04T15:37:53.103Z",
   "payload": {
     "actions": [
       {
         "name": "tap",
-        "summary": "tap button \"Options\"",
+        "summary": "tap pop-up-button \"Options\"",
         "target": {
-          "role": "button",
+          "role": "pop-up-button",
           "name": "Options",
           "testId": "converter.options",
           "selector": "id=converter.options"
@@ -25,26 +25,6 @@
         }
       },
       {
-        "name": "tapAt",
-        "summary": "tap the point (118, 208) on text \"EUR\"",
-        "point": {
-          "x": 118,
-          "y": 208
-        },
-        "viewport": {
-          "width": 402,
-          "height": 874
-        },
-        "within": {
-          "target": {
-            "role": "text",
-            "name": "EUR"
-          },
-          "fx": 0.2757,
-          "fy": 0.4615
-        }
-      },
-      {
         "name": "tap",
         "summary": "tap button \"Edit\"",
         "target": {
@@ -54,11 +34,17 @@
       },
       {
         "name": "tap",
-        "summary": "tap other \"remove\" in \"Remove, EUR\"",
+        "summary": "tap image \"remove\" in \"Remove, EUR\" (1 of 2)",
         "target": {
-          "role": "other",
+          "role": "image",
           "name": "remove",
-          "within": "Remove, EUR"
+          "testId": "minus.circle.fill",
+          "selector": "id=minus.circle.fill",
+          "within": "Remove, EUR",
+          "position": {
+            "index": 0,
+            "of": 2
+          }
         }
       },
       {
@@ -67,16 +53,6 @@
         "target": {
           "role": "button",
           "name": "Delete"
-        }
-      },
-      {
-        "name": "tap",
-        "summary": "tap button \"Done\"",
-        "target": {
-          "role": "button",
-          "name": "Done",
-          "testId": "checkmark",
-          "selector": "id=checkmark"
         }
       },
       {
@@ -99,15 +75,9 @@
       "targetId": "owned-iphone",
       "instructionDigest": "f6eedb7b2c40b278a1dc3eaf69fa678e150fb3268da3049a52ea8c2885ae04f3"
     },
-    "summary": "Opened Options → Manage currencies, entered list editing, deleted only EUR, confirmed the list contains CHF and CZK, then closed Manage currencies and returned to the converter with Swiss Franc and Czech Koruna visible.",
-    "startPath": "com.dimasike.currency / Source currency, US Dollar",
+    "summary": "Opened Options > Manage currencies, used Edit and the EUR row’s delete control to remove only Euro, then closed the manager. The converter is visible with Swiss Franc (CHF) and Czech Koruna (CZK) still listed.",
+    "startPath": "com.dimasike.currency / 🇺🇸",
     "endPath": "com.dimasike.currency / 🇺🇸",
-    "endAnchors": [
-      {
-        "role": "navigation",
-        "testId": "_TtGC7SwiftUI32NavigationStackHosting"
-      }
-    ],
-    "endWaitMs": 16969
+    "endWaitMs": 13460
   }
 }

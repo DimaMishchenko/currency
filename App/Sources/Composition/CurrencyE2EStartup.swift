@@ -77,6 +77,21 @@
             RateSnapshot(quotes: FixedRateProvider.quotes(now: now), fetchedAt: now, checkedAt: now)
           )
       }
+      let historyFile = directory.appendingPathComponent("history-EUR-USD-30.json")
+      let history = HistorySeries(
+        points: [
+          HistoryPoint(date: now.addingTimeInterval(-7 * 86400), value: 1.8),
+          HistoryPoint(date: now.addingTimeInterval(-86400), value: 2)
+        ], source: .init(provider: .ecb, observation: .dailyReference), fetchedAt: now)
+      try FileCoordination.write(at: historyFile) {
+        try JSONEncoder().encode(history).write(to: historyFile, options: .atomic)
+      }
+      let seededHistory = try JSONDecoder()
+        .decode(
+          HistorySeries.self, from: Data(contentsOf: historyFile))
+      guard seededHistory.points == history.points, seededHistory.source == history.source,
+        seededHistory.fetchedAt == now
+      else { throw StartupError.seedVerificationFailed }
       let files = [
         "input.json", "onboarding.json", "widget-location-refresh.json",
         "widget-location.json", "widget-location-status.json"

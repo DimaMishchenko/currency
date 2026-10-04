@@ -1,6 +1,6 @@
 {
   "schemaVersion": "trace-1",
-  "createdAt": "2026-10-04T13:19:34.768Z",
+  "createdAt": "2026-10-04T15:41:09.989Z",
   "payload": {
     "actions": [
       {
@@ -21,9 +21,9 @@
       "targetId": "owned-iphone",
       "instructionDigest": "305e1e8da3428254310f36f4fee8503250baa1fe913ba528d008876c6468162e"
     },
-    "summary": "Selected Dark from the Theme menu. The menu is closed and Settings remains open with Theme showing Dark.",
+    "summary": "Settings remains open with the Theme menu closed, and the Theme control shows Dark.",
     "startPath": "com.dimasike.currency",
-    "endPath": "com.dimasike.currency / Back",
+    "endPath": "com.dimasike.currency / Settings",
     "endAnchors": [
       {
         "role": "button",
@@ -61,6 +61,6 @@
         "name": "Accent color"
       }
     ],
-    "endWaitMs": 14502
+    "endWaitMs": 22270
   }
 }
