@@ -20,7 +20,7 @@ For command-line Xcode builds, use `set -o pipefail` and pipe combined output th
 
 ## Dependency cache
 
-Tuist defines repository modules as native targets in a single Currency project and automatically substitutes available cached modules during generation. `Tuist/Package.swift` is reserved for external dependencies. Normal development does not require authentication or custom build scripts.
+Tuist defines repository modules as native targets in a single Currency project. Default generation keeps their source visible and substitutes only external dependencies with cached binaries. `Tuist/Package.swift` is reserved for external dependencies. Normal development does not require authentication or custom build scripts.
 
 Without authentication, Tuist reuses locally cached binaries; downloading shared binaries requires login. `tuist cache` creates binaries; ordinary Xcode builds only consume them.
 
@@ -33,7 +33,7 @@ mise exec -- tuist generate --no-open
 
 To upload newly built binaries, authenticate before warming and omit `--no-upload`; binaries already warmed locally are not uploaded again. Main and same-repository PR checks authenticate with GitHub OIDC and warm the shared cache, except Dependabot PRs. Fork and Dependabot PRs receive no Tuist writer credentials. Warming is optional and CI continues if it fails. See [Tuist's module cache guide](https://tuist.dev/en/docs/guides/features/cache/module-cache).
 
-Use `tuist generate --no-open --cache-profile none` to keep dependencies as source. Signed release archives always use this mode.
+Use `tuist generate --no-open --cache-profile all-possible` to opt into replacing repository modules with cached binaries. This focused build view can omit module sources from the navigator. Default generation preserves the complete source tree. Signed release archives use `--cache-profile none`.
 
 After generation, run `python3 Scripts/CI/check_project_structure.py` to verify one workspace project, complete tracked-file coverage, and no duplicate navigator paths. CI runs the same check.
 

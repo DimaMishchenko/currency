@@ -4,6 +4,6 @@ let tuist = Tuist(
   fullHandle: "dimasike/currency",
   project: .tuist(
     generationOptions: .options(optionalAuthentication: true),
-    cacheOptions: .options(profiles: .profiles(default: .allPossible))
+    cacheOptions: .options(profiles: .profiles(default: .onlyExternal))
   )
 )
