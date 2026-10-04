@@ -1,28 +1,8 @@
 {
   "schemaVersion": "trace-1",
-  "createdAt": "2026-10-03T22:49:48.061Z",
+  "createdAt": "2026-10-04T13:18:39.766Z",
   "payload": {
     "actions": [
-      {
-        "name": "tap",
-        "summary": "tap button \"Continue\"",
-        "target": {
-          "role": "button",
-          "name": "Continue",
-          "testId": "onboarding.primary",
-          "selector": "id=onboarding.primary"
-        }
-      },
-      {
-        "name": "tap",
-        "summary": "tap button \"Back\"",
-        "target": {
-          "role": "button",
-          "name": "Back",
-          "testId": "onboarding.back",
-          "selector": "id=onboarding.back"
-        }
-      },
       {
         "name": "tap",
         "summary": "tap button \"Continue\"",
@@ -73,9 +53,9 @@
       "targetId": "owned-iphone",
       "instructionDigest": "a9d55279dca7fe3af1f429e9d9e20f98b109e235eccbcfdbc0bc00580d36ce11"
     },
-    "summary": "Kept CHF as the base with EUR and USD destinations, skipped widget setup using Later, and tapped Get started. The onboarding finished and the converter is now visible with CHF, EUR, and USD.",
-    "startPath": "com.dimasike.currency / Back",
-    "endPath": "com.dimasike.currency / Source currency, Swiss Franc",
+    "summary": "Skipped optional widget setup with Later, left optional location setup untouched, and tapped Get started. Onboarding closed and the converter is open with CHF as the source and EUR and USD destinations.",
+    "startPath": "com.dimasike.currency / _TtGC7SwiftUI32NavigationStackHosting",
+    "endPath": "com.dimasike.currency / 🇨🇭",
     "endAnchors": [
       {
         "role": "image",
@@ -111,10 +91,11 @@
         "testId": "plus"
       },
       {
-        "role": "other",
-        "name": "Source currency, Swiss Franc"
+        "role": "button",
+        "name": "Source currency, Swiss Franc",
+        "testId": "converter.source"
       }
     ],
-    "endWaitMs": 13759
+    "endWaitMs": 15119
   }
 }

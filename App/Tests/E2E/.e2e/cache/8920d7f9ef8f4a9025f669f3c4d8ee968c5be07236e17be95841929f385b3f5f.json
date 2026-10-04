@@ -1,6 +1,6 @@
 {
   "schemaVersion": "trace-1",
-  "createdAt": "2026-10-04T12:53:53.688Z",
+  "createdAt": "2026-10-04T13:15:26.724Z",
   "payload": {
     "actions": [
       {
@@ -25,11 +25,23 @@
         }
       },
       {
-        "name": "longPress",
-        "summary": "long-press text \"EUR\"",
-        "target": {
-          "role": "text",
-          "name": "EUR"
+        "name": "tapAt",
+        "summary": "tap the point (118, 208) on text \"EUR\"",
+        "point": {
+          "x": 118,
+          "y": 208
+        },
+        "viewport": {
+          "width": 402,
+          "height": 874
+        },
+        "within": {
+          "target": {
+            "role": "text",
+            "name": "EUR"
+          },
+          "fx": 0.2757,
+          "fy": 0.4615
         }
       },
       {
@@ -41,25 +53,12 @@
         }
       },
       {
-        "name": "tapAt",
-        "summary": "tap the point (44, 211) on image \"remove\"",
-        "point": {
-          "x": 44,
-          "y": 211
-        },
-        "viewport": {
-          "width": 402,
-          "height": 874
-        },
-        "within": {
-          "target": {
-            "role": "image",
-            "name": "remove",
-            "testId": "minus.circle.fill",
-            "selector": "id=minus.circle.fill"
-          },
-          "fx": 0.5,
-          "fy": 0.5455
+        "name": "tap",
+        "summary": "tap other \"remove\" in \"Remove, EUR\"",
+        "target": {
+          "role": "other",
+          "name": "remove",
+          "within": "Remove, EUR"
         }
       },
       {
@@ -100,9 +99,15 @@
       "targetId": "owned-iphone",
       "instructionDigest": "f6eedb7b2c40b278a1dc3eaf69fa678e150fb3268da3049a52ea8c2885ae04f3"
     },
-    "summary": "Opened Options → Manage currencies, used the list editing controls to delete only EUR, confirmed CHF and CZK remain, then closed Manage currencies and returned to the converter. The converter now shows Swiss Franc (CHF) and Czech Koruna (CZK) destinations, with EUR absent.",
-    "startPath": "com.dimasike.currency / 🇺🇸",
+    "summary": "Opened Options → Manage currencies, entered list editing, deleted only EUR, confirmed the list contains CHF and CZK, then closed Manage currencies and returned to the converter with Swiss Franc and Czech Koruna visible.",
+    "startPath": "com.dimasike.currency / Source currency, US Dollar",
     "endPath": "com.dimasike.currency / 🇺🇸",
-    "endWaitMs": 17952
+    "endAnchors": [
+      {
+        "role": "navigation",
+        "testId": "_TtGC7SwiftUI32NavigationStackHosting"
+      }
+    ],
+    "endWaitMs": 16969
   }
 }

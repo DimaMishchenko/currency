@@ -1,13 +1,13 @@
 {
   "schemaVersion": "trace-1",
-  "createdAt": "2026-10-04T12:59:25.436Z",
+  "createdAt": "2026-10-04T13:19:34.765Z",
   "payload": {
     "actions": [
       {
         "name": "tap",
-        "summary": "tap pop-up-button \"Options\"",
+        "summary": "tap button \"Options\"",
         "target": {
-          "role": "pop-up-button",
+          "role": "button",
           "name": "Options",
           "testId": "converter.options",
           "selector": "id=converter.options"
@@ -34,9 +34,9 @@
       "targetId": "owned-iphone",
       "instructionDigest": "f0627508d4a7628eb1badff0687a30f8e8efcf280f9a0be69aaf4e7b3beb3311"
     },
-    "summary": "Opened Options and tapped Settings. The Settings screen is displayed with Theme and Accent color visible.",
-    "startPath": "com.dimasike.currency / 🇪🇺",
-    "endPath": "com.dimasike.currency / Settings",
+    "summary": "Opened Options and tapped Settings. The Settings screen is open, with Theme and Accent color visible.",
+    "startPath": "com.dimasike.currency / Source currency, Euro",
+    "endPath": "com.dimasike.currency / Back",
     "endAnchors": [
       {
         "role": "button",
@@ -74,6 +74,6 @@
         "name": "Accent color"
       }
     ],
-    "endWaitMs": 16046
+    "endWaitMs": 15337
   }
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "trace-1",
-  "createdAt": "2026-10-03T22:49:48.058Z",
+  "createdAt": "2026-10-04T13:18:39.762Z",
   "payload": {
     "actions": [
       {
@@ -31,9 +31,9 @@
       "targetId": "owned-iphone",
       "instructionDigest": "0427d73f8d2dd187197476a2f20063ef67f5cc730e747f09609c56cd6d6f3f19"
     },
-    "summary": "Continued to the destination selection screen. Euro (EUR) and US Dollar (USD) recommendation containers both show Selected; no further taps were needed. Remaining on the destination selection screen.",
-    "startPath": "com.dimasike.currency / Back",
-    "endPath": "com.dimasike.currency / Back",
+    "summary": "Advanced to destination currency selection and verified the recommendation containers for Euro (EUR) and US Dollar (USD) both show Selected. Stayed on the destination selection screen.",
+    "startPath": "com.dimasike.currency / _TtGC7SwiftUI32NavigationStackHosting",
+    "endPath": "com.dimasike.currency / _TtGC7SwiftUI32NavigationStackHosting",
     "endAnchors": [
       {
         "role": "text",
@@ -69,6 +69,6 @@
         "name": "Choose the currencies you want to convert to"
       }
     ],
-    "endWaitMs": 14552
+    "endWaitMs": 14373
   }
 }

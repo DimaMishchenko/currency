@@ -1,6 +1,6 @@
 {
   "schemaVersion": "trace-1",
-  "createdAt": "2026-10-04T11:29:12.823Z",
+  "createdAt": "2026-10-04T13:15:26.723Z",
   "payload": {
     "actions": [
       {
@@ -43,9 +43,9 @@
       "targetId": "owned-iphone",
       "instructionDigest": "e0abf1f1bc63690c9eb807f9bab288076c3bc7674b8bff27c7227553fe8bae31"
     },
-    "summary": "Searched for CZK in Add currency, selected Czech Koruna, and returned to the converter. The source remains US Dollar (USD), and the destination rows EUR, CHF, and CZK are all visible.",
-    "startPath": "com.dimasike.currency / 🇺🇸",
-    "endPath": "com.dimasike.currency / 🇺🇸",
+    "summary": "Searched for CZK in Add currency and selected Czech Koruna. Returned to the converter showing EUR, CHF, and CZK destination rows, with US Dollar (USD) still the source.",
+    "startPath": "com.dimasike.currency / Source currency, US Dollar",
+    "endPath": "com.dimasike.currency / Source currency, US Dollar",
     "endAnchors": [
       {
         "role": "text",
@@ -68,6 +68,6 @@
         "name": "Czech Koruna, 12.5"
       }
     ],
-    "endWaitMs": 14499
+    "endWaitMs": 13829
   }
 }

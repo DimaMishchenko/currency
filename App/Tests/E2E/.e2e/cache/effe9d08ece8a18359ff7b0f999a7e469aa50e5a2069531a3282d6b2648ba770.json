@@ -1,6 +1,6 @@
 {
   "schemaVersion": "trace-1",
-  "createdAt": "2026-10-03T22:49:48.056Z",
+  "createdAt": "2026-10-04T13:18:39.760Z",
   "payload": {
     "actions": [
       {
@@ -21,6 +21,15 @@
           "name": "Search",
           "testId": "onboarding.baseSearch",
           "selector": "id=onboarding.baseSearch"
+        }
+      },
+      {
+        "name": "tap",
+        "summary": "tap textbox \"Search\"",
+        "target": {
+          "role": "textbox",
+          "name": "Search",
+          "placeholder": "Search"
         }
       },
       {
@@ -53,9 +62,9 @@
       "targetId": "owned-iphone",
       "instructionDigest": "828696bc18e76b77fa90e15b43b3770429213dad5bee2e8595565c5ee7d6f843"
     },
-    "summary": "Advanced to the base currency screen, opened the currency picker, searched CHF, and selected Swiss Franc. The screen now shows Base currency value “Swiss Franc, CHF”.",
-    "startPath": "com.dimasike.currency / Search",
-    "endPath": "com.dimasike.currency / Back",
+    "summary": "Advanced to the base currency screen, opened the currency picker, searched CHF, and selected Swiss Franc. The screen remains on Base currency with Swiss Franc (CHF) selected.",
+    "startPath": "com.dimasike.currency / _TtGC7SwiftUI32NavigationStackHosting",
+    "endPath": "com.dimasike.currency / _TtGC7SwiftUI32NavigationStackHosting",
     "endAnchors": [
       {
         "role": "button",
@@ -91,6 +100,6 @@
         "name": "GBP"
       }
     ],
-    "endWaitMs": 15930
+    "endWaitMs": 16242
   }
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "trace-1",
-  "createdAt": "2026-10-03T22:49:48.060Z",
+  "createdAt": "2026-10-04T13:18:39.764Z",
   "payload": {
     "actions": [
       {
@@ -23,9 +23,9 @@
       "targetId": "owned-iphone",
       "instructionDigest": "9b5008a6d5fba086d69250ec9ad20ad3b44ec319e13012dfa41031ed2114eb01"
     },
-    "summary": "Tapped Continue on the base currency screen. The destination-currency screen is now visible, CHF remains the source currency, and EUR and USD still show Selected.",
-    "startPath": "com.dimasike.currency / Back",
-    "endPath": "com.dimasike.currency / Back",
+    "summary": "Tapped Continue on the base currency screen. The destination currencies screen is now shown with CHF as the base and both EUR and USD marked Selected.",
+    "startPath": "com.dimasike.currency / _TtGC7SwiftUI32NavigationStackHosting",
+    "endPath": "com.dimasike.currency / _TtGC7SwiftUI32NavigationStackHosting",
     "endAnchors": [
       {
         "role": "text",
@@ -61,6 +61,6 @@
         "name": "Choose the currencies you want to convert to"
       }
     ],
-    "endWaitMs": 14307
+    "endWaitMs": 14291
   }
 }

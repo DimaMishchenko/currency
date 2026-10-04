@@ -1,6 +1,6 @@
 {
   "schemaVersion": "trace-1",
-  "createdAt": "2026-10-03T22:49:48.059Z",
+  "createdAt": "2026-10-04T13:18:39.763Z",
   "payload": {
     "actions": [
       {
@@ -23,9 +23,9 @@
       "targetId": "owned-iphone",
       "instructionDigest": "ba6d29cf886b3de820628d179f16935681997d4af822af2e51133e112879982b"
     },
-    "summary": "Went back to the base currency screen. Swiss Franc (CHF) remains selected; no currency choices were changed.",
-    "startPath": "com.dimasike.currency / Back",
-    "endPath": "com.dimasike.currency / Back",
+    "summary": "Tapped Back to return to the Base currency screen. Swiss Franc (CHF) remains selected; no currency choices were changed.",
+    "startPath": "com.dimasike.currency / _TtGC7SwiftUI32NavigationStackHosting",
+    "endPath": "com.dimasike.currency / _TtGC7SwiftUI32NavigationStackHosting",
     "endAnchors": [
       {
         "role": "text",
@@ -45,6 +45,10 @@
         "testId": "onboarding.base"
       },
       {
+        "role": "scroll-view",
+        "testId": "onboarding.baseRecommendations"
+      },
+      {
         "role": "button",
         "name": "US Dollar, USD",
         "testId": "onboarding.baseChoice.USD"
@@ -58,13 +62,8 @@
         "role": "button",
         "name": "Japanese Yen, JPY",
         "testId": "onboarding.baseChoice.JPY"
-      },
-      {
-        "role": "button",
-        "name": "British Pound, GBP",
-        "testId": "onboarding.baseChoice.GBP"
       }
     ],
-    "endWaitMs": 13776
+    "endWaitMs": 14554
   }
 }
