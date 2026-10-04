@@ -2,7 +2,7 @@
 
 Inventory of the app’s implemented user capabilities, independent of any test framework. Use the stable IDs to define acceptance criteria, choose regression journeys, and identify missing coverage. An entry describes behavior to verify, not evidence that it has been verified on every platform.
 
-Update this map when functionality changes. Keep test selection, execution commands and results in the relevant verification guides: [development](Development.md), [agent E2E](../App/Tests/E2E/README.md), [adaptive layouts](AdaptiveLayouts.md), and [localization](Localization.md). A test may cover only one representative path within a capability; list that scope explicitly.
+Update this map when functionality changes. Keep test selection, execution commands and results in the relevant verification guides: [development](Development.md), [agent E2E](../Apps/Currency/Tests/E2E/README.md), [adaptive layouts](AdaptiveLayouts.md), and [localization](Localization.md). A test may cover only one representative path within a capability; list that scope explicitly.
 
 ## Onboarding
 
@@ -61,7 +61,7 @@ Send feedback is currently displayed as “Coming soon”; it has no submission 
 
 ## Widgets and widget discovery
 
-Owners: [widget guide](../Features/WidgetOnboarding/Sources/WidgetOnboardingUI/OnboardingHomeScreen.swift), [widget bundle](../App/Widgets/Sources/CurrencyWidgets.swift), and Widgets domain. Installation/configuration happens through iOS; the in-app guide previews the capabilities and setup.
+Owners: [widget guide](../Features/WidgetOnboarding/Sources/WidgetOnboardingUI/OnboardingHomeScreen.swift), [widget bundle](../AppExtensions/CurrencyWidgets/Sources/CurrencyWidgets.swift), and Widgets domain. Installation/configuration happens through iOS; the in-app guide previews the capabilities and setup.
 
 | ID | Capability / entry | Observable outcome |
 | --- | --- | --- |
@@ -76,11 +76,11 @@ Owners: [widget guide](../Features/WidgetOnboarding/Sources/WidgetOnboardingUI/O
 | WID-09 | Currency Icon: accessory circular Lock Screen widget | The configured currency symbol appears in the system accessory presentation. |
 | WID-10 | System gallery, Edit Widget, taps, removal and reload | Installation/configuration produce the selected widget; intents execute in the real extension; removal works and shared data remains consistent. |
 
-Some widget entry links currently emit legacy `currency://convert`, while the application route parser accepts the versioned converter route below. Converter opening from those links requires correction/validation; it is not established by rendering a widget. See [widget links](../Domain/Widgets/Sources/WidgetsUI/WidgetComponents.swift), [Currency Icon](../App/Widgets/Sources/CurrencyWidget.swift), and [route handling](../App/Modules/CurrencyApplication/Sources/CurrencyScene.swift).
+Some widget entry links currently emit legacy `currency://convert`, while the application route parser accepts the versioned converter route below. Converter opening from those links requires correction/validation; it is not established by rendering a widget. See [widget links](../Domain/Widgets/Sources/WidgetsUI/WidgetComponents.swift), [Currency Icon](../AppExtensions/CurrencyWidgets/Sources/CurrencyWidget.swift), and [route handling](../Apps/Currency/Modules/CurrencyApplication/Sources/CurrencyScene.swift).
 
 ## System actions and external navigation
 
-Owners: [SystemActions](../App/Sources/SystemActions), [CurrencyRoute](../App/Modules/CurrencyApplication/Sources/CurrencyRoute.swift), and application scene routing.
+Owners: [SystemActions](../Apps/Currency/App/Sources/SystemActions), [CurrencyRoute](../Apps/Currency/Modules/CurrencyApplication/Sources/CurrencyRoute.swift), and application scene routing.
 
 | ID | Capability / entry | Observable outcome |
 | --- | --- | --- |

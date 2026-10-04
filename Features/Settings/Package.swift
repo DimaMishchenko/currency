@@ -8,7 +8,7 @@ let package = Package(
     .library(name: "SettingsUI", targets: ["SettingsUI"])
   ],
   dependencies: [
-    .package(path: "../../Domain/ExchangeRates"), .package(path: "../../DesignSystem")
+    .package(path: "../../Domain/ExchangeRates"), .package(path: "../../Foundation/DesignSystem")
   ],
   targets: [
     .target(

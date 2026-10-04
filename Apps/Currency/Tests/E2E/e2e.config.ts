@@ -17,7 +17,7 @@ export default {
       app: {
         identity: 'currency-fixtures-v1',
         bundleId: 'com.dimasike.currency',
-        appPath: '../../../.validation/e2e/DerivedData/Build/Products/Debug-iphonesimulator/Currency.app',
+        appPath: '../../../../.validation/e2e/DerivedData/Build/Products/Debug-iphonesimulator/Currency.app',
         launchArguments: ['-AppleLanguages', '(en)', '-AppleLocale', 'en_US', '-CurrencyE2E'],
       },
     },

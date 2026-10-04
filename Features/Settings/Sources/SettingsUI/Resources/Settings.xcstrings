@@ -571,7 +571,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Couleur d’accentuation"
+            "value": "Couleur d’accent"
           }
         },
         "pt-BR": {
@@ -607,7 +607,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Цвет акцента"
+            "value": "Акцент"
           }
         },
         "uk": {
@@ -1093,7 +1093,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Predeterminado"
+            "value": "Por defecto"
           }
         },
         "de": {
@@ -4138,7 +4138,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bientôt disponible"
+            "value": "Bientôt"
           }
         },
         "pt-BR": {
@@ -4162,7 +4162,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Prossimamente"
+            "value": "In arrivo"
           }
         },
         "tr": {

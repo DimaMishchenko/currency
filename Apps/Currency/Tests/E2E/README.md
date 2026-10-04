@@ -28,7 +28,7 @@ xcrun simctl create 'Currency E2E' com.apple.CoreSimulator.SimDeviceType.iPhone-
 export CURRENCY_E2E_UDID=<your-simulator-uuid>
 ```
 
-From `App/Tests/E2E`:
+From `Apps/Currency/Tests/E2E`:
 
 ```sh
 npm ci
@@ -40,8 +40,8 @@ npm run test:e2e -- tests/converter.e2e.ts
 Before running, check the configured app exists and record its build identity:
 
 ```sh
-test -d ../../../.validation/e2e/DerivedData/Build/Products/Debug-iphonesimulator/Currency.app
-shasum -a 256 ../../../.validation/e2e/DerivedData/Build/Products/Debug-iphonesimulator/Currency.app/Currency.debug.dylib
+test -d ../../../../.validation/e2e/DerivedData/Build/Products/Debug-iphonesimulator/Currency.app
+shasum -a 256 ../../../../.validation/e2e/DerivedData/Build/Products/Debug-iphonesimulator/Currency.app/Currency.debug.dylib
 ```
 
 Login is needed only when credentials are unavailable. Authentication stays outside the repository. Run one suite at a time against the explicit owned UDID; keep the simulator/helper warm during iteration. The latest report is `.e2e/report.json`; screenshots are under `.e2e/artifacts/`. Preserve reports before the next run overwrites them.
@@ -62,7 +62,7 @@ Target names keep action recordings separate by profile. Stop the matching helpe
 
 ## Coverage and maintenance
 
-The app-wide [feature map](../../../Documentation/FeatureMap.md) owns capabilities and expected outcomes, including features without E2E coverage. This table maps representative journeys to its stable IDs; it does not establish coverage of every path within an ID.
+The app-wide [feature map](../../../../Documentation/FeatureMap.md) owns capabilities and expected outcomes, including features without E2E coverage. This table maps representative journeys to its stable IDs; it does not establish coverage of every path within an ID.
 
 | Feature IDs | Journey / initial state | Current coverage |
 | --- | --- | --- |
@@ -102,7 +102,7 @@ For functional changes, select only affected journeys from the feature map and c
 
 ## Latest verification
 
-The expanded coverage uses the owned iPhone 18 Pro / iOS 27.0 simulator. The current Debug app SHA-256 is `89677df62786ea2f359734af83fda0bca1ffd7742eee4cda17641fe9d6571705` (`Currency.debug.dylib`). The Debug build, TypeScript checks, scoped Swift formatting, all 35 native application integration test declarations (49 parameterized executions) and independent review passed. The prior Release build passed before the additive DEBUG-only history fixture.
+The expanded coverage uses the owned iPhone 18 Pro / iOS 27.0 simulator. The expanded widget runs used Debug app SHA-256 `89677df62786ea2f359734af83fda0bca1ffd7742eee4cda17641fe9d6571705` (`Currency.debug.dylib`). The Debug build, TypeScript checks, scoped Swift formatting, all 35 native application integration test declarations (49 parameterized executions) and independent review passed. The prior Release build passed before the additive DEBUG-only history fixture.
 
 All 17 journeys have passing evidence across separate batches and focused rechecks; this is not a single green full-suite invocation. The five representative Home Screen display cases initially took **11m 47s**: Board, Cash, Pocket and Mental Math passed, while History failed because the simulator displayed a decimal comma. The corrected exact percentage check accepts either separator; its focused recheck passed in **95s**, plus **15s** driver preparation. The default Lock Screen icon installation passed in **128s**. Its final reuse check, with fresh visual presence/absence guards before adding, passed in **187s**, plus **7s** preparation; exactly one dollar icon remained. An attempted native guard failed because the driver omitted the editor controls despite their presence in the screenshot.
 
@@ -117,6 +117,8 @@ The regression batch passed all 11 selected cases (five core, two Calculator sha
 Gallery installation/removal dominates the display journeys. Missing-widget setup passed without relying on a Currency app icon. The current driver still exposes some widget descendants with incorrect local frames; visual checks require exact expected currencies, numbers and readable layout where native accessibility cannot establish the outcome.
 
 Reports and screenshots are preserved under `.validation/e2e/widget-display-native-gallery`, `widget-history`, `widget-expansion-regression`, `widget-lock-screen-passed` and `widget-lock-screen-final`; build and native test logs are alongside them. Default data is checked for all seven kinds and all ten Home Screen kind/family combinations. Arbitrary configuration, custom symbols, Local currency, independent instances and every preset interaction remain uncovered. Cache and system-widget automation reliability remain provisional.
+
+After integrating main's physical project reorganization (`b20674d`), E2E moved to `Apps/Currency/Tests/E2E`. The rebuilt Debug app SHA-256 is `660c91e37dfa5121335cca478490b2933b2985a4e1de0d17230f4a5303f19b28`. Generation, navigator coverage, localization checks, TypeScript, scoped formatting and the focused startup integration tests passed. The affected converter/restart journey passed in **45s** with one replayed goal and zero model calls, plus **124s** driver preparation. The widget matrix was not repeated for this folder-only integration. Evidence is under `.validation/e2e/main-integration-*`.
 
 ### iPad and Duo trial
 

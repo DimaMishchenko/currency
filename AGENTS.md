@@ -1,6 +1,6 @@
 # Functional verification
 
-Maintain the real-app journeys in `App/Tests/E2E` instead of repeating manual screen tours for covered behavior. Use `Documentation/FeatureMap.md` for the app-wide capabilities and expected outcomes, including features without E2E coverage. Follow the E2E README for setup, test mapping and limitations.
+Maintain the real-app journeys in `Apps/Currency/Tests/E2E` instead of repeating manual screen tours for covered behavior. Use `Documentation/FeatureMap.md` for the app-wide capabilities and expected outcomes, including features without E2E coverage. Follow the E2E README for setup, test mapping and limitations.
 
 When a change adds, removes or changes app functionality, update `Documentation/FeatureMap.md` with the current entry points and expected outcomes, preserving existing feature IDs. Update the E2E README mapping when coverage changes.
 

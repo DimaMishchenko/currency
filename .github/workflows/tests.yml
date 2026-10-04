@@ -33,7 +33,9 @@ jobs:
           subprocess.run(["python3", "Scripts/CI/check_localizations.py"], check=True, timeout=25)
           PYTHON
       - name: Test CI skip rules
-        run: python3 Scripts/CI/test_skip_rules.py
+        run: |
+          python3 Scripts/CI/test_skip_rules.py
+          python3 Scripts/CI/test_project_structure.py
       - name: Test TestFlight notes
         run: python3 Scripts/CI/test_testflight_notes.py
       - name: Record release decision
@@ -74,7 +76,7 @@ jobs:
         run: brew install xcbeautify
       - name: Check Swift formatting
         if: needs.changes.outputs.xcode == 'true'
-        run: swift format lint --recursive --strict App Domain Features DesignSystem Infrastructure
+        run: swift format lint --recursive --strict Apps AppExtensions Domain Features Foundation
       - name: Install Tuist dependencies
         if: needs.changes.outputs.xcode == 'true'
         run: tuist install
@@ -94,6 +96,9 @@ jobs:
         if: needs.changes.outputs.xcode == 'true'
         run: |
           tuist generate --no-open --cache-profile none
+      - name: Check generated navigator structure
+        if: needs.changes.outputs.xcode == 'true'
+        run: python3 Scripts/CI/check_project_structure.py
       - name: Create test simulator
         if: needs.changes.outputs.xcode == 'true'
         run: |

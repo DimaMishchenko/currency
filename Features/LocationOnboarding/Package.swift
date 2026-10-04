@@ -9,7 +9,7 @@ let package = Package(
   ],
   dependencies: [
     .package(path: "../../Domain/LocalCurrency"), .package(path: "../../Domain/Conversion"),
-    .package(path: "../../Domain/ExchangeRates"), .package(path: "../../DesignSystem")
+    .package(path: "../../Domain/ExchangeRates"), .package(path: "../../Foundation/DesignSystem")
   ],
   targets: [
     .target(

@@ -9,8 +9,8 @@ let package = Package(
     .library(name: "WidgetsUI", targets: ["WidgetsUI"])
   ],
   dependencies: [
-    .package(path: "../../Infrastructure/CoordinatedFiles"),
-    .package(path: "../../DesignSystem"),
+    .package(path: "../../Foundation/CoordinatedFiles"),
+    .package(path: "../../Foundation/DesignSystem"),
     .package(path: "../ExchangeRates"),
     .package(path: "../LocalCurrency"),
     .package(path: "../Conversion")
