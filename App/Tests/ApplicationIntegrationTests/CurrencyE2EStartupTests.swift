@@ -51,8 +51,10 @@
         let day = now.formatted(.iso8601.year().month().day().dateSeparator(.dash))
         let previous = RateSnapshot(
           quotes: [
-            "EUR": ExchangeRate(1, published: day, source: .init(provider: .ecb), cachedAt: earlier),
-            "USD": ExchangeRate(1.13, published: day, source: .init(provider: .ecb), cachedAt: earlier)
+            "EUR": ExchangeRate(
+              1, published: day, source: .init(provider: .ecb), cachedAt: earlier),
+            "USD": ExchangeRate(
+              1.13, published: day, source: .init(provider: .ecb), cachedAt: earlier)
           ], fetchedAt: earlier, checkedAt: earlier)
         try RateCache(directory: directory).save(previous)
         _ = try CurrencyE2EStartup.prepare(

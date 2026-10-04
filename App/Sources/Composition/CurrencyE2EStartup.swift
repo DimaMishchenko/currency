@@ -72,8 +72,10 @@
     ) throws {
       let rates = RateStore(directory: directory)
       try FileCoordination.write(at: directory.appendingPathComponent("rates.json")) {
-        try RateCache(directory: directory).save(
-          RateSnapshot(quotes: FixedRateProvider.quotes(now: now), fetchedAt: now, checkedAt: now))
+        try RateCache(directory: directory)
+          .save(
+            RateSnapshot(quotes: FixedRateProvider.quotes(now: now), fetchedAt: now, checkedAt: now)
+          )
       }
       let files = [
         "input.json", "onboarding.json", "widget-location-refresh.json",
@@ -134,7 +136,9 @@
       let values: [String: Decimal] = ["EUR": 1, "USD": 2, "CHF": 0.5, "CZK": 25]
       return
         values
-        .mapValues { ExchangeRate($0, published: day, source: .init(provider: .ecb), cachedAt: now) }
+        .mapValues {
+          ExchangeRate($0, published: day, source: .init(provider: .ecb), cachedAt: now)
+        }
     }
   }
 #endif
