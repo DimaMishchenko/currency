@@ -67,20 +67,7 @@ struct WatchRateView: View {
             Text(verbatim: amountText + " ≈ " + displayValue + " " + quote)
           }
         case .accessoryCorner:
-          Text(verbatim: primary)
-            .font(.title3).minimumScaleFactor(0.4)
-            .accessibilityLabel(
-              Text(
-                verbatim: entry.style == .mental
-                  ? pair + " " + primary : amountText + " → " + displayValue + " " + quote)
-            )
-            .widgetLabel {
-              Text(
-                verbatim: entry.style == .mental
-                  ? pair : amountText + " → " + quote + unit(for: quote)
-              )
-              .lineLimit(1).minimumScaleFactor(0.5)
-            }
+          corner
         case .accessoryCircular:
           VStack(spacing: 1) {
             Text(verbatim: entry.style == .mental ? entry.activeSource : quote).font(.caption2)
@@ -96,6 +83,41 @@ struct WatchRateView: View {
     .fontDesign(.rounded)
     .widgetURL(conversionURL)
     .accessibilityElement(children: family == .accessoryRectangular ? .contain : .combine)
+  }
+
+  private var corner: some View {
+    Group {
+      if entry.style == .mental {
+        Text(verbatim: cornerPrimary).font(.title.bold())
+      } else {
+        ViewThatFits(in: .horizontal) {
+          Text(verbatim: cornerAmounts).font(.title3.bold())
+          Text(verbatim: cornerAmounts).font(.headline.bold())
+          Text(verbatim: compactCornerAmounts).font(.headline.bold())
+        }
+      }
+    }
+    .widgetCurvesContent()
+    .accessibilityLabel(
+      Text(
+        verbatim: entry.style == .mental
+          ? pair + " " + primary : amountText + " → " + displayValue + " " + quote)
+    )
+    .widgetLabel {
+      Text(
+        verbatim: entry.style == .mental
+          ? pair
+          : entry.activeSource + unit(for: entry.activeSource)
+            + "  " + quote + unit(for: quote))
+    }
+  }
+
+  private var cornerAmounts: String {
+    format(amount, code: entry.activeSource) + " → " + format(value, code: quote)
+  }
+
+  private var compactCornerAmounts: String {
+    compactCornerFormat(amount) + " → " + compactCornerFormat(value)
   }
 
   private var conversionURL: URL {
@@ -123,9 +145,10 @@ struct WatchRateView: View {
   private var rectangular: some View {
     VStack(alignment: .leading, spacing: 1) {
       HStack(spacing: 3) {
-        CurrencyIcon(entry.activeSource, size: 11).frame(width: 13, height: 11)
-        Text(verbatim: pair).font(.system(size: 10, weight: .semibold))
+        CurrencyIcon(entry.activeSource, size: 12).frame(width: 14, height: 12)
+        Text(verbatim: pair).font(.system(size: 11, weight: .semibold))
         Spacer(minLength: 0)
+        WatchRateStatus(entry: entry)
         if entry.style != .cash && entry.style != .mental {
           Button(intent: WatchWidgetSwapIntent(entry: entry)) {
             Image(systemName: "arrow.up.arrow.down")
@@ -136,10 +159,18 @@ struct WatchRateView: View {
           .disabled(value == nil)
         }
       }
-      .frame(height: 12)
+      .frame(height: 13)
       if entry.style == .cash {
-        cashRows
-        WatchRateFreshness(entry: entry).frame(height: 10)
+        HStack(alignment: .firstTextBaseline, spacing: 3) {
+          Text(verbatim: format(amount, code: entry.activeSource) + unit(for: entry.activeSource))
+            .font(.system(size: 11))
+          Text(verbatim: "≈").font(.system(size: 10))
+          Text(verbatim: displayValue).font(.system(size: 17, weight: .semibold))
+        }
+        .frame(height: 20)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: amountText + " ≈ " + displayValue + " " + quote))
+        cashButtons
       } else {
         HStack(alignment: .firstTextBaseline, spacing: 3) {
           if entry.style != .mental {
@@ -147,23 +178,13 @@ struct WatchRateView: View {
               .font(.system(size: 11))
             Image(systemName: "equal").font(.system(size: 8))
           }
-          Text(verbatim: primary).font(.system(size: 16, weight: .semibold))
+          Text(verbatim: primary)
+            .font(.system(size: entry.style == .mental ? 22 : 17, weight: .semibold))
           Spacer(minLength: 0)
-          if entry.style == .mental, let rule {
-            Text(
-              .WatchWidgets.approximationError(
-                rule.error.formatted(.percent.precision(.fractionLength(1))))
-            )
-            .font(.system(size: 9)).foregroundStyle(.secondary)
-          }
+
         }
-        .frame(height: 19)
-        HStack(spacing: 4) {
-          if entry.style != .mental && renderingMode == .fullColor { presetButtons }
-          WatchRateFreshness(entry: entry)
-            .frame(maxWidth: .infinity, alignment: .trailing)
-        }
-        .frame(height: 18)
+        .frame(height: entry.style == .mental ? 36 : 20)
+        if entry.style != .mental && renderingMode == .fullColor { presetButtons }
       }
     }
     .frame(maxWidth: .infinity, alignment: .leading)
@@ -175,8 +196,8 @@ struct WatchRateView: View {
     HStack(spacing: 3) {
       ForEach([Decimal(1), 10, 100], id: \.self) { value in
         Button(intent: WatchWidgetPresetIntent(entry: entry, amount: value)) {
-          Text(verbatim: value.description).font(.system(size: 9, weight: .semibold))
-            .frame(width: value == 100 ? 25 : 21, height: 18)
+          Text(verbatim: value.description).font(.system(size: 10, weight: .semibold))
+            .frame(maxWidth: .infinity, minHeight: 20)
             .background(.quaternary, in: RoundedRectangle(cornerRadius: 5))
             .contentShape(Rectangle())
         }
@@ -184,29 +205,25 @@ struct WatchRateView: View {
         .accessibilityLabel(Text(.WatchWidgets.useAmount(value.description)))
       }
     }
-    .fixedSize(horizontal: true, vertical: false)
+    .frame(height: 20)
   }
 
-  private var cashRows: some View {
-    VStack(spacing: 0) {
+  private var cashButtons: some View {
+    HStack(spacing: 3) {
       ForEach(WidgetPresets.amounts(entry.activeSource), id: \.self) { preset in
-        let result =
-          entry.snapshot.hasValidFetchTimestamp(now: entry.date)
-            && WidgetPresets.allows(entry.activeSource) && WidgetPresets.allows(quote)
-          ? WidgetPresets.convert(
-            preset, from: entry.activeSource, to: quote, snapshot: entry.snapshot) : nil
-        HStack {
-          Text(
-            verbatim: format(preset, code: entry.activeSource)
-              + (WidgetPresets.metals.contains(entry.activeSource) ? " g" : ""))
-          Spacer(minLength: 2)
-          Text(
-            verbatim: "≈ " + format(result, code: quote)
-              + (WidgetPresets.metals.contains(quote) ? " g" : ""))
+        let title = format(preset, code: entry.activeSource) + unit(for: entry.activeSource)
+        Button(intent: WatchWidgetPresetIntent(entry: entry, amount: preset)) {
+          Text(verbatim: title).font(.system(size: 10, weight: .semibold))
+            .frame(maxWidth: .infinity, minHeight: 20)
+            .background(.quaternary, in: RoundedRectangle(cornerRadius: 5))
+            .contentShape(Rectangle())
         }
-        .font(.system(size: 10)).monospacedDigit().frame(height: 10)
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text(.WatchWidgets.useAmount(title + " " + entry.activeSource)))
+        .accessibilityAddTraits(preset == amount ? .isSelected : [])
       }
     }
+    .frame(height: 20)
     .accessibilityLabel(
       Text(
         WidgetPresets.metals.contains(entry.activeSource)
@@ -214,6 +231,37 @@ struct WatchRateView: View {
           : WidgetPresets.isBanknote(entry.activeSource)
             ? .WatchWidgets.banknotes
             : .WatchWidgets.referenceAmounts))
+  }
+
+  private var cornerPrimary: String {
+    if entry.style == .mental, let rule {
+      return (rule.divide ? "÷ " : "× ") + cornerFormat(rule.factor, code: "")
+    }
+    return cornerFormat(value, code: quote)
+  }
+
+  private func cornerFormat(_ value: Decimal?, code: String) -> String {
+    let full = format(value, code: code)
+    guard let value, full.count > 7 else { return full }
+    if abs(value) >= 1000 {
+      return value.formatted(
+        .number.locale(locale).notation(.compactName).precision(.significantDigits(3)))
+    }
+    return value.formatted(
+      .number.locale(locale).notation(.scientific).precision(.significantDigits(3)))
+  }
+
+  private func compactCornerFormat(_ value: Decimal?) -> String {
+    guard let value, !value.isNaN else { return "—" }
+    if abs(value) >= 1000 {
+      return value.formatted(
+        .number.locale(locale).notation(.compactName).precision(.significantDigits(3)))
+    }
+    if value != 0 && abs(value) < 0.001 {
+      return value.formatted(
+        .number.locale(locale).notation(.scientific).precision(.significantDigits(3)))
+    }
+    return value.formatted(.number.locale(locale).precision(.significantDigits(3)))
   }
 
   private func format(_ value: Decimal?, code: String) -> String {
@@ -233,11 +281,13 @@ struct WatchBoardView: View {
       favorites
     } else if family == .accessoryRectangular {
       VStack(alignment: .leading, spacing: 0) {
-        Text(
-          verbatim: entry.input.amount + " " + entry.activeSource
-            + WatchWidgetFormat.unit(entry.activeSource)
-        )
-        .font(.system(size: 10, weight: .semibold)).frame(height: 12)
+        HStack(spacing: 3) {
+          Text(verbatim: sourceAmount)
+            .font(.system(size: 11, weight: .semibold))
+          Spacer(minLength: 0)
+          WatchRateStatus(entry: entry)
+        }
+        .frame(height: 13)
         if entry.targets.isEmpty { Text(.WatchWidgets.addFavorites).font(.system(size: 10)) }
         ForEach(Array(entry.targets.prefix(3)), id: \.self) {
           code in
@@ -249,9 +299,8 @@ struct WatchBoardView: View {
               verbatim: WatchWidgetFormat.amount(entry.value(to: code), code: code, locale: locale)
                 + WatchWidgetFormat.unit(code))
           }
-          .font(.system(size: 10)).monospacedDigit().frame(height: 10)
+          .font(.system(size: 11)).monospacedDigit().frame(height: 13)
         }
-        WatchRateFreshness(entry: entry).frame(height: 10)
       }
       .fontDesign(.rounded)
       .lineLimit(1).minimumScaleFactor(0.55)
@@ -326,27 +375,28 @@ struct WatchBoardView: View {
   }
 }
 
-struct WatchRateFreshness: View {
+private struct WatchRateStatus: View {
   let entry: WatchWidgetEntry
+
   var body: some View {
     Group {
       if entry.evaluation == nil
         || entry.evaluation?.results.allSatisfy({ $0.amount == nil }) == true
       {
-        Text(.WatchWidgets.ratesUnavailable)
+        Image(systemName: "exclamationmark.triangle")
+          .accessibilityLabel(Text(.WatchWidgets.ratesUnavailable))
       } else if entry.evaluation?.refreshFailed == true || entry.evaluation?.cacheIsStale == true {
-        Text(
-          .WatchWidgets.savedRatesAsOf(
-            entry.snapshot.fetchedAt.formatted(date: .abbreviated, time: .shortened)))
+        Image(systemName: "clock.arrow.circlepath")
+          .accessibilityLabel(
+            Text(
+              .WatchWidgets.savedRatesAsOf(
+                entry.snapshot.fetchedAt.formatted(date: .abbreviated, time: .shortened))))
       } else if entry.evaluation?.dailyFallback == true {
-        Text(.WatchWidgets.dailyRate)
-      } else if entry.evaluation?.fetchedAt != nil {
-        Text(
-          .WatchWidgets.updated(
-            entry.snapshot.fetchedAt.formatted(date: .omitted, time: .shortened)))
+        Image(systemName: "clock")
+          .accessibilityLabel(Text(.WatchWidgets.dailyRate))
       }
     }
-    .font(.system(size: 9)).foregroundStyle(.secondary).lineLimit(1)
+    .font(.system(size: 9)).foregroundStyle(.secondary)
   }
 }
 
@@ -424,7 +474,8 @@ struct WatchHistoryView: View {
       switch family {
       case .accessoryInline: Text(verbatim: pair + " " + periodChange)
       case .accessoryCorner:
-        Text(verbatim: change).font(.title3).minimumScaleFactor(0.4)
+        Text(verbatim: change).font(.title.bold())
+          .widgetCurvesContent()
           .widgetLabel {
             Text(verbatim: pair + " " + localized(rangeTitle))
           }
@@ -477,49 +528,6 @@ struct WatchHistoryView: View {
     .widgetURL(
       WatchWidgetRoute.url(source: snapshot.pair.base, quote: snapshot.pair.quote, details: true))
   }
-}
-
-struct WatchIconView: View {
-  @Environment(\.widgetFamily) private var family
-  let entry: WatchIconEntry
-  var body: some View {
-    Group {
-      if family == .accessoryInline {
-        Label {
-          Text(.WatchWidgets.openCurrency)
-        } icon: {
-          icon(size: 11)
-        }
-      } else {
-        icon(size: 26).widgetAccentable()
-          .widgetLabel { Text(.WatchWidgets.openCurrency) }
-      }
-    }
-    .fontDesign(.rounded)
-    .widgetURL(WatchWidgetRoute.url())
-    .containerBackground(.fill.tertiary, for: .widget)
-    .accessibilityLabel(Text(.WatchWidgets.openCurrency))
-  }
-
-  @ViewBuilder private func icon(size: CGFloat) -> some View {
-    if let code = Self.currencyCodes[entry.symbol] {
-      CurrencyIcon(code, size: size)
-    } else {
-      Image(systemName: entry.symbol.id).font(.system(size: size, design: .rounded))
-    }
-  }
-
-  private static let currencyCodes: [CurrencySymbol: String] = [
-    .australiandollar: "AUD", .baht: "THB", .bitcoin: "BTC", .brazilianreal: "BRL",
-    .cedi: "GHS", .chineseyuanrenminbi: "CNY", .danishkrone: "DKK", .dong: "VND",
-    .dollar: "USD", .euro: "EUR", .eurozone: "EUR", .franc: "CHF", .guarani: "PYG",
-    .hryvnia: "UAH", .indianrupee: "INR", .kip: "LAK", .lari: "GEL", .lira: "TRY",
-    .malaysianringgit: "MYR", .manat: "AZN", .naira: "NGN", .norwegiankrone: "NOK",
-    .peruviansoles: "PEN", .peso: "PHP", .polishzloty: "PLN", .ruble: "RUB",
-    .rupee: "INR", .shekel: "ILS", .singaporedollar: "SGD", .sterling: "GBP",
-    .swedishkrona: "SEK", .tenge: "KZT", .tugrik: "MNT", .turkishlira: "TRY",
-    .won: "KRW", .yen: "JPY"
-  ]
 }
 
 enum WatchWidgetFormat {

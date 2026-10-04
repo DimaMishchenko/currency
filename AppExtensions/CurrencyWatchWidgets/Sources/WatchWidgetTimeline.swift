@@ -248,30 +248,6 @@ struct WatchHistoryTimeline: AppIntentTimelineProvider {
   }
 }
 
-struct WatchIconEntry: TimelineEntry {
-  let date: Date
-  let symbol: CurrencySymbol
-}
-
-struct WatchIconTimeline: AppIntentTimelineProvider {
-  func recommendations() -> [AppIntentRecommendation<WatchIconSettings>] { [] }
-  func placeholder(in context: Context) -> WatchIconEntry {
-    WatchIconEntry(date: .now, symbol: .euro)
-  }
-  func snapshot(for configuration: WatchIconSettings, in context: Context) async -> WatchIconEntry {
-    entry(configuration)
-  }
-  func timeline(
-    for configuration: WatchIconSettings, in context: Context
-  ) async -> Timeline<WatchIconEntry> {
-    Timeline(entries: [entry(configuration)], policy: .never)
-  }
-  private func entry(_ configuration: WatchIconSettings) -> WatchIconEntry {
-    WatchIconEntry(
-      date: .now, symbol: configuration.symbol.flatMap { CurrencySymbol(rawValue: $0.id) } ?? .euro)
-  }
-}
-
 enum WatchWidgetPreview {
   static func entry(style: WatchWidgetStyle) -> WatchWidgetEntry {
     let now = Date()

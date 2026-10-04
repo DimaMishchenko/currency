@@ -11,7 +11,6 @@ struct CurrencyWatchWidgets: WidgetBundle {
     WatchHistoryWidget()
     WatchPairWidget(style: .mental)
     WatchCashWidget()
-    WatchCurrencyIconWidget()
     WatchBoardWidget(style: .favorites)
     OpenCurrencyWatchControl()
   }
@@ -99,20 +98,6 @@ struct WatchHistoryWidget: Widget {
     ) { WatchHistoryView(entry: $0) }
     .configurationDisplayName(String(localized: .WatchWidgets.historyTitle))
     .description(String(localized: .WatchWidgets.historyDescription))
-    .supportedFamilies([
-      .accessoryRectangular, .accessoryCircular, .accessoryInline, .accessoryCorner
-    ])
-  }
-}
-
-struct WatchCurrencyIconWidget: Widget {
-  var body: some WidgetConfiguration {
-    AppIntentConfiguration(
-      kind: "CurrencyWatch-icon", intent: WatchIconSettings.self,
-      provider: WatchIconTimeline()
-    ) { WatchIconView(entry: $0) }
-    .configurationDisplayName(String(localized: .WatchWidgets.iconTitle))
-    .description(String(localized: .WatchWidgets.iconDescription))
     .supportedFamilies([
       .accessoryRectangular, .accessoryCircular, .accessoryInline, .accessoryCorner
     ])

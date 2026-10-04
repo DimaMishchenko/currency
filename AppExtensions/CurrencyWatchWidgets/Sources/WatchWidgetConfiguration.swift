@@ -231,35 +231,3 @@ struct WatchHistorySettings: WidgetConfigurationIntent {
     }
   }
 }
-
-struct WatchCurrencyGlyph: AppEntity {
-  static let typeDisplayRepresentation = TypeDisplayRepresentation(
-    name: LocalizedStringResource("symbol", defaultValue: "Currency symbol", table: "WatchWidgets"))
-  static let defaultQuery = WatchGlyphQuery()
-  let id: String
-  var displayRepresentation: DisplayRepresentation {
-    DisplayRepresentation(title: "\(id)", image: .init(systemName: id))
-  }
-}
-
-struct WatchGlyphQuery: EntityQuery {
-  func defaultResult() async -> WatchCurrencyGlyph? {
-    WatchCurrencyGlyph(id: CurrencySymbol.euro.id)
-  }
-  func entities(for identifiers: [String]) async throws -> [WatchCurrencyGlyph] {
-    identifiers.filter { CurrencySymbol(rawValue: $0) != nil }.map { WatchCurrencyGlyph(id: $0) }
-  }
-  func suggestedEntities() async throws -> [WatchCurrencyGlyph] {
-    CurrencySymbol.allCases.map { WatchCurrencyGlyph(id: $0.id) }
-  }
-}
-
-struct WatchIconSettings: WidgetConfigurationIntent {
-  static let title: LocalizedStringResource = LocalizedStringResource(
-    "iconTitle", defaultValue: "Currency Icon", table: "WatchWidgets")
-  @Parameter(
-    title: LocalizedStringResource(
-      "symbol", defaultValue: "Currency symbol", table: "WatchWidgets"), query: WatchGlyphQuery())
-  var symbol: WatchCurrencyGlyph?
-  static var parameterSummary: some ParameterSummary { Summary { \.$symbol } }
-}

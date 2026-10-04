@@ -1,15 +1,18 @@
 # Currency Watch widgets
 
 watchOS 26 extension with Pocket Rate, Currency Board, History, Mental Math,
-Know Your Cash, Currency Icon, Favorite Pairs, and an Open Currency control.
+Know Your Cash, Favorite Pairs, and an Open Currency control.
 Rectangular widgets appear on watch faces and in the Smart Stack; circular, inline,
 and corner families provide compact face presentations. Favorite Pairs uses the
-native rectangular `AccessoryWidgetGroup`.
+native rectangular `AccessoryWidgetGroup`. Corner conversions curve both amounts above
+the currency names with a single arrow. Ordinary update timestamps are omitted;
+unavailable, stale and daily fallback rates retain compact accessible indicators.
 
 The executable supplies the Watch App Group directory to `ConversionStore`,
 `RateStore`, `WidgetStore`, and `HistoryService`. Missing entitlement fails explicitly.
 Empty currency choices follow the Watch source and favorites; Local is excluded.
-Know Your Cash offers only fiat and metals. An ineligible followed source uses EUR;
+Know Your Cash offers only fiat and metals. Its denomination buttons select banknotes
+or metal weights and update one prominent conversion. An ineligible followed source uses EUR;
 its comparison uses the first eligible distinct favorite, then USD (EUR for a USD source).
 Unsupported saved cash pairs prompt a new currency or metal selection.
 Rates load from cache before refresh, and historical graphs use real validated series.
