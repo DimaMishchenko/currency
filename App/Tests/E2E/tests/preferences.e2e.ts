@@ -3,7 +3,7 @@ import { expect } from 'e2e';
 
 test('appearance preference survives app restart', { tags: ['core'] }, async ({ start, agent, app, screen }) => {
   await start('ready-converter');
-  await agent.act('Open Currency Settings from the converter Options menu. Stay on Settings.');
+  await agent.act('Open Options and tap Settings. Finish on the Settings screen showing Theme and Accent color.');
   const theme = screen.getByTestId('settings.theme');
   await expect(theme).toBeVisible();
   await expect(theme).toHaveAccessibleName('Theme, System');
@@ -16,7 +16,7 @@ test('appearance preference survives app restart', { tags: ['core'] }, async ({ 
   await app.restart();
   await expect(screen.getByRole('button', 'Edit amount in EUR')).toHaveValue('1');
   await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2');
-  await agent.act('Open Currency Settings from the converter Options menu. Stay on Settings.');
+  await agent.act('Open Options and tap Settings. Finish on the Settings screen showing Theme and Accent color.');
   await expect(theme).toBeVisible();
   await expect(theme).toHaveAccessibleName('Theme, Dark');
   await app.screenshot('settings-dark-theme-after-restart');

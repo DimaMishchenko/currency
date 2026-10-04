@@ -1,0 +1,79 @@
+{
+  "schemaVersion": "trace-1",
+  "createdAt": "2026-10-04T12:59:25.436Z",
+  "payload": {
+    "actions": [
+      {
+        "name": "tap",
+        "summary": "tap pop-up-button \"Options\"",
+        "target": {
+          "role": "pop-up-button",
+          "name": "Options",
+          "testId": "converter.options",
+          "selector": "id=converter.options"
+        }
+      },
+      {
+        "name": "tap",
+        "summary": "tap button \"Settings\" in \"Gear shape\"",
+        "target": {
+          "role": "button",
+          "name": "Settings",
+          "testId": "converter.settings",
+          "selector": "id=converter.settings",
+          "within": "Gear shape"
+        }
+      }
+    ],
+    "executor": {
+      "name": "e2e-default-agent",
+      "version": "2"
+    },
+    "recordedFor": {
+      "testId": "tests/preferences.e2e.ts::appearance%20preference%20survives%20app%20restart",
+      "targetId": "owned-iphone",
+      "instructionDigest": "f0627508d4a7628eb1badff0687a30f8e8efcf280f9a0be69aaf4e7b3beb3311"
+    },
+    "summary": "Opened Options and tapped Settings. The Settings screen is displayed with Theme and Accent color visible.",
+    "startPath": "com.dimasike.currency / 🇪🇺",
+    "endPath": "com.dimasike.currency / Settings",
+    "endAnchors": [
+      {
+        "role": "button",
+        "name": "Back",
+        "testId": "BackButton"
+      },
+      {
+        "role": "text",
+        "name": "Settings"
+      },
+      {
+        "role": "text",
+        "name": "Appearance"
+      },
+      {
+        "role": "text",
+        "name": "System"
+      },
+      {
+        "role": "image",
+        "name": "Circle With The Left Half Filled",
+        "testId": "circle.lefthalf.filled"
+      },
+      {
+        "role": "text",
+        "name": "Theme"
+      },
+      {
+        "role": "image",
+        "name": "Paint Palette",
+        "testId": "paintpalette"
+      },
+      {
+        "role": "text",
+        "name": "Accent color"
+      }
+    ],
+    "endWaitMs": 16046
+  }
+}

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "trace-1",
-  "createdAt": "2026-10-03T22:50:44.368Z",
+  "createdAt": "2026-10-04T12:59:25.439Z",
   "payload": {
     "actions": [
       {
@@ -32,11 +32,11 @@
     "recordedFor": {
       "testId": "tests/preferences.e2e.ts::appearance%20preference%20survives%20app%20restart",
       "targetId": "owned-iphone",
-      "instructionDigest": "fd421954fa5838093e88ec6d9b23ff8d526a2eee11bce21d23502456c21282a9"
+      "instructionDigest": "f0627508d4a7628eb1badff0687a30f8e8efcf280f9a0be69aaf4e7b3beb3311"
     },
-    "summary": "Opened Options, selected Settings, and verified the Settings screen is displayed.",
-    "startPath": "com.dimasike.currency / Source currency, Euro",
-    "endPath": "com.dimasike.currency / Back",
+    "summary": "Opened Options and tapped Settings. The Settings screen is displayed with Theme and Accent color visible.",
+    "startPath": "com.dimasike.currency / 🇪🇺",
+    "endPath": "com.dimasike.currency / Settings",
     "endAnchors": [
       {
         "role": "button",
@@ -53,7 +53,7 @@
       },
       {
         "role": "text",
-        "name": "System"
+        "name": "Dark"
       },
       {
         "role": "image",
@@ -74,6 +74,6 @@
         "name": "Accent color"
       }
     ],
-    "endWaitMs": 14511
+    "endWaitMs": 14309
   }
 }

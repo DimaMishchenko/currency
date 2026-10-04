@@ -1,13 +1,13 @@
 {
   "schemaVersion": "trace-1",
-  "createdAt": "2026-10-04T11:29:12.825Z",
+  "createdAt": "2026-10-04T12:53:53.688Z",
   "payload": {
     "actions": [
       {
         "name": "tap",
-        "summary": "tap pop-up-button \"Options\"",
+        "summary": "tap button \"Options\"",
         "target": {
-          "role": "pop-up-button",
+          "role": "button",
           "name": "Options",
           "testId": "converter.options",
           "selector": "id=converter.options"
@@ -25,19 +25,19 @@
         }
       },
       {
+        "name": "longPress",
+        "summary": "long-press text \"EUR\"",
+        "target": {
+          "role": "text",
+          "name": "EUR"
+        }
+      },
+      {
         "name": "tap",
         "summary": "tap button \"Edit\"",
         "target": {
           "role": "button",
           "name": "Edit"
-        }
-      },
-      {
-        "name": "tap",
-        "summary": "tap text \"Remove, EUR\"",
-        "target": {
-          "role": "text",
-          "name": "Remove, EUR"
         }
       },
       {
@@ -100,9 +100,9 @@
       "targetId": "owned-iphone",
       "instructionDigest": "f6eedb7b2c40b278a1dc3eaf69fa678e150fb3268da3049a52ea8c2885ae04f3"
     },
-    "summary": "Opened Options > Manage currencies, used the list editing controls to delete only EUR, finished editing, and closed Manage currencies. The converter now shows Swiss Franc (CHF) and Czech Koruna (CZK) destinations; EUR is absent.",
+    "summary": "Opened Options → Manage currencies, used the list editing controls to delete only EUR, confirmed CHF and CZK remain, then closed Manage currencies and returned to the converter. The converter now shows Swiss Franc (CHF) and Czech Koruna (CZK) destinations, with EUR absent.",
     "startPath": "com.dimasike.currency / 🇺🇸",
     "endPath": "com.dimasike.currency / 🇺🇸",
-    "endWaitMs": 15266
+    "endWaitMs": 17952
   }
 }

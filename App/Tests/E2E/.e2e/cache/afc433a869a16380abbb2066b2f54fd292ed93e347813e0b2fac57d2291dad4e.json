@@ -1,6 +1,6 @@
 {
   "schemaVersion": "trace-1",
-  "createdAt": "2026-10-03T23:49:08.020Z",
+  "createdAt": "2026-10-04T12:51:27.828Z",
   "payload": {
     "actions": [
       {
@@ -9,6 +9,16 @@
         "target": {
           "role": "button",
           "name": "Edit amount in EUR"
+        }
+      },
+      {
+        "name": "tap",
+        "summary": "tap button \"Delete digit\"",
+        "target": {
+          "role": "button",
+          "name": "Delete digit",
+          "testId": "delete.left",
+          "selector": "id=delete.left"
         }
       },
       {
@@ -47,23 +57,15 @@
       "targetId": "owned-iphone",
       "instructionDigest": "43211767434cddcd6a8db0f469206344b40e7656a3ea99e873ea60da1ff2992e"
     },
-    "summary": "Replaced the Euro amount with 42 using keypad digits 4 then 2, confirmed with the keypad checkmark, and remained on the converter showing 42 EUR.",
-    "startPath": "com.dimasike.currency / Source currency, Euro",
-    "endPath": "com.dimasike.currency / Source currency, Euro",
+    "summary": "Used the calculator keypad to enter 4 then 2, confirmed the source amount is 42 EUR, and tapped the keypad toolbar checkmark. The converter remains open with 42 EUR shown.",
+    "startPath": "com.dimasike.currency / 🇪🇺",
+    "endPath": "com.dimasike.currency / 🇪🇺",
     "endAnchors": [
-      {
-        "role": "scroll-view",
-        "name": "US Dollar, 84"
-      },
-      {
-        "role": "other",
-        "name": "US Dollar, 84"
-      },
       {
         "role": "button",
         "name": "US Dollar, 84"
       }
     ],
-    "endWaitMs": 14402
+    "endWaitMs": 15594
   }
 }
