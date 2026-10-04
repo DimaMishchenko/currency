@@ -131,6 +131,8 @@ Warm widget placement takes roughly **1–2s**, with **23–34s** warm display j
 
 The three private-configuration journeys passed together in **3m 1s**, plus **19s** engine preparation: Pocket reversal/restoration **50s**, Mental Math division **31s**, and Custom Board **94s**. The strengthened Board recheck passed in **2m 2s**, plus **14s** engine preparation, including **13s** cold helper preparation. Its new 8/16 outcome after app input 42/84 proves a fresh custom calculation, rather than relying only on unchanged 7/14 content. Warm export/apply commands plus persisted verification took roughly **0.6–1s**; the complete journeys still include app preparation, native actions and model-backed rendering checks. Reports: `.e2e/private-widget-configuration` and `.e2e/private-widget-custom-board`.
 
+The extracted `widgetctl` integration passed nine selected iPhone journeys in **9m29s**, plus **37s** engine preparation: all three configuration cases, both Calculator sharing directions, Cash, medium History, large Calculator and small Board. Helper cold preparation was **16–25s** per test module; warm configuration apply plus persisted verification was approximately **0.6–0.8s**. This selection uses normal caching; the report is `.e2e/widgetctl-integration/report.json`. Package host tests and static native compilation run in the [widgetctl repository](https://github.com/DimaMishchenko/widgetctl/actions); Currency CI checks the integration types.
+
 ### iPad and Duo trial
 
 All seven cases were selected and executed on each profile with the same Debug app. These were new cache identities, so the runs primarily used the model. Durations below are the runner's reported durations, excluding simulator boot and engine preparation. Focused rechecks followed the full runs; the combined results do not represent a green full-suite invocation.
@@ -157,7 +159,7 @@ After the shared fixture/goal corrections, all three affected iPhone cases (conv
 
 ## Cache limits
 
-Real simulator journeys are local-only. The simulator utility’s host-only tests also run in CI, without device access or model calls. Cached navigation can replay without a model call, but cache misses, screen-identity mismatches and widget vision assertions still require your ChatGPT login. Keep the default cache enabled; it does not make the entire suite deterministic. Historical replay experiments and reports remain under `.validation/e2e`.
+Real simulator journeys are local-only. Widgetctl’s host-only tests run in its own CI, without device access or model calls. Cached navigation can replay without a model call, but cache misses, screen-identity mismatches and widget vision assertions still require your ChatGPT login. Keep the default cache enabled; it does not make the entire suite deterministic. Historical replay experiments and reports remain under `.validation/e2e`.
 
 ## Shutdown
 
@@ -169,6 +171,3 @@ xcrun simctl shutdown "$CURRENCY_E2E_UDID"
 ```
 
 `@e2e-dev/mobile` 0.9.2 ships `agent-device` 0.21.20 with the [iOS toolbar occlusion fix](https://github.com/callstack/agent-device/pull/3097), following [upstream E2E PR](https://github.com/tester-army/e2e/pull/791). No dependency override is needed. The state directory keeps this suite’s helper separate from other tasks. Unauthenticated replay is not a supported suite configuration; cache context rejection remains a known limitation.
-
-The extracted `widgetctl` integration passed nine selected iPhone journeys in **9m29s**, plus **37s** engine preparation: all three configuration cases, both Calculator sharing directions, Cash, medium History, large Calculator and small Board. Helper cold preparation was **16–25s** per test module; warm configuration apply plus persisted verification was approximately **0.6–0.8s**. This selection uses normal caching; the report is `.e2e/widgetctl-integration/report.json`. Package host tests and static native compilation run in the [widgetctl repository](https://github.com/DimaMishchenko/widgetctl/actions); Currency CI checks the integration types.
-
