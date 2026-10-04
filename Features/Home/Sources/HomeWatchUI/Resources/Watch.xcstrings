@@ -2227,6 +2227,95 @@
           }
         }
       }
+    },
+    "troyOunce": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "troy oz"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "金衡盎司"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "トロイオンス"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "oz troy"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Feinunzen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "oz troy"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "oz troy"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "트로이온스"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "金衡盎司"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "once troy"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "troy ons"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "тройских унций"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "тройських унцій"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "troiuntsi"
+          }
+        }
+      },
+      "extractionState": "manual"
     }
   },
   "version": "1.0"

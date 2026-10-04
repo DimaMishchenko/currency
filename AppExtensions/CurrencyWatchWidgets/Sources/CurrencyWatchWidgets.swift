@@ -28,8 +28,8 @@ struct WatchPairWidget: Widget {
     ) {
       WatchRateView(entry: $0)
     }
-    .configurationDisplayName(Text(title))
-    .description(Text(description))
+    .configurationDisplayName(String(localized: title))
+    .description(String(localized: description))
     .supportedFamilies([
       .accessoryRectangular, .accessoryCircular, .accessoryInline, .accessoryCorner
     ])
@@ -56,8 +56,8 @@ struct WatchCashWidget: Widget {
       kind: WatchWidgetStyle.cash.kind, intent: WatchCashSettings.self,
       provider: WatchCashTimeline()
     ) { WatchRateView(entry: $0) }
-    .configurationDisplayName(Text(.WatchWidgets.cashTitle))
-    .description(Text(.WatchWidgets.cashDescription))
+    .configurationDisplayName(String(localized: .WatchWidgets.cashTitle))
+    .description(String(localized: .WatchWidgets.cashDescription))
     .supportedFamilies([
       .accessoryRectangular, .accessoryCircular, .accessoryInline, .accessoryCorner
     ])
@@ -76,11 +76,13 @@ struct WatchBoardWidget: Widget {
       WatchBoardView(entry: $0)
     }
     .configurationDisplayName(
-      Text(style == .favorites ? .WatchWidgets.favoritesTitle : .WatchWidgets.boardTitle)
+      String(
+        localized: style == .favorites ? .WatchWidgets.favoritesTitle : .WatchWidgets.boardTitle)
     )
     .description(
-      Text(
-        style == .favorites ? .WatchWidgets.favoritesDescription : .WatchWidgets.boardDescription)
+      String(
+        localized: style == .favorites
+          ? .WatchWidgets.favoritesDescription : .WatchWidgets.boardDescription)
     )
     .supportedFamilies(
       style == .favorites
@@ -95,8 +97,8 @@ struct WatchHistoryWidget: Widget {
       kind: "CurrencyWatch-history", intent: WatchHistorySettings.self,
       provider: WatchHistoryTimeline()
     ) { WatchHistoryView(entry: $0) }
-    .configurationDisplayName(Text(.WatchWidgets.historyTitle))
-    .description(Text(.WatchWidgets.historyDescription))
+    .configurationDisplayName(String(localized: .WatchWidgets.historyTitle))
+    .description(String(localized: .WatchWidgets.historyDescription))
     .supportedFamilies([
       .accessoryRectangular, .accessoryCircular, .accessoryInline, .accessoryCorner
     ])
@@ -109,8 +111,8 @@ struct WatchCurrencyIconWidget: Widget {
       kind: "CurrencyWatch-icon", intent: WatchIconSettings.self,
       provider: WatchIconTimeline()
     ) { WatchIconView(entry: $0) }
-    .configurationDisplayName(Text(.WatchWidgets.iconTitle))
-    .description(Text(.WatchWidgets.iconDescription))
+    .configurationDisplayName(String(localized: .WatchWidgets.iconTitle))
+    .description(String(localized: .WatchWidgets.iconDescription))
     .supportedFamilies([
       .accessoryRectangular, .accessoryCircular, .accessoryInline, .accessoryCorner
     ])
@@ -124,7 +126,7 @@ struct OpenCurrencyWatchControl: ControlWidget {
         Label {
           Text(.WatchWidgets.openCurrency)
         } icon: {
-          Image(systemName: "arrow.left.arrow.right")
+          Image(systemName: "dollarsign")
         }
       }
     }

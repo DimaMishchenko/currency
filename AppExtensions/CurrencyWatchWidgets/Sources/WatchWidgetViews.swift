@@ -69,7 +69,18 @@ struct WatchRateView: View {
         case .accessoryCorner:
           Text(verbatim: primary)
             .font(.title3).minimumScaleFactor(0.4)
-            .widgetLabel { Text(verbatim: pair) }
+            .accessibilityLabel(
+              Text(
+                verbatim: entry.style == .mental
+                  ? pair + " " + primary : amountText + " → " + displayValue + " " + quote)
+            )
+            .widgetLabel {
+              Text(
+                verbatim: entry.style == .mental
+                  ? pair : amountText + " → " + quote + unit(for: quote)
+              )
+              .lineLimit(1).minimumScaleFactor(0.5)
+            }
         case .accessoryCircular:
           VStack(spacing: 1) {
             Text(verbatim: entry.style == .mental ? entry.activeSource : quote).font(.caption2)
@@ -251,9 +262,36 @@ struct WatchBoardView: View {
     }
   }
 
+  private func localized(_ resource: LocalizedStringResource) -> String {
+    var resource = resource
+    resource.locale = locale
+    return String(localized: resource)
+  }
+
+  private var sourceAmount: String {
+    WatchWidgetFormat.amount(entry.input.decimal, code: entry.activeSource, locale: locale)
+      + " " + entry.activeSource + WatchWidgetFormat.unit(entry.activeSource)
+  }
+
+  private var savedRateStatus: String {
+    guard entry.evaluation?.refreshFailed == true || entry.evaluation?.cacheIsStale == true else {
+      return ""
+    }
+    let date = entry.snapshot.fetchedAt.formatted(
+      .dateTime.locale(locale).day().month(.abbreviated).hour().minute())
+    return localized(.WatchWidgets.savedRatesAsOf(date))
+  }
+
   private var favorites: some View {
     AccessoryWidgetGroup {
-      Text(.WatchWidgets.favoritePairs).font(.system(size: 10))
+      HStack(spacing: 3) {
+        Text(verbatim: sourceAmount).font(.system(size: 10)).monospacedDigit()
+        if !savedRateStatus.isEmpty {
+          Image(systemName: "clock.arrow.circlepath").font(.system(size: 9))
+            .accessibilityLabel(Text(verbatim: savedRateStatus))
+        }
+      }
+      .lineLimit(1).minimumScaleFactor(0.6)
     } content: {
       ForEach(Array(entry.targets.prefix(3)), id: \.self) { code in
         Link(destination: entry.url(quote: code)) {
@@ -268,6 +306,13 @@ struct WatchBoardView: View {
           .lineLimit(1)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(
+          Text(
+            verbatim: sourceAmount + " → "
+              + WatchWidgetFormat.amount(entry.value(to: code), code: code, locale: locale)
+              + " " + code + WatchWidgetFormat.unit(code))
+        )
+        .accessibilityHint(Text(verbatim: savedRateStatus))
       }
       if entry.targets.isEmpty {
         Link(destination: WatchWidgetRoute.url()) { Image(systemName: "plus") }
@@ -318,8 +363,51 @@ struct WatchHistoryView: View {
     } ?? "—"
   }
   private var change: String {
-    snapshot.change?.formatted(.percent.precision(.fractionLength(2)).sign(strategy: .always()))
+    snapshot.change?
+      .formatted(
+        .percent.locale(locale).precision(.fractionLength(2)).sign(strategy: .always()))
       ?? "—"
+  }
+  private func localized(_ resource: LocalizedStringResource) -> String {
+    var resource = resource
+    resource.locale = locale
+    return String(localized: resource)
+  }
+
+  private var rangeTitle: LocalizedStringResource {
+    switch snapshot.range {
+    case .day: .WatchWidgets.historyDay
+    case .week: .WatchWidgets.historyWeek
+    case .month: .WatchWidgets.historyMonth
+    case .quarter: .WatchWidgets.historyQuarter
+    case .year: .WatchWidgets.historyYear
+    case .yearToDate: .WatchWidgets.historyYearToDate
+    case .all: .WatchWidgets.historyAll
+    }
+  }
+  private var rangeAccessibilityTitle: LocalizedStringResource {
+    switch snapshot.range {
+    case .day: .WatchWidgets.day
+    case .week: .WatchWidgets.week
+    case .month: .WatchWidgets.month
+    case .quarter: .WatchWidgets.quarter
+    case .year: .WatchWidgets.year
+    case .yearToDate: .WatchWidgets.historyYearToDateLong
+    case .all: .WatchWidgets.all
+    }
+  }
+  private var periodChange: String {
+    localized(rangeTitle) + " " + change
+  }
+  private var accessibilitySummary: String {
+    let date =
+      snapshot.latest?.date
+      .formatted(
+        .dateTime.locale(locale).day().month(.abbreviated).year()) ?? ""
+    return pair + ", " + localized(rangeAccessibilityTitle)
+      + ", " + change + ", " + latest + " " + date
+      + ", "
+      + localized(snapshot.series == nil ? .WatchWidgets.historyUnavailable : provenance)
   }
   private var provenance: LocalizedStringResource {
     if snapshot.issue == .usingCachedSeries { return .WatchWidgets.savedHistory }
@@ -334,15 +422,19 @@ struct WatchHistoryView: View {
   var body: some View {
     Group {
       switch family {
-      case .accessoryInline: Text(verbatim: pair + " " + change)
+      case .accessoryInline: Text(verbatim: pair + " " + periodChange)
       case .accessoryCorner:
         Text(verbatim: change).font(.title3).minimumScaleFactor(0.4)
-          .widgetLabel { Text(verbatim: pair) }
+          .widgetLabel {
+            Text(verbatim: pair + " " + localized(rangeTitle))
+          }
       case .accessoryCircular:
-        VStack(spacing: 1) {
-          Text(verbatim: snapshot.pair.quote ?? "").font(.caption2)
-          Text(verbatim: change).font(.headline).minimumScaleFactor(0.35)
+        VStack(spacing: 2) {
+          Text(verbatim: snapshot.pair.base + "→" + (snapshot.pair.quote ?? ""))
+            .font(.system(size: 9, weight: .medium))
+          Text(verbatim: periodChange).font(.system(size: 12, weight: .semibold))
         }
+        .minimumScaleFactor(0.45)
         .containerBackground(.fill.tertiary, for: .widget)
       default:
         VStack(alignment: .leading, spacing: 1) {
@@ -350,7 +442,7 @@ struct WatchHistoryView: View {
             CurrencyIcon(snapshot.pair.base, size: 10).frame(width: 12, height: 11)
             Text(verbatim: pair).font(.system(size: 10, weight: .semibold))
             Spacer(minLength: 0)
-            Text(verbatim: change).font(.system(size: 9))
+            Text(verbatim: periodChange).font(.system(size: 9))
           }
           .frame(height: 12)
           if let series = snapshot.series {
@@ -380,6 +472,8 @@ struct WatchHistoryView: View {
     }
     .fontDesign(.rounded)
     .lineLimit(1).minimumScaleFactor(0.5).monospacedDigit()
+    .accessibilityElement(children: .combine)
+    .accessibilityLabel(Text(verbatim: accessibilitySummary))
     .widgetURL(
       WatchWidgetRoute.url(source: snapshot.pair.base, quote: snapshot.pair.quote, details: true))
   }

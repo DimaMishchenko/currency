@@ -8,14 +8,12 @@ import SwiftUI
 public struct HomeWatchScreen: View {
   @Bindable private var model: HomeModel
   private let output: (HomeOutput) -> Void
-  @State private var amount = ""
   @State private var editingAmount = false
   @State private var choosingSource = false
   @State private var addingCurrency = false
   @State private var refreshRequested = false
   @Environment(\.locale) private var locale
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
-  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
   /// Supplies the flow model and semantic navigation receiver.
   public init(model: HomeModel, output: @escaping (HomeOutput) -> Void) {
@@ -27,52 +25,50 @@ public struct HomeWatchScreen: View {
   public var body: some View {
     List {
       Section {
-        Button {
-          amount = model.input.amount
-          editingAmount = true
-        } label: {
-          VStack(alignment: .leading) {
-            Text(.Watch.amountLabel).font(.caption).foregroundStyle(.secondary)
-            Text(verbatim: amountLabel(model.input.decimal, code: model.input.source))
-              .font(.system(.title2, design: .rounded, weight: .medium)).monospacedDigit()
-              .contentTransition(reduceMotion ? .identity : .numericText())
-              .animation(reduceMotion ? nil : .snappy(duration: 0.25), value: model.input.amount)
-              .fixedSize(horizontal: false, vertical: true)
-          }
-        }
-        .accessibilityLabel(Text(.Watch.editAmount))
-        .accessibilityValue(Text(verbatim: sourceAccessibilityAmount))
-        .accessibilityIdentifier("watch.home.amount")
-        Button {
-          choosingSource = true
-        } label: {
-          HStack(spacing: 8) {
-            CurrencyIcon(model.input.source, size: 24)
-            Text(verbatim: model.input.source).font(.system(.headline, design: .rounded))
-            Spacer(minLength: 0)
-            Image(systemName: "chevron.down").font(.caption).foregroundStyle(.secondary)
-          }
-        }
-        .accessibilityLabel(Text(.Watch.sourceCurrency))
-        .accessibilityValue(Text(verbatim: model.input.source))
-        .accessibilityIdentifier("watch.home.source")
-        GlassEffectContainer(spacing: 6) {
-          HStack(spacing: 6) {
-            ForEach([1, 10, 100], id: \.self) { value in
-              Button {
-                _ = model.commitAmount(String(value))
-              } label: {
-                Text(verbatim: String(value))
-                  .frame(maxWidth: .infinity)
+        HStack(spacing: 8) {
+          Button {
+            editingAmount = true
+          } label: {
+            VStack(alignment: .leading, spacing: 0) {
+              Text(verbatim: formatted(model.input.decimal, code: model.input.source))
+                .font(.system(.title3, design: .rounded, weight: .medium)).monospacedDigit()
+                .contentTransition(reduceMotion ? .identity : .numericText())
+                .animation(reduceMotion ? nil : .snappy(duration: 0.25), value: model.input.amount)
+                .lineLimit(1).minimumScaleFactor(0.35)
+              if CurrencyCatalog.metals.contains(model.input.source) {
+                Text(.Watch.troyOunce).font(.caption2).foregroundStyle(.secondary)
+                  .lineLimit(1).minimumScaleFactor(0.5)
               }
-              .buttonStyle(.glass)
-              .accessibilityIdentifier("watch.home.preset.\(value)")
             }
+            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+            .contentShape(Rectangle())
           }
+          .accessibilityLabel(Text(.Watch.editAmount))
+          .accessibilityValue(Text(verbatim: sourceAccessibilityAmount))
+          .accessibilityIdentifier("watch.home.amount")
+          Button {
+            choosingSource = true
+          } label: {
+            HStack(spacing: 4) {
+              CurrencyIcon(model.input.source, size: 20)
+              Text(verbatim: model.input.source).font(.system(.headline, design: .rounded))
+                .lineLimit(1).fixedSize(horizontal: true, vertical: false)
+              Image(systemName: "chevron.down").font(.caption2).foregroundStyle(.secondary)
+            }
+            .fixedSize(horizontal: true, vertical: false)
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+          }
+          .accessibilityLabel(Text(.Watch.sourceCurrency))
+          .accessibilityValue(
+            Text(
+              verbatim:
+                "\(model.input.source), \(CurrencyDisplay.name(model.input.source, locale: locale))"
+            )
+          )
+          .accessibilityIdentifier("watch.home.source")
         }
-        .listRowBackground(Color.clear)
-      }
-      Section {
+        .buttonStyle(.plain)
         ForEach(model.input.destinationRows) { destination in
           Button {
             output(
@@ -85,10 +81,6 @@ public struct HomeWatchScreen: View {
               CurrencyIcon(destination.code, size: 24).padding(.top, 2)
               VStack(alignment: .leading, spacing: 3) {
                 Text(verbatim: destination.code).font(.system(.headline, design: .rounded))
-                if !dynamicTypeSize.isAccessibilitySize {
-                  Text(verbatim: CurrencyDisplay.name(destination.code, locale: locale))
-                    .font(.caption2).foregroundStyle(.secondary).lineLimit(1)
-                }
                 if let value = model.row(destination.code, selectionID: destination.id).amount {
                   Text(verbatim: amountLabel(value, code: destination.code))
                     .font(.system(.body, design: .rounded, weight: .medium)).monospacedDigit()
@@ -104,6 +96,16 @@ public struct HomeWatchScreen: View {
             }
             .fixedSize(horizontal: false, vertical: true)
           }
+          .accessibilityLabel(
+            Text(
+              verbatim:
+                "\(destination.code), \(CurrencyDisplay.name(destination.code, locale: locale))")
+          )
+          .accessibilityValue(destinationAccessibilityValue(destination))
+          .accessibilityHint(
+            destination.isLocal && model.input.localCurrencyIsStale
+              ? Text(.Watch.savedLocation) : Text(verbatim: "")
+          )
           .accessibilityIdentifier("watch.home.destination.\(destination.id)")
           .swipeActions(edge: .trailing) {
             Button(.Watch.removeCurrency, role: .destructive) {
@@ -114,7 +116,13 @@ public struct HomeWatchScreen: View {
             Button(.Watch.useAsBase) { model.useAsBase(destination.code) }
               .disabled(model.row(destination.code).amount == nil)
           }
+          if destination.id == model.input.destinationRows.first?.id {
+            presets
+          }
         }
+        if model.input.destinationRows.isEmpty { presets }
+      }
+      Section {
         Button(.Watch.addCurrency, systemImage: "plus") { addingCurrency = true }
           .accessibilityIdentifier("watch.home.add")
         if let first = model.input.destinations.first {
@@ -147,16 +155,20 @@ public struct HomeWatchScreen: View {
     .font(.system(.body, design: .rounded))
     .navigationTitle(Text(.Watch.converterTitle))
     .sheet(isPresented: $editingAmount) {
-      WatchAmountEntry(amount: amount, save: { model.commitAmount($0) })
+      WatchAmountEntry(amount: model.input.amount, save: { model.commitAmount($0) })
     }
     .sheet(isPresented: $choosingSource) {
-      WatchCurrencyPicker(excluded: [], selected: model.input.source) {
+      WatchCurrencyPicker(
+        excluded: [], selected: model.input.source,
+        favorites: [model.input.source] + model.input.manualDestinations
+      ) {
         model.changeSource($0)
       }
     }
     .sheet(isPresented: $addingCurrency) {
       WatchCurrencyPicker(
-        excluded: Set([model.input.source] + model.input.manualDestinations), selected: nil
+        excluded: Set([model.input.source] + model.input.manualDestinations), selected: nil,
+        favorites: [model.input.source] + model.input.manualDestinations
       ) { model.addDestination($0) }
     }
     .task { await model.observeChanges() }
@@ -165,6 +177,31 @@ public struct HomeWatchScreen: View {
       _ = await model.refresh(force: true)
       refreshRequested = false
     }
+  }
+
+  private var presets: some View {
+    GlassEffectContainer(spacing: 6) {
+      HStack(spacing: 6) {
+        ForEach([1, 10, 100], id: \.self) { value in
+          Button {
+            _ = model.commitAmount(String(value))
+          } label: {
+            Text(verbatim: String(value)).frame(maxWidth: .infinity)
+          }
+          .buttonStyle(.glass)
+          .accessibilityIdentifier("watch.home.preset.\(value)")
+        }
+      }
+    }
+    .listRowBackground(Color.clear)
+  }
+
+  private func destinationAccessibilityValue(_ destination: ConverterState.Destination) -> Text {
+    let row = model.row(destination.code, selectionID: destination.id)
+    if let amount = row.amount {
+      return Text(verbatim: amountLabel(amount, code: destination.code))
+    }
+    return Text(.Watch.rateUnavailable)
   }
 
   private var sourceAccessibilityAmount: String {
@@ -223,7 +260,7 @@ private struct WatchAmountEntry: View {
   var body: some View {
     NavigationStack {
       GeometryReader { geometry in
-        VStack(spacing: 6) {
+        VStack(spacing: 2) {
           Text(
             verbatim: draft.amount.replacingOccurrences(
               of: ".", with: locale.decimalSeparator ?? ".")
@@ -232,13 +269,13 @@ private struct WatchAmountEntry: View {
           .foregroundStyle(replacing ? Color.accentColor : Color.primary)
           .lineLimit(1).minimumScaleFactor(0.35)
           .frame(maxWidth: .infinity, alignment: .trailing)
-          .frame(height: 26)
+          .frame(height: 22)
           .contentTransition(reduceMotion ? .identity : .numericText())
           .animation(reduceMotion ? nil : .snappy(duration: 0.15), value: draft.amount)
           .accessibilityLabel(Text(.Watch.amountLabel))
           .accessibilityIdentifier("watch.home.amountField")
-          GlassEffectContainer(spacing: 4) {
-            Grid(horizontalSpacing: 6, verticalSpacing: 4) {
+          GlassEffectContainer(spacing: 2) {
+            Grid(horizontalSpacing: 6, verticalSpacing: 2) {
               ForEach(0..<4) { row in
                 GridRow {
                   ForEach(0..<3) { column in
@@ -255,7 +292,7 @@ private struct WatchAmountEntry: View {
                       }
                       .font(.system(.title3, design: .rounded, weight: .medium))
                       .frame(maxWidth: .infinity)
-                      .frame(height: max(20, (geometry.size.height - 44) / 4))
+                      .frame(height: max(24, (geometry.size.height - 30) / 4))
                       .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
@@ -270,7 +307,6 @@ private struct WatchAmountEntry: View {
         }
         .padding(.horizontal, 4)
       }
-      .navigationTitle(Text(.Watch.amountLabel))
       .toolbar {
         ToolbarItem(placement: .confirmationAction) {
           Button {
@@ -308,6 +344,7 @@ private struct WatchAmountEntry: View {
 private struct WatchCurrencyPicker: View {
   let excluded: Set<String>
   let selected: String?
+  let favorites: [String]
   let save: (String) -> Bool
   @State private var search = ""
   @State private var failed = false
@@ -316,7 +353,9 @@ private struct WatchCurrencyPicker: View {
 
   private var codes: [String] {
     if search.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-      return CurrencyCatalog.codes.filter { !excluded.contains($0) }.sorted()
+      var seen = excluded
+      let ordered = favorites + CurrencyCatalog.codes.sorted()
+      return ordered.filter { CurrencyCatalog.codes.contains($0) && seen.insert($0).inserted }
     }
     return CurrencyCatalog.search(
       search, allowedCodes: Set(CurrencyCatalog.codes).subtracting(excluded),

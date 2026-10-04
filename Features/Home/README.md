@@ -8,6 +8,8 @@ Converter discovery uses native TipKit popovers. After one completed amount edit
 
 `HomeWatchUI` presents the same `HomeModel` with a full-screen decimal keypad using shared converter editing rules, presets, a searchable currency picker, selected destinations, refresh feedback, and semantic details requests. Swipe a destination to remove it or promote its converted value to the base. The Watch executable owns navigation, shared-state observation dependencies, and rate refresh scheduling.
 
+The Watch converter places its compact amount and source controls immediately before the first result, with presets below that result. Currency pickers show the current source and favorites before the remaining catalog; search still covers every eligible currency. The amount editor keeps native dismissal and confirmation controls and allocates its remaining height to all four keypad rows.
+
 ## Harness
 
 Select the `HomeHarness` scheme and add launch arguments under **Run → Arguments**. Use `--case <name>`; for example, `--case save-failure`. Omitting it selects `normal`.
