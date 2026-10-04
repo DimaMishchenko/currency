@@ -157,7 +157,7 @@ After the shared fixture/goal corrections, all three affected iPhone cases (conv
 
 ## Cache limits
 
-This suite is local-only. Cached navigation can replay without a model call, but cache misses, screen-identity mismatches and widget vision assertions still require your ChatGPT login. Keep the default cache enabled; it does not make the entire suite deterministic. Historical replay experiments and reports remain under `.validation/e2e`.
+Real simulator journeys are local-only. The simulator utility’s host-only tests also run in CI, without device access or model calls. Cached navigation can replay without a model call, but cache misses, screen-identity mismatches and widget vision assertions still require your ChatGPT login. Keep the default cache enabled; it does not make the entire suite deterministic. Historical replay experiments and reports remain under `.validation/e2e`.
 
 ## Shutdown
 

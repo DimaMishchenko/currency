@@ -36,6 +36,8 @@ jobs:
         run: |
           python3 Scripts/CI/test_skip_rules.py
           python3 Scripts/CI/test_project_structure.py
+      - name: Test simulator widget utility
+        run: python3 -m unittest discover -s Tools/SimulatorWidgets -p 'test_*.py'
       - name: Test TestFlight notes
         run: python3 Scripts/CI/test_testflight_notes.py
       - name: Record release decision
