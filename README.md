@@ -31,3 +31,7 @@ Open the `Currency` scheme and choose an iOS 26+ simulator. No Tuist account is 
 `App/` composes the app and widgets, `Features/` owns screens, `Domain/` owns reusable logic, and `DesignSystem/` holds shared UI primitives.
 
 [Development guide](Documentation/Development.md) · [Architecture](Documentation/Architecture.md) · [Decisions](Documentation/Decisions.md) · [Third-party assets](Documentation/ThirdPartyAssets.md)
+
+## Acknowledgements
+
+[e2e](https://github.com/tester-army/e2e) powers the real-app end-to-end test suite.
