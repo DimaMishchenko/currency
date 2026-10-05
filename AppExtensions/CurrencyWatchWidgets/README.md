@@ -2,10 +2,10 @@
 
 watchOS 26 extension with Pocket Rate, Currency Board, History, Mental Math,
 Know Your Cash, Favorite Pairs, and an Open Currency control.
-Rectangular widgets appear on watch faces and in the Smart Stack; circular, inline,
-and corner families provide compact face presentations. Favorite Pairs uses the
-native rectangular `AccessoryWidgetGroup`. Corner conversions curve both amounts above
-the currency names with a single arrow. Ordinary update timestamps are omitted;
+Rectangular widgets appear on watch faces and in the Smart Stack; circular and inline
+families provide compact face presentations. Pocket Rate is the only corner widget,
+curving both compact amounts above the currency names with a single arrow. Favorite
+Pairs centers its source above three destination links. Ordinary update timestamps are omitted;
 unavailable, stale and daily fallback rates retain compact accessible indicators.
 
 The executable supplies the Watch App Group directory to `ConversionStore`,

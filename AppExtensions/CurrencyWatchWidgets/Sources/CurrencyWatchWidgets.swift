@@ -29,9 +29,10 @@ struct WatchPairWidget: Widget {
     }
     .configurationDisplayName(String(localized: title))
     .description(String(localized: description))
-    .supportedFamilies([
-      .accessoryRectangular, .accessoryCircular, .accessoryInline, .accessoryCorner
-    ])
+    .supportedFamilies(
+      style == .pocket
+        ? [.accessoryRectangular, .accessoryCircular, .accessoryInline, .accessoryCorner]
+        : [.accessoryRectangular, .accessoryCircular, .accessoryInline])
   }
   private var title: LocalizedStringResource {
     switch style {
@@ -58,7 +59,7 @@ struct WatchCashWidget: Widget {
     .configurationDisplayName(String(localized: .WatchWidgets.cashTitle))
     .description(String(localized: .WatchWidgets.cashDescription))
     .supportedFamilies([
-      .accessoryRectangular, .accessoryCircular, .accessoryInline, .accessoryCorner
+      .accessoryRectangular, .accessoryCircular, .accessoryInline
     ])
   }
 }
@@ -86,7 +87,7 @@ struct WatchBoardWidget: Widget {
     .supportedFamilies(
       style == .favorites
         ? [.accessoryRectangular]
-        : [.accessoryRectangular, .accessoryCircular, .accessoryInline, .accessoryCorner])
+        : [.accessoryRectangular, .accessoryCircular, .accessoryInline])
   }
 }
 
@@ -99,7 +100,7 @@ struct WatchHistoryWidget: Widget {
     .configurationDisplayName(String(localized: .WatchWidgets.historyTitle))
     .description(String(localized: .WatchWidgets.historyDescription))
     .supportedFamilies([
-      .accessoryRectangular, .accessoryCircular, .accessoryInline, .accessoryCorner
+      .accessoryRectangular, .accessoryCircular, .accessoryInline
     ])
   }
 }

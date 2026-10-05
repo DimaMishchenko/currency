@@ -86,34 +86,16 @@ struct WatchRateView: View {
   }
 
   private var corner: some View {
-    Group {
-      if entry.style == .mental {
-        Text(verbatim: cornerPrimary).font(.title.bold())
-      } else {
-        ViewThatFits(in: .horizontal) {
-          Text(verbatim: cornerAmounts).font(.title3.bold())
-          Text(verbatim: cornerAmounts).font(.headline.bold())
-          Text(verbatim: compactCornerAmounts).font(.headline.bold())
-        }
-      }
-    }
-    .widgetCurvesContent()
-    .accessibilityLabel(
-      Text(
-        verbatim: entry.style == .mental
-          ? pair + " " + primary : amountText + " → " + displayValue + " " + quote)
-    )
-    .widgetLabel {
-      Text(
-        verbatim: entry.style == .mental
-          ? pair
-          : entry.activeSource + unit(for: entry.activeSource)
+    Text(verbatim: compactCornerAmounts)
+      .font(.system(size: 16, weight: .semibold))
+      .lineLimit(1).minimumScaleFactor(0.75)
+      .widgetCurvesContent()
+      .accessibilityLabel(Text(verbatim: amountText + " → " + displayValue + " " + quote))
+      .widgetLabel {
+        Text(
+          verbatim: entry.activeSource + unit(for: entry.activeSource)
             + "  " + quote + unit(for: quote))
-    }
-  }
-
-  private var cornerAmounts: String {
-    format(amount, code: entry.activeSource) + " → " + format(value, code: quote)
+      }
   }
 
   private var compactCornerAmounts: String {
@@ -233,35 +215,17 @@ struct WatchRateView: View {
             : .WatchWidgets.referenceAmounts))
   }
 
-  private var cornerPrimary: String {
-    if entry.style == .mental, let rule {
-      return (rule.divide ? "÷ " : "× ") + cornerFormat(rule.factor, code: "")
-    }
-    return cornerFormat(value, code: quote)
-  }
-
-  private func cornerFormat(_ value: Decimal?, code: String) -> String {
-    let full = format(value, code: code)
-    guard let value, full.count > 7 else { return full }
-    if abs(value) >= 1000 {
-      return value.formatted(
-        .number.locale(locale).notation(.compactName).precision(.significantDigits(3)))
-    }
-    return value.formatted(
-      .number.locale(locale).notation(.scientific).precision(.significantDigits(3)))
-  }
-
   private func compactCornerFormat(_ value: Decimal?) -> String {
     guard let value, !value.isNaN else { return "—" }
     if abs(value) >= 1000 {
       return value.formatted(
-        .number.locale(locale).notation(.compactName).precision(.significantDigits(3)))
+        .number.locale(locale).notation(.compactName).precision(.significantDigits(1...3)))
     }
     if value != 0 && abs(value) < 0.001 {
       return value.formatted(
-        .number.locale(locale).notation(.scientific).precision(.significantDigits(3)))
+        .number.locale(locale).notation(.scientific).precision(.significantDigits(1...3)))
     }
-    return value.formatted(.number.locale(locale).precision(.significantDigits(3)))
+    return value.formatted(.number.locale(locale).precision(.significantDigits(1...3)))
   }
 
   private func format(_ value: Decimal?, code: String) -> String {
@@ -488,12 +452,6 @@ struct WatchHistoryView: View {
     Group {
       switch family {
       case .accessoryInline: Text(verbatim: pair + " " + periodChange)
-      case .accessoryCorner:
-        Text(verbatim: change).font(.title.bold())
-          .widgetCurvesContent()
-          .widgetLabel {
-            Text(verbatim: pair + " " + localized(rangeTitle))
-          }
       case .accessoryCircular:
         VStack(spacing: 2) {
           Text(verbatim: snapshot.pair.base + "→" + (snapshot.pair.quote ?? ""))
