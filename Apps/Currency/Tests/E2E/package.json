@@ -1,5 +1,5 @@
 {
-  "name": "currency-local-agent-e2e",
+  "name": "currency-e2e",
   "version": "0.0.0",
   "private": true,
   "type": "module",
