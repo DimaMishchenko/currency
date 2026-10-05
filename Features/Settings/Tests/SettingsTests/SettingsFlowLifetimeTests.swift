@@ -20,7 +20,7 @@ private final class SettingsLifetimeFixture {
         return AsyncStream { self.changes = $0 }
       },
       readPreferences: { SettingsPreferences(theme: .system, accent: .primary) },
-      setTheme: { _ in }, setAccent: { _ in },
+      setTheme: { _ in }, setAccent: { _ in }, setMetalUnit: { _ in },
       refresh: {
         self.refreshRequests += 1
         return await withCheckedContinuation { self.pendingRefresh = $0 }
@@ -51,7 +51,6 @@ struct SettingsFlowLifetimeTests {
     let lifetime = SettingsFlowLifetime(dependencies: fixture.dependencies)
     lifetime.start()
     await waitForSettings { fixture.subscriptions == 1 }
-    // Navigation covers the entry while this State-owned token remains alive.
     fixture.rates.codes = ["EUR", "GBP"]
     fixture.changes?.yield(())
     await waitForSettings { lifetime.model.rates.codes == ["EUR", "GBP"] }

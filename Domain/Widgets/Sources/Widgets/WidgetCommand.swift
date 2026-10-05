@@ -139,6 +139,7 @@ extension WidgetStore {
       }
     } else {
       try updateWidgetInput(key: key, codes: spec.codes, amount: spec.amount) { input in
+        if spec.kind == "CurrencyConverter" { input.setMetalUnit(conversion.input().metalUnit) }
         action.apply(to: &input, snapshot: snapshot)
       }
     }

@@ -10,7 +10,6 @@ import Widgets
 struct WidgetSurface: ViewModifier {
   func body(content: Content) -> some View {
     content
-      // Fixed widget bounds cannot accommodate unbounded text growth; VoiceOver retains full values.
       .dynamicTypeSize(...DynamicTypeSize.large)
       .font(AppStyle.font(.caption))
       .tint(Color(uiColor: .label))
@@ -126,7 +125,6 @@ private struct OpaquePermissionBackground: View {
   }
 }
 
-/// Interactive widgets show the committed selection; pressing must not fade the whole label.
 struct WidgetButtonStyle: ButtonStyle {
   @Environment(\.isWidgetPreview) private var preview
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -264,6 +262,7 @@ struct CurrencyTile: View {
   private var displayCode: String { WidgetSelection.currency(code) }
   private var selected: Bool { code == entry.input.active }
   private var codeVisibility: CGFloat {
+    if CurrencyCode(rawValue: displayCode)?.isMetal == true { return 1 }
     if previewDense, let previewSpread { return 1 - previewSpread }
     return showsCode ? 1 : 0
   }
@@ -279,6 +278,8 @@ struct CurrencyTile: View {
       .accessibilityLabel(
         Text(
           verbatim: "\(CurrencyDisplay.name(displayCode)), \(displayCode)"
+            + (CurrencyCode(rawValue: displayCode)?.isMetal == true
+              ? ", " + entry.input.metalUnit.symbol : "")
             + (WidgetSelection.isLocal(code)
               ? " · " + String(localized: .WidgetPresentation.localCurrencyChoice) : ""))
       )
@@ -288,8 +289,8 @@ struct CurrencyTile: View {
           : CurrencyDisplay.format(
             entry.snapshot.convert(
               entry.input.decimal, from: WidgetSelection.currency(entry.input.active),
-              to: displayCode),
-            code: displayCode, locale: locale)
+              to: displayCode, metalUnit: entry.input.metalUnit),
+            code: displayCode, locale: locale, metalUnit: entry.input.metalUnit)
       )
       .accessibilityHint(.WidgetPresentation.selectCurrencyHint)
       .accessibilityAddTraits(selected ? .isSelected : [])
@@ -330,28 +331,34 @@ struct CurrencyTile: View {
   }
 
   private var currencyCode: some View {
-    Text(verbatim: displayCode)
-      .font(AppStyle.font(.caption2, weight: .medium))
+    Text(
+      verbatim: displayCode
+        + (CurrencyCode(rawValue: displayCode)?.isMetal == true
+          ? " · " + entry.input.metalUnit.symbol : "")
+    )
+    .font(AppStyle.font(.caption2, weight: .medium))
   }
 
   private var amount: some View {
     Text(
       selected
         ? (entry.input.replacesOnDigit
-          ? CurrencyDisplay.format(entry.input.decimal, code: displayCode, locale: locale)
+          ? CurrencyDisplay.format(
+            entry.input.decimal, code: displayCode, locale: locale, metalUnit: entry.input.metalUnit
+          )
           : CurrencyDisplay.inputAmount(entry.input.amount, locale: locale))
         : CurrencyDisplay.format(
           entry.snapshot.convert(
-            entry.input.decimal, from: WidgetSelection.currency(entry.input.active), to: displayCode
+            entry.input.decimal, from: WidgetSelection.currency(entry.input.active),
+            to: displayCode, metalUnit: entry.input.metalUnit
           ),
-          code: displayCode, locale: locale)
+          code: displayCode, locale: locale, metalUnit: entry.input.metalUnit)
     )
     .monospacedDigit().lineLimit(1).minimumScaleFactor(0.35)
     .contentTransition(.identity)
   }
 }
 
-/// A flag, code, and value keep one identity while a tile changes its arrangement.
 private struct CurrencyTileArrangement: Layout {
   var stacked: CGFloat
   var codeVisibility: CGFloat

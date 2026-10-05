@@ -8,9 +8,12 @@ public struct HistoryWidgetPair: Sendable, Equatable {
   public let base: String
   /// Resolved comparison currency, absent when the app list is empty.
   public let quote: String?
+  /// The app-selected mass unit for both metal currencies.
+  public let metalUnit: MetalUnit
 
   /// Nil overrides follow the app base and first displayed destination independently.
   public init(app: ConverterState, base: String? = nil, quote: String? = nil) {
+    metalUnit = app.metalUnit
     self.base = base ?? app.source
     self.quote = quote ?? app.destinationRows.first?.code
   }
@@ -60,10 +63,14 @@ public struct HistoryWidgetSnapshot: Sendable {
     self.pair = pair
     self.range = range
     let inverted = pair.historyRequest?.inverted == true
+    let factor = NSDecimalNumber(
+      decimal: pair.metalUnit.rateFactor(from: pair.base, to: pair.quote ?? pair.base)
+    )
+    .doubleValue
     let points =
       result.series?.points
       .map {
-        HistoryPoint(date: $0.date, value: inverted ? 1 / $0.value : $0.value)
+        HistoryPoint(date: $0.date, value: (inverted ? 1 / $0.value : $0.value) * factor)
       } ?? []
     let valid =
       pair.isSupported && points.count >= 2

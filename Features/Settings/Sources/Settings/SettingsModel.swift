@@ -22,10 +22,13 @@ public struct SettingsPreferences: Sendable, Equatable {
   public var theme: SettingsTheme
   /// Selected semantic accent preference.
   public var accent: SettingsAccent
+  /// Preferred measurement shared by metal conversion surfaces.
+  public var metalUnit: MetalUnit
   /// Creates the owned value or model with explicit host inputs and operations.
-  public init(theme: SettingsTheme, accent: SettingsAccent) {
+  public init(theme: SettingsTheme, accent: SettingsAccent, metalUnit: MetalUnit = .troyOunce) {
     self.theme = theme
     self.accent = accent
+    self.metalUnit = metalUnit
   }
 }
 
@@ -48,7 +51,9 @@ public struct SettingsRateState: Sendable {
 /// Semantic requests interpreted by application coordination.
 public enum SettingsOutput: Sendable { case manageLocation, replayed }
 /// Recoverable operation failure localized by SettingsUI.
-public enum SettingsIssue: Sendable, Equatable { case refreshFailed, replayFailed }
+public enum SettingsIssue: Sendable, Equatable {
+  case refreshFailed, replayFailed, preferenceSaveFailed
+}
 
 /// The host supplies preference persistence and operations; Settings owns their presentation flow.
 @MainActor
@@ -63,6 +68,8 @@ public struct SettingsDependencies {
   public var setTheme: (SettingsTheme) -> Void
   /// Persists the selected accent through the host-owned preference capability.
   public var setAccent: (SettingsAccent) -> Void
+  /// Saves the shared measurement or throws without changing authoritative preferences.
+  public var setMetalUnit: (MetalUnit) throws -> Void
   /// Refreshes rates; callers coalesce repeated actions and reject superseded results.
   public var refresh: () async throws -> SettingsRateState
   /// Saves replay progress before emitting a successful replay outcome.
@@ -76,11 +83,13 @@ public struct SettingsDependencies {
     readPreferences: @escaping () -> SettingsPreferences,
     setTheme: @escaping (SettingsTheme) -> Void,
     setAccent: @escaping (SettingsAccent) -> Void,
+    setMetalUnit: @escaping (MetalUnit) throws -> Void,
     refresh: @escaping () async throws -> SettingsRateState,
     replay: (() throws -> Void)?, output: @escaping (SettingsOutput) -> Void
   ) {
     self.readState = readState; self.changes = changes; self.readPreferences = readPreferences
-    self.setTheme = setTheme; self.setAccent = setAccent; self.refresh = refresh
+    self.setTheme = setTheme; self.setAccent = setAccent; self.setMetalUnit = setMetalUnit
+    self.refresh = refresh
     self.replay = replay; self.output = output
   }
 }
@@ -111,6 +120,14 @@ public final class SettingsModel {
   public func setTheme(_ value: SettingsTheme) { dependencies.setTheme(value) }
   /// Persists the selected accent through the host-owned preference capability.
   public func setAccent(_ value: SettingsAccent) { dependencies.setAccent(value) }
+  /// Saves a measurement and exposes failure while retaining authoritative preferences.
+  public func setMetalUnit(_ value: MetalUnit) {
+    do {
+      try dependencies.setMetalUnit(value)
+      reload()
+      if issue == .preferenceSaveFailed { issue = nil }
+    } catch { issue = .preferenceSaveFailed }
+  }
   /// Requests location management without opening another feature directly.
   public func manageLocation() {
     guard !stopped else { return }

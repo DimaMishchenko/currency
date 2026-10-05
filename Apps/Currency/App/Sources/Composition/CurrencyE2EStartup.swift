@@ -13,6 +13,8 @@
     enum InitialState: String {
       case freshOnboarding = "fresh-onboarding"
       case readyConverter = "ready-converter"
+      case readyMetals = "ready-metals"
+      case readyMetalSource = "ready-metal-source"
     }
 
     enum StartupError: Error, Equatable {
@@ -92,6 +94,17 @@
       guard seededHistory.points == history.points, seededHistory.source == history.source,
         seededHistory.fetchedAt == now
       else { throw StartupError.seedVerificationFailed }
+      if state == .readyMetals || state == .readyMetalSource {
+        let metalHistory = HistorySeries(
+          points: [
+            HistoryPoint(date: now.addingTimeInterval(-7 * 86400), value: 0.009),
+            HistoryPoint(date: now.addingTimeInterval(-86400), value: 0.01)
+          ], source: .init(provider: .ecb, observation: .dailyReference), fetchedAt: now)
+        let metalHistoryFile = directory.appendingPathComponent("history-EUR-XAU-30.json")
+        try FileCoordination.write(at: metalHistoryFile) {
+          try JSONEncoder().encode(metalHistory).write(to: metalHistoryFile, options: .atomic)
+        }
+      }
       let files = [
         "input.json", "onboarding.json", "widget-location-refresh.json",
         "widget-location.json", "widget-location-status.json"
@@ -108,10 +121,11 @@
       let conversion = ConversionStore(directory: directory)
       let progress = OnboardingProgressStore(directory: directory)
       switch state {
-      case .readyConverter:
+      case .readyConverter, .readyMetals, .readyMetalSource:
         let input = try conversion.updateInput {
           $0 = ConverterState()
-          $0.setDestinations(["USD"])
+          $0.setDestinations(state == .readyMetals ? ["USD", "XAU"] : ["USD"])
+          if state == .readyMetalSource { $0.changeSource("XAU") }
         }
         try progress.save(OnboardingProgress(draft: input, step: .ready, completed: true))
         guard conversion.input() == input, progress.load()?.completed == true,
@@ -148,7 +162,7 @@
 
     static func quotes(now: Date) -> [String: ExchangeRate] {
       let day = now.formatted(.iso8601.year().month().day().dateSeparator(.dash))
-      let values: [String: Decimal] = ["EUR": 1, "USD": 2, "CHF": 0.5, "CZK": 25]
+      let values: [String: Decimal] = ["EUR": 1, "USD": 2, "CHF": 0.5, "CZK": 25, "XAU": 0.01]
       return
         values
         .mapValues {

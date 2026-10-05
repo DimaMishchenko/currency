@@ -11,20 +11,22 @@ public enum CurrencyDisplay {
   }
 
   /// Formats a currency value using the currency's supported precision.
-  public static func format(_ value: Decimal?, code: String, locale: Locale = .current) -> String {
+  public static func format(
+    _ value: Decimal?, code: String, locale: Locale = .current, metalUnit: MetalUnit = .troyOunce
+  ) -> String {
     guard let value, !value.isNaN else { return "—" }
     let formatter = NumberFormatter()
     formatter.locale = locale
     formatter.numberStyle = .decimal
-    formatter.maximumFractionDigits = fractionDigits(code)
+    formatter.maximumFractionDigits = fractionDigits(code, metalUnit: metalUnit)
     return formatter.string(from: NSDecimalNumber(decimal: value)) ?? "—"
   }
 }
 
 extension CurrencyDisplay {
   /// Returns the display precision for a currency code.
-  public static func fractionDigits(_ code: String) -> Int {
-    CurrencyPrecision.fractionDigits(code)
+  public static func fractionDigits(_ code: String, metalUnit: MetalUnit = .troyOunce) -> Int {
+    CurrencyPrecision.fractionDigits(code, metalUnit: metalUnit)
   }
 
   /// Returns the flag or symbol associated with a currency code.

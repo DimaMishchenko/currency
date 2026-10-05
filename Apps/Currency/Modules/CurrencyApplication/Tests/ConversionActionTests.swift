@@ -64,6 +64,23 @@ import Testing
       action.request(amount: "10", source: "EUR", destination: "USD"))
     #expect(result.results[0].amount == "20" && result.refreshFailed && result.cacheIsStale)
   }
+  @Test func externalConversionSnapshotsSavedMetalUnit() async throws {
+    var input = ConverterState()
+    input.setMetalUnit(.gram)
+    let saved = input
+    let action = ConversionAction(
+      dependencies: .init(
+        readInput: { saved }, readLocal: { (nil, .notDetermined) }, readRates: { .init() },
+        refresh: { _ in
+          Issue.record("Identity must not refresh"); return .init(snapshot: .init(), warning: nil)
+        },
+        now: { now }))
+    let request = try action.request(amount: "12.5", source: "XAU", destination: "XAU")
+    #expect(request.metalUnit == .gram)
+    let evaluation = try await action.perform(request)
+    #expect(evaluation.results.first?.amount == "12.5")
+  }
+
   private func make(
     snapshot: RateSnapshot, refresh: @escaping @Sendable (Date) async throws -> RefreshResult
   ) -> ConversionAction {

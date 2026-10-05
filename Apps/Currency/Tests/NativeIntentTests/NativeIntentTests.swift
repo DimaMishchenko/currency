@@ -28,6 +28,34 @@ final class NativeIntentTests: XCTestCase {
     }
   }
 
+  func testMetalIntentReadsSavedGramPreferenceAfterAppTermination() async throws {
+    let app = launchReadyApp()
+    app.buttons["Options"].tap()
+    app.buttons["converter.settings"].tap()
+    let unit = app.buttons["settings.metalUnit"]
+    XCTAssertTrue(unit.waitForExistence(timeout: 5))
+    unit.tap()
+    app.buttons["settings.metalUnit.gram"].tap()
+    app.terminate()
+    let gold = definitions.entities["CurrencyEntity"].makeReference(identifier: "XAU")
+    let result = try await definitions.intents["ConvertAmountIntent"]
+      .makeIntent(amount: "12.5", source: gold, destination: gold).run()
+    let value: AnyTransientAppEntity = try result.value
+    let exact: String = try value.convertedAmount
+    let measurement: String = try value.metalMeasurementUnit
+    let text: String = try value.resultText
+    XCTAssertEqual(exact, "12.5")
+    XCTAssertEqual(measurement, "g")
+    XCTAssertTrue(text.contains("XAU g"))
+    XCTAssertFalse(text.contains("troy oz"))
+    XCTAssertNotEqual(app.state, .runningForeground)
+    _ = launchReadyApp()
+    app.buttons["Options"].tap()
+    app.buttons["converter.settings"].tap()
+    app.buttons["settings.metalUnit"].tap()
+    app.buttons["settings.metalUnit.troyOunce"].tap()
+  }
+
   func testExactOutputCanFeedAnotherConversion() async throws {
     let euro = definitions.entities["CurrencyEntity"].makeReference(identifier: "EUR")
     let intent = definitions.intents["ConvertAmountIntent"]

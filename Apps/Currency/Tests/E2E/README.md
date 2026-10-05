@@ -58,6 +58,10 @@ These are representative outcomes, not exhaustive coverage of each feature ID.
 | CONV-01, CONV-05 | [converter](tests/converter.e2e.ts) | EUR 42 → USD 84 persists after restart |
 | CONV-02–03, CONV-05 | [currency-selection](tests/currency-selection.e2e.ts) | Change source, add/remove currencies, exact amounts and restart |
 | HIST-01–04 | [converter-details](tests/converter-details.e2e.ts) | Rate, period selection, source explanation and return |
+| PREF-05, ONB-01–02 | [metal-widget-preview](tests/metal-widget-preview.e2e.ts) | Replayed Calculator and Board showcase previews retain the saved grams preference and converted Gold amount |
+| PREF-05, WID-04–08 | [metal-widget-display](tests/metal-widget-display.e2e.ts) | Board, Cash, Pocket, Mental Math and History show Gold amounts and visible measurement units |
+| PREF-05, WID-02, WID-10 | [metal-widget](tests/metal-widget.e2e.ts) | Saved grams preference reaches Calculator; keypad edits return to app with matching metal conversion |
+| PREF-05, CONV-01, CONV-05 | [metal-measurement](tests/metal-measurement.e2e.ts) | Seeded metal destination units and exact displayed conversions change; grams and seeded metal source weight survive restart |
 | PREF-01 | [preferences](tests/preferences.e2e.ts) | Dark appearance persists; converter stays unchanged |
 | WID-02, WID-10, CONV-05 | [home-screen-widget](tests/home-screen-widget.e2e.ts), [app-to-widget](tests/app-to-widget.e2e.ts) | Calculator keypad → app and app edits → widget |
 | WID-04–08, WID-10 | [widget-display](tests/widget-display.e2e.ts) | Board, Cash, Pocket, Mental Math and History data; additional sizes |
@@ -68,7 +72,7 @@ For widget/shared-data changes, run the affected widget and both Calculator shar
 
 ## Fixtures, widgets and cache
 
-Start each case once with `start('fresh-onboarding')` or `start('ready-converter')`. The first launch resets real stores; restart keeps edits. Fixed rates are EUR 1 / USD 2 / CHF 0.5 / CZK 25, with seeded history. Keep `-CurrencyE2EState` out of default launch arguments.
+Start each case once with a matching fixture. `fresh-onboarding` and `ready-converter` cover general flows; `ready-metals` adds Gold as a destination and `ready-metal-source` starts with one troy ounce of Gold for measurement checks. The first launch resets real stores; restart keeps edits. Fixed rates are EUR 1 / USD 2 / CHF 0.5 / CZK 25 / XAU 0.01 troy oz, with seeded EUR/USD history and EUR/Gold history for metal fixtures. Keep `-CurrencyE2EState` out of default launch arguments.
 
 Home Screen setup uses [widgetctl](https://github.com/DimaMishchenko/widgetctl), pinned as a GitHub dev dependency. It installs/configures the requested kind and size, preserves other apps’ widgets and unloads its helper after the module. Tests still validate rendered data and interactions. Set `CURRENCY_E2E_WIDGET_SETUP=gallery` to exercise system installation; private-configuration cases then skip. Lock Screen installation uses system UI.
 
@@ -76,8 +80,9 @@ Cache remains enabled and local, ignored by Git. Fresh checkouts record their ow
 
 ## Limitations
 
+- Menu pickers can ignore whole-row driver taps. Target the visible selected-value text (as in the measurement journey), then select the option by its identifier.
 - Replay reliability is provisional: mobile screen identities and keypad targeting have caused misses or failures. Keep native outcome assertions strict.
-- The driver misprojects some widget descendants. Calculator tests use a bounded tap workaround for the verified medium, two-currency, English iPhone layout; three-currency output also needs vision.
+- The driver misprojects some widget descendants. Calculator tests use a bounded tap workaround for the verified medium, two-currency and three-currency, English iPhone layouts; three-currency output also needs vision.
 - iPad picker automation requires a snapshot-projection fix not included in the pinned driver; widget checks are blocked by missing descendants. Duo verification is deferred; widgetctl device placement is verified only on arm64 iPhone/iOS 27.
 - Native Edit Widget picker/save, Local currency states, independent instances and custom Lock Screen symbols remain uncovered. History navigation does not prove live chart data.
 

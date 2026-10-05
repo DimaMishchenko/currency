@@ -22,6 +22,7 @@ struct SettingsScreen: View {
   var body: some View {
     List {
       appearanceControls
+      metalUnitControl
       languageControl
       Section {
         Button(action: manageLocation) {
@@ -69,6 +70,33 @@ struct SettingsScreen: View {
     .alert(.Settings.replayFailed, isPresented: $replayFailed) {
       Button(.Settings.retryReplay) { restartOnboarding() }
       Button(.Settings.close, role: .cancel) {}
+    }
+  }
+
+  private var metalUnitControl: some View {
+    Section {
+      Picker(
+        selection: Binding(
+          get: { model.preferences.metalUnit },
+          set: { model.setMetalUnit($0) }
+        )
+      ) {
+        ForEach(MetalUnit.allCases, id: \.self) { unit in
+          Text(unit.title).tag(unit)
+            .accessibilityIdentifier("settings.metalUnit.\(unit.rawValue)")
+        }
+      } label: {
+        Label(.Settings.metalUnit, systemImage: "scalemass")
+      }
+      .pickerStyle(.menu)
+      .accessibilityIdentifier("settings.metalUnit")
+      if model.issue == .preferenceSaveFailed {
+        Text(.Settings.preferenceSaveFailed).foregroundStyle(.secondary)
+      }
+    } header: {
+      Text(.Settings.preciousMetals)
+    } footer: {
+      Text(.Settings.metalUnitExplanation)
     }
   }
 
@@ -412,4 +440,14 @@ private extension SettingsAccent {
 
 private extension SettingsAccent {
   var color: Color { AppAppearance.Accent(rawValue: rawValue)?.color ?? .primary }
+}
+
+private extension MetalUnit {
+  var title: LocalizedStringResource {
+    switch self {
+    case .troyOunce: .Settings.troyOunces
+    case .gram: .Settings.grams
+    case .kilogram: .Settings.kilograms
+    }
+  }
 }

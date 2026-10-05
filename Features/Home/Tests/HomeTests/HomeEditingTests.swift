@@ -15,6 +15,31 @@ private struct SlowFeedbackProvider: RateProvider {
 
 @MainActor
 struct HomeEditingTests {
+  @Test func metalRowsAndEditingUseTheSavedMeasurement() throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = HomeTestStore(directory: directory)
+    try store.updateInput {
+      $0.setDestinations(["XAU"])
+      $0.setMetalUnit(.gram)
+    }
+    let snapshot = RateSnapshot(quotes: [
+      "EUR": ExchangeRate(1, published: "2026-10-05", source: .init(provider: .custom("test"))),
+      "XAU": ExchangeRate(
+        Decimal(string: "0.01")!, published: "2026-10-05", source: .init(provider: .custom("test")))
+    ])
+    let model = makeHomeModel(store: store, service: RateService(), readRates: { snapshot })
+    #expect(model.row("XAU").amount == Decimal(string: "0.311034768"))
+    model.beginEditing("XAU")
+    #expect(model.editingText == "0.31103477")
+    #expect(model.press("2"))
+    #expect(model.input.decimal == snapshot.convert(2, from: "XAU", to: "EUR", metalUnit: .gram))
+    try store.updateInput { $0.setMetalUnit(.kilogram) }
+    model.reloadSharedState()
+    #expect(model.editor == nil)
+    #expect(model.input.metalUnit == .kilogram)
+  }
+
   @Test func rowEligibilityTracksResolvedIdentityAndMissingRates() throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }

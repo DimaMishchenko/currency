@@ -69,7 +69,6 @@ extension WidgetFamily {
 extension WidgetPreviewState {
   static var sampleLocalCurrencyCode: String { "CZK" }
 
-  /// Every preview family receives the same canonical input; only production layout limits it.
   func entry(
     synchronized: Bool = false, configuredCodes: [String]? = nil, sampleLocation: Bool = false
   ) -> SuiteEntry {
@@ -81,7 +80,8 @@ extension WidgetPreviewState {
     spec.synchronized = synchronized
     var resolvedInput = input
     if input.active == WidgetSelection.localID, spec.localCode != nil {
-      resolvedInput = WidgetInput(codes: spec.codes, amount: input.amount)
+      resolvedInput = WidgetInput(
+        codes: spec.codes, amount: input.amount, metalUnit: input.metalUnit)
     } else {
       resolvedInput.reconcile(codes: spec.codes)
     }
@@ -117,17 +117,20 @@ struct WidgetPreview: View {
     self.snapshot = snapshot; self.converterInput = converterInput
     sharedState = state
     _localState = State(
-      initialValue: WidgetPreviewState(kind: kind, snapshot: snapshot, codes: codes, amount: amount)
+      initialValue: WidgetPreviewState(
+        kind: kind, snapshot: snapshot, codes: codes, amount: amount,
+        metalUnit: converterInput?.metalUnit ?? .troyOunce)
     )
   }
   private var previewState: Binding<WidgetPreviewState> { sharedState ?? $localState }
   private func currentState() -> WidgetPreviewState {
     var current = previewState.wrappedValue
-    // Resolve the demo list before updating state so Local tile/keypad edits keep their identity.
     let projected = current.entry(
       synchronized: synchronized, configuredCodes: codes, sampleLocation: converterInput == nil)
     current.input = projected.input
-    current.update(snapshot: snapshot, codes: projected.spec.codes, amount: amount)
+    current.update(
+      snapshot: snapshot, codes: projected.spec.codes, amount: amount,
+      metalUnit: converterInput?.metalUnit ?? .troyOunce)
     return current
   }
   private var entry: SuiteEntry {
@@ -195,7 +198,6 @@ struct WidgetPreview: View {
   }
 }
 
-/// Scales the real fixed widget bounds into an available preview slot without changing its layout.
 struct FittedWidgetPreview: View {
   let kind: WidgetShowcaseKind
   let family: WidgetFamily
@@ -220,13 +222,13 @@ struct FittedWidgetPreview: View {
   }
 }
 
-/// One progress value resizes the calculator and repositions its persistent currency cells.
 struct AnimatedCalculatorPreview: View, @preconcurrency Animatable {
   var progress: CGFloat
   var width: CGFloat
   var codes: [String]? = nil
   var amount: String? = nil
   var snapshot = WidgetPreviewState.rates
+  var converterInput: ConverterState? = nil
   var state: Binding<WidgetPreviewState>? = nil
 
   var animatableData: AnimatablePair<CGFloat, CGFloat> {
@@ -239,8 +241,8 @@ struct AnimatedCalculatorPreview: View, @preconcurrency Animatable {
     let atMediumEndpoint = progress <= 0.0001
     var preview = WidgetPreview(
       kind: .calculator, family: atMediumEndpoint ? .systemMedium : .systemLarge, interactive: true,
-      codes: codes, amount: amount, snapshot: snapshot, state: state)
-    // Keep the same cell tree at both endpoints and throughout the interpolation.
+      codes: codes, amount: amount, snapshot: snapshot, converterInput: converterInput, state: state
+    )
     preview.calculatorProgress = progress
     return
       preview
@@ -275,7 +277,6 @@ struct AnimatedHistoryPreview: View, @preconcurrency Animatable {
   }
 }
 
-/// One live preview retains its input while the widget surface and production layout resize.
 struct AnimatedWidgetFamilyPreview: View {
   let kind: WidgetShowcaseKind
   let family: WidgetFamily

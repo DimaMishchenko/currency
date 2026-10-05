@@ -136,9 +136,13 @@ public struct HistoryWidgetView: View {
       } else if let code {
         WidgetCurrencyIcon(code: code, size: iconSize)
           .frame(width: iconSize, height: iconSize).accessibilityHidden(true)
-        Text(verbatim: code)
-          .font(AppStyle.font(.caption, weight: .medium)).foregroundStyle(.secondary).fixedSize()
-          .modifier(HistoryLabelContrast())
+        Text(
+          verbatim: code
+            + (CurrencyCode(rawValue: code)?.isMetal == true
+              ? " · " + snapshot.pair.metalUnit.symbol : "")
+        )
+        .font(AppStyle.font(.caption, weight: .medium)).foregroundStyle(.secondary).fixedSize()
+        .modifier(HistoryLabelContrast())
       } else {
         Text(verbatim: "—").foregroundStyle(.secondary)
       }

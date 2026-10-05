@@ -22,15 +22,31 @@ public struct WidgetInput: Codable, Equatable, Sendable {
     var rate: Decimal?
   }
   private var sharedValue: SharedValue?
+  private var storedMetalUnit: MetalUnit?
+
+  /// The unit represented by this widget’s editable metal amounts.
+  public var metalUnit: MetalUnit { storedMetalUnit ?? .troyOunce }
+
+  /// Changes metal units while preserving the widget’s physical quantity.
+  public mutating func setMetalUnit(_ unit: MetalUnit) {
+    guard unit != metalUnit else { return }
+    if CurrencyCode(rawValue: WidgetSelection.currency(active))?.isMetal == true {
+      amount = NSDecimalNumber(decimal: metalUnit.converted(decimal, to: unit)).stringValue
+    }
+    storedMetalUnit = unit
+    sharedValue = nil
+  }
 
   private func sharedValue(for app: ConverterState, snapshot: RateSnapshot) -> SharedValue {
     SharedValue(
       source: app.source, amount: app.amount,
-      rate: snapshot.convert(1, from: app.source, to: WidgetSelection.currency(active)))
+      rate: snapshot.convert(
+        1, from: app.source, to: WidgetSelection.currency(active), metalUnit: app.metalUnit))
   }
 
   /// Creates normalized input for a currency list.
-  public init(codes: [String], amount: String = "1") {
+  public init(codes: [String], amount: String = "1", metalUnit: MetalUnit = .troyOunce) {
+    storedMetalUnit = metalUnit
     var seen = Set<String>()
     let valid = codes.filter {
       (!WidgetSelection.normalize([$0], allowsLocal: true).isEmpty) && seen.insert($0).inserted
@@ -57,18 +73,20 @@ public struct WidgetInput: Codable, Equatable, Sendable {
 
   /// Shares value with the app while retaining this widget's active tile.
   public mutating func synchronize(with app: ConverterState, snapshot: RateSnapshot) {
+    setMetalUnit(app.metalUnit)
     let incoming = sharedValue(for: app, snapshot: snapshot)
     guard sharedValue != incoming else { return }
     sharedValue = incoming
     let currency = WidgetSelection.currency(active)
     if currency == app.source {
       if amount != app.amount { amount = app.amount; replacesOnDigit = true }
-    } else if let value = snapshot.convert(app.decimal, from: app.source, to: currency) {
+    } else if let value = snapshot.convert(
+      app.decimal, from: app.source, to: currency, metalUnit: app.metalUnit)
+    {
       if decimal != value {
         amount = NSDecimalNumber(decimal: value).stringValue; replacesOnDigit = true
       }
     }
-    // Without a conversion rate, keep the selected tile editable; other values remain unavailable.
   }
 
   /// Publishes the value and remembers its exact source representation to avoid round-trip resets.
@@ -76,7 +94,9 @@ public struct WidgetInput: Codable, Equatable, Sendable {
     let source = WidgetSelection.currency(active)
     if source == app.source {
       app.setRoundedAmount(decimal)
-    } else if let value = snapshot.convert(decimal, from: source, to: app.source) {
+    } else if let value = snapshot.convert(
+      decimal, from: source, to: app.source, metalUnit: app.metalUnit)
+    {
       app.setRoundedAmount(value)
     }
     sharedValue = sharedValue(for: app, snapshot: snapshot)
@@ -109,7 +129,8 @@ public struct WidgetInput: Codable, Equatable, Sendable {
       let target = visible.first(where: {
         $0 != WidgetSelection.localID
           && snapshot.convert(
-            decimal, from: WidgetSelection.currency(active), to: WidgetSelection.currency($0))
+            decimal, from: WidgetSelection.currency(active), to: WidgetSelection.currency($0),
+            metalUnit: metalUnit)
             != nil
       })
     else { return self }
@@ -134,7 +155,7 @@ public struct WidgetInput: Codable, Equatable, Sendable {
 
   /// Selects a tile without changing its position; next digit starts a fresh amount.
   public mutating func select(_ code: String, snapshot: RateSnapshot) {
-    editor.select(code, snapshot: snapshot)
+    editor.select(code, snapshot: snapshot, metalUnit: metalUnit)
   }
 
   /// Applies a currency amount editing command.

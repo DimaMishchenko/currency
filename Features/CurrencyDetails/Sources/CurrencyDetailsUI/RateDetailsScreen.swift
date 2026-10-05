@@ -30,6 +30,12 @@ struct RateDetailsScreen: View {
   @State private var sourceDetailsExpanded = false
   @State private var historySelectionHeight: CGFloat = 48
   private var quote: String { model.quote }
+  private var sourceLabel: String { unitLabel(code) }
+  private var quoteLabel: String { unitLabel(quote) }
+
+  private func unitLabel(_ code: String) -> String {
+    CurrencyCode(rawValue: code)?.isMetal == true ? "\(code) \(model.input.metalUnit.symbol)" : code
+  }
 
   private var selected: HistoryPoint? {
     guard let selectedDate else { return series?.points.last }
@@ -182,26 +188,31 @@ struct RateDetailsScreen: View {
         Text(currencyName)
           .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
           .fixedSize(horizontal: false, vertical: true)
-        Text(.Details.unitConversion(code, quote))
+        Text(.Details.unitConversion(sourceLabel, quoteLabel))
           .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
       }
       .frame(maxWidth: compact ? .infinity : nil, alignment: .leading)
       HStack(alignment: .firstTextBaseline, spacing: AppStyle.Space.small) {
-        Text(rateLabel(snapshot.convert(1, from: code, to: quote)))
-          .font(
-            .system(
-              size: compact ? min(amountSize, 32) : amountSize, weight: .light, design: .rounded)
-          )
-          .monospacedDigit()
-          .lineLimit(1).minimumScaleFactor(0.25)
-        Text(quote)
+        Text(
+          rateLabel(snapshot.convert(1, from: code, to: quote, metalUnit: model.input.metalUnit))
+        )
+        .font(
+          .system(
+            size: compact ? min(amountSize, 32) : amountSize, weight: .light, design: .rounded)
+        )
+        .monospacedDigit()
+        .lineLimit(1).minimumScaleFactor(0.25)
+        Text(quoteLabel)
           .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
           .fixedSize()
       }
       .accessibilityElement(children: .ignore)
-      .accessibilityLabel(.Details.unitConversion(code, quote))
+      .accessibilityLabel(.Details.unitConversion(sourceLabel, quoteLabel))
       .accessibilityValue(
-        Text(verbatim: "\(rateLabel(snapshot.convert(1, from: code, to: quote))) \(quote)")
+        Text(
+          verbatim:
+            "\(rateLabel(snapshot.convert(1, from: code, to: quote, metalUnit: model.input.metalUnit))) \(quoteLabel)"
+        )
       )
       .accessibilityIdentifier("currency.details.rate")
     }
@@ -227,14 +238,14 @@ struct RateDetailsScreen: View {
     VStack(alignment: .leading, spacing: AppStyle.Space.medium) {
       ZStack(alignment: .leading) {
         VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
-          Text(verbatim: "0.000000 \(quote)").font(AppStyle.font(.title3))
+          Text(verbatim: "0.000000 \(quoteLabel)").font(AppStyle.font(.title3))
             .lineLimit(1).minimumScaleFactor(0.25)
           Text(dayLabel(Date())).font(AppStyle.font(.caption))
         }
         .hidden().accessibilityHidden(true)
         if let selected, !loading {
           VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
-            Text(verbatim: "\(rateLabel(Decimal(selected.value))) \(quote)")
+            Text(verbatim: "\(rateLabel(Decimal(selected.value))) \(quoteLabel)")
               .font(AppStyle.font(.title3).monospacedDigit())
               .lineLimit(1).minimumScaleFactor(0.25)
             Text(dayLabel(selected.date))
@@ -352,7 +363,8 @@ struct RateDetailsScreen: View {
       .allowsHitTesting(false)
     }
     .accessibilityLabel(
-      .Details.chartAccessibility(String(localized: range.accessibilityTitle), code, quote))
+      .Details.chartAccessibility(
+        String(localized: range.accessibilityTitle), sourceLabel, quoteLabel))
   }
 
   @AxisMarkBuilder
@@ -449,7 +461,10 @@ struct RateDetailsScreen: View {
     let formatter = NumberFormatter()
     formatter.locale = locale
     formatter.numberStyle = .decimal
-    formatter.maximumFractionDigits = CurrencyCatalog.crypto.contains(code) ? 2 : 6
+    formatter.maximumFractionDigits =
+      CurrencyCode(rawValue: quote)?.isMetal == true
+      ? CurrencyPrecision.fractionDigits(quote, metalUnit: model.input.metalUnit)
+      : CurrencyCatalog.crypto.contains(code) ? 2 : 6
     return formatter.string(from: NSDecimalNumber(decimal: value)) ?? "—"
   }
 

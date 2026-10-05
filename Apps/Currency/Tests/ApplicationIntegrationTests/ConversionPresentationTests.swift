@@ -102,6 +102,20 @@ import Testing
     #expect(result.monetaryAmount == nil)
     #expect(result.resultText.contains("troy oz") && result.resultText.contains("🥇"))
   }
+  @Test(arguments: [MetalUnit.gram, .kilogram])
+  func metalResultsExposeSelectedUnitForChainingAndSourceContext(_ unit: MetalUnit) throws {
+    let request = try ConversionRequest(
+      amount: "2", source: "XAU", destinations: [.init(code: "XAU")], metalUnit: unit)
+    let evaluation = try ConversionEvaluation(request: request, snapshot: .init(), now: now)
+    let result = ConversionResultEntity(result: evaluation.results[0], evaluation: evaluation)
+    #expect(result.convertedAmount == "2")
+    #expect(result.metalMeasurementUnit == unit.symbol)
+    #expect(result.monetaryAmount == nil)
+    #expect(result.resultText.components(separatedBy: unit.symbol).count >= 3)
+    #expect(ConversionPresentation.speech(evaluation).contains(unit.symbol))
+    #expect(!result.resultText.contains("troy oz"))
+  }
+
   private func quote(_ value: Decimal) -> ExchangeRate {
     .init(value, published: "2027-01-15", source: .init(provider: .ecb))
   }

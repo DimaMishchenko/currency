@@ -55,6 +55,30 @@ import WidgetsUI
     #expect(calculatorSpec.synchronized)
   }
 
+  @Test func calculatorAndBoardTimelineReadSavedUnitWhileReferenceWidgetsKeepExplicitUnits() {
+    var input = ConverterState()
+    input.setMetalUnit(.kilogram)
+    let app = input
+    let rates = rates
+    let dependencies = WidgetTimelineDependencies(
+      input: { app }, rates: { rates }, localSnapshot: { (nil, .notDetermined) },
+      widgetInput: { _, codes, amount in WidgetInput(codes: codes, amount: amount) },
+      refreshRates: { _ in .init(snapshot: rates, warning: nil) },
+      refreshLocalCurrency: {}, now: { .now })
+    let calculator = SuiteTimeline<MultiSettings>(
+      kind: "CurrencyConverter", dependencies: dependencies
+    )
+    .entry(MultiSettings())
+    let board = SuiteTimeline<BoardSettings>(kind: "CurrencyBoard", dependencies: dependencies)
+      .entry(BoardSettings())
+    let reference = SuiteTimeline<CashSettings>(kind: "CurrencyCash", dependencies: dependencies)
+      .entry(CashSettings())
+    #expect(calculator.input.metalUnit == .kilogram)
+    #expect(board.input.metalUnit == .kilogram)
+    #expect(reference.input.metalUnit == .troyOunce)
+    #expect(WidgetPresets.convert(1000, from: "XAU", to: "XAU", snapshot: rates) == 1000)
+  }
+
   @Test func recentlyEditedTimelineAvoidsRefreshAndPreservesCurrentInput() async {
     let calls = Mutex(0)
     var input = WidgetInput(codes: ["EUR", "USD"])
