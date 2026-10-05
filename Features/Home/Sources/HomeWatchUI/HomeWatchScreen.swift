@@ -116,11 +116,7 @@ public struct HomeWatchScreen: View {
             Button(.Watch.useAsBase) { model.useAsBase(destination.code) }
               .disabled(model.row(destination.code).amount == nil)
           }
-          if destination.id == model.input.destinationRows.first?.id {
-            presets
-          }
         }
-        if model.input.destinationRows.isEmpty { presets }
       }
       Section {
         Button(.Watch.addCurrency, systemImage: "plus") { addingCurrency = true }
@@ -177,23 +173,6 @@ public struct HomeWatchScreen: View {
       _ = await model.refresh(force: true)
       refreshRequested = false
     }
-  }
-
-  private var presets: some View {
-    GlassEffectContainer(spacing: 6) {
-      HStack(spacing: 6) {
-        ForEach([1, 10, 100], id: \.self) { value in
-          Button {
-            _ = model.commitAmount(String(value))
-          } label: {
-            Text(verbatim: String(value)).frame(maxWidth: .infinity)
-          }
-          .buttonStyle(.glass)
-          .accessibilityIdentifier("watch.home.preset.\(value)")
-        }
-      }
-    }
-    .listRowBackground(Color.clear)
   }
 
   private func destinationAccessibilityValue(_ destination: ConverterState.Destination) -> Text {
