@@ -46,7 +46,7 @@ Use iPhone by default. Add iPad for layout or tablet-specific changes with `CURR
 CURRENCY_E2E_TARGET=ipad CURRENCY_E2E_UDID=<owned-ipad-uuid> AGENT_DEVICE_STATE_DIR=$PWD/.local/agent-device-ipad npx e2e run tests/converter.e2e.ts --output .e2e/ipad
 ```
 
-The latest report is `.e2e/report.json`, with screenshots under `.e2e/artifacts/`. Preserve evidence before another run overwrites it. Report selected coverage, failures/skips, build identity and test duration separately from build/boot/engine preparation.
+Results are written to `.e2e/report.json` and screenshots to `.e2e/artifacts/`. Use `--output <directory>` to keep separate runs.
 
 ## Coverage
 
@@ -74,14 +74,12 @@ Home Screen setup uses [widgetctl](https://github.com/DimaMishchenko/widgetctl),
 
 Cache remains enabled and local, ignored by Git. Fresh checkouts record their own. Inspect it with `npx e2e cache ls` or `stats`; `clear` removes all recordings. Unused entries are not automatically pruned. Keep goal/test identities stable and bump `app.identity` when fixture semantics change. Diagnose failed outcomes before accepting replacement recordings. `--no-cache` neither reads nor writes cache. Visual assertions and cache misses still require model access; these simulator tests run locally, not in CI.
 
-## Limitations and timing
+## Limitations
 
 - Replay reliability is provisional: mobile screen identities and keypad targeting have caused misses or failures. Keep native outcome assertions strict.
 - The driver misprojects some widget descendants. Calculator tests use a bounded tap workaround for the verified medium, two-currency, English iPhone layout; three-currency output also needs vision.
-- iPad core flows passed with a local snapshot-projection patch that is not in the pinned driver. iPad widgets remain blocked by missing descendants. Duo verification is deferred; widgetctl device placement is verified only on arm64 iPhone/iOS 27.
+- iPad picker automation requires a snapshot-projection fix not included in the pinned driver; widget checks are blocked by missing descendants. Duo verification is deferred; widgetctl device placement is verified only on arm64 iPhone/iOS 27.
 - Native Edit Widget picker/save, Local currency states, independent instances and custom Lock Screen symbols remain uncovered. History navigation does not prove live chart data.
-
-The latest nine selected widgetctl integration journeys passed in **9m29s**, plus **37s** engine preparation. Warm placement takes about **1–2s** and configuration apply/verification **0.6–0.8s**; cold helper preparation took **16–25s** per module. Complete journeys also include app preparation and visual checks. Evidence: `.e2e/widgetctl-integration/report.json`; older reports remain under `.validation/e2e`.
 
 ## Shutdown
 
