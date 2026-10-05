@@ -16,6 +16,10 @@ or metal weights and update one prominent conversion. An ineligible followed sou
 its comparison uses the first eligible distinct favorite, then USD (EUR for a USD source).
 Unsupported saved cash pairs prompt a new currency or metal selection.
 Rates load from cache before refresh, and historical graphs use real validated series.
+Snapshots respect configured currencies, amounts and history ranges, including the native
+editor. History snapshots read saved series without network requests; timeline refreshes
+load current history. Only placeholders and SwiftUI previews use fixed sample pairs.
+See [simulator signing](../../Apps/CurrencyWatch/README.md) before verifying entity configuration.
 
 Pocket Rate and Know Your Cash setup choose currencies only; their buttons select
 amounts. Board and Favorite Pairs retain a configurable amount. Widget button state

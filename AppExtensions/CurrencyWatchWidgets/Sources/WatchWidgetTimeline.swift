@@ -43,7 +43,7 @@ struct WatchWidgetEntry: TimelineEntry {
 
   func value(to code: String) -> Decimal? {
     evaluation?.results.first { $0.destination.code == code }?.amount
-      .flatMap(WidgetMath.parseAmount)
+      .flatMap(ExactAmount.parse)
   }
 
   func url(quote: String? = nil, details: Bool = false) -> URL {
@@ -145,7 +145,7 @@ struct WatchPairTimeline: AppIntentTimelineProvider {
   }
   func snapshot(for configuration: WatchPairSettings, in context: Context) async -> WatchWidgetEntry
   {
-    context.isPreview ? WatchWidgetPreview.entry(style: style) : entry(configuration)
+    entry(configuration)
   }
   func timeline(
     for configuration: WatchPairSettings, in context: Context
@@ -167,7 +167,7 @@ struct WatchCashTimeline: AppIntentTimelineProvider {
   }
   func snapshot(for configuration: WatchCashSettings, in context: Context) async -> WatchWidgetEntry
   {
-    context.isPreview ? WatchWidgetPreview.entry(style: .cash) : entry(configuration)
+    entry(configuration)
   }
   func timeline(
     for configuration: WatchCashSettings, in context: Context
@@ -191,7 +191,7 @@ struct WatchBoardTimeline: AppIntentTimelineProvider {
   func snapshot(
     for configuration: WatchBoardSettings, in context: Context
   ) async -> WatchWidgetEntry {
-    context.isPreview ? WatchWidgetPreview.entry(style: style) : entry(configuration)
+    entry(configuration)
   }
   func timeline(
     for configuration: WatchBoardSettings, in context: Context
@@ -217,7 +217,7 @@ struct WatchHistoryTimeline: AppIntentTimelineProvider {
   func snapshot(
     for configuration: WatchHistorySettings, in context: Context
   ) async -> WatchHistoryEntry {
-    context.isPreview ? WatchWidgetPreview.history() : await entry(configuration)
+    await entry(configuration, client: WatchHistorySnapshotClient())
   }
   func timeline(
     for configuration: WatchHistorySettings, in context: Context
@@ -226,7 +226,9 @@ struct WatchHistoryTimeline: AppIntentTimelineProvider {
     return Timeline(
       entries: [current], policy: .after(current.snapshot.nextRefresh(after: current.date)))
   }
-  private func entry(_ configuration: WatchHistorySettings) async -> WatchHistoryEntry {
+  private func entry(
+    _ configuration: WatchHistorySettings, client: any HTTPClient = NetworkClient(timeout: 8)
+  ) async -> WatchHistoryEntry {
     let now = Date()
     let pair = HistoryWidgetPair(
       app: WatchWidgetComposition.input(), base: configuration.source?.id,
@@ -235,7 +237,7 @@ struct WatchHistoryTimeline: AppIntentTimelineProvider {
     let result: HistoryResult
     if let request = pair.historyRequest {
       result = await HistoryService(
-        directory: WatchWidgetComposition.directory(), client: NetworkClient(timeout: 8)
+        directory: WatchWidgetComposition.directory(), client: client
       )
       .load(
         base: request.base, quote: request.quote, range: range, now: now,
@@ -246,6 +248,10 @@ struct WatchHistoryTimeline: AppIntentTimelineProvider {
     return WatchHistoryEntry(
       date: now, snapshot: HistoryWidgetSnapshot(pair: pair, range: range, result: result))
   }
+}
+
+private struct WatchHistorySnapshotClient: HTTPClient {
+  func get(_ url: URL) async throws -> Data { throw RateError.unavailable }
 }
 
 enum WatchWidgetPreview {
