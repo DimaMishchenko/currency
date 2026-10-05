@@ -124,20 +124,6 @@ public struct HomeWatchScreen: View {
         }
       }
       Section {
-        if ([model.input.source] + model.input.manualDestinations)
-          .contains(where: CurrencyCatalog.metals.contains)
-        {
-          Picker(
-            selection: Binding(get: { model.input.metalUnit }, set: { _ = model.setMetalUnit($0) })
-          ) {
-            ForEach(MetalUnit.allCases, id: \.self) { unit in
-              Text(verbatim: unit.symbol).tag(unit)
-            }
-          } label: {
-            Label(.Watch.metalUnit, systemImage: "scalemass")
-          }
-          .accessibilityIdentifier("watch.home.metalUnit")
-        }
         Button(.Watch.addCurrency, systemImage: "plus") { addingCurrency = true }
           .accessibilityIdentifier("watch.home.add")
       } header: {

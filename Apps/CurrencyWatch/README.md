@@ -1,6 +1,6 @@
 # Currency Watch
 
-Independent watchOS 26+ converter. Amount, active pair, downloaded rates and history live on Watch. The shared `MetalUnit` preference supports troy ounces, grams and kilograms across conversions, details, history, widgets and Siri. The Watch measurement picker appears in My Currencies when metals are selected. Cash retains the shared iPhone gram presets; links carry their captured unit so preference changes preserve physical quantity. The companion phone sends preferred currencies and metal measurement through the latest WatchConnectivity application context; it preserves Watch base currency and physical source-metal quantity. No location permission is requested on Watch.
+Independent watchOS 26+ converter. Amount, active pair, downloaded rates and history live on Watch. The shared `MetalUnit` preference supports troy ounces, grams and kilograms across conversions, details, history, widgets and Siri. Watch follows the iPhone app measurement setting through companion preference sync; it has no measurement picker. Cash retains the shared iPhone gram presets; links carry their captured unit so preference changes preserve physical quantity. The companion phone sends preferred currencies and metal measurement through the latest WatchConnectivity application context; it preserves Watch base currency and physical source-metal quantity. No location permission is requested on Watch.
 
 `App` composes the reusable Home and CurrencyDetails models with native Watch presentations, direct rate/history services and App Group persistence shared with CurrencyWatchWidgets. Existing conversion/check-rate Siri actions reuse CurrencyApplication operations. Widgets and controls open validated `currency-watch` routes.
 
@@ -34,8 +34,8 @@ Confirm `TeamIdentifier` matches the project team. Verify a custom pair such as 
 The iPhone E2E driver does not cover Watch surfaces. Keep this native Watch journey for WATCH-14 on an explicitly owned simulator; use the selected CompanionSync, Home editing, Watch route and shared metal/widget tests for numerical and synchronization regressions.
 
 1. Select XAU as source with amount 1 and troy ounces. Capture its destination conversions.
-2. In My Currencies, choose grams. Expect exactly 31.1034768 g and unchanged destination values. Choose kilograms; expect 0.0311034768 kg with the same values.
-3. Set a one-gram amount, change to troy ounces, then open the amount keypad. Expect the full stored converted amount rather than 1; Done must preserve it. Restart and verify the unit and quantity persist.
+2. Change the iPhone app setting to grams and accept its newer preference context on Watch. Expect exactly 31.1034768 g and unchanged destination values. Repeat with kilograms; expect 0.0311034768 kg with the same values. My Currencies must have no measurement picker.
+3. Set a one-gram amount, sync the phone setting back to troy ounces, then open the amount keypad. Expect the full stored converted amount rather than 1; Done must preserve it. Restart and verify the unit and quantity persist.
 4. Open a metal amount draft, then accept a newer phone measurement preference. Done must reject the old draft rather than reinterpret its mass; Cancel and reopen uses current input.
 5. Configure metal Pocket/Board/History widgets. Their units follow the saved preference. Cash keeps gram presets. A previously rendered Cash link must open the same physical grams after the app measurement changes to kilograms; links carry their original measurement.
 

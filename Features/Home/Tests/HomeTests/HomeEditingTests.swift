@@ -34,7 +34,8 @@ struct HomeEditingTests {
     #expect(model.editingText == "0.31103477")
     #expect(model.press("2"))
     #expect(model.input.decimal == snapshot.convert(2, from: "XAU", to: "EUR", metalUnit: .gram))
-    #expect(model.setMetalUnit(.kilogram))
+    try store.updateInput { $0.setMetalUnit(.kilogram) }
+    model.reloadSharedState()
     #expect(model.editor == nil)
     #expect(model.input.metalUnit == .kilogram)
   }
@@ -53,7 +54,8 @@ struct HomeEditingTests {
     #expect(!model.commitAmount("100", source: "XAU", metalUnit: .gram))
     #expect(store.input().decimal == Decimal(string: "0.1"))
     #expect(model.input.metalUnit == .kilogram)
-    #expect(model.setMetalUnit(.troyOunce))
+    try store.updateInput { $0.setMetalUnit(.troyOunce) }
+    model.reloadSharedState()
     let exact = model.input.amount
     #expect(model.commitAmount(exact, source: "XAU", metalUnit: .troyOunce))
     #expect(store.input().amount == exact)

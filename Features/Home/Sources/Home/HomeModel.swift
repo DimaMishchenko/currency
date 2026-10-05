@@ -279,14 +279,6 @@ public final class HomeModel {
   }
 
   /// Commits a selection mutation and keeps the last valid state on failure.
-  @discardableResult public func setMetalUnit(_ unit: MetalUnit) -> Bool {
-    guard unit != input.metalUnit else { return true }
-    guard updateInput({ $0.setMetalUnit(unit) }) else { return false }
-    editor = nil
-    editingSelectionID = nil
-    return true
-  }
-
   @discardableResult
   private func updateInput(_ mutation: (inout ConverterState) throws -> Void) -> Bool {
     do {
