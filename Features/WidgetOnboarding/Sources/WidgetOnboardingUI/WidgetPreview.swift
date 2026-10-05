@@ -228,6 +228,7 @@ struct AnimatedCalculatorPreview: View, @preconcurrency Animatable {
   var codes: [String]? = nil
   var amount: String? = nil
   var snapshot = WidgetPreviewState.rates
+  var converterInput: ConverterState? = nil
   var state: Binding<WidgetPreviewState>? = nil
 
   var animatableData: AnimatablePair<CGFloat, CGFloat> {
@@ -240,7 +241,8 @@ struct AnimatedCalculatorPreview: View, @preconcurrency Animatable {
     let atMediumEndpoint = progress <= 0.0001
     var preview = WidgetPreview(
       kind: .calculator, family: atMediumEndpoint ? .systemMedium : .systemLarge, interactive: true,
-      codes: codes, amount: amount, snapshot: snapshot, state: state)
+      codes: codes, amount: amount, snapshot: snapshot, converterInput: converterInput, state: state
+    )
     preview.calculatorProgress = progress
     return
       preview

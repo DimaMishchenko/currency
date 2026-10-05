@@ -58,6 +58,7 @@ These are representative outcomes, not exhaustive coverage of each feature ID.
 | CONV-01, CONV-05 | [converter](tests/converter.e2e.ts) | EUR 42 → USD 84 persists after restart |
 | CONV-02–03, CONV-05 | [currency-selection](tests/currency-selection.e2e.ts) | Change source, add/remove currencies, exact amounts and restart |
 | HIST-01–04 | [converter-details](tests/converter-details.e2e.ts) | Rate, period selection, source explanation and return |
+| PREF-05, ONB-01–02 | [metal-widget-preview](tests/metal-widget-preview.e2e.ts) | Replayed Calculator and Board showcase previews retain the saved grams preference and converted Gold amount |
 | PREF-05, WID-04–08 | [metal-widget-display](tests/metal-widget-display.e2e.ts) | Board, Cash, Pocket, Mental Math and History show Gold amounts and visible measurement units |
 | PREF-05, WID-02, WID-10 | [metal-widget](tests/metal-widget.e2e.ts) | Saved grams preference reaches Calculator; keypad edits return to app with matching metal conversion |
 | PREF-05, CONV-01, CONV-05 | [metal-measurement](tests/metal-measurement.e2e.ts) | Seeded metal destination units and exact displayed conversions change; grams and seeded metal source weight survive restart |

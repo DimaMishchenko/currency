@@ -225,7 +225,7 @@ private struct OnboardingWidgetCard: View {
     _state = State(
       initialValue: WidgetPreviewState(
         kind: kind, snapshot: configuration.snapshot, codes: configuration.codes,
-        amount: configuration.input.amount))
+        amount: configuration.input.amount, metalUnit: configuration.input.metalUnit))
   }
 
   var body: some View {
@@ -247,7 +247,7 @@ private struct OnboardingWidgetCard: View {
       AnimatedCalculatorPreview(
         progress: family == .systemMedium ? 0 : 1, width: fittedWidth,
         codes: configuration.codes, amount: configuration.input.amount,
-        snapshot: configuration.snapshot, state: $state
+        snapshot: configuration.snapshot, converterInput: configuration.input, state: $state
       )
       .animation(
         reduceMotion || scenePhase != .active ? nil : .easeInOut(duration: 0.64), value: family)
@@ -261,7 +261,7 @@ private struct OnboardingWidgetCard: View {
       AnimatedWidgetFamilyPreview(
         kind: .board, family: family, maximumWidth: width, availableHeight: availableHeight,
         codes: configuration.codes, amount: configuration.input.amount,
-        snapshot: configuration.snapshot, state: $state)
+        snapshot: configuration.snapshot, converterInput: configuration.input, state: $state)
     } else if kind == .icon {
       AnimatedWidgetFamilyPreview(
         kind: kind, family: family, maximumWidth: width, availableHeight: availableHeight,
