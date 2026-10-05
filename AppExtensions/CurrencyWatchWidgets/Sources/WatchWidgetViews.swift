@@ -282,11 +282,16 @@ struct WatchBoardView: View {
     } else if family == .accessoryRectangular {
       VStack(alignment: .leading, spacing: 0) {
         HStack(spacing: 3) {
-          Text(verbatim: sourceAmount)
-            .font(.system(size: 11, weight: .semibold))
-          Spacer(minLength: 0)
+          CurrencyIcon(entry.activeSource, size: 9).frame(width: 11, height: 10)
+          Text(verbatim: entry.activeSource)
           WatchRateStatus(entry: entry)
+          Spacer(minLength: 2)
+          Text(
+            verbatim: WatchWidgetFormat.amount(
+              entry.input.decimal, code: entry.activeSource, locale: locale)
+              + WatchWidgetFormat.unit(entry.activeSource))
         }
+        .font(.system(size: 11, weight: .bold)).monospacedDigit()
         .frame(height: 13)
         if entry.targets.isEmpty { Text(.WatchWidgets.addFavorites).font(.system(size: 10)) }
         ForEach(Array(entry.targets.prefix(3)), id: \.self) {
@@ -332,44 +337,54 @@ struct WatchBoardView: View {
   }
 
   private var favorites: some View {
-    AccessoryWidgetGroup {
+    VStack(spacing: 4) {
       HStack(spacing: 3) {
-        Text(verbatim: sourceAmount).font(.system(size: 10)).monospacedDigit()
+        CurrencyIcon(entry.activeSource, size: 10).frame(width: 12, height: 11)
+        Text(verbatim: sourceAmount).font(.system(size: 10, weight: .bold)).monospacedDigit()
         if !savedRateStatus.isEmpty {
           Image(systemName: "clock.arrow.circlepath").font(.system(size: 9))
             .accessibilityLabel(Text(verbatim: savedRateStatus))
         }
       }
+      .frame(maxWidth: .infinity, alignment: .center)
+      .frame(height: 16)
       .lineLimit(1).minimumScaleFactor(0.6)
-    } content: {
-      ForEach(Array(entry.targets.prefix(3)), id: \.self) { code in
-        Link(destination: entry.url(quote: code)) {
-          VStack(spacing: 1) {
-            Text(verbatim: code).font(.system(size: 9))
-            Text(
-              verbatim: WatchWidgetFormat.amount(entry.value(to: code), code: code, locale: locale)
-                + WatchWidgetFormat.unit(code)
-            )
-            .font(.system(size: 10)).minimumScaleFactor(0.4)
+      HStack(spacing: 4) {
+        ForEach(Array(entry.targets.prefix(3)), id: \.self) { code in
+          Link(destination: entry.url(quote: code)) {
+            VStack(spacing: 1) {
+              HStack(spacing: 2) {
+                CurrencyIcon(code, size: 9).frame(width: 11, height: 10)
+                Text(verbatim: code).font(.system(size: 9))
+              }
+              Text(
+                verbatim: WatchWidgetFormat.amount(
+                  entry.value(to: code), code: code, locale: locale)
+                  + WatchWidgetFormat.unit(code)
+              )
+              .font(.system(size: 10)).minimumScaleFactor(0.4)
+            }
+            .frame(maxWidth: .infinity, minHeight: 30)
+            .lineLimit(1)
           }
-          .lineLimit(1)
+          .buttonStyle(.plain)
+          .accessibilityLabel(
+            Text(
+              verbatim: sourceAmount + " → "
+                + WatchWidgetFormat.amount(entry.value(to: code), code: code, locale: locale)
+                + " " + code + WatchWidgetFormat.unit(code))
+          )
+          .accessibilityHint(Text(verbatim: savedRateStatus))
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(
-          Text(
-            verbatim: sourceAmount + " → "
-              + WatchWidgetFormat.amount(entry.value(to: code), code: code, locale: locale)
-              + " " + code + WatchWidgetFormat.unit(code))
-        )
-        .accessibilityHint(Text(verbatim: savedRateStatus))
+        if entry.targets.isEmpty {
+          Link(destination: WatchWidgetRoute.url()) { Image(systemName: "plus") }
+            .accessibilityLabel(Text(.WatchWidgets.addFavorites))
+        }
       }
-      if entry.targets.isEmpty {
-        Link(destination: WatchWidgetRoute.url()) { Image(systemName: "plus") }
-          .accessibilityLabel(Text(.WatchWidgets.addFavorites))
-      }
+      .frame(maxWidth: .infinity)
     }
+    .frame(maxWidth: .infinity)
     .fontDesign(.rounded)
-    .accessoryWidgetGroupStyle(.roundedSquare)
     .widgetURL(entry.url())
     .containerBackground(.fill.tertiary, for: .widget)
   }
@@ -504,7 +519,7 @@ struct WatchHistoryView: View {
             }
             .chartXAxis(.hidden).chartYAxis(.hidden).chartLegend(.hidden)
             .chartYScale(domain: .automatic(includesZero: false))
-            .frame(height: 17)
+            .frame(height: 27)
             .accessibilityLabel(Text(.WatchWidgets.historyChart(pair)))
             HStack {
               Text(verbatim: latest)
@@ -513,7 +528,6 @@ struct WatchHistoryView: View {
                 verbatim: snapshot.latest?.date.formatted(date: .abbreviated, time: .omitted) ?? "")
             }
             .font(.system(size: 9)).frame(height: 10)
-            Text(provenance).font(.system(size: 9)).foregroundStyle(.secondary).frame(height: 10)
           } else {
             Text(.WatchWidgets.historyUnavailable).font(.system(size: 11))
           }

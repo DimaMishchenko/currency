@@ -156,7 +156,7 @@ struct WatchPairTimeline: AppIntentTimelineProvider {
   private func entry(_ configuration: WatchPairSettings) -> WatchWidgetEntry {
     WatchWidgetComposition.entry(
       style: style, source: configuration.source?.id,
-      targets: configuration.quote.map { [$0.id] }, amount: configuration.amount)
+      targets: configuration.quote.map { [$0.id] }, amount: "1")
   }
 }
 
@@ -178,7 +178,7 @@ struct WatchCashTimeline: AppIntentTimelineProvider {
   private func entry(_ configuration: WatchCashSettings) -> WatchWidgetEntry {
     WatchWidgetComposition.entry(
       style: .cash, source: configuration.source?.id,
-      targets: configuration.quote.map { [$0.id] }, amount: configuration.amount)
+      targets: configuration.quote.map { [$0.id] }, amount: "1")
   }
 }
 

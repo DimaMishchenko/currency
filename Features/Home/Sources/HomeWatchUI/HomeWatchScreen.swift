@@ -121,23 +121,12 @@ public struct HomeWatchScreen: View {
       Section {
         Button(.Watch.addCurrency, systemImage: "plus") { addingCurrency = true }
           .accessibilityIdentifier("watch.home.add")
-        if let first = model.input.destinations.first {
-          Button(.Watch.swapCurrencies, systemImage: "arrow.up.arrow.down") {
-            model.useAsBase(first)
-          }
-          .disabled(model.row(first).amount == nil)
-          .accessibilityIdentifier("watch.home.swap")
-        }
       } header: {
         Text(.Watch.myCurrencies)
       }
       Section {
         if model.snapshot.quotes.isEmpty {
           Text(.Watch.noRates)
-        } else {
-          Text(.Watch.savedRates)
-          Text(model.snapshot.fetchedAt, format: .dateTime.month().day().hour().minute())
-            .font(.caption2).foregroundStyle(.secondary)
         }
         if let warning = model.warning { Text(message(warning)).font(.caption2) }
         if model.refreshing {

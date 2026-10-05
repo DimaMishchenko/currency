@@ -113,13 +113,10 @@ struct WatchCashSettings: WidgetConfigurationIntent {
     title: LocalizedStringResource(
       "quote", defaultValue: "Comparison (empty follows Watch)", table: "WatchWidgets"))
   var quote: WatchCashCurrency?
-  @Parameter(
-    title: LocalizedStringResource("amount", defaultValue: "Amount", table: "WatchWidgets"),
-    default: "1") var amount: String
 
   static var parameterSummary: some ParameterSummary {
     Summary {
-      \.$source; \.$quote; \.$amount
+      \.$source; \.$quote
     }
   }
 }
@@ -135,13 +132,10 @@ struct WatchPairSettings: WidgetConfigurationIntent {
     title: LocalizedStringResource(
       "quote", defaultValue: "Comparison (empty follows Watch)", table: "WatchWidgets")) var quote:
     WatchCurrency?
-  @Parameter(
-    title: LocalizedStringResource("amount", defaultValue: "Amount", table: "WatchWidgets"),
-    default: "1") var amount: String
 
   static var parameterSummary: some ParameterSummary {
     Summary {
-      \.$source; \.$quote; \.$amount
+      \.$source; \.$quote
     }
   }
 }

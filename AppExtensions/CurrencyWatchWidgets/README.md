@@ -17,9 +17,10 @@ its comparison uses the first eligible distinct favorite, then USD (EUR for a US
 Unsupported saved cash pairs prompt a new currency or metal selection.
 Rates load from cache before refresh, and historical graphs use real validated series.
 
-Pocket Rate's presets and swap persist independently of the app's converter. Records
-use the widget kind, source, comparison currencies, and configured amount as a stable
-key. Identical configurations share amount and swap state across placements.
+Pocket Rate and Know Your Cash setup choose currencies only; their buttons select
+amounts. Board and Favorite Pairs retain a configurable amount. Widget button state
+persists independently of the app's converter. Records use the widget kind, source,
+comparison currencies, and initial amount as a stable key. Identical configurations share amount and swap state across placements.
 
 Routes are `currency-watch://convert` and `currency-watch://details`, with `source`
 and `quote`; only conversion accepts `amount`. Missing or invalid pairs open the converter

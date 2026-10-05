@@ -4,7 +4,7 @@ import ExchangeRates
 import ExchangeRatesUI
 import SwiftUI
 
-/// Watch rate provenance and history presentation for one immutable details flow.
+/// Watch currency information and history for one immutable details flow.
 public struct CurrencyDetailsWatchScreen: View {
   @State private var model: CurrencyDetailsModel
   @Environment(\.locale) private var locale
@@ -15,7 +15,7 @@ public struct CurrencyDetailsWatchScreen: View {
     _model = State(initialValue: CurrencyDetailsModel(input: input, dependencies: dependencies))
   }
 
-  /// Shows provider history and disclosures for the captured pair, including cached or unavailable results.
+  /// Shows history and the reference-rate note for the captured pair.
   public var body: some View {
     @Bindable var model = model
     List {
@@ -102,35 +102,8 @@ public struct CurrencyDetailsWatchScreen: View {
         Text(.Watch.historyTitle)
       }
       Section {
-        if let quote = model.input.snapshot.quotes[model.input.code] {
-          VStack(alignment: .leading, spacing: 4) {
-            Text(verbatim: provider(quote.source.provider))
-              .font(.system(.headline, design: .rounded))
-            Text(observation(quote.source.observation)).font(.caption2)
-            Text(verbatim: quote.published).font(.caption2)
-            if let date = quote.observedAt ?? quote.retrievedAt ?? quote.cachedAt {
-              Text(date, format: .dateTime.month().day().hour().minute())
-                .font(.caption2).foregroundStyle(.secondary)
-            }
-          }
-          .accessibilityElement(children: .combine)
-        } else {
-          Text(.Watch.rateUnavailable)
-        }
-        if let series = model.series {
-          VStack(alignment: .leading, spacing: 4) {
-            Text(verbatim: provider(series.source.provider))
-              .font(.system(.headline, design: .rounded))
-            Text(observation(series.source.observation)).font(.caption2)
-            Text(.Watch.historySaved).font(.caption2)
-            Text(series.fetchedAt, format: .dateTime.month().day().hour().minute())
-              .font(.caption2).foregroundStyle(.secondary)
-          }
-          .accessibilityElement(children: .combine)
-        }
         Text(.Watch.referenceExplanation).font(.caption2)
-      } header: {
-        Text(.Watch.sourceTitle)
+          .fixedSize(horizontal: false, vertical: true)
       }
     }
     .font(.system(.body, design: .rounded))
@@ -193,27 +166,4 @@ public struct CurrencyDetailsWatchScreen: View {
     }
   }
 
-  private func provider(_ id: RateProviderID) -> String {
-    switch id {
-    case .ecb: "European Central Bank"
-    case .frankfurter: "Frankfurter"
-    case .fawaz: "Fawaz"
-    case .coinbase: "Coinbase"
-    case .custom(let name): name
-    }
-  }
-
-  private func observation(_ observation: RateObservation) -> LocalizedStringResource {
-    switch observation {
-    case .unspecified: .Watch.unspecifiedObservation
-    case .dailyRate: .Watch.dailyRate
-    case .exchangeRate: .Watch.exchangeRate
-    case .trade: .Watch.trade
-    case .dailyReference: .Watch.dailyReference
-    case .monthlyReference: .Watch.monthlyReference
-    case .hourlyClose: .Watch.hourlyClose
-    case .dailyClose: .Watch.dailyClose
-    case .monthlyLastClose: .Watch.monthlyLastClose
-    }
-  }
 }
