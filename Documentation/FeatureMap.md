@@ -93,6 +93,29 @@ Owners: [SystemActions](../Apps/Currency/App/Sources/SystemActions), [CurrencyRo
 | SYS-06 | `currency://converter?v=1`, `currency://local-currency` | Open the converter or location setup respectively; malformed/unsupported versioned content URLs are rejected. |
 | SYS-07 | Published App Shortcut phrases and system discovery | Currency actions can be discovered/configured/run through the actual system surface. Siri/device behavior is distinct from native intent contract execution. |
 
+## Apple Watch (pending PR #75)
+
+These capabilities are implemented in [PR #75](https://github.com/DimaMishchenko/currency/pull/75), targeting watchOS 26+, and are not yet part of `main`. Ownership follows the Watch application composition, HomeWatchUI, CurrencyDetailsWatchUI and CurrencyWatchWidgets, reusing the Conversion, ExchangeRates and Widgets domains. Preserve these IDs when the feature lands and remove this pending status.
+
+| ID | Capability / entry | Observable outcome |
+| --- | --- | --- |
+| WATCH-01 | Open the independent Watch app | The source amount and first conversion appear together on the small Watch; the app fetches rates directly and remains useful without an iPhone connection. |
+| WATCH-02 | Tap source amount → decimal keypad | Digits, locale decimal separator and deletion edit a local draft; Done commits the amount and updates conversions, Cancel keeps the previous amount. The keypad fits without scrolling; there are no in-app 1/10/100 presets. |
+| WATCH-03 | Source picker, Add currency and favorite row actions | Flag/icon currency choices update the source or destinations without duplicates. Favorite rows can become the base or be removed; selections and custom amount survive restart. |
+| WATCH-04 | Favorite row → currency details/history | Show currency identity, inverse rate, selected history range/chart and the reference-rate note. No provider/source sections, saved-rate label or standalone swap action are shown in the app. Metal conversion rates and history use the shared troy-ounce/gram/kilogram preference. |
+| WATCH-05 | Refresh rates, offline and unavailable history | Explicit refresh preserves cached rates/history; loading, stale, missing and failed-refresh states remain distinguishable without claiming a successful fetch. |
+| WATCH-06 | iPhone preferred-currency synchronization | Preferred currencies and metal measurement synchronize opportunistically; Watch base and physical metal amount remain local, and connectivity is not required for direct fetch/cache use. |
+| WATCH-07 | Pocket Rate in Smart Stack | Configure source/comparison currencies, then use 1/10/100 and swap buttons to update the displayed pair/conversion. Setup has no amount field; taps on conversion content open the corresponding Watch route. |
+| WATCH-14 | Metal measurement from iPhone settings | Follow the iPhone app’s troy-ounce/gram/kilogram setting through companion preference sync, without a Watch picker; conversions, details, history, widgets and Siri show that unit, and source-metal quantity is preserved. Cash keeps the same physical gram presets as the iPhone widget and translates routes into the selected app unit. |
+| WATCH-08 | Currency Board and Favorite Pairs | Configure base, destinations and amount. Board aligns flag/code left and value right, with a bold source row; Favorite Pairs centers the flagged source above three flagged destination links. |
+| WATCH-09 | History widget | Configured pair/range displays trend, period/change, current value and date, with explicit cached/unavailable behavior. The chart uses the space previously occupied by the daily-reference footer. |
+| WATCH-10 | Know Your Cash widget | Configure currencies only; banknote or metal-weight buttons choose the amount and update conversion with the correct units. Opening the app preserves the displayed conversion semantics. |
+| WATCH-11 | Mental Math widget | Display a simple rounded conversion rule for the configured pair without an error percentage. |
+| WATCH-12 | Watch-face complications | Pocket Rate supports rectangular, circular, inline and corner families. Cash, Board, History and Mental Math support the first three; Favorite Pairs is rectangular only. Corner selection offers only Pocket Rate, with both compact values on the outer curve, one arrow, names/units inside and full values in accessibility. Verify slot fitting, including bottom-right 100-unit conversions. |
+| WATCH-13 | Open Currency control and Watch Siri/Shortcuts | Control Center opens the Watch converter; existing conversion/rate operations run on Watch with exact amounts and actionable unavailable-rate outcomes. Spoken Siri and physical-device behavior require separate acceptance. |
+
+Widgets are installed through the native Watch system surfaces; the app has no widget gallery, calculator or Currency Icon widget. Configuration previews and installed widgets retain selected currencies, amounts and history ranges; valid repeating-decimal conversions remain visible. History previews use cached data, while timelines can refresh. Native simulator configuration checks require development signing with a team identity, as documented in the PR's Watch README. Ordinary update labels are omitted from widgets while meaningful stale/unavailable status remains accessible. Physical-device battery/refresh behavior, reconnect/pairing transitions, exhaustive accessibility/content combinations and release signing remain separate acceptance checks.
+
 ## Cross-feature acceptance dimensions
 
 Apply these to relevant journeys rather than duplicating every feature for every combination.

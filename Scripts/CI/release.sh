@@ -10,6 +10,9 @@ case "${1:-}" in
     echo "Release build $number"
     ;;
   export-options)
+    for name in APPLE_TEAM_ID CURRENCY_APP_PROFILE_UUID CURRENCY_WIDGET_PROFILE_UUID CURRENCY_WATCH_PROFILE_UUID CURRENCY_WATCH_WIDGET_PROFILE_UUID; do
+      [[ -n "${!name:-}" ]] || { echo "Missing release value: $name" >&2; exit 1; }
+    done
     cat > "$2" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -22,6 +25,8 @@ case "${1:-}" in
 <key>provisioningProfiles</key><dict>
   <key>com.dimasike.currency</key><string>$CURRENCY_APP_PROFILE_UUID</string>
   <key>com.dimasike.currency.widgets</key><string>$CURRENCY_WIDGET_PROFILE_UUID</string>
+  <key>com.dimasike.currency.watchkitapp</key><string>$CURRENCY_WATCH_PROFILE_UUID</string>
+  <key>com.dimasike.currency.watchkitapp.widgets</key><string>$CURRENCY_WATCH_WIDGET_PROFILE_UUID</string>
 </dict>
 </dict></plist>
 EOF

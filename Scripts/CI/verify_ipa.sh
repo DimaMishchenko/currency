@@ -8,6 +8,8 @@ check_bundle() {
     || { echo "Wrong bundle ID: $bundle" >&2; exit 1; }
   [[ $(plutil -extract CFBundleVersion raw -o - "$info") == "$CURRENCY_BUILD_NUMBER" ]] \
     || { echo "Wrong build number: $bundle" >&2; exit 1; }
+  [[ $(plutil -extract CFBundleShortVersionString raw -o - "$info") == "$app_version" ]] \
+    || { echo "Mismatched marketing version: $bundle" >&2; exit 1; }
   security cms -D -i "$bundle/embedded.mobileprovision" > "$workdir/embedded.plist"
   [[ $(plutil -extract UUID raw -o - "$workdir/embedded.plist") == "$expected_profile" ]] \
     || { echo "Wrong provisioning profile: $bundle" >&2; exit 1; }
@@ -26,6 +28,14 @@ unzip -q "$1" -d "$workdir"
 app=$workdir/Payload/Currency.app
 widget=$app/PlugIns/CurrencyWidgets.appex
 [[ -d "$app" && -d "$widget" ]] || { echo 'Missing app or widget extension in IPA' >&2; exit 1; }
+watch=$app/Watch/CurrencyWatch.app
+watch_widget=$watch/PlugIns/CurrencyWatchWidgets.appex
+[[ -d "$watch" && -d "$watch_widget" ]] || { echo 'Missing Watch app or widget extension in IPA' >&2; exit 1; }
+app_version=$(plutil -extract CFBundleShortVersionString raw -o - "$app/Info.plist")
 check_bundle "$app" com.dimasike.currency "$CURRENCY_APP_PROFILE_UUID"
 check_bundle "$widget" com.dimasike.currency.widgets "$CURRENCY_WIDGET_PROFILE_UUID"
-echo 'Exported app and widget identifiers, build numbers, profiles, and App Group signatures verified'
+check_bundle "$watch" com.dimasike.currency.watchkitapp "$CURRENCY_WATCH_PROFILE_UUID"
+check_bundle "$watch_widget" com.dimasike.currency.watchkitapp.widgets "$CURRENCY_WATCH_WIDGET_PROFILE_UUID"
+[[ $(plutil -extract WKCompanionAppBundleIdentifier raw -o - "$watch/Info.plist") == com.dimasike.currency ]] \
+  || { echo 'Wrong Watch companion identifier' >&2; exit 1; }
+echo 'Exported iPhone and Watch bundles, versions, profiles, and App Group signatures verified'

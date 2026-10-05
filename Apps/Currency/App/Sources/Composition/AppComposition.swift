@@ -1,5 +1,6 @@
 import AppIntents
 import AppearancePreferences
+import CompanionSync
 import Conversion
 import CoreLocation
 import CurrencyApplication
@@ -18,6 +19,9 @@ import WidgetKit
 
 @MainActor
 final class AppComposition {
+  private let syncDirectory: URL
+  private var companion: CompanionSyncTransport?
+  private(set) var companionIssue: CompanionSyncIssue?
   let rates: RateStore
   let conversion: ConversionStore
   let local: LocalCurrencyStore
@@ -56,6 +60,7 @@ final class AppComposition {
     directory: URL = AppGroup.directory, appearance: AppearancePreferences? = nil,
     discoveryDefaults: UserDefaults = .standard, service: RateService = RateService()
   ) {
+    syncDirectory = directory
     self.service = service
     self.appearance = appearance ?? AppearancePreferences(defaults: .standard)
     rates = RateStore(directory: directory)
@@ -90,7 +95,29 @@ final class AppComposition {
           selectionID: id, code: code, reference: input.source, snapshot: rates.loadRates())
       })
   }
+  func startCompanionSync() {
+    if companion == nil {
+      do {
+        let store = CompanionSyncStateStore(directory: syncDirectory)
+        let engine = try CompanionSyncEngine(
+          dependencies: .init(
+            loadState: store.load, saveState: store.save,
+            editInput: { [conversion] mutation in _ = try conversion.updateInput(mutation) },
+            changed: { [weak self] in self?.changed() }))
+        companion = CompanionSyncTransport(role: .phone, engine: engine)
+      } catch { companionIssue = .commitFailed; return }
+    }
+    companion?.start()
+    publishFavorites()
+  }
+  private func publishFavorites() {
+    do {
+      try companion?.publish(conversion.readInput())
+      companionIssue = companion?.issue
+    } catch { companionIssue = .commitFailed }
+  }
   func changed() {
+    publishFavorites()
     for observer in observers.values { observer.yield(()) }
     searchIndex.reconcile()
   }

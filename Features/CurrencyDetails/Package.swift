@@ -4,8 +4,9 @@ import PackageDescription
 let package = Package(
   name: "CurrencyDetails",
   defaultLocalization: "en",
-  platforms: [.iOS("26.0")],
+  platforms: [.iOS("26.0"), .watchOS("26.0")],
   products: [
+    .library(name: "CurrencyDetailsWatchUI", targets: ["CurrencyDetailsWatchUI"]),
     .library(name: "CurrencyDetails", targets: ["CurrencyDetails"]),
     .library(name: "CurrencyDetailsUI", targets: ["CurrencyDetailsUI"])
   ],
@@ -13,6 +14,13 @@ let package = Package(
     .package(path: "../../Domain/ExchangeRates"), .package(path: "../../Foundation/DesignSystem")
   ],
   targets: [
+    .target(
+      name: "CurrencyDetailsWatchUI",
+      dependencies: [
+        "CurrencyDetails", .product(name: "ExchangeRates", package: "ExchangeRates"),
+        .product(name: "ExchangeRatesUI", package: "ExchangeRates")
+      ],
+      resources: [.process("Resources")]),
     .target(
       name: "CurrencyDetails",
       dependencies: [.product(name: "ExchangeRates", package: "ExchangeRates")]),

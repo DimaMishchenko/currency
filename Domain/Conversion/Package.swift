@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
   name: "Conversion", defaultLocalization: "en",
-  platforms: [.macOS(.v14), .iOS("26.0")],
+  platforms: [.macOS(.v14), .iOS("26.0"), .watchOS("26.0")],
   products: [
     .library(name: "Conversion", targets: ["Conversion"]),
     .library(name: "CurrencySelectionUI", targets: ["CurrencySelectionUI"])

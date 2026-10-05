@@ -253,6 +253,32 @@ public final class HomeModel {
 
   private enum EditingError: Error { case unavailableCurrency }
 
+  /// Commits validated nonnegative decimal text as the source amount.
+  @discardableResult public func commitAmount(
+    _ text: String, source: String? = nil, metalUnit: MetalUnit? = nil
+  ) -> Bool {
+    guard let value = ExactAmount.parse(text) else { return false }
+    return updateInput {
+      guard source == nil || source == $0.source, metalUnit == nil || metalUnit == $0.metalUnit
+      else {
+        throw EditingError.unavailableCurrency
+      }
+      $0.setConvertedAmount(value)
+    }
+  }
+
+  /// Promotes a convertible destination while preserving its current converted value.
+  @discardableResult public func useAsBase(_ code: String) -> Bool {
+    updateInput {
+      guard snapshot.convert($0.decimal, from: $0.source, to: code, metalUnit: $0.metalUnit) != nil
+      else {
+        throw EditingError.unavailableCurrency
+      }
+      $0.useAsBase(code, snapshot: snapshot)
+    }
+  }
+
+  /// Commits a selection mutation and keeps the last valid state on failure.
   @discardableResult
   private func updateInput(_ mutation: (inout ConverterState) throws -> Void) -> Bool {
     do {

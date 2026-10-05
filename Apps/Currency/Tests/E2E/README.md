@@ -94,3 +94,5 @@ Stop only your helper and simulator; use the matching state directory for altern
 AGENT_DEVICE_STATE_DIR="$PWD/.local/agent-device" npx agent-device daemon stop
 xcrun simctl shutdown "$CURRENCY_E2E_UDID"
 ```
+
+Watch metal measurement (WATCH-14) uses the [maintained native Watch journey](../../../CurrencyWatch/README.md#metal-measurement-acceptance). The iPhone E2E driver does not cover Watch. Numerical, stale-draft and preference-sync regressions remain in the native unit test targets.

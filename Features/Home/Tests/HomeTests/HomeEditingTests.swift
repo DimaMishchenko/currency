@@ -40,6 +40,27 @@ struct HomeEditingTests {
     #expect(model.input.metalUnit == .kilogram)
   }
 
+  @Test func watchDraftCannotOverwriteAChangedMetalMeasurement() throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = HomeTestStore(directory: directory)
+    try store.updateInput {
+      $0.changeSource("XAU")
+      $0.setMetalUnit(.gram)
+      $0.setAmount("100")
+    }
+    let model = makeHomeModel(store: store, service: RateService())
+    try store.updateInput { $0.setMetalUnit(.kilogram) }
+    #expect(!model.commitAmount("100", source: "XAU", metalUnit: .gram))
+    #expect(store.input().decimal == Decimal(string: "0.1"))
+    #expect(model.input.metalUnit == .kilogram)
+    try store.updateInput { $0.setMetalUnit(.troyOunce) }
+    model.reloadSharedState()
+    let exact = model.input.amount
+    #expect(model.commitAmount(exact, source: "XAU", metalUnit: .troyOunce))
+    #expect(store.input().amount == exact)
+  }
+
   @Test func rowEligibilityTracksResolvedIdentityAndMissingRates() throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }

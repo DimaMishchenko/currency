@@ -22,6 +22,36 @@ public enum CurrencyCatalog {
   /// Cryptocurrencies in alphabetical code order, without the curated shortlist.
   public static let otherCrypto = crypto.filter { !popularCrypto.contains($0) }.sorted()
 
+  /// Returns a canonical market name for supported crypto assets, independent of locale.
+  public static func assetName(_ code: String) -> String? {
+    guard let currency = CurrencyCode(rawValue: code) else { return nil }
+    return switch currency {
+    case .btc: "Bitcoin"
+    case .eth: "Ethereum"
+    case .sol: "Solana"
+    case .doge: "Dogecoin"
+    case .ltc: "Litecoin"
+    case .usdc: "USD Coin"
+    case .usdt: "Tether"
+    case .xrp: "XRP"
+    case .ada: "Cardano"
+    case .avax: "Avalanche"
+    case .link: "Chainlink"
+    case .dot: "Polkadot"
+    case .bch: "Bitcoin Cash"
+    case .xlm: "Stellar"
+    case .atom: "Cosmos"
+    case .uni: "Uniswap"
+    case .etc: "Ethereum Classic"
+    case .fil: "Filecoin"
+    case .aave: "Aave"
+    case .algo: "Algorand"
+    case .shib: "Shiba Inu"
+    case .icp: "Internet Computer"
+    default: nil
+    }
+  }
+
   /// Finds supported codes by exact code, code prefix, name prefix, then remaining matches.
   /// The caller supplies localized display names; ties use alphabetical code order.
   public static func search(

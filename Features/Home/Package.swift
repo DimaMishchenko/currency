@@ -3,8 +3,9 @@ import PackageDescription
 
 let package = Package(
   name: "Home",
-  defaultLocalization: "en", platforms: [.iOS(.v26)],
+  defaultLocalization: "en", platforms: [.iOS(.v26), .watchOS("26.0")],
   products: [
+    .library(name: "HomeWatchUI", targets: ["HomeWatchUI"]),
     .library(name: "Home", targets: ["Home"]), .library(name: "HomeUI", targets: ["HomeUI"])
   ],
   dependencies: [
@@ -12,6 +13,13 @@ let package = Package(
     .package(path: "../../Domain/ExchangeRates"), .package(path: "../../Foundation/DesignSystem")
   ],
   targets: [
+    .target(
+      name: "HomeWatchUI",
+      dependencies: [
+        "Home", .product(name: "ExchangeRates", package: "ExchangeRates"),
+        .product(name: "ExchangeRatesUI", package: "ExchangeRates"),
+        .product(name: "Conversion", package: "Conversion")
+      ], resources: [.process("Resources")]),
     .target(
       name: "Home",
       dependencies: [

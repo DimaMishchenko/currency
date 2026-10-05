@@ -77,10 +77,10 @@ def resource_directory(root, source):
         return None
     if "Tests" in parts or "HarnessApp" in parts or "DerivedSources" in parts:
         return None
-    if parts[:3] == ("AppExtensions", "CurrencyWidgets", "Sources"):
-        return root / "AppExtensions/CurrencyWidgets/Resources"
-    if parts[:4] == ("Apps", "Currency", "App", "Sources"):
-        return root / "Apps/Currency/App/Resources"
+    if len(parts) >= 3 and parts[0] == "AppExtensions" and parts[2] == "Sources":
+        return root / "AppExtensions" / parts[1] / "Resources"
+    if len(parts) >= 4 and parts[0] == "Apps" and parts[2:4] == ("App", "Sources"):
+        return root / "Apps" / parts[1] / "App/Resources"
     if len(parts) >= 5 and parts[0] in {"Features", "Domain"} and parts[2] == "Sources":
         return root.joinpath(*parts[:4], "Resources")
     return None

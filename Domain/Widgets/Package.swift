@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
   name: "Widgets", defaultLocalization: "en",
-  platforms: [.macOS(.v14), .iOS("26.0")],
+  platforms: [.macOS(.v14), .iOS("26.0"), .watchOS("26.0")],
   products: [
     .library(name: "Widgets", targets: ["Widgets"]),
     .library(name: "WidgetsUI", targets: ["WidgetsUI"])

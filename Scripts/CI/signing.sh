@@ -120,6 +120,8 @@ reconcile_profile() {
 
 app_uuid=$(reconcile_profile "$app_bundle")
 widget_uuid=$(reconcile_profile "$widget_bundle")
+watch_uuid=$(reconcile_profile "com.dimasike.currency.watchkitapp")
+watch_widget_uuid=$(reconcile_profile "com.dimasike.currency.watchkitapp.widgets")
 
 openssl x509 -inform DER -in "$signing_dir/$cert_id.cer" -out "$signing_dir/distribution.pem"
 openssl rand -hex 32 | tr -d '\n' > "$signing_dir/identity-password"
@@ -137,5 +139,7 @@ asc signing keychain install \
 {
   echo "CURRENCY_APP_PROFILE_UUID=$app_uuid"
   echo "CURRENCY_WIDGET_PROFILE_UUID=$widget_uuid"
+  echo "CURRENCY_WATCH_PROFILE_UUID=$watch_uuid"
+  echo "CURRENCY_WATCH_WIDGET_PROFILE_UUID=$watch_widget_uuid"
 } >> "$GITHUB_ENV"
-echo "Signing ready: certificate $cert_id; app profile $app_uuid; widget profile $widget_uuid"
+echo "Signing ready: certificate $cert_id; app profile $app_uuid; widget profile $widget_uuid; Watch profile $watch_uuid; Watch widget profile $watch_widget_uuid"

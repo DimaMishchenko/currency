@@ -85,6 +85,8 @@ jobs:
         run: |
           TUIST_CURRENCY_APP_PROFILE_UUID="$CURRENCY_APP_PROFILE_UUID" \
           TUIST_CURRENCY_WIDGET_PROFILE_UUID="$CURRENCY_WIDGET_PROFILE_UUID" \
+          TUIST_CURRENCY_WATCH_PROFILE_UUID="$CURRENCY_WATCH_PROFILE_UUID" \
+          TUIST_CURRENCY_WATCH_WIDGET_PROFILE_UUID="$CURRENCY_WATCH_WIDGET_PROFILE_UUID" \
             tuist generate --no-open --cache-profile none
       - name: Archive
         run: |

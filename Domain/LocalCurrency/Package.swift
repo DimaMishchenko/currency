@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
   name: "LocalCurrency",
-  platforms: [.macOS(.v14), .iOS("26.0")],
+  platforms: [.macOS(.v14), .iOS("26.0"), .watchOS("26.0")],
   products: [.library(name: "LocalCurrency", targets: ["LocalCurrency"])],
   dependencies: [
     .package(path: "../../Foundation/CoordinatedFiles"),

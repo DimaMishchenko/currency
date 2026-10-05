@@ -6,6 +6,10 @@ The main converter: amount editing, selected currencies, and rate-refresh feedba
 
 Converter discovery uses native TipKit popovers. After one completed amount edit, the next editing interaction can introduce rate history from the keypad button if details have not been opened. The widget tip waits until a later calendar day and a new completed edit with usable converted results, then appears when the keypad closes and the converter is idle. It is excluded from the onboarding completion visit, suppressed after opening the widget guide, and never follows a shown history tip in the same foreground visit. The app supplies onboarding status, clock, and app-local discovery persistence through `HomeDependencies`; TipKit owns native presentation and dismissal.
 
+`HomeWatchUI` presents the same `HomeModel` with a full-screen decimal keypad using shared converter editing rules, a searchable currency picker, selected destinations, refresh feedback, and semantic details requests. Swipe a destination to remove it or promote its converted value to the base. The Watch executable owns navigation, shared-state observation dependencies, and rate refresh scheduling.
+
+The Watch converter places its compact amount and source controls immediately before the first result. Tap the amount to enter any custom value with the full-screen keypad. Currency pickers show the current source and favorites before the remaining catalog; search still covers every eligible currency. The amount editor keeps native dismissal and confirmation controls and allocates its remaining height to all four keypad rows.
+
 ## Harness
 
 Select the `HomeHarness` scheme and add launch arguments under **Run → Arguments**. Use `--case <name>`; for example, `--case save-failure`. Omitting it selects `normal`.

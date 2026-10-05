@@ -14,7 +14,8 @@ public struct ConversionStore: Sendable {
     (try? readInput()) ?? resolved(ConverterState())
   }
 
-  private func readInput() throws -> ConverterState {
+  /// Loads confirmed input, defaulting only when its record is absent.
+  public func readInput() throws -> ConverterState {
     let data = try FileCoordination.dataIfPresent(
       at: directory.appendingPathComponent("input.json"))
     let input = try data.map { try JSONDecoder().decode(ConverterState.self, from: $0) }
