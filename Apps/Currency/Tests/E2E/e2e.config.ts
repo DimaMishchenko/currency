@@ -15,7 +15,7 @@ export default {
       name: targetName,
       engine: mobile({ platform: 'ios', device: udid, session: `currency-e2e-${targetName}` }),
       app: {
-        identity: 'currency-fixtures-v3',
+        identity: 'currency-fixtures-v4',
         bundleId: 'com.dimasike.currency',
         appPath: '../../../../.validation/e2e/DerivedData/Build/Products/Debug-iphonesimulator/Currency.app',
         launchArguments: ['-AppleLanguages', '(en)', '-AppleLocale', 'en_US', '-CurrencyE2E'],

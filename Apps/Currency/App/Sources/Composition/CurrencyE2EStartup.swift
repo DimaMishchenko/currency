@@ -94,6 +94,17 @@
       guard seededHistory.points == history.points, seededHistory.source == history.source,
         seededHistory.fetchedAt == now
       else { throw StartupError.seedVerificationFailed }
+      if state == .readyMetals || state == .readyMetalSource {
+        let metalHistory = HistorySeries(
+          points: [
+            HistoryPoint(date: now.addingTimeInterval(-7 * 86400), value: 0.009),
+            HistoryPoint(date: now.addingTimeInterval(-86400), value: 0.01)
+          ], source: .init(provider: .ecb, observation: .dailyReference), fetchedAt: now)
+        let metalHistoryFile = directory.appendingPathComponent("history-EUR-XAU-30.json")
+        try FileCoordination.write(at: metalHistoryFile) {
+          try JSONEncoder().encode(metalHistory).write(to: metalHistoryFile, options: .atomic)
+        }
+      }
       let files = [
         "input.json", "onboarding.json", "widget-location-refresh.json",
         "widget-location.json", "widget-location-status.json"
