@@ -36,6 +36,14 @@ jobs:
         run: |
           python3 Scripts/CI/test_skip_rules.py
           python3 Scripts/CI/test_project_structure.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Check E2E integration types
+        working-directory: Apps/Currency/Tests/E2E
+        run: |
+          npm ci
+          npm run typecheck
       - name: Test TestFlight notes
         run: python3 Scripts/CI/test_testflight_notes.py
       - name: Record release decision

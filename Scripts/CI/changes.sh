@@ -23,7 +23,7 @@ else
     case "$file" in
       Documentation/*|README.md|LICENSE|.gitignore)
         ;;
-      .swift-format|.github/workflows/tests.yml)
+      Tools/SimulatorWidgets/*|.swift-format|.github/workflows/tests.yml)
         xcode=true ;;
       Scripts/CI/testflight_notes.py)
         publish=true ;;
