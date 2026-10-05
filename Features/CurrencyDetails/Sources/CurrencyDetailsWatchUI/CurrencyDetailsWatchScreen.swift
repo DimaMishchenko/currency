@@ -114,15 +114,15 @@ public struct CurrencyDetailsWatchScreen: View {
 
   private func amountLabel(_ amount: String, code: String) -> String {
     if CurrencyCatalog.metals.contains(code) {
-      var resource = LocalizedStringResource.Watch.metalAmount(amount, code)
-      resource.locale = locale
-      return String(localized: resource)
+      return "\(amount) \(code) \(model.input.metalUnit.symbol)"
     }
     return "\(amount) \(code)"
   }
 
   private var rate: String {
-    guard let value = model.input.snapshot.convert(1, from: model.input.code, to: model.quote)
+    guard
+      let value = model.input.snapshot.convert(
+        1, from: model.input.code, to: model.quote, metalUnit: model.input.metalUnit)
     else {
       return "—"
     }

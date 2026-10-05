@@ -83,18 +83,22 @@ enum ConversionPresentation {
     func label(_ text: String, code: String) -> String {
       let value = ExactAmount.parse(text)
       let step = Decimal(
-        sign: .plus, exponent: -CurrencyPrecision.fractionDigits(code), significand: 1)
+        sign: .plus,
+        exponent: -CurrencyPrecision.fractionDigits(code, metalUnit: request.metalUnit),
+        significand: 1)
       let formatted: String
       if let value, value > 0, value < step {
         formatted = value.formatted(.number.precision(.significantDigits(1...6)))
       } else if let value {
         formatted = value.formatted(
-          .number.precision(.fractionLength(0...CurrencyPrecision.fractionDigits(code))))
+          .number.precision(
+            .fractionLength(
+              0...CurrencyPrecision.fractionDigits(code, metalUnit: request.metalUnit))))
       } else {
         formatted = text
       }
       return CurrencyCatalog.metals.contains(code)
-        ? String(localized: "\(formatted) \(code) troy oz") : "\(formatted) \(code)"
+        ? "\(formatted) \(code) \(request.metalUnit.symbol)" : "\(formatted) \(code)"
     }
     return "\(label(request.amount, code: request.source)) ≈ \(label(amount, code: quote))"
   }

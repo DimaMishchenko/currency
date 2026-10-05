@@ -19,6 +19,17 @@ struct OnboardingWidgetTests {
     ])
   }
 
+  @Test func metalPreviewStartsInSuppliedUnitAndRetainsPhysicalQuantityOnPreferenceChange() {
+    var preview = WidgetPreviewState(
+      kind: .calculator, codes: ["XAU", "EUR"], amount: "31.1034768", metalUnit: .gram)
+    #expect(preview.input.metalUnit == .gram)
+    #expect(preview.input.decimal == MetalUnit.troyOunce.gramsPerUnit)
+    preview.update(
+      snapshot: .init(), codes: ["XAU", "EUR"], amount: "0.0311034768", metalUnit: .kilogram)
+    #expect(preview.input.metalUnit == .kilogram)
+    #expect(preview.input.decimal == Decimal(string: "0.0311034768")!)
+  }
+
   @Test func tutorialLocalSelectionResolvesTheSameSampleAsItsPicker() {
     let codes = ["EUR", WidgetSelection.localID]
     let state = WidgetPreviewState(kind: .calculator, codes: codes, amount: "100")

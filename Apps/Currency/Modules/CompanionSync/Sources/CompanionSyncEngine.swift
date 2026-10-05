@@ -2,7 +2,7 @@ import Conversion
 import ExchangeRates
 import Foundation
 
-/// Versioned phone-owned favorites, excluding transient conversion and location state.
+/// Versioned phone-owned favorites and metal units, excluding transient conversion and location state.
 public struct CompanionFavoritesContext: Codable, Sendable, Equatable {
   /// The supported payload version.
   public let schemaVersion: Int
@@ -12,13 +12,20 @@ public struct CompanionFavoritesContext: Codable, Sendable, Equatable {
   public let revision: UInt64
   /// Ordered favorite codes, including the phone's source currency.
   public let codes: [String]
+  private let savedMetalUnit: MetalUnit?
+  /// Shared metal measurement preference; older contexts default to troy ounces.
+  public var metalUnit: MetalUnit { savedMetalUnit ?? .troyOunce }
 
   /// Explicit schema and revision values permit validation before accepting transported data.
-  public init(schemaVersion: Int = 1, senderID: UUID, revision: UInt64, codes: [String]) {
+  public init(
+    schemaVersion: Int = 1, senderID: UUID, revision: UInt64, codes: [String],
+    metalUnit: MetalUnit = .troyOunce
+  ) {
     self.schemaVersion = schemaVersion
     self.senderID = senderID
     self.revision = revision
     self.codes = codes
+    savedMetalUnit = metalUnit
   }
 
   /// Rejects unsupported versions, invalid revisions, and malformed currency selections.
@@ -98,14 +105,17 @@ public final class CompanionSyncEngine {
   /// Latest durable publication available for activation or reachability-independent retries.
   public var outgoing: CompanionFavoritesContext? { state.outgoing }
 
-  /// Revises only changed phone favorites and persists before publication.
+  /// Revises changed phone favorites or metal units and persists before publication.
   public func phoneContext(for input: ConverterState) throws -> CompanionFavoritesContext {
     let codes = [input.source] + input.manualDestinations
-    if let outgoing = state.outgoing, outgoing.codes == codes { return outgoing }
+    if let outgoing = state.outgoing, outgoing.codes == codes, outgoing.metalUnit == input.metalUnit
+    {
+      return outgoing
+    }
     let revision = state.outgoing?.revision ?? 0
     guard revision < UInt64.max else { throw CompanionSyncError.revisionExhausted }
     let context = CompanionFavoritesContext(
-      senderID: state.senderID, revision: revision + 1, codes: codes)
+      senderID: state.senderID, revision: revision + 1, codes: codes, metalUnit: input.metalUnit)
     try context.validate()
     var next = state
     next.outgoing = context
@@ -114,7 +124,7 @@ public final class CompanionSyncEngine {
     return context
   }
 
-  /// Accepts a newer context while preserving Watch amount, source, and available selected pair.
+  /// Accepts preferences while preserving Watch source quantity and available selected pair.
   @discardableResult
   public func accept(_ context: CompanionFavoritesContext) throws -> Bool {
     try context.validate()
@@ -126,6 +136,7 @@ public final class CompanionSyncEngine {
         destinations.insert(primary, at: 0)
       }
       input.setDestinations(destinations)
+      input.setMetalUnit(context.metalUnit)
     }
     dependencies.changed()
     var next = state

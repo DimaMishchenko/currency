@@ -1,5 +1,6 @@
 import CompanionSync
 import Conversion
+import ExchangeRates
 import Foundation
 import Testing
 
@@ -32,6 +33,98 @@ private final class SyncFixture {
 
 @Suite @MainActor
 struct CompanionSyncTests {
+  @Test func legacyContextDefaultsToTroyOunces() throws {
+    let context = try JSONDecoder()
+      .decode(
+        CompanionFavoritesContext.self,
+        from: Data(
+          #"{"schemaVersion":1,"senderID":"00000000-0000-0000-0000-000000000001","revision":7,"codes":["EUR","XAU"]}"#
+            .utf8))
+    try context.validate()
+    #expect(context.metalUnit == .troyOunce)
+    let fixture = SyncFixture()
+    var state = CompanionSyncState(senderID: context.senderID)
+    state.outgoing = context
+    fixture.saved = state
+    fixture.input.setDestinations(["XAU"])
+    #expect(try fixture.engine().phoneContext(for: fixture.input).revision == 7)
+    fixture.input.changeSource("XAU")
+    fixture.input.setMetalUnit(.gram)
+    fixture.input.setAmount("31.1034768")
+    #expect(try fixture.engine().accept(context))
+    #expect(fixture.input.source == "XAU")
+    #expect(fixture.input.metalUnit == .troyOunce)
+    #expect(fixture.input.decimal == 1)
+  }
+
+  @Test func metalUnitOnlyChangeRevisesPhoneContextAndSurvivesRestart() throws {
+    let fixture = SyncFixture()
+    let engine = try fixture.engine()
+    let first = try engine.phoneContext(for: fixture.input)
+    fixture.input.setMetalUnit(.gram)
+    let second = try engine.phoneContext(for: fixture.input)
+    #expect(second.codes == first.codes)
+    #expect(second.senderID == first.senderID)
+    #expect(second.revision == first.revision + 1)
+    #expect(second.metalUnit == .gram)
+    let decoded = try JSONDecoder()
+      .decode(
+        CompanionFavoritesContext.self, from: JSONEncoder().encode(second))
+    #expect(decoded == second)
+    #expect(try fixture.engine().phoneContext(for: fixture.input) == second)
+    fixture.input.setAmount("99")
+    #expect(try engine.phoneContext(for: fixture.input) == second)
+  }
+
+  @Test(arguments: ["XAU", "XAG", "XPT", "XPD"])
+  func acceptedMetalUnitPreservesWatchSourceMass(_ source: String) throws {
+    let fixture = SyncFixture()
+    fixture.input.changeSource(source)
+    fixture.input.setAmount("2")
+    let engine = try fixture.engine()
+    let sender = UUID()
+    let grams = CompanionFavoritesContext(
+      senderID: sender, revision: 1, codes: ["EUR", "USD"], metalUnit: .gram)
+    #expect(try engine.accept(grams))
+    #expect(fixture.input.source == source)
+    #expect(fixture.input.metalUnit == .gram)
+    #expect(fixture.input.decimal == 2 * MetalUnit.troyOunce.gramsPerUnit)
+    let kilograms = CompanionFavoritesContext(
+      senderID: sender, revision: 2, codes: grams.codes, metalUnit: .kilogram)
+    #expect(try engine.accept(kilograms))
+    #expect(fixture.input.source == source)
+    #expect(fixture.input.metalUnit == .kilogram)
+    #expect(fixture.input.decimal == 2 * MetalUnit.troyOunce.gramsPerUnit / 1000)
+  }
+
+  @Test(arguments: ["GBP", "BTC"])
+  func acceptedMetalUnitPreservesNonmetalWatchAmount(_ source: String) throws {
+    let fixture = SyncFixture()
+    fixture.input.changeSource(source)
+    fixture.input.setAmount("12.50")
+    let context = CompanionFavoritesContext(
+      senderID: UUID(), revision: 1, codes: ["EUR", "XAU"], metalUnit: .kilogram)
+    #expect(try fixture.engine().accept(context))
+    #expect(fixture.input.source == source)
+    #expect(fixture.input.amount == "12.50")
+    #expect(fixture.input.metalUnit == .kilogram)
+  }
+
+  @Test func metadataRetryDoesNotConvertMetalSourceTwice() throws {
+    let fixture = SyncFixture()
+    fixture.input.changeSource("XAU")
+    let engine = try fixture.engine()
+    let context = CompanionFavoritesContext(
+      senderID: UUID(), revision: 1, codes: ["EUR", "USD"], metalUnit: .gram)
+    fixture.failMetadata = true
+    #expect(throws: SyncFixture.Failure.metadata) { try engine.accept(context) }
+    #expect(fixture.input.decimal == MetalUnit.troyOunce.gramsPerUnit)
+    fixture.failMetadata = false
+    #expect(try engine.accept(context))
+    #expect(fixture.input.decimal == MetalUnit.troyOunce.gramsPerUnit)
+    #expect(try !engine.accept(context))
+  }
+
   @Test func phoneRevisionsTrackFavoritesAndSurviveRestart() throws {
     let fixture = SyncFixture()
     let engine = try fixture.engine()
@@ -67,14 +160,17 @@ struct CompanionSyncTests {
     let fixture = SyncFixture()
     let sender = UUID()
     let engine = try fixture.engine()
-    let newest = CompanionFavoritesContext(senderID: sender, revision: 3, codes: ["EUR", "CZK"])
+    let newest = CompanionFavoritesContext(
+      senderID: sender, revision: 3, codes: ["EUR", "CZK"], metalUnit: .gram)
     #expect(try engine.accept(newest))
     fixture.input.setAmount("100")
-    let older = CompanionFavoritesContext(senderID: sender, revision: 2, codes: ["EUR", "JPY"])
+    let older = CompanionFavoritesContext(
+      senderID: sender, revision: 2, codes: ["EUR", "JPY"], metalUnit: .kilogram)
     #expect(try !engine.accept(older))
     #expect(try !fixture.engine().accept(newest))
     #expect(fixture.input.amount == "100")
     #expect(fixture.input.manualDestinations == ["CZK"])
+    #expect(fixture.input.metalUnit == .gram)
     #expect(fixture.notifications == 1)
   }
 

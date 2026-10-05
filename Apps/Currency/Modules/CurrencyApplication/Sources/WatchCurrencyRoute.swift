@@ -7,7 +7,7 @@ public enum WatchCurrencyRoute: Equatable, Sendable {
   /// Opens the converter without replacing local input.
   case converter
   /// Opens the converter with an explicitly requested pair and optional amount.
-  case convert(source: String, quote: String, amount: String?)
+  case convert(source: String, quote: String, amount: String?, metalUnit: MetalUnit? = nil)
   /// Opens history and rate provenance without changing converter input.
   case details(source: String, quote: String)
 
@@ -31,18 +31,26 @@ public enum WatchCurrencyRoute: Equatable, Sendable {
       guard items.count == 2 else { return nil }
       self = .details(source: source, quote: quote)
     case "convert":
-      guard items.allSatisfy({ ["source", "quote", "amount"].contains($0.name) }) else {
+      guard items.allSatisfy({ ["source", "quote", "amount", "metalUnit"].contains($0.name) })
+      else {
         return nil
       }
       let amountItem = items.first { $0.name == "amount" }
       var amount: String?
       if let amountItem {
-        guard let text = amountItem.value, let value = AmountEditing.parseAmount(text) else {
+        guard let text = amountItem.value, let value = ExactAmount.parse(text) else {
           return nil
         }
-        amount = NSDecimalNumber(decimal: value).stringValue
+        amount = ExactAmount.string(value)
       }
-      self = .convert(source: source, quote: quote, amount: amount)
+      var metalUnit: MetalUnit?
+      if let item = items.first(where: { $0.name == "metalUnit" }) {
+        guard amount != nil, CurrencyCode(rawValue: source)?.isMetal == true,
+          let text = item.value, let unit = MetalUnit(rawValue: text)
+        else { return nil }
+        metalUnit = unit
+      }
+      self = .convert(source: source, quote: quote, amount: amount, metalUnit: metalUnit)
     default: return nil
     }
   }

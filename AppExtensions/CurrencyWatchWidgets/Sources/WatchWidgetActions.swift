@@ -35,7 +35,11 @@ struct WatchWidgetPresetIntent: AppIntent {
     try WidgetStore(directory: WatchWidgetAppGroup.directory())
       .updateWidgetInput(
         key: key, codes: codes, amount: initialAmount
-      ) { $0.preset(amount) }
+      ) { input in
+        input.setMetalUnit(
+          kind == WatchWidgetStyle.cash.kind ? .gram : WatchWidgetAppGroup.input().metalUnit)
+        input.preset(amount)
+      }
     WidgetCenter.shared.reloadTimelines(ofKind: kind)
     return .result()
   }
@@ -69,8 +73,11 @@ struct WatchWidgetSwapIntent: AppIntent {
       .updateWidgetInput(
         key: key, codes: codes, amount: initialAmount
       ) { input in
+        input.setMetalUnit(WatchWidgetAppGroup.input().metalUnit)
         let target = input.active == codes[0] ? codes[1] : codes[0]
-        if rates.convert(input.decimal, from: input.active, to: target) != nil {
+        if rates.convert(
+          input.decimal, from: input.active, to: target, metalUnit: input.metalUnit) != nil
+        {
           input.select(target, snapshot: rates)
         }
       }

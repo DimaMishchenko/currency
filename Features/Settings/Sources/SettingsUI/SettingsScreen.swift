@@ -22,6 +22,7 @@ struct SettingsScreen: View {
   var body: some View {
     List {
       appearanceControls
+      metalUnitControl
       languageControl
       Section {
         Button(action: manageLocation) {
@@ -69,6 +70,33 @@ struct SettingsScreen: View {
     .alert(.Settings.replayFailed, isPresented: $replayFailed) {
       Button(.Settings.retryReplay) { restartOnboarding() }
       Button(.Settings.close, role: .cancel) {}
+    }
+  }
+
+  private var metalUnitControl: some View {
+    Section {
+      Picker(
+        selection: Binding(
+          get: { model.preferences.metalUnit },
+          set: { model.setMetalUnit($0) }
+        )
+      ) {
+        ForEach(MetalUnit.allCases, id: \.self) { unit in
+          Text(unit.title).tag(unit)
+            .accessibilityIdentifier("settings.metalUnit.\(unit.rawValue)")
+        }
+      } label: {
+        Label(.Settings.metalUnit, systemImage: "scalemass")
+      }
+      .pickerStyle(.menu)
+      .accessibilityIdentifier("settings.metalUnit")
+      if model.issue == .preferenceSaveFailed {
+        Text(.Settings.preferenceSaveFailed).foregroundStyle(.secondary)
+      }
+    } header: {
+      Text(.Settings.preciousMetals)
+    } footer: {
+      Text(.Settings.metalUnitExplanation)
     }
   }
 
@@ -357,7 +385,7 @@ struct SettingsScreen: View {
     }
   }
 
-  private var acknowledgements: some View {
+  @ViewBuilder private var acknowledgements: some View {
     Section(.Settings.artwork) {
       sourceCredit(
         "Web3 Icons", description: .Settings.web3Credit,
@@ -373,6 +401,13 @@ struct SettingsScreen: View {
         licenseURL:
           "https://github.com/spothq/cryptocurrency-icons/blob/1a63530be6e374711a8554f31b17e4cb92c25fa5/LICENSE.md"
       )
+    }
+    Section(.Settings.testing) {
+      sourceCredit(
+        "e2e", description: .Settings.testingCredit,
+        website: "https://github.com/tester-army/e2e",
+        license: "Apache 2.0",
+        licenseURL: "https://github.com/tester-army/e2e/blob/main/LICENSE")
     }
   }
 }
@@ -405,4 +440,14 @@ private extension SettingsAccent {
 
 private extension SettingsAccent {
   var color: Color { AppAppearance.Accent(rawValue: rawValue)?.color ?? .primary }
+}
+
+private extension MetalUnit {
+  var title: LocalizedStringResource {
+    switch self {
+    case .troyOunce: .Settings.troyOunces
+    case .gram: .Settings.grams
+    case .kilogram: .Settings.kilograms
+    }
+  }
 }

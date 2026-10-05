@@ -40,7 +40,8 @@ private struct WatchRoot: View {
         if case .detailsRequested(let request) = output {
           detail = WatchDetail(
             input: .init(
-              code: request.code, reference: request.reference, snapshot: request.snapshot))
+              code: request.code, reference: request.reference, snapshot: request.snapshot,
+              metalUnit: model.input.metalUnit))
         }
       }
       .navigationDestination(item: $detail) { item in
@@ -70,13 +71,16 @@ private struct WatchRoot: View {
       detail = WatchDetail(
         input: .init(
           code: source, reference: quote, snapshot: composition.rates.loadRates(),
-          referencePolicy: .requestedPair))
-    case .convert(let source, let quote, let amount):
+          referencePolicy: .requestedPair, metalUnit: composition.conversion.input().metalUnit))
+    case .convert(let source, let quote, let amount, let metalUnit):
       do {
         _ = try composition.edit {
           $0.changeSource(source)
           $0.setDestinations([quote] + $0.manualDestinations.filter { $0 != quote })
-          if let amount { $0.setAmount(amount) }
+          if let amount, let value = ExactAmount.parse(amount) {
+            let unit = $0.metalUnit
+            $0.setConvertedAmount(metalUnit.map { $0.converted(value, to: unit) } ?? value)
+          }
         }
         detail = nil
         model.reloadSharedState()

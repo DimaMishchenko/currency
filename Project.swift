@@ -313,6 +313,7 @@ let project = Project(
               target: "ApplicationIntegrationTests",
               included: [
                 "Composition/AppComposition.swift",
+                "Composition/CurrencyE2EStartup.swift",
                 "Composition/LocationPermissionRouting.swift",
                 "Composition/SystemActionComposition.swift",
                 "SystemActions/ConversionIntents.swift",
@@ -331,6 +332,7 @@ let project = Project(
       ],
       entitlements: .file(path: "Apps/Currency/App/Configuration/Currency.entitlements"),
       dependencies: [
+        .target(name: "CoordinatedFiles"),
         .target(name: "Conversion"), .target(name: "CurrencyDetails"),
         .target(name: "CurrencyDetailsUI"), .target(name: "DesignSystem"),
         .target(name: "ExchangeRates"), .target(name: "ExchangeRatesUI"),
@@ -524,6 +526,7 @@ let project = Project(
       infoPlist: .default,
       buildableFolders: ["Apps/Currency/Tests/ApplicationIntegrationTests"],
       dependencies: [
+        .target(name: "CoordinatedFiles"),
         .target(name: "CurrencyDetailsUI"), .target(name: "CurrencySelectionUI"),
         .target(name: "ExchangeRates"), .target(name: "ExchangeRatesUI"),
         .target(name: "HomeUI"), .target(name: "LocationOnboardingUI"),
@@ -559,6 +562,7 @@ let project = Project(
         }))
   ],
   additionalFiles: [
+    "AGENTS.md", .folderReference(path: "Apps/Currency/Tests/E2E"),
     "README.md", "LICENSE", "Project.swift", "Tuist.swift", ".gitignore", ".mise.toml",
     ".swift-format", ".github/**/*.yml", ".github/**/*.md", "Documentation/**/*.md",
     "Documentation/**/*.png", "Scripts/**/*.sh", "Scripts/**/*.py",

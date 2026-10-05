@@ -9,6 +9,8 @@ public struct HomeWatchScreen: View {
   @Bindable private var model: HomeModel
   private let output: (HomeOutput) -> Void
   @State private var editingAmount = false
+  @State private var amountSource: String?
+  @State private var amountMetalUnit: MetalUnit?
   @State private var choosingSource = false
   @State private var addingCurrency = false
   @State private var refreshRequested = false
@@ -27,6 +29,8 @@ public struct HomeWatchScreen: View {
       Section {
         HStack(spacing: 8) {
           Button {
+            amountSource = model.input.source
+            amountMetalUnit = model.input.metalUnit
             editingAmount = true
           } label: {
             VStack(alignment: .leading, spacing: 0) {
@@ -36,7 +40,8 @@ public struct HomeWatchScreen: View {
                 .animation(reduceMotion ? nil : .snappy(duration: 0.25), value: model.input.amount)
                 .lineLimit(1).minimumScaleFactor(0.35)
               if CurrencyCatalog.metals.contains(model.input.source) {
-                Text(.Watch.troyOunce).font(.caption2).foregroundStyle(.secondary)
+                Text(verbatim: model.input.metalUnit.symbol).font(.caption2)
+                  .foregroundStyle(.secondary)
                   .lineLimit(1).minimumScaleFactor(0.5)
               }
             }
@@ -119,6 +124,20 @@ public struct HomeWatchScreen: View {
         }
       }
       Section {
+        if ([model.input.source] + model.input.manualDestinations)
+          .contains(where: CurrencyCatalog.metals.contains)
+        {
+          Picker(
+            selection: Binding(get: { model.input.metalUnit }, set: { _ = model.setMetalUnit($0) })
+          ) {
+            ForEach(MetalUnit.allCases, id: \.self) { unit in
+              Text(verbatim: unit.symbol).tag(unit)
+            }
+          } label: {
+            Label(.Watch.metalUnit, systemImage: "scalemass")
+          }
+          .accessibilityIdentifier("watch.home.metalUnit")
+        }
         Button(.Watch.addCurrency, systemImage: "plus") { addingCurrency = true }
           .accessibilityIdentifier("watch.home.add")
       } header: {
@@ -140,7 +159,9 @@ public struct HomeWatchScreen: View {
     .font(.system(.body, design: .rounded))
     .navigationTitle(Text(.Watch.converterTitle))
     .sheet(isPresented: $editingAmount) {
-      WatchAmountEntry(amount: model.input.amount, save: { model.commitAmount($0) })
+      WatchAmountEntry(
+        amount: model.input.amount,
+        save: { model.commitAmount($0, source: amountSource, metalUnit: amountMetalUnit) })
     }
     .sheet(isPresented: $choosingSource) {
       WatchCurrencyPicker(
@@ -182,21 +203,13 @@ public struct HomeWatchScreen: View {
   private func amountLabel(_ value: Decimal, code: String) -> String {
     let amount = formatted(value, code: code)
     if CurrencyCatalog.metals.contains(code) {
-      var resource = LocalizedStringResource.Watch.metalAmount(amount, code)
-      resource.locale = locale
-      return String(localized: resource)
+      return "\(amount) \(code) \(model.input.metalUnit.symbol)"
     }
     return amount
   }
 
   private func formatted(_ value: Decimal, code: String) -> String {
-    let digits = CurrencyPrecision.fractionDigits(code)
-    var minorUnit: Decimal = 1
-    for _ in 0..<digits { minorUnit /= 10 }
-    if value > 0 && value < minorUnit {
-      return value.formatted(.number.precision(.significantDigits(3...6)).locale(locale))
-    }
-    return value.formatted(.number.precision(.fractionLength(0...digits)).locale(locale))
+    CurrencyDisplay.format(value, code: code, locale: locale, metalUnit: model.input.metalUnit)
   }
 
   private func message(_ issue: HomeIssue) -> LocalizedStringResource {
@@ -220,7 +233,7 @@ private struct WatchAmountEntry: View {
 
   init(amount: String, save: @escaping (String) -> Bool) {
     var input = ConverterState()
-    input.setAmount(amount)
+    if let value = ExactAmount.parse(amount) { input.setConvertedAmount(value) }
     _draft = State(initialValue: input)
     self.save = save
   }

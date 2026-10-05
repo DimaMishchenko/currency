@@ -3,7 +3,7 @@ import TipKit
 
 @main
 struct CurrencyApp: App {
-  private let composition = AppComposition()
+  private let composition = AppComposition.launch()
   init() {
     try? Tips.configure()
     composition.startCompanionSync()

@@ -47,9 +47,14 @@ public struct ConversionRequest: Equatable, Sendable {
   public let source: String
   /// Ordered destinations including distinct fixed and Local identities.
   public let destinations: [ConversionDestination]
+  /// Unit applied to precious-metal amounts on both sides of the calculation.
+  public let metalUnit: MetalUnit
 
   /// Validates and normalizes an external calculation without mutating converter input.
-  public init(amount: String, source: String, destinations: [ConversionDestination]) throws {
+  public init(
+    amount: String, source: String, destinations: [ConversionDestination],
+    metalUnit: MetalUnit = .troyOunce
+  ) throws {
     guard let value = ExactAmount.parse(amount) else { throw ConversionError.invalidAmount }
     guard CurrencyCatalog.codes.contains(source) else { throw ConversionError.unsupportedCurrency }
     guard !destinations.isEmpty else { throw ConversionError.noDestinations }
@@ -57,11 +62,12 @@ public struct ConversionRequest: Equatable, Sendable {
       destinations.allSatisfy(\.isValid), Set(destinations.map(\.id)).count == destinations.count
     else { throw ConversionError.unsupportedCurrency }
     self.amount = ExactAmount.string(value); self.source = source; self.destinations = destinations
+    self.metalUnit = metalUnit
   }
 
   /// Validates a external request using the same rules as intent parameters.
   public func validated() throws -> Self {
-    try Self(amount: amount, source: source, destinations: destinations)
+    try Self(amount: amount, source: source, destinations: destinations, metalUnit: metalUnit)
   }
 }
 

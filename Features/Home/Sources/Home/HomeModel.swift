@@ -49,7 +49,8 @@ public final class HomeModel {
 
   /// Projects the current amount and editing policy for a fixed or dynamic selection.
   public func row(_ code: String, selectionID: String? = nil) -> HomeCurrencyRow {
-    let amount = snapshot.convert(input.decimal, from: input.source, to: code)
+    let amount = snapshot.convert(
+      input.decimal, from: input.source, to: code, metalUnit: input.metalUnit)
     return HomeCurrencyRow(
       amount: amount,
       isEditable: amount != nil && canEdit(code, selectionID: selectionID ?? code, in: input))
@@ -59,6 +60,7 @@ public final class HomeModel {
   public func reloadInput(preservingEditor: Bool = false) {
     let next = dependencies.readInput()
     if !preservingEditor || next.source != input.source || next.amount != input.amount
+      || next.metalUnit != input.metalUnit
       || (editor.map { !canEdit($0.active, selectionID: editingSelectionID, in: next) } ?? false)
     {
       editor = nil
@@ -72,7 +74,6 @@ public final class HomeModel {
     snapshot = dependencies.readRates()
     reloadInput(preservingEditor: true)
     reconcileEditor()
-    // A background rate or input notification must not hide a failed selection commit.
     if warning != .selectionSaveFailed { warning = dependencies.readRateIssue() }
   }
 
@@ -92,10 +93,11 @@ public final class HomeModel {
     if editor != nil { recordCompletedEdit() }
     var next = AmountEditor(codes: [input.source] + input.destinations)
     next.preset(input.decimal)
-    next.select(code, snapshot: snapshot)
+    next.select(code, snapshot: snapshot, metalUnit: input.metalUnit)
     var value = next.decimal
     var rounded = Decimal()
-    NSDecimalRound(&rounded, &value, CurrencyPrecision.fractionDigits(code), .plain)
+    NSDecimalRound(
+      &rounded, &value, CurrencyPrecision.fractionDigits(code, metalUnit: input.metalUnit), .plain)
     next.preset(rounded)
     editor = next
     editingSelectionID = id
@@ -189,7 +191,8 @@ public final class HomeModel {
   private func reconcileEditor() {
     guard let editor else { return }
     if !canEdit(editor.active, selectionID: editingSelectionID, in: input)
-      || snapshot.convert(editor.decimal, from: editor.active, to: input.source) == nil
+      || snapshot.convert(
+        editor.decimal, from: editor.active, to: input.source, metalUnit: input.metalUnit) == nil
     {
       self.editor = nil
       editingSelectionID = nil
@@ -207,7 +210,8 @@ public final class HomeModel {
     closedWithResults =
       changed
       && input.destinations.contains {
-        snapshot.convert(input.decimal, from: input.source, to: $0) != nil
+        snapshot.convert(input.decimal, from: input.source, to: $0, metalUnit: input.metalUnit)
+          != nil
       }
     editor = nil
     editStartingAmount = nil
@@ -231,8 +235,10 @@ public final class HomeModel {
     next.press(key)
     guard
       updateInput({
-        guard canEdit(next.active, selectionID: editingSelectionID, in: $0),
-          let value = snapshot.convert(next.decimal, from: next.active, to: $0.source)
+        guard $0.metalUnit == input.metalUnit,
+          canEdit(next.active, selectionID: editingSelectionID, in: $0),
+          let value = snapshot.convert(
+            next.decimal, from: next.active, to: $0.source, metalUnit: $0.metalUnit)
         else { throw EditingError.unavailableCurrency }
         if next.active == $0.source {
           $0.setAmount(next.amount)
@@ -248,15 +254,24 @@ public final class HomeModel {
   private enum EditingError: Error { case unavailableCurrency }
 
   /// Commits validated nonnegative decimal text as the source amount.
-  @discardableResult public func commitAmount(_ text: String) -> Bool {
-    guard let value = AmountEditing.parseAmount(text) else { return false }
-    return updateInput { $0.setAmount(NSDecimalNumber(decimal: value).stringValue) }
+  @discardableResult public func commitAmount(
+    _ text: String, source: String? = nil, metalUnit: MetalUnit? = nil
+  ) -> Bool {
+    guard let value = ExactAmount.parse(text) else { return false }
+    return updateInput {
+      guard source == nil || source == $0.source, metalUnit == nil || metalUnit == $0.metalUnit
+      else {
+        throw EditingError.unavailableCurrency
+      }
+      $0.setConvertedAmount(value)
+    }
   }
 
   /// Promotes a convertible destination while preserving its current converted value.
   @discardableResult public func useAsBase(_ code: String) -> Bool {
     updateInput {
-      guard snapshot.convert($0.decimal, from: $0.source, to: code) != nil else {
+      guard snapshot.convert($0.decimal, from: $0.source, to: code, metalUnit: $0.metalUnit) != nil
+      else {
         throw EditingError.unavailableCurrency
       }
       $0.useAsBase(code, snapshot: snapshot)
@@ -264,6 +279,14 @@ public final class HomeModel {
   }
 
   /// Commits a selection mutation and keeps the last valid state on failure.
+  @discardableResult public func setMetalUnit(_ unit: MetalUnit) -> Bool {
+    guard unit != input.metalUnit else { return true }
+    guard updateInput({ $0.setMetalUnit(unit) }) else { return false }
+    editor = nil
+    editingSelectionID = nil
+    return true
+  }
+
   @discardableResult
   private func updateInput(_ mutation: (inout ConverterState) throws -> Void) -> Bool {
     do {

@@ -26,8 +26,8 @@ struct WatchRateView: View {
       guard WidgetPresets.allows(entry.activeSource), WidgetPresets.allows(quote) else {
         return nil
       }
-      return WidgetPresets.convert(
-        amount, from: entry.activeSource, to: quote, snapshot: entry.snapshot)
+      return entry.snapshot.convert(
+        amount, from: entry.activeSource, to: quote, metalUnit: .gram)
     }
     return entry.value(to: quote)
   }
@@ -37,7 +37,9 @@ struct WatchRateView: View {
   }
   private var pair: String { entry.activeSource + " → " + quote }
   private var rule: (divide: Bool, factor: Decimal, error: Decimal)? {
-    guard let value = entry.snapshot.convert(1, from: entry.activeSource, to: quote),
+    guard
+      let value = entry.snapshot.convert(
+        1, from: entry.activeSource, to: quote, metalUnit: entry.input.metalUnit),
       entry.snapshot.hasValidFetchTimestamp(now: entry.date)
     else { return nil }
     return WidgetMath.rule(rate: value)
@@ -104,15 +106,10 @@ struct WatchRateView: View {
 
   private var conversionURL: URL {
     guard entry.style == .cash else { return entry.url() }
-    let sourceAmount =
-      WidgetPresets.metals.contains(entry.activeSource)
-      ? amount / WidgetPresets.gramsPerTroyOunce : amount
-    var rawAmount = sourceAmount
-    var roundedAmount = Decimal()
-    NSDecimalRound(&roundedAmount, &rawAmount, 12, .plain)
     return WatchWidgetRoute.url(
       source: entry.activeSource, quote: entry.activeQuote,
-      amount: NSDecimalNumber(decimal: roundedAmount).stringValue)
+      amount: NSDecimalNumber(decimal: amount).stringValue,
+      metalUnit: CurrencyCode(rawValue: entry.activeSource)?.isMetal == true ? .gram : nil)
   }
 
   private var amountText: String {
@@ -121,7 +118,7 @@ struct WatchRateView: View {
   }
   private func unit(for code: String) -> String {
     guard WidgetPresets.metals.contains(code) else { return "" }
-    return entry.style == .cash ? " g" : " " + String(localized: .WatchWidgets.troyOunce)
+    return " " + entry.input.metalUnit.symbol
   }
 
   private var rectangular: some View {
@@ -229,7 +226,7 @@ struct WatchRateView: View {
   }
 
   private func format(_ value: Decimal?, code: String) -> String {
-    WatchWidgetFormat.amount(value, code: code, locale: locale)
+    WatchWidgetFormat.amount(value, code: code, locale: locale, metalUnit: entry.input.metalUnit)
   }
 }
 
@@ -252,8 +249,9 @@ struct WatchBoardView: View {
           Spacer(minLength: 2)
           Text(
             verbatim: WatchWidgetFormat.amount(
-              entry.input.decimal, code: entry.activeSource, locale: locale)
-              + WatchWidgetFormat.unit(entry.activeSource))
+              entry.input.decimal, code: entry.activeSource, locale: locale,
+              metalUnit: entry.input.metalUnit)
+              + WatchWidgetFormat.unit(entry.activeSource, metalUnit: entry.input.metalUnit))
         }
         .font(.system(size: 11, weight: .bold)).monospacedDigit()
         .frame(height: 13)
@@ -265,8 +263,9 @@ struct WatchBoardView: View {
             Text(verbatim: code)
             Spacer(minLength: 2)
             Text(
-              verbatim: WatchWidgetFormat.amount(entry.value(to: code), code: code, locale: locale)
-                + WatchWidgetFormat.unit(code))
+              verbatim: WatchWidgetFormat.amount(
+                entry.value(to: code), code: code, locale: locale, metalUnit: entry.input.metalUnit)
+                + WatchWidgetFormat.unit(code, metalUnit: entry.input.metalUnit))
           }
           .font(.system(size: 11)).monospacedDigit().frame(height: 13)
         }
@@ -287,8 +286,11 @@ struct WatchBoardView: View {
   }
 
   private var sourceAmount: String {
-    WatchWidgetFormat.amount(entry.input.decimal, code: entry.activeSource, locale: locale)
-      + " " + entry.activeSource + WatchWidgetFormat.unit(entry.activeSource)
+    WatchWidgetFormat.amount(
+      entry.input.decimal, code: entry.activeSource, locale: locale,
+      metalUnit: entry.input.metalUnit)
+      + " " + entry.activeSource
+      + WatchWidgetFormat.unit(entry.activeSource, metalUnit: entry.input.metalUnit)
   }
 
   private var savedRateStatus: String {
@@ -323,8 +325,9 @@ struct WatchBoardView: View {
               }
               Text(
                 verbatim: WatchWidgetFormat.amount(
-                  entry.value(to: code), code: code, locale: locale)
-                  + WatchWidgetFormat.unit(code)
+                  entry.value(to: code), code: code, locale: locale,
+                  metalUnit: entry.input.metalUnit)
+                  + WatchWidgetFormat.unit(code, metalUnit: entry.input.metalUnit)
               )
               .font(.system(size: 10)).minimumScaleFactor(0.4)
             }
@@ -335,8 +338,10 @@ struct WatchBoardView: View {
           .accessibilityLabel(
             Text(
               verbatim: sourceAmount + " → "
-                + WatchWidgetFormat.amount(entry.value(to: code), code: code, locale: locale)
-                + " " + code + WatchWidgetFormat.unit(code))
+                + WatchWidgetFormat.amount(
+                  entry.value(to: code), code: code, locale: locale,
+                  metalUnit: entry.input.metalUnit)
+                + " " + code + WatchWidgetFormat.unit(code, metalUnit: entry.input.metalUnit))
           )
           .accessibilityHint(Text(verbatim: savedRateStatus))
         }
@@ -387,8 +392,10 @@ struct WatchHistoryView: View {
   private var pair: String { snapshot.pair.base + " → " + (snapshot.pair.quote ?? "") }
   private var latest: String {
     snapshot.latest.map {
-      WatchWidgetFormat.amount(Decimal($0.value), code: snapshot.pair.quote ?? "", locale: locale)
-        + WatchWidgetFormat.unit(snapshot.pair.quote ?? "")
+      WatchWidgetFormat.amount(
+        Decimal($0.value), code: snapshot.pair.quote ?? "", locale: locale,
+        metalUnit: snapshot.pair.metalUnit)
+        + WatchWidgetFormat.unit(snapshot.pair.quote ?? "", metalUnit: snapshot.pair.metalUnit)
     } ?? "—"
   }
   private var change: String {
@@ -503,12 +510,14 @@ struct WatchHistoryView: View {
 }
 
 enum WatchWidgetFormat {
-  static func unit(_ code: String) -> String {
-    WidgetPresets.metals.contains(code) ? " " + String(localized: .WatchWidgets.troyOunce) : ""
+  static func unit(_ code: String, metalUnit: MetalUnit) -> String {
+    CurrencyCode(rawValue: code)?.isMetal == true ? " " + metalUnit.symbol : ""
   }
-  static func amount(_ value: Decimal?, code: String, locale: Locale) -> String {
+  static func amount(
+    _ value: Decimal?, code: String, locale: Locale, metalUnit: MetalUnit
+  ) -> String {
     guard let value, !value.isNaN else { return "—" }
-    let digits = CurrencyPrecision.fractionDigits(code)
+    let digits = CurrencyPrecision.fractionDigits(code, metalUnit: metalUnit)
     let step = pow(Decimal(10), -digits)
     if value != 0 && abs(value) < step {
       return value.formatted(.number.locale(locale).precision(.significantDigits(3...6)))

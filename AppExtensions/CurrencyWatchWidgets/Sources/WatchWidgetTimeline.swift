@@ -5,11 +5,6 @@ import Foundation
 import WidgetKit
 import Widgets
 
-enum WatchWidgetStyle: String, Sendable {
-  case pocket, board, mental, cash, favorites
-  var kind: String { "CurrencyWatch-" + rawValue }
-}
-
 struct WatchWidgetEntry: TimelineEntry {
   let date: Date
   let style: WatchWidgetStyle
@@ -34,7 +29,8 @@ struct WatchWidgetEntry: TimelineEntry {
     guard
       let request = try? ConversionRequest(
         amount: input.amount, source: input.active,
-        destinations: destinations.map { ConversionDestination(code: $0) })
+        destinations: destinations.map { ConversionDestination(code: $0) },
+        metalUnit: input.metalUnit)
     else { return nil }
     return try? ConversionEvaluation(
       request: request, snapshot: snapshot, now: date, refreshFailed: refreshFailed,
@@ -48,14 +44,17 @@ struct WatchWidgetEntry: TimelineEntry {
 
   func url(quote: String? = nil, details: Bool = false) -> URL {
     WatchWidgetRoute.url(
-      source: activeSource, quote: quote ?? activeQuote, amount: input.amount, details: details)
+      source: activeSource, quote: quote ?? activeQuote,
+      amount: input.amount, details: details,
+      metalUnit: CurrencyCode(rawValue: activeSource)?.isMetal == true ? input.metalUnit : nil)
   }
+
 }
 
 enum WatchWidgetRoute {
   static func url(
     source: String? = nil, quote: String? = nil, amount: String? = nil,
-    details: Bool = false
+    details: Bool = false, metalUnit: MetalUnit? = nil
   ) -> URL {
     var components = URLComponents()
     components.scheme = "currency-watch"
@@ -68,7 +67,9 @@ enum WatchWidgetRoute {
       ? [
         source.map { URLQueryItem(name: "source", value: $0) },
         quote.map { URLQueryItem(name: "quote", value: $0) },
-        !details ? amount.map { URLQueryItem(name: "amount", value: $0) } : nil
+        !details ? amount.map { URLQueryItem(name: "amount", value: $0) } : nil,
+        !details && amount != nil
+          ? metalUnit.map { URLQueryItem(name: "metalUnit", value: $0.rawValue) } : nil
       ]
       .compactMap { $0 } : []
     if components.queryItems?.isEmpty == true { components.queryItems = nil }
@@ -103,9 +104,8 @@ enum WatchWidgetComposition {
       WidgetMath.parseAmount(amount).map { NSDecimalNumber(decimal: $0).stringValue } ?? "1"
     let key = ([style.kind, base] + selected + [initial])
       .joined(separator: "|")
-    let input = WidgetStore(directory: directory)
-      .widgetInput(
-        key: key, codes: [base] + selected, amount: initial)
+    let input = widgetInput(
+      style: style, key: key, codes: [base] + selected, amount: initial, app: app)
     return WatchWidgetEntry(
       date: now, style: style, source: base, targets: selected, input: input, key: key,
       initialAmount: initial, snapshot: RateStore(directory: directory).loadRates(),
@@ -118,6 +118,33 @@ enum WatchWidgetComposition {
     )
   }
 
+  static func widgetInput(
+    style: WatchWidgetStyle, key: String, codes: [String], amount: String,
+    app: ConverterState
+  ) -> WidgetInput {
+    let unit: MetalUnit = style == .cash ? .gram : app.metalUnit
+    let store = WidgetStore(directory: directory())
+    if let saved = try? store.updateWidgetInput(
+      key: key, codes: codes, amount: amount,
+      mutation: {
+        adoptMeasurement(unit, style: style, input: &$0)
+      })
+    {
+      return saved
+    }
+    var input = store.widgetInput(key: key, codes: codes, amount: amount)
+    adoptMeasurement(unit, style: style, input: &input)
+    return input
+  }
+
+  private static func adoptMeasurement(
+    _ unit: MetalUnit, style: WatchWidgetStyle, input: inout WidgetInput
+  ) {
+    let cashAmount = style == .cash && input.metalUnit != .gram ? input.decimal : nil
+    input.setMetalUnit(unit)
+    if let cashAmount { input.preset(cashAmount) }
+  }
+
   static func refresh(_ entry: WatchWidgetEntry) async -> WatchWidgetEntry {
     guard Date().timeIntervalSince(entry.input.editedAt ?? .distantPast) >= 60 else { return entry }
     var refreshed = entry
@@ -127,9 +154,9 @@ enum WatchWidgetComposition {
           using: RateService(), force: entry.snapshot.quotes.isEmpty, providerTimeout: .seconds(2))
       refreshed = WatchWidgetEntry(
         date: .now, style: entry.style, source: entry.source, targets: entry.targets,
-        input: WidgetStore(directory: directory())
-          .widgetInput(
-            key: entry.key, codes: entry.codes, amount: entry.initialAmount),
+        input: widgetInput(
+          style: entry.style, key: entry.key, codes: entry.codes, amount: entry.initialAmount,
+          app: input()),
         key: entry.key, initialAmount: entry.initialAmount, snapshot: result.snapshot,
         warning: result.warning, configurationIsValid: entry.configurationIsValid)
     } catch { refreshed.refreshFailed = true }

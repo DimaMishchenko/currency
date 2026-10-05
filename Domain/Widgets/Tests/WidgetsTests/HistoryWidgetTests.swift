@@ -20,6 +20,25 @@ import Testing
             }, source: .init(provider: .frankfurter), fetchedAt: now), issue: issue))
   }
 
+  @Test func metalHistoryScalesRateToSavedMassUnitWithoutChangingMovement() throws {
+    var app = ConverterState()
+    app.setMetalUnit(.gram)
+    let pair = HistoryWidgetPair(app: app, base: "XAU", quote: "EUR")
+    let provider = HistorySeries(
+      points: [
+        HistoryPoint(date: now.addingTimeInterval(-86_400), value: 2000),
+        HistoryPoint(date: now, value: 2200)
+      ], source: .init(provider: .custom("Metals")), fetchedAt: now)
+    let shown = HistoryWidgetSnapshot(
+      pair: pair, range: .month, result: .init(series: provider, issue: nil))
+    let latest = try #require(shown.latest)
+    let gramsPerOunce = NSDecimalNumber(decimal: MetalUnit.troyOunce.gramsPerUnit).doubleValue
+    #expect(pair.metalUnit == .gram)
+    #expect(abs(latest.value - 2200 / gramsPerOunce) < 0.000000001)
+    #expect(shown.change == 0.1)
+    #expect(shown.series?.source == provider.source)
+  }
+
   @Test func missingAndUnsupportedPairsAreNotSilentlySubstituted() {
     var app = ConverterState()
     app.setDestinations([])

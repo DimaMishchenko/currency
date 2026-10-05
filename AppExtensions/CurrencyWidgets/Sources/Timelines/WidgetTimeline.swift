@@ -23,11 +23,9 @@ struct SuiteTimeline<Configuration: SuiteConfiguration>: AppIntentTimelineProvid
     await loadTimeline(configuration)
   }
 
-  /// The actual provider path, also exercised without constructing a WidgetKit context.
   func loadTimeline(_ configuration: Configuration) async -> Timeline<SuiteEntry> {
     let current = entry(configuration)
     if dependencies.now().timeIntervalSince(current.input.editedAt ?? .distantPast) < 60 {
-      // A tap never waits for network refresh or a second read of cached input.
       return timeline(starting: current)
     }
     if current.spec.usesLocation { await dependencies.refreshLocalCurrency() }
@@ -64,6 +62,9 @@ struct SuiteTimeline<Configuration: SuiteConfiguration>: AppIntentTimelineProvid
     #endif
     var input = dependencies.widgetInput(spec.key, spec.codes, spec.amount)
     let rates = dependencies.rates()
+    if ["CurrencyConverter", "CurrencyBoard", "CurrencyMentalMath"].contains(spec.kind) {
+      input.setMetalUnit(app.metalUnit)
+    }
     if spec.synchronized { input.synchronize(with: app, snapshot: rates) }
     return SuiteEntry(date: dependencies.now(), spec: spec, input: input, snapshot: rates)
   }

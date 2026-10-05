@@ -4,6 +4,11 @@ import ExchangeRates
 import Foundation
 import Widgets
 
+enum WatchWidgetStyle: String, Sendable {
+  case pocket, board, mental, cash, favorites
+  var kind: String { "CurrencyWatch-" + rawValue }
+}
+
 struct WatchCurrency: AppEntity {
   static let typeDisplayRepresentation = TypeDisplayRepresentation(
     name: LocalizedStringResource("currency", defaultValue: "Currency", table: "WatchWidgets"))

@@ -4,9 +4,11 @@ import LocalCurrency
 
 /// The persisted converter input shared by the app and widgets.
 public struct ConverterState: Codable, Sendable, Equatable {
-  /// The user's ordered destination currencies.
   private var savedTargets: [String]? = nil
   private var followsLocalCurrency: Bool? = nil
+  private var savedMetalUnit: MetalUnit? = nil
+  /// Shared metal measurement preference, defaulting to the provider's troy-ounce unit.
+  public var metalUnit: MetalUnit { savedMetalUnit ?? .troyOunce }
   /// Whether the converter retains a dynamic Local selection.
   public var usesLocalCurrency: Bool { followsLocalCurrency == true }
   /// The permitted observation, resolved when the store loads input; never persisted as a selection.
@@ -22,7 +24,7 @@ public struct ConverterState: Codable, Sendable, Equatable {
   /// The primary destination currency code.
   public private(set) var primaryDestination = "USD"
   private enum CodingKeys: String, CodingKey {
-    case savedTargets, editedAt, amount, followsLocalCurrency
+    case savedTargets, editedAt, amount, followsLocalCurrency, savedMetalUnit
     case source = "from"
     case primaryDestination = "to"
   }
@@ -32,6 +34,18 @@ public struct ConverterState: Codable, Sendable, Equatable {
   /// The source amount parsed as a decimal value.
   public var decimal: Decimal {
     Decimal(string: amount, locale: Locale(identifier: "en_US_POSIX")) ?? 0
+  }
+
+  /// Changes metal units while preserving the physical quantity of a metal source.
+  public mutating func setMetalUnit(_ unit: MetalUnit) {
+    guard unit != metalUnit else { return }
+    if CurrencyCode(rawValue: source)?.isMetal == true {
+      let converted = metalUnit.converted(decimal, to: unit)
+      guard !converted.isNaN else { return }
+      amount = NSDecimalNumber(decimal: converted).stringValue
+    }
+    savedMetalUnit = unit
+    editedAt = .now
   }
 
   /// Updates the shared value without changing the app's currency selection.
@@ -53,7 +67,10 @@ public struct ConverterState: Codable, Sendable, Equatable {
     guard !value.isNaN, value >= 0 else { return }
     var value = value
     var rounded = Decimal()
-    NSDecimalRound(&rounded, &value, 2, .plain)
+    NSDecimalRound(
+      &rounded, &value,
+      CurrencyCode(rawValue: source)?.isMetal == true
+        ? CurrencyPrecision.fractionDigits(source, metalUnit: metalUnit) : 2, .plain)
     amount = NSDecimalNumber(decimal: rounded).stringValue
     editedAt = .now
   }
@@ -150,11 +167,12 @@ extension ConverterState {
   /// Promotes a destination to the source while preserving its converted value.
   public mutating func useAsBase(_ code: String, snapshot: RateSnapshot) {
     guard code != source, CurrencyCatalog.codes.contains(code),
-      let converted = snapshot.convert(decimal, from: source, to: code)
+      let converted = snapshot.convert(decimal, from: source, to: code, metalUnit: metalUnit)
     else { return }
     var value = converted
     var rounded = Decimal()
-    NSDecimalRound(&rounded, &value, CurrencyPrecision.fractionDigits(code), .plain)
+    NSDecimalRound(
+      &rounded, &value, CurrencyPrecision.fractionDigits(code, metalUnit: metalUnit), .plain)
     let oldSource = source
     var updated = manualDestinations.map { $0 == code ? oldSource : $0 }
     if usesLocalCurrency && localCurrencyCode == code && !manualDestinations.contains(code) {

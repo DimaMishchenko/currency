@@ -15,6 +15,50 @@ private struct SlowFeedbackProvider: RateProvider {
 
 @MainActor
 struct HomeEditingTests {
+  @Test func metalRowsAndEditingUseTheSavedMeasurement() throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = HomeTestStore(directory: directory)
+    try store.updateInput {
+      $0.setDestinations(["XAU"])
+      $0.setMetalUnit(.gram)
+    }
+    let snapshot = RateSnapshot(quotes: [
+      "EUR": ExchangeRate(1, published: "2026-10-05", source: .init(provider: .custom("test"))),
+      "XAU": ExchangeRate(
+        Decimal(string: "0.01")!, published: "2026-10-05", source: .init(provider: .custom("test")))
+    ])
+    let model = makeHomeModel(store: store, service: RateService(), readRates: { snapshot })
+    #expect(model.row("XAU").amount == Decimal(string: "0.311034768"))
+    model.beginEditing("XAU")
+    #expect(model.editingText == "0.31103477")
+    #expect(model.press("2"))
+    #expect(model.input.decimal == snapshot.convert(2, from: "XAU", to: "EUR", metalUnit: .gram))
+    #expect(model.setMetalUnit(.kilogram))
+    #expect(model.editor == nil)
+    #expect(model.input.metalUnit == .kilogram)
+  }
+
+  @Test func watchDraftCannotOverwriteAChangedMetalMeasurement() throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = HomeTestStore(directory: directory)
+    try store.updateInput {
+      $0.changeSource("XAU")
+      $0.setMetalUnit(.gram)
+      $0.setAmount("100")
+    }
+    let model = makeHomeModel(store: store, service: RateService())
+    try store.updateInput { $0.setMetalUnit(.kilogram) }
+    #expect(!model.commitAmount("100", source: "XAU", metalUnit: .gram))
+    #expect(store.input().decimal == Decimal(string: "0.1"))
+    #expect(model.input.metalUnit == .kilogram)
+    #expect(model.setMetalUnit(.troyOunce))
+    let exact = model.input.amount
+    #expect(model.commitAmount(exact, source: "XAU", metalUnit: .troyOunce))
+    #expect(store.input().amount == exact)
+  }
+
   @Test func rowEligibilityTracksResolvedIdentityAndMissingRates() throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }

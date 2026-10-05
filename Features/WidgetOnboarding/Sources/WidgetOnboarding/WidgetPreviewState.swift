@@ -26,18 +26,22 @@ public struct WidgetPreviewState {
   /// Creates isolated demonstration input with supplied or explicitly labeled sample rates.
   public init(
     kind: WidgetShowcaseKind, snapshot: RateSnapshot = Self.rates,
-    codes: [String]? = nil, amount: String? = nil
+    codes: [String]? = nil, amount: String? = nil, metalUnit: MetalUnit = .troyOunce
   ) {
     self.snapshot = snapshot
     input = WidgetInput(
-      codes: codes ?? kind.codes, amount: amount ?? (kind == .cash ? "200" : "100"))
+      codes: codes ?? kind.codes, amount: amount ?? (kind == .cash ? "200" : "100"),
+      metalUnit: metalUnit)
   }
   /// External coverage changes do not replay a user's temporary keypad or tile interaction.
-  public mutating func update(snapshot: RateSnapshot, codes: [String]?, amount: String?) {
+  public mutating func update(
+    snapshot: RateSnapshot, codes: [String]?, amount: String?, metalUnit: MetalUnit = .troyOunce
+  ) {
+    input.setMetalUnit(metalUnit)
     self.snapshot = snapshot
     if let codes { input.reconcile(codes: codes) }
     if input.editedAt == nil, let amount, input.amount != amount {
-      input = WidgetInput(codes: input.codes, amount: amount)
+      input = WidgetInput(codes: input.codes, amount: amount, metalUnit: metalUnit)
     }
   }
 

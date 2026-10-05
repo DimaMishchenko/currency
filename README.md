@@ -31,3 +31,7 @@ Open the `Currency` scheme and choose an iOS 26+ simulator. No Tuist account is 
 `Apps/` contains app executables and their internal modules, `AppExtensions/` contains extensions, `Features/` owns user capabilities, `Domain/` owns reusable business logic, and `Foundation/` holds DesignSystem and CoordinatedFiles.
 
 [Development guide](Documentation/Development.md) · [Architecture](Documentation/Architecture.md) · [Decisions](Documentation/Decisions.md) · [Third-party assets](Documentation/ThirdPartyAssets.md)
+
+## Acknowledgements
+
+[e2e](https://github.com/tester-army/e2e) powers the real-app end-to-end test suite.

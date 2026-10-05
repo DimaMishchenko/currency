@@ -19,16 +19,19 @@ public struct CurrencyDetailsInput: Sendable {
   public let referencePolicy: ReferencePolicy
   /// The current rate snapshot supplied by the caller.
   public let snapshot: RateSnapshot
+  /// Measurement used to present metal rates and history for this flow.
+  public let metalUnit: MetalUnit
 
   /// Creates the immutable context of a details flow.
   public init(
     code: String, reference: String, snapshot: RateSnapshot,
-    referencePolicy: ReferencePolicy = .automatic
+    referencePolicy: ReferencePolicy = .automatic, metalUnit: MetalUnit = .troyOunce
   ) {
     self.code = code
     self.reference = reference
     self.snapshot = snapshot
     self.referencePolicy = referencePolicy
+    self.metalUnit = metalUnit
   }
 }
 
@@ -117,18 +120,17 @@ public final class CurrencyDetailsModel {
       if requestID == identity { phase = .idle }
       return
     }
-    if request.inverted, let received = result.series {
-      let points = received.points.map { HistoryPoint(date: $0.date, value: 1 / $0.value) }
-      guard points.allSatisfy({ $0.value.isFinite && $0.value > 0 }) else {
-        issue = .unavailable
-        phase = .loaded
-        return
+    series = result.series.flatMap { received in
+      let factor = NSDecimalNumber(decimal: input.metalUnit.rateFactor(from: input.code, to: quote))
+        .doubleValue
+      let points = received.points.map {
+        HistoryPoint(date: $0.date, value: (request.inverted ? 1 / $0.value : $0.value) * factor)
       }
-      series = HistorySeries(points: points, source: received.source, fetchedAt: received.fetchedAt)
-    } else {
-      series = result.series
+      guard points.allSatisfy({ $0.value.isFinite && $0.value > 0 }) else { return nil }
+      return HistorySeries(points: points, source: received.source, fetchedAt: received.fetchedAt)
+
     }
-    issue = result.issue
+    issue = result.series != nil && series == nil ? .unavailable : result.issue
     phase = .loaded
   }
 
