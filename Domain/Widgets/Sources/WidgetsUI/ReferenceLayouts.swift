@@ -121,10 +121,12 @@ public struct AnchorView: View {
       if mental { Spacer(minLength: 0) }
       if target == WidgetSelection.localID {
         LocalCurrencySetup(status: entry.spec.locationStatus)
-      } else if let rate = entry.snapshot.convert(1, from: base, to: target), rate > 0 {
+      } else if let rate = entry.snapshot.convert(
+        1, from: base, to: target, metalUnit: mental ? entry.input.metalUnit : .gram), rate > 0
+      {
         if mental, let rule = WidgetMath.rule(rate: rate) {
           HStack(spacing: AppStyle.Space.xs) {
-            WidgetCurrencyIcon(code: base, size: 20); Text(base)
+            WidgetCurrencyIcon(code: base, size: 20); Text(referenceLabel(base))
           }
           .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
           Text(rule.divide ? .WidgetPresentation.divideBy : .WidgetPresentation.multiplyBy)
@@ -134,7 +136,7 @@ public struct AnchorView: View {
             .font(AppStyle.font(.largeTitle)).lineLimit(1).minimumScaleFactor(0.4)
           HStack(spacing: AppStyle.Space.xs) {
             WidgetCurrencyIcon(code: target, size: 20, isLocal: entry.spec.usesLocation)
-            Text("≈ \(target)")
+            Text("≈ \(referenceLabel(target))")
           }
           .foregroundStyle(.secondary)
         } else if let anchor = WidgetMath.anchor(rate: rate) {
@@ -158,11 +160,17 @@ public struct AnchorView: View {
     .modifier(WidgetSurface())
   }
 
+  private func referenceLabel(_ code: String) -> String {
+    code
+      + (WidgetPresets.metals.contains(code)
+        ? " · " + (mental ? entry.input.metalUnit.symbol : "g") : "")
+  }
+
   private func pocketRow(code: String, isLocal: Bool = false, amount: String) -> some View {
     VStack(alignment: .leading, spacing: 0) {
       HStack(spacing: AppStyle.Space.xs) {
         WidgetCurrencyIcon(code: code, size: 16, isLocal: isLocal).frame(width: 20, height: 20)
-        Text(code).font(AppStyle.font(.caption2)).foregroundStyle(.secondary)
+        Text(referenceLabel(code)).font(AppStyle.font(.caption2)).foregroundStyle(.secondary)
       }
       Text(amount).font(AppStyle.font(.title)).monospacedDigit()
         .frame(maxWidth: .infinity, alignment: .trailing)

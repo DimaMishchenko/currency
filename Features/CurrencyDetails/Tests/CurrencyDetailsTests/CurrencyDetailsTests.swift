@@ -16,6 +16,23 @@ private final class PendingHistory {
 
 @Suite @MainActor
 struct CurrencyDetailsTests {
+  @Test(arguments: [
+    ("XAU", "USD", 3110.34768, 100.0), ("USD", "XAU", 0.01, 0.311034768)
+  ])
+  func historyDisplaysSavedMetalUnitsWithoutChangingProviderValues(
+    code: String, reference: String, canonicalValue: Double, expected: Double
+  ) async {
+    let canonical = HistorySeries(
+      points: [HistoryPoint(date: .now, value: canonicalValue)],
+      source: .init(provider: .custom("test")), fetchedAt: .now)
+    let model = CurrencyDetailsModel(
+      input: .init(code: code, reference: reference, snapshot: RateSnapshot(), metalUnit: .gram),
+      dependencies: .init { _, _, _ in HistoryResult(series: canonical, issue: nil) })
+    await model.load()
+    #expect(abs((model.series?.points.first?.value ?? 0) - expected) < 0.0000001)
+    #expect(canonical.points.first?.value == canonicalValue)
+  }
+
   @Test func quotePolicyPreservesCryptoHistoryAndDistinctFiatReferences() {
     for (code, reference, quote) in [
       ("BTC", "CZK", "USD"), ("EUR", "EUR", "USD"), ("USD", "USD", "EUR"),

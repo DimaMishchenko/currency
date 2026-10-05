@@ -39,11 +39,11 @@ public struct ConversionAction: Sendable {
     amount: String, source: String, destination: String? = nil
   ) throws -> ConversionRequest {
     let now = dependencies.now()
+    let input = dependencies.readInput()
     let ids: [String]
     if let destination {
       ids = [destination]
     } else {
-      let input = dependencies.readInput()
       ids = input.manualDestinations + (input.usesLocalCurrency ? [CurrencySelection.localID] : [])
     }
     let (location, status) =
@@ -53,7 +53,8 @@ public struct ConversionAction: Sendable {
         ? ConversionDestination(local: location, status: status, now: now)
         : ConversionDestination(code: id)
     }
-    return try ConversionRequest(amount: amount, source: source, destinations: destinations)
+    return try ConversionRequest(
+      amount: amount, source: source, destinations: destinations, metalUnit: input.metalUnit)
   }
 
   /// Refreshes only when due under the existing attempt throttle; cache errors remain disclosed.

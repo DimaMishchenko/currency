@@ -29,8 +29,8 @@ export const test = base.extend<{ calculator: Locator }>({
   },
 });
 
-export async function tapCalculatorControl(calculator: Locator, control: 'EUR' | 'Clear' | '4' | '2') {
-  const positions = { EUR: [0.26, 0.27], Clear: [0.89, 0.36], '4': [0.54, 0.36], '2': [0.66, 0.53] } as const;
+export async function tapCalculatorControl(calculator: Locator, control: 'EUR' | 'EUR-three-currencies' | 'Clear' | '4' | '2') {
+  const positions = { EUR: [0.26, 0.27], 'EUR-three-currencies': [0.15, 0.27], Clear: [0.89, 0.36], '4': [0.54, 0.36], '2': [0.66, 0.53] } as const;
   const box = await calculator.boundingBox();
   if (!box || box.width / box.height < 1.7 || box.width / box.height > 2) {
     throw new Error('Widget taps require the verified medium Calculator layout.');

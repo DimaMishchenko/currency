@@ -174,13 +174,15 @@ final class AppComposition {
   func settings(scene: CurrencyScene) -> SettingsDependencies {
     SettingsDependencies(
       readState: { [self] in settingsState }, changes: { [self] in changes() },
-      readPreferences: { [appearance] in
+      readPreferences: { [self] in
         .init(
           theme: SettingsTheme(rawValue: appearance.theme.rawValue) ?? .system,
-          accent: SettingsAccent(rawValue: appearance.accent.rawValue) ?? .primary)
+          accent: SettingsAccent(rawValue: appearance.accent.rawValue) ?? .primary,
+          metalUnit: conversion.input().metalUnit)
       },
       setTheme: { [appearance] in appearance.theme = .init(rawValue: $0.rawValue) ?? .system },
       setAccent: { [appearance] in appearance.accent = .init(rawValue: $0.rawValue) ?? .primary },
+      setMetalUnit: { [self] unit in _ = try edit { $0.setMetalUnit(unit) } },
       refresh: { [self] in
         _ = try await refresh(force: true); return settingsState
       },

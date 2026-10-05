@@ -8,6 +8,7 @@ struct ConversionResultEntity: TransientAppEntity {
   static let typeDisplayRepresentation: TypeDisplayRepresentation = "Conversion result"
   let id: UUID
   @Property(title: "Converted amount") var convertedAmount: String?
+  @Property(title: "Metal measurement unit") var metalMeasurementUnit: String?
   @Property(title: "Currency") var currency: String?
   @Property(title: "Monetary amount") var monetaryAmount: IntentCurrencyAmount?
   @Property(title: "Result") var resultText: String
@@ -26,6 +27,9 @@ struct ConversionResultEntity: TransientAppEntity {
     id = UUID()
     convertedAmount = result.amount
     currency = result.destination.code
+    metalMeasurementUnit = currency.flatMap {
+      CurrencyCode(rawValue: $0)?.isMetal == true ? evaluation.request.metalUnit.symbol : nil
+    }
     resultText = ConversionPresentation.readable(result, request: evaluation.request, style: style)
     status = ConversionPresentation.status(evaluation, result: result)
     monetaryAmount = nil
@@ -56,7 +60,9 @@ enum ConversionPresentation {
         ? String(localized: "Local currency")
         : String(localized: "\(result.destination.code ?? ""): unavailable")
     }
-    let step = Decimal(sign: .plus, exponent: -CurrencyDisplay.fractionDigits(code), significand: 1)
+    let step = Decimal(
+      sign: .plus, exponent: -CurrencyDisplay.fractionDigits(code, metalUnit: request.metalUnit),
+      significand: 1)
     let formatted: String
     if style == .rate && value > 0 && value < step {
       let formatter = NumberFormatter()
@@ -64,13 +70,15 @@ enum ConversionPresentation {
       formatter.usesSignificantDigits = true; formatter.maximumSignificantDigits = 3
       formatted = formatter.string(from: NSDecimalNumber(decimal: value)) ?? text
     } else if value > 0 && value < step {
-      formatted = String(localized: "Less than \(CurrencyDisplay.format(step, code: code))")
+      formatted = String(
+        localized:
+          "Less than \(CurrencyDisplay.format(step, code: code, metalUnit: request.metalUnit))")
     } else {
-      formatted = CurrencyDisplay.format(value, code: code)
+      formatted = CurrencyDisplay.format(value, code: code, metalUnit: request.metalUnit)
     }
     let label = includesIcon ? "\(CurrencyDisplay.flag(code)) \(code)" : CurrencyDisplay.name(code)
     return CurrencyCode(rawValue: code)?.isMetal == true
-      ? String(localized: "\(formatted) \(label) troy oz")
+      ? String(localized: "\(formatted) \(label) \(request.metalUnit.symbol)")
       : String(localized: "\(formatted) \(label)")
   }
   static func readable(
@@ -78,7 +86,9 @@ enum ConversionPresentation {
   ) -> String {
     if result.amount == nil { return row(result, request: request, style: style) }
     let input = CurrencyDisplay.inputAmount(request.amount)
-    let source = "\(CurrencyDisplay.flag(request.source)) \(request.source)"
+    let source =
+      "\(CurrencyDisplay.flag(request.source)) \(request.source)"
+      + metalSuffix(request.source, unit: request.metalUnit)
     let output = row(result, request: request, style: style)
     let text =
       result.destination.code == request.source
@@ -142,7 +152,9 @@ enum ConversionPresentation {
         : String(localized: "Exchange rates are unavailable. Open Currency to update them.")
     }
     let input = CurrencyDisplay.inputAmount(evaluation.request.amount)
-    let source = CurrencyDisplay.name(evaluation.request.source)
+    let source =
+      CurrencyDisplay.name(evaluation.request.source)
+      + metalSuffix(evaluation.request.source, unit: evaluation.request.metalUnit)
     let rows = available.prefix(3)
       .map {
         row($0, request: evaluation.request, style: style, includesIcon: false)
@@ -168,6 +180,10 @@ enum ConversionPresentation {
     if !message.isEmpty { text += " " + message + "." }
     return text
   }
+  private static func metalSuffix(_ code: String, unit: MetalUnit) -> String {
+    CurrencyCode(rawValue: code)?.isMetal == true ? " " + unit.symbol : ""
+  }
+
   static func dialog(_ evaluation: ConversionEvaluation, style: Style = .amount) -> IntentDialog {
     let speech = speech(evaluation, style: style)
     let rows = evaluation.results.prefix(3)

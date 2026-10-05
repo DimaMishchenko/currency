@@ -79,11 +79,21 @@ public struct RateSnapshot: Codable, Sendable {
   /// Converts an amount using the ratio of two EUR-normalized quotes.
   /// - Returns: The unrounded amount, or `nil` for missing/invalid rates or decimal overflow.
   ///   A same-currency conversion requires no quote. Rounding belongs to the consumer.
-  public func convert(_ amount: Decimal, from: String, to: String) -> Decimal? {
+  public func convert(
+    _ amount: Decimal, from: String, to: String, metalUnit: MetalUnit = .troyOunce
+  ) -> Decimal? {
     guard !amount.isNaN else { return nil }
     if from == to { return amount }
     guard let a = quotes[from]?.value, let b = quotes[to]?.value, a > 0, b > 0 else { return nil }
-    let result = amount / a * b
+    let sourceIsMetal = CurrencyCode(rawValue: from)?.isMetal == true
+    let targetIsMetal = CurrencyCode(rawValue: to)?.isMetal == true
+    let sourceAmount =
+      sourceIsMetal && !targetIsMetal
+      ? metalUnit.converted(amount, to: .troyOunce) : amount
+    let quotedResult = sourceAmount / a * b
+    let result =
+      targetIsMetal && !sourceIsMetal
+      ? MetalUnit.troyOunce.converted(quotedResult, to: metalUnit) : quotedResult
     return result.isNaN ? nil : result
   }
 }

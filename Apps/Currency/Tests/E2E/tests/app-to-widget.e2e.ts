@@ -1,4 +1,4 @@
-import { unloadWidgetHelper } from '../simulator-widgets.js';
+import { unloadWidgetHelper, revealWidget, widgetSetupMethod } from '../simulator-widgets.js';
 import { expect } from 'e2e';
 import { test } from '../widget-fixtures.js';
 
@@ -19,6 +19,7 @@ test('app amount and currency additions update the Home Screen calculator', { ta
 
   await device.home();
   await device.openApp('com.apple.springboard');
+  if (widgetSetupMethod() === 'private') await revealWidget('Currency Calculator', 'Medium');
   await expect(calculator).toBeVisible();
   await expect(calculator.getByRole('button', /^Swiss Franc, CHF/i)).toHaveValue('21');
   await agent.assert('The Currency widget shows EUR with amount 42, USD with amount 84 and CHF with amount 21.', { vision: 'only' });

@@ -10,12 +10,17 @@ public struct CurrencyDetailsInput: Sendable {
   public let reference: String
   /// The current rate snapshot supplied by the caller.
   public let snapshot: RateSnapshot
+  /// Measurement used to present metal rates and history for this flow.
+  public let metalUnit: MetalUnit
 
   /// Creates the immutable context of a details flow.
-  public init(code: String, reference: String, snapshot: RateSnapshot) {
+  public init(
+    code: String, reference: String, snapshot: RateSnapshot, metalUnit: MetalUnit = .troyOunce
+  ) {
     self.code = code
     self.reference = reference
     self.snapshot = snapshot
+    self.metalUnit = metalUnit
   }
 }
 
@@ -94,7 +99,13 @@ public final class CurrencyDetailsModel {
       if requestID == identity { phase = .idle }
       return
     }
-    series = result.series
+    series = result.series.map { series in
+      let factor = NSDecimalNumber(decimal: input.metalUnit.rateFactor(from: input.code, to: quote))
+        .doubleValue
+      return HistorySeries(
+        points: series.points.map { HistoryPoint(date: $0.date, value: $0.value * factor) },
+        source: series.source, fetchedAt: series.fetchedAt)
+    }
     issue = result.issue
     phase = .loaded
   }

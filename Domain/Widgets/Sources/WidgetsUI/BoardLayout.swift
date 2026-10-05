@@ -1,5 +1,6 @@
 import Conversion
 import DesignSystem
+import ExchangeRates
 import ExchangeRatesUI
 import LocalCurrency
 import SwiftUI
@@ -46,7 +47,9 @@ public struct BoardLayout: View {
               row(
                 code: code,
                 amount: CurrencyDisplay.format(
-                  entry.snapshot.convert(amount, from: base, to: code), code: code, locale: locale),
+                  entry.snapshot.convert(
+                    amount, from: base, to: code, metalUnit: entry.input.metalUnit), code: code,
+                  locale: locale, metalUnit: entry.input.metalUnit),
                 primary: selection == base, local: WidgetSelection.isLocal(selection))
             }
           }
@@ -78,7 +81,12 @@ public struct BoardLayout: View {
     HStack(spacing: AppStyle.Space.xs) {
       WidgetCurrencyIcon(code: code, size: 14, isLocal: local)
         .frame(width: 20, height: 20)
-      Text(code).font(AppStyle.font(.caption2)).bold(primary)
+      Text(
+        code
+          + (CurrencyCode(rawValue: code)?.isMetal == true
+            ? " · " + entry.input.metalUnit.symbol : "")
+      )
+      .font(AppStyle.font(.caption2)).bold(primary)
       Spacer(minLength: 0)
       Text(amount)
         .font(AppStyle.font(.subheadline)).bold(primary).monospacedDigit()

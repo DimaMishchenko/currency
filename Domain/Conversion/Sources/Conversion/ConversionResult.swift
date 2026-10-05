@@ -104,7 +104,9 @@ public struct ConversionEvaluation: Sendable {
         let a = sourceQuote?.value, let b = targetQuote?.value,
         !a.isNaN, !b.isNaN, a > 0, b > 0
       else { return result(.missingRates) }
-      guard let converted = snapshot.convert(input, from: request.source, to: code),
+      guard
+        let converted = snapshot.convert(
+          input, from: request.source, to: code, metalUnit: request.metalUnit),
         input == 0 || converted > 0
       else { return result(.overflow) }
       return result(.available, converted)

@@ -81,7 +81,9 @@ struct HomeScreen: View {
     if editingAmount && model.editingSelectionID == model.input.source {
       CurrencyDisplay.inputAmount(model.editingText, locale: locale)
     } else {
-      CurrencyDisplay.format(model.input.decimal, code: model.input.source, locale: locale)
+      CurrencyDisplay.format(
+        model.input.decimal, code: model.input.source, locale: locale,
+        metalUnit: model.input.metalUnit)
     }
   }
 
@@ -266,7 +268,6 @@ struct HomeScreen: View {
   private func currencyList(embeddedDock: Bool, bottomSafeArea: CGFloat) -> some View {
     GeometryReader { viewport in
       ScrollView {
-        // Keep the first row mounted while UIKit collapses the pull-to-refresh inset.
         VStack(spacing: 0) {
           ForEach(model.input.destinationRows) { row in
             VStack(spacing: 0) {
@@ -329,7 +330,6 @@ struct HomeScreen: View {
         }
       }
       .task(id: "\(editingAmount)-\(model.editingSelectionID ?? "")-\(viewport.size)") {
-        // Wait for the keypad's layout transaction before resolving the row's scroll position.
         do { try await Task.sleep(for: .milliseconds(100)) } catch { return }
         guard editingAmount, model.editingSelectionID != model.input.source else { return }
         if model.editingSelectionID == model.input.destinationRows.last?.id {
@@ -424,6 +424,10 @@ struct HomeScreen: View {
     }
   }
 
+  private func amountCode(_ code: String) -> String {
+    CurrencyCode(rawValue: code)?.isMetal == true ? "\(code) \(model.input.metalUnit.symbol)" : code
+  }
+
   private var sourcePicker: some View {
     Button {
       AppHaptics.play(.action)
@@ -473,12 +477,18 @@ struct HomeScreen: View {
           .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
           .fixedSize()
           .accessibilityHidden(true)
+        if CurrencyCode(rawValue: model.input.source)?.isMetal == true {
+          Text(verbatim: model.input.metalUnit.symbol)
+            .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
+            .fixedSize()
+            .accessibilityIdentifier("converter.unit.\(model.input.source)")
+        }
         Spacer(minLength: 0)
       }
       .frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
     }
     .buttonStyle(.plain)
-    .accessibilityLabel(.Converter.editAmountAccessibility(model.input.source))
+    .accessibilityLabel(.Converter.editAmountAccessibility(amountCode(model.input.source)))
     .accessibilityValue(amountLabel)
     .accessibilityHint(editingAmount ? .Converter.doneEntering : .Converter.enterAmount)
     .contextMenu {
@@ -506,6 +516,11 @@ struct HomeScreen: View {
             Text(code).font(AppStyle.font(.body, weight: .medium))
               .lineLimit(1).fixedSize(horizontal: true, vertical: false)
               .matchedGeometryEffect(id: row.id, in: currencyMotion)
+            if CurrencyCode(rawValue: code)?.isMetal == true {
+              Text(verbatim: model.input.metalUnit.symbol)
+                .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
+                .accessibilityIdentifier("converter.unit.\(code)")
+            }
             if row.isLocal {
               Image(systemName: "location.fill")
                 .font(AppStyle.font(.caption2))
@@ -529,7 +544,8 @@ struct HomeScreen: View {
         Text(
           editingAmount && model.editingSelectionID == row.id
             ? CurrencyDisplay.inputAmount(model.editingText, locale: locale)
-            : CurrencyDisplay.format(value, code: code, locale: locale)
+            : CurrencyDisplay.format(
+              value, code: code, locale: locale, metalUnit: model.input.metalUnit)
         )
         .font(
           AppStyle.font(
@@ -569,7 +585,9 @@ struct HomeScreen: View {
             localized: .Converter.localCurrencyName(
               CurrencyDisplay.name(code, locale: locale)))
           : CurrencyDisplay.name(code, locale: locale),
-        CurrencyDisplay.format(value, code: code, locale: locale))
+        CurrencyDisplay.format(value, code: code, locale: locale, metalUnit: model.input.metalUnit)
+          + (CurrencyCode(rawValue: code)?.isMetal == true
+            ? " \(model.input.metalUnit.symbol)" : ""))
     )
     .accessibilityHint(
       editingAmount
@@ -591,7 +609,8 @@ struct HomeScreen: View {
       showDetails(code: code, selectionID: row.id)
     }
     Button(.Converter.copyAmount, systemImage: "doc.on.doc") {
-      UIPasteboard.general.string = CurrencyDisplay.format(value, code: code, locale: locale)
+      UIPasteboard.general.string = CurrencyDisplay.format(
+        value, code: code, locale: locale, metalUnit: model.input.metalUnit)
       AppHaptics.play(.success)
     }
     .disabled(value == nil)
@@ -666,7 +685,7 @@ struct HomeScreen: View {
                 if !dynamicTypeSize.isAccessibilitySize {
                   CurrencyIcon(model.editingCode, size: 14).accessibilityHidden(true)
                 }
-                Text(verbatim: model.editingCode)
+                Text(verbatim: amountCode(model.editingCode))
               }
               .frame(maxWidth: .infinity)
               .lineLimit(1)
@@ -737,10 +756,9 @@ struct HomeScreen: View {
         .frame(maxWidth: 640)
         .frame(maxWidth: .infinity)
         .contentShape(keypadShape)
-        .onTapGesture { /* Keep taps in the keypad's header and gaps inside the pad. */  }
+        .onTapGesture {}
         .glassEffect(.regular, in: keypadShape)
         .overlay {
-          // Consume corner taps before UIKit expands a nearby button's touch target.
           Color.clear.contentShape(Rectangle().subtracting(keypadShape))
             .onTapGesture { dismissAmount() }
             .accessibilityHidden(true)

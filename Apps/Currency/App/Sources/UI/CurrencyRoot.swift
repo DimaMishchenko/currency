@@ -198,7 +198,7 @@ struct CurrencyRoot: View {
       flowID: detail.id,
       input: CurrencyDetailsInput(
         code: detail.request.code, reference: detail.request.reference,
-        snapshot: detail.request.snapshot)
+        snapshot: detail.request.snapshot, metalUnit: composition.conversion.input().metalUnit)
     )
     .accessibilityIdentifier("currency.details.\(detail.request.code)")
     .appEntityIdentifier(EntityIdentifier(for: CurrencyEntity(detail.request.code)))

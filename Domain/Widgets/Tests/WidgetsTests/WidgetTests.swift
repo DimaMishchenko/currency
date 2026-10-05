@@ -17,6 +17,60 @@ struct WidgetTests {
     ExchangeRate(value, published: "2026-09-04", source: .init(provider: .ecb))
   }
 
+  @Test func metalSelectionUsesSavedMassUnitAndLegacyInputDefaultsToTroyOunce() throws {
+    let legacy = Data(
+      #"{"codes":["XAU","EUR"],"active":"XAU","amount":"1","replacesOnDigit":true}"#.utf8)
+    var input = try JSONDecoder().decode(WidgetInput.self, from: legacy)
+    #expect(input.metalUnit == .troyOunce)
+    input.setMetalUnit(.gram)
+    #expect(input.decimal == MetalUnit.troyOunce.gramsPerUnit)
+    input.select("EUR", snapshot: rates)
+    #expect(abs(input.decimal - 1000) < Decimal(string: "0.00000001")!)
+    input.select("XAU", snapshot: rates)
+    #expect(abs(input.decimal - MetalUnit.troyOunce.gramsPerUnit) < Decimal(string: "0.00000001")!)
+    let restored = try JSONDecoder().decode(WidgetInput.self, from: JSONEncoder().encode(input))
+    #expect(restored.metalUnit == .gram)
+  }
+
+  @Test func synchronizedMetalWidgetPublishesGramsToIndependentAppStore() throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let appStore = ConversionStore(directory: directory)
+    try appStore.updateInput { app in
+      app.changeSource("XAU")
+      app.setMetalUnit(.gram)
+      app.setAmount("10")
+    }
+    var spec = WidgetSpec(kind: "CurrencyConverter", codes: ["XAU", "EUR"], status: .notDetermined)
+    spec.synchronized = true
+    let widgets = WidgetStore(directory: directory)
+    try widgets.apply(WidgetCommand("2", spec: spec), snapshot: rates)
+    let independentlyRead = ConversionStore(directory: directory).input()
+    #expect(independentlyRead.metalUnit == .gram)
+    #expect(independentlyRead.amount == "2")
+    let input = WidgetStore(directory: directory).widgetInput(key: spec.key, codes: spec.codes)
+    #expect(input.metalUnit == .gram)
+    #expect(input.decimal == 2)
+    try widgets.apply(WidgetCommand("select:EUR", spec: spec), snapshot: rates)
+    let currencyInput = widgets.widgetInput(key: spec.key, codes: spec.codes)
+    let expected = try #require(rates.convert(2, from: "XAU", to: "EUR", metalUnit: .gram))
+    #expect(abs(currencyInput.decimal - expected) < Decimal(string: "0.00000001")!)
+  }
+
+  @Test func kilogramPublicationPreservesSmallDirectAndConvertedMasses() throws {
+    var app = ConverterState()
+    app.changeSource("XAU")
+    app.setMetalUnit(.kilogram)
+    var metal = WidgetInput(codes: ["XAU", "EUR"], amount: "0.001", metalUnit: .kilogram)
+    metal.publish(to: &app, snapshot: rates)
+    #expect(app.decimal == Decimal(string: "0.001")!)
+    var fiat = WidgetInput(codes: ["EUR", "XAU"], amount: "1", metalUnit: .kilogram)
+    fiat.publish(to: &app, snapshot: rates)
+    let expected = try #require(rates.convert(1, from: "EUR", to: "XAU", metalUnit: .kilogram))
+    #expect(app.decimal > 0)
+    #expect(abs(app.decimal - expected) < Decimal(string: "0.00000000001")!)
+  }
+
   @Test func selectionKeepsOrderAndNextDigitReplaces() {
     var state = WidgetInput(codes: ["EUR", "USD", "CZK"])
     state.press("5")

@@ -13,6 +13,8 @@
     enum InitialState: String {
       case freshOnboarding = "fresh-onboarding"
       case readyConverter = "ready-converter"
+      case readyMetals = "ready-metals"
+      case readyMetalSource = "ready-metal-source"
     }
 
     enum StartupError: Error, Equatable {
@@ -108,10 +110,11 @@
       let conversion = ConversionStore(directory: directory)
       let progress = OnboardingProgressStore(directory: directory)
       switch state {
-      case .readyConverter:
+      case .readyConverter, .readyMetals, .readyMetalSource:
         let input = try conversion.updateInput {
           $0 = ConverterState()
-          $0.setDestinations(["USD"])
+          $0.setDestinations(state == .readyMetals ? ["USD", "XAU"] : ["USD"])
+          if state == .readyMetalSource { $0.changeSource("XAU") }
         }
         try progress.save(OnboardingProgress(draft: input, step: .ready, completed: true))
         guard conversion.input() == input, progress.load()?.completed == true,
@@ -148,7 +151,7 @@
 
     static func quotes(now: Date) -> [String: ExchangeRate] {
       let day = now.formatted(.iso8601.year().month().day().dateSeparator(.dash))
-      let values: [String: Decimal] = ["EUR": 1, "USD": 2, "CHF": 0.5, "CZK": 25]
+      let values: [String: Decimal] = ["EUR": 1, "USD": 2, "CHF": 0.5, "CZK": 25, "XAU": 0.01]
       return
         values
         .mapValues {

@@ -45,16 +45,17 @@ public struct AmountEditor: Codable, Equatable, Sendable {
   }
 
   /// Selects a tile without changing its position; next digit starts a fresh amount.
-  public mutating func select(_ code: String, snapshot: RateSnapshot) {
+  public mutating func select(
+    _ code: String, snapshot: RateSnapshot, metalUnit: MetalUnit = .troyOunce
+  ) {
     guard codes.contains(code), code != CurrencySelection.localID else { return }
-    // Reselecting the active tile starts fresh input and still counts as an interaction.
     replacesOnDigit = true
     editedAt = .now
     guard code != active else { return }
     let value = snapshot.convert(
-      decimal, from: CurrencySelection.currency(active), to: CurrencySelection.currency(code))
+      decimal, from: CurrencySelection.currency(active), to: CurrencySelection.currency(code),
+      metalUnit: metalUnit)
     active = code
-    // Missing conversion must never present the previous currency's value as this currency's value.
     amount = value.map { NSDecimalNumber(decimal: $0).stringValue } ?? "0"
   }
 

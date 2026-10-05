@@ -15,7 +15,8 @@ import Testing
       readState: { SettingsRateState(snapshot: RateSnapshot(), codes: ["EUR", "USD"]) },
       changes: { AsyncStream<Void>(bufferingPolicy: .unbounded) { _ in } },
       readPreferences: { SettingsPreferences(theme: .system, accent: .primary) },
-      setTheme: { _ in }, setAccent: { _ in }, refresh: refresh, replay: replay, output: output)
+      setTheme: { _ in }, setAccent: { _ in }, setMetalUnit: { _ in }, refresh: refresh,
+      replay: replay, output: output)
   }
   @Test func failedReplayDoesNotEmitNavigationAndSuccessfulRetryCommitsFirst() {
     var failing = true
@@ -66,12 +67,29 @@ import Testing
         changes: { AsyncStream<Void>(bufferingPolicy: .unbounded) { _ in } },
         readPreferences: { preferences },
         setTheme: { preferences.theme = $0 }, setAccent: { preferences.accent = $0 },
+        setMetalUnit: { preferences.metalUnit = $0 },
         refresh: { SettingsRateState(snapshot: RateSnapshot(), codes: []) }, replay: nil,
         output: { _ in }))
     model.setTheme(.dark)
     model.setAccent(.teal)
-    #expect(model.preferences == SettingsPreferences(theme: .dark, accent: .teal))
+    model.setMetalUnit(.gram)
+    #expect(model.preferences == SettingsPreferences(theme: .dark, accent: .teal, metalUnit: .gram))
   }
+  @Test func failedMeasurementSavePreservesAuthoritativePreference() {
+    let model = SettingsModel(
+      dependencies: SettingsDependencies(
+        readState: { SettingsRateState(snapshot: RateSnapshot(), codes: []) },
+        changes: { AsyncStream { $0.finish() } },
+        readPreferences: { SettingsPreferences(theme: .system, accent: .primary) },
+        setTheme: { _ in }, setAccent: { _ in },
+        setMetalUnit: { _ in throw CocoaError(.fileWriteUnknown) },
+        refresh: { SettingsRateState(snapshot: RateSnapshot(), codes: []) },
+        replay: nil, output: { _ in }))
+    model.setMetalUnit(.gram)
+    #expect(model.preferences.metalUnit == .troyOunce)
+    #expect(model.issue == .preferenceSaveFailed)
+  }
+
   @Test func hostCommitsRefreshDisplayedStateUntilFlowTeardown() async {
     var state = SettingsRateState(snapshot: RateSnapshot(), codes: ["EUR"])
     let stream = AsyncStream<Void>.makeStream()
@@ -79,7 +97,8 @@ import Testing
       dependencies: SettingsDependencies(
         readState: { state }, changes: { stream.stream },
         readPreferences: { SettingsPreferences(theme: .system, accent: .primary) },
-        setTheme: { _ in }, setAccent: { _ in }, refresh: { state }, replay: nil, output: { _ in }))
+        setTheme: { _ in }, setAccent: { _ in }, setMetalUnit: { _ in }, refresh: { state },
+        replay: nil, output: { _ in }))
     let lifetime = Task { await model.run() }
     state.codes = ["EUR", "JPY"]
     stream.continuation.yield(())
