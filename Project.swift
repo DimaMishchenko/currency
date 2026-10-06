@@ -142,7 +142,9 @@ let project = Project(
     ],
     configurations: [
       .debug(name: "Debug"),
-      .release(name: "Release", settings: ["CODE_SIGN_IDENTITY": "Apple Distribution"])
+      .release(
+        name: "Release",
+        settings: ["CODE_SIGN_IDENTITY": "Apple Distribution", "CODE_SIGN_STYLE": "Manual"])
     ]),
   targets: modules + [
     .target(
