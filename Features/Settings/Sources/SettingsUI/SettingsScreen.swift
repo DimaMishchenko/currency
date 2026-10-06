@@ -1,6 +1,7 @@
 import DesignSystem
 import ExchangeRates
 import ExchangeRatesUI
+import MessageUI
 import Settings
 import SwiftUI
 import UIKit
@@ -17,7 +18,21 @@ struct SettingsScreen: View {
   private func manageLocation() { model.manageLocation() }
   @Environment(\.locale) private var locale
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  @Environment(\.openURL) private var openURL
   @State private var replayFailed = false
+  @State private var showsFeedbackOptions = false
+  @State private var pendingFeedbackEmail = false
+  @State private var showsFeedbackComposer = false
+  @State private var showsMailUnavailable = false
+  @State private var pendingMailFailure = false
+  @State private var mailSendFailed = false
+  @State private var creatorCoinSpinStartedAt: Date?
+  @State private var creatorCoinCurrency = CreatorCoinCurrency.usd
+  @State private var creatorCoinLastCurrency: CreatorCoinCurrency?
+  @State private var creatorCoinIsFlipping = false
+  @State private var creatorCoinShowsReducedMotionSymbol = false
+  @State private var creatorCoinSpinID = 0
 
   var body: some View {
     List {
@@ -45,15 +60,10 @@ struct SettingsScreen: View {
           Text(.Settings.gettingStarted)
         }
       }
+      feedbackControls
+      creatorFooter
       Section {
-        settingsValueRow {
-          Label(.Settings.sendFeedback, systemImage: "bubble.left.and.bubble.right")
-        } value: {
-          Text(.Settings.comingSoon)
-        }
-        .foregroundStyle(.secondary)
-        .accessibilityElement(children: .combine)
-        .accessibilityIdentifier("settings.feedback")
+        EmptyView()
       } footer: {
         Text(
           .Settings.appVersion(
@@ -71,6 +81,247 @@ struct SettingsScreen: View {
       Button(.Settings.retryReplay) { restartOnboarding() }
       Button(.Settings.close, role: .cancel) {}
     }
+    .alert(.Settings.feedback, isPresented: $showsFeedbackOptions) {
+      Button(.Settings.contactEmail) {
+        pendingFeedbackEmail = true
+        showsFeedbackOptions = false
+      }
+      .accessibilityIdentifier("settings.feedback.email")
+      Button(.Settings.contactX) {
+        if let url = URL(string: "https://x.com/dimasike_") { openURL(url) }
+      }
+      .accessibilityIdentifier("settings.feedback.x")
+      Button(.Settings.close, role: .cancel) {}
+    }
+    .onChange(of: showsFeedbackOptions) { _, presented in
+      if !presented && pendingFeedbackEmail {
+        pendingFeedbackEmail = false
+        sendFeedbackEmail()
+      }
+    }
+    .sheet(isPresented: $showsFeedbackComposer, onDismiss: feedbackComposerDismissed) {
+      FeedbackMailComposer { failed in
+        pendingMailFailure = failed
+        showsFeedbackComposer = false
+      }
+    }
+    .alert(
+      mailSendFailed ? .Settings.mailSendFailed : .Settings.mailUnavailable,
+      isPresented: $showsMailUnavailable
+    ) {
+      Button(.Settings.copyEmail) {
+        UIPasteboard.general.string = "dimasike.dev@gmail.com"
+      }
+      Button(.Settings.close, role: .cancel) {}
+    } message: {
+      Text(verbatim: "dimasike.dev@gmail.com")
+    }
+  }
+
+  private var feedbackControls: some View {
+    Section {
+      Button {
+        showsFeedbackOptions = true
+      } label: {
+        Label {
+          Text(.Settings.feedback).foregroundStyle(Color.primary)
+        } icon: {
+          Image(systemName: "bubble.left").foregroundStyle(.tint)
+        }
+      }
+      .accessibilityIdentifier("settings.feedback")
+    } footer: {
+      Text(.Settings.feedbackExplanation)
+    }
+  }
+
+  private func sendFeedbackEmail() {
+    mailSendFailed = false
+    pendingMailFailure = false
+    if MFMailComposeViewController.canSendMail() {
+      showsFeedbackComposer = true
+    } else if let url = URL(string: "mailto:dimasike.dev@gmail.com") {
+      openURL(url) { accepted in
+        if !accepted { showsMailUnavailable = true }
+      }
+    }
+  }
+
+  private func feedbackComposerDismissed() {
+    if pendingMailFailure {
+      pendingMailFailure = false
+      mailSendFailed = true
+      showsMailUnavailable = true
+    }
+  }
+
+  private var creatorFooter: some View {
+    Section {
+      VStack(spacing: AppStyle.Space.medium) {
+        creatorCoin
+        Text(.Settings.madeByDimasike)
+          .font(AppStyle.font(.headline))
+          .multilineTextAlignment(.center)
+          .fixedSize(horizontal: false, vertical: true)
+        if creatorLinksAreVertical {
+          VStack(spacing: AppStyle.Space.small) { creatorLinks }
+        } else {
+          HStack(spacing: AppStyle.Space.small) { creatorLinks }
+        }
+      }
+      .frame(maxWidth: .infinity)
+      .padding(.vertical, AppStyle.Space.small)
+      .listRowInsets(.horizontal, 0)
+      .listRowBackground(Color.clear)
+      .listRowSeparator(.hidden)
+      .accessibilityElement(children: .contain)
+      .accessibilityIdentifier("settings.creator")
+    }
+  }
+
+  private var creatorCoin: some View {
+    Button(action: flipCreatorCoin) {
+      TimelineView(.animation(paused: !creatorCoinIsFlipping || reduceMotion)) { context in
+        let rotation = creatorCoinRotation(at: context.date)
+        ZStack {
+          Image("CreatorPortrait", bundle: .module)
+            .resizable()
+            .scaledToFill()
+            .frame(width: 88, height: 88)
+            .clipShape(Circle())
+            .modifier(CreatorCoinFace(rotation: reduceMotion ? 0 : rotation))
+            .opacity(reduceMotion && creatorCoinShowsReducedMotionSymbol ? 0 : 1)
+          Circle()
+            .fill(Color(uiColor: .tertiarySystemFill))
+            .overlay {
+              Image(systemName: creatorCoinCurrency.symbol)
+                .font(.system(size: 38, weight: .medium))
+                .foregroundStyle(.tint)
+            }
+            .frame(width: 88, height: 88)
+            .modifier(CreatorCoinFace(rotation: reduceMotion ? 0 : rotation - 180))
+            .opacity(reduceMotion && !creatorCoinShowsReducedMotionSymbol ? 0 : 1)
+        }
+        .frame(width: 88, height: 88)
+        .contentShape(Circle())
+      }
+    }
+    .buttonStyle(CreatorCoinButtonStyle())
+    .allowsHitTesting(!creatorCoinIsFlipping)
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel(.Settings.flipCreatorCoin)
+    .accessibilityValue(Text(.Settings.creatorCoinPortrait))
+    .accessibilityIdentifier("settings.creator.coin")
+    .task(id: creatorCoinIsFlipping) {
+      guard creatorCoinIsFlipping else { return }
+      let spinID = creatorCoinSpinID
+      let reduced = reduceMotion
+      do {
+        try await Task.sleep(for: .milliseconds(reduced ? 600 : 1000))
+      } catch {
+        if spinID == creatorCoinSpinID { resetCreatorCoin() }
+        return
+      }
+      guard spinID == creatorCoinSpinID else { return }
+      guard reduced else {
+        resetCreatorCoin()
+        return
+      }
+      withAnimation(.easeInOut(duration: 0.15), completionCriteria: .logicallyComplete) {
+        creatorCoinShowsReducedMotionSymbol = false
+      } completion: {
+        guard spinID == creatorCoinSpinID else { return }
+        creatorCoinIsFlipping = false
+      }
+    }
+    .onDisappear(perform: resetCreatorCoin)
+  }
+
+  private func flipCreatorCoin() {
+    guard !creatorCoinIsFlipping else { return }
+    creatorCoinSpinID += 1
+    let candidates = CreatorCoinCurrency.allCases.filter { $0 != creatorCoinLastCurrency }
+    if let currency = candidates.randomElement() {
+      creatorCoinCurrency = currency
+      creatorCoinLastCurrency = currency
+    }
+    creatorCoinSpinStartedAt = Date()
+    creatorCoinIsFlipping = true
+    if reduceMotion {
+      withAnimation(.easeInOut(duration: 0.15)) {
+        creatorCoinShowsReducedMotionSymbol = true
+      }
+    }
+  }
+
+  private func creatorCoinRotation(at date: Date) -> Double {
+    guard let start = creatorCoinSpinStartedAt else { return 0 }
+    let progress = min(1, max(0, date.timeIntervalSince(start)))
+    return 180 * (1 - cos(progress * .pi))
+  }
+
+  private func resetCreatorCoin() {
+    creatorCoinSpinID += 1
+    var transaction = Transaction(animation: nil)
+    transaction.disablesAnimations = true
+    withTransaction(transaction) {
+      creatorCoinSpinStartedAt = nil
+      creatorCoinShowsReducedMotionSymbol = false
+      creatorCoinIsFlipping = false
+    }
+  }
+
+  private var creatorLinks: some View {
+    Group {
+      Button(action: sendFeedbackEmail) {
+        creatorContactLabel(.Settings.contactEmail, symbol: "envelope")
+      }
+      .accessibilityIdentifier("settings.contact.email")
+      if let url = URL(string: "https://dimasike.com") {
+        Link(destination: url) {
+          creatorContactLabel(.Settings.contactWebsite, symbol: "globe")
+        }
+        .accessibilityIdentifier("settings.contact.website")
+      }
+      if let url = URL(string: "https://x.com/dimasike_") {
+        Link(destination: url) {
+          creatorContactLabel(.Settings.contactX, asset: "XLogo")
+        }
+        .accessibilityIdentifier("settings.contact.x")
+      }
+    }
+    .buttonStyle(.plain)
+    .foregroundStyle(.tint)
+  }
+
+  private var creatorLinksAreVertical: Bool { dynamicTypeSize >= .xxLarge }
+
+  private func creatorContactLabel(
+    _ title: LocalizedStringResource, symbol: String? = nil, asset: String? = nil
+  ) -> some View {
+    HStack(spacing: 6) {
+      if let symbol {
+        Image(systemName: symbol)
+          .accessibilityHidden(true)
+      }
+      if let asset {
+        Image(asset, bundle: .module)
+          .resizable()
+          .scaledToFit()
+          .frame(width: 14, height: 14)
+          .accessibilityHidden(true)
+      }
+      Text(title)
+        .lineLimit(creatorLinksAreVertical ? nil : 1)
+        .minimumScaleFactor(0.8)
+    }
+    .font(AppStyle.font(.subheadline))
+    .multilineTextAlignment(.center)
+    .padding(.horizontal, 8)
+    .padding(.vertical, creatorLinksAreVertical ? 8 : 0)
+    .frame(maxWidth: .infinity, minHeight: 44)
+    .frame(height: creatorLinksAreVertical ? nil : 44)
+    .glassEffect(.regular.interactive(), in: Capsule())
   }
 
   private var metalUnitControl: some View {
@@ -418,6 +669,42 @@ private extension SettingsTheme {
     case .system: .Settings.appearanceSystem
     case .light: .Settings.appearanceLight
     case .dark: .Settings.appearanceDark
+    }
+  }
+}
+
+private struct CreatorCoinButtonStyle: ButtonStyle {
+  func makeBody(configuration: Configuration) -> some View {
+    configuration.label
+  }
+}
+
+private struct CreatorCoinFace: ViewModifier {
+  var rotation: Double
+
+  func body(content: Content) -> some View {
+    content
+      .opacity(cos(rotation * .pi / 180) > 0 ? 1 : 0)
+      .rotation3DEffect(.degrees(rotation), axis: (x: 0, y: 1, z: 0), perspective: 0.5)
+  }
+}
+
+private enum CreatorCoinCurrency: String, CaseIterable {
+  case usd = "USD"
+  case eur = "EUR"
+  case gbp = "GBP"
+  case jpy = "JPY"
+  case inr = "INR"
+  case btc = "BTC"
+
+  var symbol: String {
+    switch self {
+    case .usd: "dollarsign"
+    case .eur: "eurosign"
+    case .gbp: "sterlingsign"
+    case .jpy: "yensign"
+    case .inr: "indianrupeesign"
+    case .btc: "bitcoinsign"
     }
   }
 }

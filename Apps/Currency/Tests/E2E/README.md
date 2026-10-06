@@ -62,7 +62,8 @@ These are representative outcomes, not exhaustive coverage of each feature ID.
 | PREF-05, WID-04–08 | [metal-widget-display](tests/metal-widget-display.e2e.ts) | Board, Cash, Pocket, Mental Math and History show Gold amounts and visible measurement units |
 | PREF-05, WID-02, WID-10 | [metal-widget](tests/metal-widget.e2e.ts) | Saved grams preference reaches Calculator; keypad edits return to app with matching metal conversion |
 | PREF-05, CONV-01, CONV-05 | [metal-measurement](tests/metal-measurement.e2e.ts) | Seeded metal destination units and exact displayed conversions change; grams and seeded metal source weight survive restart |
-| PREF-01 | [preferences](tests/preferences.e2e.ts) | Dark appearance persists; converter stays unchanged |
+| PREF-01, PREF-04, PREF-06–08 | [preferences](tests/preferences.e2e.ts) | Creator footer below Feedback and Email/Website/X controls are visible in light/dark appearance; a focused footer journey checks aligned outer insets, Email/Website/X icons, and readable single-line pills and the portrait is visible; Dark persists, converter stays unchanged and version remains visible |
+| PREF-06, PREF-08 | [creator-contact](tests/creator-contact.e2e.ts) | Website opens dimasike.com in Safari; returning preserves the Settings screen and theme; Feedback opens an Email/X alert, cancellation preserves Settings, selected Email offers a copyable address on simulators without Mail, and selected X opens its website |
 | WID-02, WID-10, CONV-05 | [home-screen-widget](tests/home-screen-widget.e2e.ts), [app-to-widget](tests/app-to-widget.e2e.ts) | Calculator keypad → app and app edits → widget |
 | WID-04–08, WID-10 | [widget-display](tests/widget-display.e2e.ts) | Board, Cash, Pocket, Mental Math and History data; additional sizes |
 | WID-04, WID-06–07 | [widget-configuration](tests/widget-configuration.e2e.ts) | Reversed pairs and Custom Board amount/list independent of app input |
@@ -84,6 +85,9 @@ Cache remains enabled and local, ignored by Git. Fresh checkouts record their ow
 - Replay reliability is provisional: mobile screen identities and keypad targeting have caused misses or failures. Keep native outcome assertions strict.
 - The driver misprojects some widget descendants. Calculator tests use a bounded tap workaround for the verified medium, two-currency and three-currency, English iPhone layouts; three-currency output also needs vision.
 - iPad picker automation requires a snapshot-projection fix not included in the pinned driver; widget checks are blocked by missing descendants. Duo verification is deferred; widgetctl device placement is verified only on arm64 iPhone/iOS 27.
+- The Feedback journey checks the email fallback address and Copy email dismissal. Simulator clipboard contents were verified with device-targeted `simctl pbpaste`; the pinned driver clipboard read can return an empty string for this flow.
+- Coin motion is checked visually rather than through a dedicated E2E animation assertion.
+- Creator contact controls are covered for visibility and Website navigation; Feedback X navigation and the no-Mail copy-address path are covered. Native email composition/delivery requires a device with a configured Mail account.
 - Native Edit Widget picker/save, Local currency states, independent instances and custom Lock Screen symbols remain uncovered. History navigation does not prove live chart data.
 
 ## Shutdown

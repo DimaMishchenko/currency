@@ -54,11 +54,12 @@ Owners: [Settings](../Features/Settings/Sources/Settings/SettingsModel.swift), A
 | PREF-03 | Settings → Language → system Settings | iOS owns language selection; returning/relaunching uses localized UI and region formatting while currency identities remain stable. |
 | PREF-04 | Settings → Rates, Sources, Acknowledgements, version | Current information, artwork credits and testing-tool attribution are accessible; rate refresh has visible success/failure behavior. |
 | PREF-05 | Settings → Metal measurement: Troy ounces, Grams, Kilograms | The selected weight unit persists and applies to metal conversion input/output, details, Calculator, Board, Mental Math and History widgets, widget showcase previews, and system actions. Metal amounts show their unit; changing the unit preserves a metal source’s physical weight. Cash/Pocket weight presets retain their labeled units. |
+| PREF-06 | Settings → creator footer: Email, Website, X | The centered portrait and “Made by Dimasike” identify the developer; interactive Liquid Glass contact buttons align with the Settings table edges, include Email/Website/X icons, and adapt to large text. Email uses the Feedback composer/fallback flow for dimasike.dev@gmail.com, Website opens dimasike.com, and X opens the dimasike_ profile. |
+| PREF-07 | Settings → tap creator footer portrait | One tap rotates the coin through a full turn without dimming or tinting the portrait, briefly revealing a random SF Symbols currency face, then automatically restores the portrait. Each next currency differs from the previous choice. Reduce Motion uses a brief crossfade and also restores the portrait. |
+| PREF-08 | Settings → Feedback → choose Email or X | A single Feedback row opens an Email/X alert; its section footer invites bugs and ideas. Email presents the native mail composer when configured, otherwise opens the system mail handler or offers the address with Copy email when unavailable. X opens the dimasike_ profile. Cancelling or returning preserves Settings. |
 | LOC-01 | Onboarding, Local row/picker, Settings → Location | Opt-in, system authorization, retry and skip paths work; denied, restricted, disabled, timeout and unavailable states offer the appropriate guidance. |
 | LOC-02 | Local currency selected in app or widget configuration | A resolved location supplies the applicable currency; unresolved Local remains identifiable and directs the user to setup rather than presenting a false rate. |
 | LOC-03 | Foreground/location refresh and return from system Settings | Permission/location changes reconcile across the app and shared widget data without discarding unrelated selections. |
-
-Send feedback is currently displayed as “Coming soon”; it has no submission action. It is not an implemented feedback flow.
 
 ## Widgets and widget discovery
 
