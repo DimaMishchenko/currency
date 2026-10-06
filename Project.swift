@@ -133,12 +133,17 @@ let modules: [Target] = [
 
 let project = Project(
   name: "Currency", organizationName: "dimasike",
-  settings: .settings(base: [
-    "CODE_SIGN_STYLE": "Automatic", "CURRENT_PROJECT_VERSION": "1",
-    "DEVELOPMENT_TEAM": .string(teamID), "MARKETING_VERSION": "1.0", "SWIFT_VERSION": "6.0",
-    "STRING_CATALOG_GENERATE_SYMBOLS": "YES", "SWIFT_EMIT_LOC_STRINGS": "YES",
-    "LOCALIZATION_PREFERS_STRING_CATALOGS": "YES", "TARGETED_DEVICE_FAMILY": "1,2"
-  ]),
+  settings: .settings(
+    base: [
+      "CODE_SIGN_STYLE": "Automatic", "CURRENT_PROJECT_VERSION": "1",
+      "DEVELOPMENT_TEAM": .string(teamID), "MARKETING_VERSION": "1.0", "SWIFT_VERSION": "6.0",
+      "STRING_CATALOG_GENERATE_SYMBOLS": "YES", "SWIFT_EMIT_LOC_STRINGS": "YES",
+      "LOCALIZATION_PREFERS_STRING_CATALOGS": "YES", "TARGETED_DEVICE_FAMILY": "1,2"
+    ],
+    configurations: [
+      .debug(name: "Debug"),
+      .release(name: "Release", settings: ["CODE_SIGN_IDENTITY": "Apple Distribution"])
+    ]),
   targets: modules + [
     .target(
       name: "CompanionSync", destinations: Destinations.iOS.union(Destinations.watchOS),
