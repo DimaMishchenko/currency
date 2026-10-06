@@ -104,7 +104,7 @@ reconcile_profile() {
     select((.attributes.expirationDate | sub("\\.[0-9]+"; "") | sub("\\+00:00$"; "Z") | fromdateiso8601) > (now + $days * 86400)) |
     .id' "$signing_dir/profiles.json")
 
-  name="Currency CI $bundle $(date -u +%Y%m%d) $(openssl rand -hex 4)"
+  name=$(bash "$(dirname "${BASH_SOURCE[0]}")/profile_name.sh" "$bundle")
   if ! asc profiles create --name "$name" --profile-type IOS_APP_STORE \
       --bundle "$resource_id" --certificate "$cert_id" --output json > "$signing_dir/created-profile.json"; then
     asc profiles list --profile-type IOS_APP_STORE --paginate --output json > "$signing_dir/retry-profiles.json"

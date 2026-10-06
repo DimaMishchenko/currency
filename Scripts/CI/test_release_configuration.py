@@ -32,6 +32,24 @@ class ReleaseConfigurationTests(unittest.TestCase):
             CURRENCY_WATCH_WIDGET_PROFILE_UUID="watch-widget-profile",
         )
 
+    def test_profile_names_fit_client_limit_for_all_bundles(self):
+        bundles = [
+            "com.dimasike.currency", "com.dimasike.currency.widgets",
+            "com.dimasike.currency.watchkitapp",
+            "com.dimasike.currency.watchkitapp.widgets",
+            "com.dimasike." + "longbundle" * 20,
+        ]
+        for bundle in bundles:
+            with self.subTest(bundle=bundle):
+                names = [subprocess.run(
+                    ["bash", str(SCRIPTS / "profile_name.sh"), bundle],
+                    check=True, capture_output=True, text=True,
+                ).stdout.strip() for _ in range(2)]
+                for name in names:
+                    self.assertLessEqual(len(name), 64)
+                    self.assertRegex(name, r"^Currency CI .+ [0-9]{8} [0-9a-f]{8}$")
+                self.assertNotEqual(*names)
+
     def test_export_includes_every_embedded_bundle_profile(self):
         output = self.root / "ExportOptions.plist"
         subprocess.run(

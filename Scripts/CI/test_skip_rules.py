@@ -103,6 +103,7 @@ class SkipRulesTests(unittest.TestCase):
             "Package.swift": (True, True),
             ".github/workflows/publish.yml": (True, True),
             "Scripts/CI/signing.sh": (True, True),
+            "Scripts/CI/profile_name.sh": (True, True),
             "Scripts/CI/release.sh": (True, True),
             "Scripts/CI/verify_ipa.sh": (True, True),
             "new-folder/unknown\nfile": (True, True),
