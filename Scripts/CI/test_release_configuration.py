@@ -6,11 +6,45 @@ import tempfile
 import unittest
 import zipfile
 
+from check_release_signing import check
+
 
 SCRIPTS = Path(__file__).resolve().parent
 
 
 class ReleaseConfigurationTests(unittest.TestCase):
+    def test_distribution_identity_rejects_automatic_signing(self):
+        errors = check([{
+            "target": "CompanionSync",
+            "buildSettings": {
+                "CODE_SIGN_IDENTITY": "Apple Distribution",
+                "CODE_SIGN_STYLE": "Automatic",
+                "CODE_SIGNING_ALLOWED": "YES",
+            },
+        }])
+        self.assertEqual(errors, [
+            "CompanionSync: Apple Distribution requires manual Release signing"
+        ])
+
+    def test_manual_distribution_and_unsigned_targets_pass(self):
+        targets = [
+            ("Currency", "Apple Distribution", "Manual", "YES"),
+            ("CompanionSync", "Apple Distribution", "Manual", "YES"),
+            ("Resources", "Apple Distribution", "Automatic", "NO"),
+            ("Tests", "iPhone Developer", "Automatic", "YES"),
+        ]
+        self.assertEqual(check([{
+            "target": name,
+            "buildSettings": {
+                "CODE_SIGN_IDENTITY": identity,
+                "CODE_SIGN_STYLE": style,
+                "CODE_SIGNING_ALLOWED": allowed,
+            },
+        } for name, identity, style, allowed in targets]), [])
+
+    def test_empty_build_settings_fail(self):
+        self.assertEqual(check([]), ["No Release build settings were provided"])
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)

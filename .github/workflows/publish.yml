@@ -88,6 +88,12 @@ jobs:
           TUIST_CURRENCY_WATCH_PROFILE_UUID="$CURRENCY_WATCH_PROFILE_UUID" \
           TUIST_CURRENCY_WATCH_WIDGET_PROFILE_UUID="$CURRENCY_WATCH_WIDGET_PROFILE_UUID" \
             tuist generate --no-open --cache-profile none
+      - name: Check Release signing settings
+        run: |
+          set -o pipefail
+          xcodebuild -project Currency.xcodeproj -alltargets \
+            -configuration Release -sdk iphoneos -showBuildSettings -json \
+            | python3 Scripts/CI/check_release_signing.py
       - name: Archive
         run: |
           set -o pipefail
