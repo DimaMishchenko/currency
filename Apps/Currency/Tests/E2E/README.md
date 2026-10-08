@@ -82,6 +82,7 @@ Cache remains enabled and local, ignored by Git. Fresh checkouts record their ow
 
 ## Limitations
 
+- External links verify the native browser URL and return state; website availability depends on the network.
 - Menu pickers can ignore whole-row driver taps. Target the visible selected-value text (as in the measurement journey), then select the option by its identifier.
 - Replay reliability is provisional: mobile screen identities and keypad targeting have caused misses or failures. Keep native outcome assertions strict.
 - The driver misprojects some widget descendants. Calculator tests use a bounded tap workaround for the verified medium, two-currency and three-currency, English iPhone layouts; three-currency output also needs vision.
