@@ -88,6 +88,11 @@ struct SettingsScreen: View {
             "https://github.com/DimaMishchenko/currency/blob/main/Documentation/TermsOfUse.md"
         )
         .accessibilityIdentifier("settings.termsOfUse")
+        externalLink(
+          .Settings.openSource, systemImage: "chevron.left.forwardslash.chevron.right",
+          destination: "https://github.com/DimaMishchenko/currency"
+        )
+        .accessibilityIdentifier("settings.openSource")
         creatorFooter
       } header: {
         Text(.Settings.about)
