@@ -9,6 +9,7 @@ async function boundsOf(locator: Locator) {
 
 test('settings creator footer aligns with native rows', { tags: ['core'] }, async ({ start, agent, app, screen }) => {
   await start('ready-converter');
+  await expect(screen.getByRole('button', 'Edit amount in EUR')).toHaveValue('1');
   await screen.getByTestId('converter.options').tap();
   await screen.getByTestId('converter.settings').tap();
   await agent.act('Scroll Settings until the Help section, Feedback row and bug/idea description are visible. Stay on Settings.');
@@ -49,6 +50,7 @@ test('settings creator footer aligns with native rows', { tags: ['core'] }, asyn
 
 test('appearance preference survives app restart', { tags: ['core'] }, async ({ start, agent, app, screen, device }) => {
   await start('ready-converter');
+  await expect(screen.getByRole('button', 'Edit amount in EUR')).toHaveValue('1');
   await screen.getByTestId('converter.options').tap();
   await screen.getByTestId('converter.settings').tap();
   await expect(screen.getByTestId('settings.theme')).toBeVisible();

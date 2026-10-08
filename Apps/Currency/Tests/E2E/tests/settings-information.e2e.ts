@@ -4,6 +4,7 @@ import { deviceProfile } from '../device-profile.js';
 
 test('settings groups expose rates, credits and legal links', { tags: ['core'] }, async ({ start, agent, app, screen, device }) => {
   await start('ready-converter');
+  await expect(screen.getByRole('button', 'Edit amount in EUR')).toHaveValue('1');
   await screen.getByTestId('converter.options').tap();
   await screen.getByTestId('converter.settings').tap();
   await expect(screen.getByText('Personalization', { exact: true })).toBeVisible();
@@ -32,11 +33,15 @@ test('settings groups expose rates, credits and legal links', { tags: ['core'] }
   await expect(screen.getByRole('link', 'DimaMishchenko', { exact: true }).first()).toBeVisible();
   await expect(screen.getByRole('link', 'currency', { exact: true }).first()).toBeVisible();
   await address.tap();
-  const fullAddress = screen.getByRole('textbox').first();
+  const keyboardIntroduction = screen.getByTestId('UIContinuousPathIntroductionView');
+  if (await keyboardIntroduction.isVisible()) {
+    await keyboardIntroduction.getByRole('button', 'Continue', { exact: true }).tap();
+  }
+  const fullAddress = screen.getByTestId('URL');
   await expect(fullAddress).toBeVisible();
   await expect(fullAddress).toHaveValue(/^(?:\u200e)?https:\/\/github\.com\/DimaMishchenko\/currency\/?$/i);
   await app.screenshot('settings-open-source-url');
-  const cancelAddressEditing = screen.getByRole('button', 'Cancel', { exact: true });
+  const cancelAddressEditing = screen.getByTestId('CancelBarItemButton');
   if (await cancelAddressEditing.isVisible()) await cancelAddressEditing.tap();
   await app.screenshot('settings-open-source-github');
   await device.openApp('com.dimasike.currency');
