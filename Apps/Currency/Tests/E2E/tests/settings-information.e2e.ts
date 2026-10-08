@@ -33,16 +33,28 @@ test('settings groups expose rates, credits and legal links', { tags: ['core'] }
   await expect(screen.getByRole('link', 'DimaMishchenko', { exact: true }).first()).toBeVisible();
   await expect(screen.getByRole('link', 'currency', { exact: true }).first()).toBeVisible();
   await address.tap();
+  const searchIntroduction = screen.getByTestId('UniversalSearchFirstTimeExperienceView');
+  if (await searchIntroduction.isVisible()) {
+    await searchIntroduction.getByRole('button', 'Continue', { exact: true }).tap();
+  }
   const keyboardIntroduction = screen.getByTestId('UIContinuousPathIntroductionView');
   if (await keyboardIntroduction.isVisible()) {
     await keyboardIntroduction.getByRole('button', 'Continue', { exact: true }).tap();
   }
-  const fullAddress = screen.getByTestId('URL');
+  const fullAddress = screen.getByRole('textbox', 'Address', { exact: true }).first();
   await expect(fullAddress).toBeVisible();
+  await fullAddress.tap();
+  if (await keyboardIntroduction.isVisible()) {
+    await keyboardIntroduction.getByRole('button', 'Continue', { exact: true }).tap();
+  }
   await expect(fullAddress).toHaveValue(/^(?:\u200e)?https:\/\/github\.com\/DimaMishchenko\/currency\/?$/i);
   await app.screenshot('settings-open-source-url');
   const cancelAddressEditing = screen.getByTestId('CancelBarItemButton');
-  if (await cancelAddressEditing.isVisible()) await cancelAddressEditing.tap();
+  if (await cancelAddressEditing.isVisible()) {
+    await cancelAddressEditing.tap();
+  } else {
+    await device.dismissKeyboard();
+  }
   await app.screenshot('settings-open-source-github');
   await device.openApp('com.dimasike.currency');
   await expect(screen.getByTestId('settings.openSource')).toBeVisible();
