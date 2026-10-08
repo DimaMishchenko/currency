@@ -107,8 +107,12 @@ public final class SettingsModel {
   private var refreshTask: Task<Void, Never>?
   private var generation = UUID()
   private var stopped = false
+  private var preferenceRevision = 0
   /// Current authoritative preference values.
-  public var preferences: SettingsPreferences { dependencies.readPreferences() }
+  public var preferences: SettingsPreferences {
+    _ = preferenceRevision
+    return dependencies.readPreferences()
+  }
   /// Whether the host supplies the optional setup replay capability.
   public var allowsReplay: Bool { dependencies.replay != nil }
   /// Creates the owned value or model with explicit host inputs and operations.
@@ -117,9 +121,15 @@ public final class SettingsModel {
     rates = dependencies.readState()
   }
   /// Persists the selected theme through the host-owned preference capability.
-  public func setTheme(_ value: SettingsTheme) { dependencies.setTheme(value) }
+  public func setTheme(_ value: SettingsTheme) {
+    dependencies.setTheme(value)
+    preferenceRevision += 1
+  }
   /// Persists the selected accent through the host-owned preference capability.
-  public func setAccent(_ value: SettingsAccent) { dependencies.setAccent(value) }
+  public func setAccent(_ value: SettingsAccent) {
+    dependencies.setAccent(value)
+    preferenceRevision += 1
+  }
   /// Saves a measurement and exposes failure while retaining authoritative preferences.
   public func setMetalUnit(_ value: MetalUnit) {
     do {
@@ -133,8 +143,11 @@ public final class SettingsModel {
     guard !stopped else { return }
     dependencies.output(.manageLocation)
   }
-  /// Reconciles displayed rates from the host-owned state.
-  public func reload() { rates = dependencies.readState() }
+  /// Reconciles displayed state from the host-owned stores.
+  public func reload() {
+    rates = dependencies.readState()
+    preferenceRevision += 1
+  }
   /// Refreshes rates; callers coalesce repeated actions and reject superseded results.
   public func refresh() {
     guard !stopped, refreshTask == nil else { return }

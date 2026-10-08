@@ -1,6 +1,8 @@
 import ExchangeRates
 import Foundation
+import Observation
 import Settings
+import Synchronization
 import Testing
 
 @MainActor @Suite struct SettingsModelTests {
@@ -75,6 +77,67 @@ import Testing
     model.setMetalUnit(.gram)
     #expect(model.preferences == SettingsPreferences(theme: .dark, accent: .teal, metalUnit: .gram))
   }
+  @Test func measurementSaveInvalidatesObservedPreferencesWithoutRateChanges() {
+    let state = SettingsRateState(snapshot: RateSnapshot(), codes: ["EUR", "USD"])
+    var preferences = SettingsPreferences(theme: .system, accent: .primary)
+    let model = SettingsModel(
+      dependencies: SettingsDependencies(
+        readState: { state }, changes: { AsyncStream { $0.finish() } },
+        readPreferences: { preferences }, setTheme: { preferences.theme = $0 },
+        setAccent: { preferences.accent = $0 }, setMetalUnit: { preferences.metalUnit = $0 },
+        refresh: { state }, replay: nil, output: { _ in }))
+    let invalidated = Mutex(false)
+    withObservationTracking {
+      #expect(model.preferences.metalUnit == .troyOunce)
+    } onChange: {
+      invalidated.withLock { $0 = true }
+    }
+
+    model.setMetalUnit(.gram)
+
+    #expect(invalidated.withLock { $0 })
+    #expect(model.preferences.metalUnit == .gram)
+    #expect(model.rates.codes == state.codes)
+    #expect(model.rates.snapshot.fetchedAt == state.snapshot.fetchedAt)
+  }
+
+  @Test func hostPreferenceCommitInvalidatesObservationWithoutRateChanges() async {
+    let state = SettingsRateState(snapshot: RateSnapshot(), codes: ["EUR", "USD"])
+    var preferences = SettingsPreferences(theme: .system, accent: .primary)
+    let stream = AsyncStream<Void>.makeStream()
+    var subscribed = false
+    let model = SettingsModel(
+      dependencies: SettingsDependencies(
+        readState: { state },
+        changes: {
+          subscribed = true
+          return stream.stream
+        },
+        readPreferences: { preferences }, setTheme: { preferences.theme = $0 },
+        setAccent: { preferences.accent = $0 }, setMetalUnit: { preferences.metalUnit = $0 },
+        refresh: { state }, replay: nil, output: { _ in }))
+    let lifetime = Task { await model.run() }
+    for _ in 0..<1000 where !subscribed { await Task.yield() }
+    #expect(subscribed)
+    let invalidated = Mutex(false)
+    withObservationTracking {
+      #expect(model.preferences.metalUnit == .troyOunce)
+    } onChange: {
+      invalidated.withLock { $0 = true }
+    }
+
+    preferences.metalUnit = .kilogram
+    stream.continuation.yield(())
+    for _ in 0..<1000 where !invalidated.withLock({ $0 }) { await Task.yield() }
+
+    #expect(invalidated.withLock { $0 })
+    #expect(model.preferences.metalUnit == .kilogram)
+    #expect(model.rates.codes == state.codes)
+    #expect(model.rates.snapshot.fetchedAt == state.snapshot.fetchedAt)
+    lifetime.cancel()
+    await lifetime.value
+  }
+
   @Test func failedMeasurementSavePreservesAuthoritativePreference() {
     let model = SettingsModel(
       dependencies: SettingsDependencies(

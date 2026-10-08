@@ -1,3 +1,7 @@
+# Public repository
+
+This repository is open source. Never commit or push sensitive information, including secrets, private personal data, internal legal or release audits, and confidential security findings. Keep private notes and evidence in ignored local files. Before publishing, inspect staged changes, commit history, PR descriptions, comments, attachments and logs for sensitive content. Public policy contact details must be explicitly approved for publication; that approval does not extend to other private information.
+
 # Functional verification
 
 Maintain the real-app journeys in `Apps/Currency/Tests/E2E` instead of repeating manual screen tours for covered behavior. Use `Documentation/FeatureMap.md` for the app-wide capabilities and expected outcomes, including features without E2E coverage. Follow the E2E README for setup, test mapping and limitations.

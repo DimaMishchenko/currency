@@ -15,12 +15,18 @@ struct SettingsScreen: View {
     model.issue == .refreshFailed
       ? .Settings.refreshFailed : RateMessages.refresh(model.rates.warning)
   }
-  private func manageLocation() { model.manageLocation() }
   @Environment(\.locale) private var locale
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(\.openURL) private var openURL
   @State private var replayFailed = false
+  @State private var destination: Destination?
+
+  private enum Destination: String, Identifiable {
+    case rates, sources, acknowledgements
+    var id: Self { self }
+  }
+
   @State private var showsFeedbackOptions = false
   @State private var pendingFeedbackEmail = false
   @State private var showsFeedbackComposer = false
@@ -38,9 +44,11 @@ struct SettingsScreen: View {
     List {
       appearanceControls
       metalUnitControl
-      languageControl
       Section {
-        Button(action: manageLocation) {
+        Button {
+          AppHaptics.play(.action)
+          model.manageLocation()
+        } label: {
           Label(.Settings.locationSettings, systemImage: "location")
         }
         .accessibilityIdentifier("settings.location")
@@ -50,20 +58,39 @@ struct SettingsScreen: View {
         Text(.Settings.locationSettingsExplanation)
       }
       aboutRates
-      if model.allowsReplay {
-        Section {
+      Section {
+        if model.allowsReplay {
           Button(.Settings.replayOnboarding, systemImage: "sparkles.rectangle.stack") {
             restartOnboarding()
           }
           .accessibilityIdentifier("settings.replayOnboarding")
-        } header: {
-          Text(.Settings.gettingStarted)
         }
+        feedbackControls
+      } header: {
+        Text(.Settings.help)
+      } footer: {
+        Text(.Settings.feedbackExplanation)
       }
-      feedbackControls
-      creatorFooter
       Section {
-        EmptyView()
+        navigationRow(
+          .Settings.acknowledgements, systemImage: "heart", destination: .acknowledgements
+        )
+        .accessibilityIdentifier("settings.acknowledgements")
+        externalLink(
+          .Settings.privacyPolicy, systemImage: "hand.raised",
+          destination:
+            "https://github.com/DimaMishchenko/currency/blob/main/Documentation/PrivacyPolicy.md"
+        )
+        .accessibilityIdentifier("settings.privacyPolicy")
+        externalLink(
+          .Settings.termsOfUse, systemImage: "doc.text",
+          destination:
+            "https://github.com/DimaMishchenko/currency/blob/main/Documentation/TermsOfUse.md"
+        )
+        .accessibilityIdentifier("settings.termsOfUse")
+        creatorFooter
+      } header: {
+        Text(.Settings.about)
       } footer: {
         Text(
           .Settings.appVersion(
@@ -77,9 +104,22 @@ struct SettingsScreen: View {
     }
     .navigationTitle(.Settings.settings)
     .navigationBarTitleDisplayMode(.large)
+    .navigationDestination(item: $destination) { destination in
+      switch destination {
+      case .rates: rateInformation
+      case .sources:
+        List { sourceInformation }
+          .navigationTitle(.Settings.sources)
+          .navigationBarTitleDisplayMode(.inline)
+      case .acknowledgements:
+        List { acknowledgements }
+          .navigationTitle(.Settings.acknowledgements)
+          .navigationBarTitleDisplayMode(.inline)
+      }
+    }
     .alert(.Settings.replayFailed, isPresented: $replayFailed) {
       Button(.Settings.retryReplay) { restartOnboarding() }
-      Button(.Settings.close, role: .cancel) {}
+      Button(.Settings.close, role: .cancel) { AppHaptics.play(.action) }
     }
     .alert(.Settings.feedback, isPresented: $showsFeedbackOptions) {
       Button(.Settings.contactEmail) {
@@ -88,10 +128,11 @@ struct SettingsScreen: View {
       }
       .accessibilityIdentifier("settings.feedback.email")
       Button(.Settings.contactX) {
+        AppHaptics.play(.action)
         if let url = URL(string: "https://x.com/dimasike_") { openURL(url) }
       }
       .accessibilityIdentifier("settings.feedback.x")
-      Button(.Settings.close, role: .cancel) {}
+      Button(.Settings.close, role: .cancel) { AppHaptics.play(.action) }
     }
     .onChange(of: showsFeedbackOptions) { _, presented in
       if !presented && pendingFeedbackEmail {
@@ -111,38 +152,40 @@ struct SettingsScreen: View {
     ) {
       Button(.Settings.copyEmail) {
         UIPasteboard.general.string = "dimasike.dev@gmail.com"
+        AppHaptics.play(.success)
       }
-      Button(.Settings.close, role: .cancel) {}
+      Button(.Settings.close, role: .cancel) { AppHaptics.play(.action) }
     } message: {
       Text(verbatim: "dimasike.dev@gmail.com")
     }
   }
 
   private var feedbackControls: some View {
-    Section {
-      Button {
-        showsFeedbackOptions = true
-      } label: {
-        Label {
-          Text(.Settings.feedback).foregroundStyle(Color.primary)
-        } icon: {
-          Image(systemName: "bubble.left").foregroundStyle(.tint)
-        }
+    Button {
+      AppHaptics.play(.action)
+      showsFeedbackOptions = true
+    } label: {
+      Label {
+        Text(.Settings.feedback).foregroundStyle(Color.primary)
+      } icon: {
+        Image(systemName: "bubble.left").foregroundStyle(.tint)
       }
-      .accessibilityIdentifier("settings.feedback")
-    } footer: {
-      Text(.Settings.feedbackExplanation)
     }
+    .accessibilityIdentifier("settings.feedback")
   }
 
   private func sendFeedbackEmail() {
+    AppHaptics.play(.action)
     mailSendFailed = false
     pendingMailFailure = false
     if MFMailComposeViewController.canSendMail() {
       showsFeedbackComposer = true
     } else if let url = URL(string: "mailto:dimasike.dev@gmail.com") {
       openURL(url) { accepted in
-        if !accepted { showsMailUnavailable = true }
+        if !accepted {
+          showsMailUnavailable = true
+          AppHaptics.play(.error)
+        }
       }
     }
   }
@@ -152,31 +195,30 @@ struct SettingsScreen: View {
       pendingMailFailure = false
       mailSendFailed = true
       showsMailUnavailable = true
+      AppHaptics.play(.error)
     }
   }
 
   private var creatorFooter: some View {
-    Section {
-      VStack(spacing: AppStyle.Space.medium) {
-        creatorCoin
-        Text(.Settings.madeByDimasike)
-          .font(AppStyle.font(.headline))
-          .multilineTextAlignment(.center)
-          .fixedSize(horizontal: false, vertical: true)
-        if creatorLinksAreVertical {
-          VStack(spacing: AppStyle.Space.small) { creatorLinks }
-        } else {
-          HStack(spacing: AppStyle.Space.small) { creatorLinks }
-        }
+    VStack(spacing: AppStyle.Space.medium) {
+      creatorCoin
+      Text(.Settings.madeByDimasike)
+        .font(AppStyle.font(.headline))
+        .multilineTextAlignment(.center)
+        .fixedSize(horizontal: false, vertical: true)
+      if creatorLinksAreVertical {
+        VStack(spacing: AppStyle.Space.small) { creatorLinks }
+      } else {
+        HStack(spacing: AppStyle.Space.small) { creatorLinks }
       }
-      .frame(maxWidth: .infinity)
-      .padding(.vertical, AppStyle.Space.small)
-      .listRowInsets(.horizontal, 0)
-      .listRowBackground(Color.clear)
-      .listRowSeparator(.hidden)
-      .accessibilityElement(children: .contain)
-      .accessibilityIdentifier("settings.creator")
     }
+    .frame(maxWidth: .infinity)
+    .padding(.vertical, AppStyle.Space.small)
+    .listRowInsets(.horizontal, 0)
+    .listRowBackground(Color.clear)
+    .listRowSeparator(.hidden)
+    .accessibilityElement(children: .contain)
+    .accessibilityIdentifier("settings.creator")
   }
 
   private var creatorCoin: some View {
@@ -239,6 +281,7 @@ struct SettingsScreen: View {
 
   private func flipCreatorCoin() {
     guard !creatorCoinIsFlipping else { return }
+    AppHaptics.play(.action)
     creatorCoinSpinID += 1
     let candidates = CreatorCoinCurrency.allCases.filter { $0 != creatorCoinLastCurrency }
     if let currency = candidates.randomElement() {
@@ -278,13 +321,19 @@ struct SettingsScreen: View {
       }
       .accessibilityIdentifier("settings.contact.email")
       if let url = URL(string: "https://dimasike.com") {
-        Link(destination: url) {
+        Button {
+          AppHaptics.play(.action)
+          openURL(url)
+        } label: {
           creatorContactLabel(.Settings.contactWebsite, symbol: "globe")
         }
         .accessibilityIdentifier("settings.contact.website")
       }
       if let url = URL(string: "https://x.com/dimasike_") {
-        Link(destination: url) {
+        Button {
+          AppHaptics.play(.action)
+          openURL(url)
+        } label: {
           creatorContactLabel(.Settings.contactX, asset: "XLogo")
         }
         .accessibilityIdentifier("settings.contact.x")
@@ -307,6 +356,7 @@ struct SettingsScreen: View {
       if let asset {
         Image(asset, bundle: .module)
           .resizable()
+          .foregroundStyle(Color.primary)
           .scaledToFit()
           .frame(width: 14, height: 14)
           .accessibilityHidden(true)
@@ -329,7 +379,11 @@ struct SettingsScreen: View {
       Picker(
         selection: Binding(
           get: { model.preferences.metalUnit },
-          set: { model.setMetalUnit($0) }
+          set: { value in
+            guard value != model.preferences.metalUnit else { return }
+            model.setMetalUnit(value)
+            AppHaptics.play(model.issue == .preferenceSaveFailed ? .error : .selection)
+          }
         )
       ) {
         ForEach(MetalUnit.allCases, id: \.self) { unit in
@@ -352,60 +406,79 @@ struct SettingsScreen: View {
   }
 
   private var languageControl: some View {
-    Section {
-      Button {
-        if let url = URL(string: UIApplication.openSettingsURLString) {
-          UIApplication.shared.open(url)
-        }
-      } label: {
-        Label(.Settings.language, systemImage: "globe")
+    Button {
+      AppHaptics.play(.action)
+      if let url = URL(string: UIApplication.openSettingsURLString) {
+        openURL(url)
       }
-      .accessibilityIdentifier("settings.language")
-    } footer: {
-      Text(.Settings.languageSettingsExplanation)
+    } label: {
+      Label(.Settings.language, systemImage: "globe")
     }
+    .accessibilityIdentifier("settings.language")
   }
 
   private var aboutRates: some View {
     Section(.Settings.aboutRates) {
-      NavigationLink {
-        rateInformation
-      } label: {
+      navigationRow(
+        .Settings.rates, systemImage: "arrow.triangle.2.circlepath", destination: .rates
+      )
+      .accessibilityIdentifier("settings.rates")
+      navigationRow(.Settings.sources, systemImage: "network", destination: .sources)
+        .accessibilityIdentifier("settings.sources")
+    }
+  }
+
+  private func navigationRow(
+    _ title: LocalizedStringResource, systemImage: String, destination: Destination
+  ) -> some View {
+    Button {
+      AppHaptics.play(.action)
+      self.destination = destination
+    } label: {
+      HStack {
         Label {
-          Text(.Settings.rates).foregroundStyle(Color.primary)
+          Text(title).foregroundStyle(Color.primary)
         } icon: {
-          Image(systemName: "arrow.triangle.2.circlepath").foregroundStyle(.tint)
+          Image(systemName: systemImage).foregroundStyle(.tint)
         }
+        Spacer()
+        Image(systemName: "chevron.right")
+          .font(AppStyle.font(.footnote, weight: .semibold))
+          .foregroundStyle(.tertiary)
+          .accessibilityHidden(true)
       }
-      NavigationLink {
-        List { sourceInformation }
-          .navigationTitle(.Settings.sources)
-          .navigationBarTitleDisplayMode(.inline)
+    }
+  }
+
+  @ViewBuilder
+  private func externalLink(
+    _ title: LocalizedStringResource, systemImage: String, destination: String
+  ) -> some View {
+    if let url = URL(string: destination) {
+      Button {
+        AppHaptics.play(.action)
+        openURL(url)
       } label: {
-        Label {
-          Text(.Settings.sources).foregroundStyle(Color.primary)
-        } icon: {
-          Image(systemName: "network").foregroundStyle(.tint)
-        }
-      }
-      NavigationLink {
-        List { acknowledgements }
-          .navigationTitle(.Settings.acknowledgements)
-          .navigationBarTitleDisplayMode(.inline)
-      } label: {
-        Label {
-          Text(.Settings.acknowledgements).foregroundStyle(Color.primary)
-        } icon: {
-          Image(systemName: "heart").foregroundStyle(.tint)
+        HStack {
+          Label(title, systemImage: systemImage)
+          Spacer()
+          Image(systemName: "arrow.up.right")
+            .font(AppStyle.font(.caption))
+            .accessibilityHidden(true)
         }
       }
     }
   }
 
   private var appearanceControls: some View {
-    Section(.Settings.appearance) {
+    Section {
       themeControl
       accentControl
+      languageControl
+    } header: {
+      Text(.Settings.personalization)
+    } footer: {
+      Text(.Settings.languageSettingsExplanation)
     }
   }
 
@@ -413,7 +486,11 @@ struct SettingsScreen: View {
     Picker(
       selection: Binding(
         get: { model.preferences.theme },
-        set: { value in model.setTheme(value) }
+        set: { value in
+          guard value != model.preferences.theme else { return }
+          model.setTheme(value)
+          AppHaptics.play(.selection)
+        }
       )
     ) {
       ForEach(SettingsTheme.allCases) { theme in
@@ -436,7 +513,11 @@ struct SettingsScreen: View {
         .Settings.accentColor,
         selection: Binding(
           get: { model.preferences.accent },
-          set: { value in model.setAccent(value) }
+          set: { value in
+            guard value != model.preferences.accent else { return }
+            model.setAccent(value)
+            AppHaptics.play(.selection)
+          }
         )
       ) {
         ForEach(SettingsAccent.allCases) { accent in
@@ -479,7 +560,6 @@ struct SettingsScreen: View {
     .accessibilityIdentifier("settings.accent")
     .accessibilityValue(Text(model.preferences.accent.title))
     .id(model.preferences.accent)
-    .onChange(of: model.preferences.accent) { _, _ in AppHaptics.play(.selection) }
   }
 
   private func restartOnboarding() {
@@ -538,7 +618,10 @@ struct SettingsScreen: View {
   ) -> some View {
     VStack(alignment: .leading, spacing: AppStyle.Space.small) {
       if let website = URL(string: website) {
-        Link(destination: website) {
+        Button {
+          AppHaptics.play(.action)
+          openURL(website)
+        } label: {
           HStack {
             Text(verbatim: name).font(AppStyle.font(.headline)).foregroundStyle(Color.primary)
             Spacer()
@@ -548,12 +631,16 @@ struct SettingsScreen: View {
       }
       Text(description).font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
       if let license, let licenseURL, let url = URL(string: licenseURL) {
-        Link(destination: url) {
+        Button {
+          AppHaptics.play(.action)
+          openURL(url)
+        } label: {
           Label(license, systemImage: "doc.text")
             .font(AppStyle.font(.caption, weight: .medium))
         }
       }
     }
+    .buttonStyle(.borderless)
     .padding(.vertical, AppStyle.Space.small)
   }
 
@@ -565,6 +652,7 @@ struct SettingsScreen: View {
           date: snapshot.fetchedAt == .distantPast ? nil : snapshot.fetchedAt)
         timestampRow(.Settings.lastChecked, date: snapshot.checkedAt)
         Button(.Settings.refreshNow, systemImage: "arrow.clockwise") {
+          AppHaptics.play(.action)
           model.refresh()
         }
         .disabled(isRefreshing)
@@ -579,12 +667,22 @@ struct SettingsScreen: View {
       Section(.Settings.quoteInformation) {
         ForEach(codes, id: \.self) { code in
           quoteRow(code)
-
         }
       }
     }
     .navigationTitle(.Settings.rates)
     .navigationBarTitleDisplayMode(.inline)
+    .onChange(of: isRefreshing) { old, new in
+      if old && !new {
+        if model.issue == .refreshFailed {
+          AppHaptics.play(.error)
+        } else if model.rates.warning != nil {
+          AppHaptics.play(.warning)
+        } else {
+          AppHaptics.play(.success)
+        }
+      }
+    }
   }
 
   private func quoteRow(_ code: String) -> some View {
