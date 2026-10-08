@@ -4,7 +4,7 @@ import { deviceProfile } from '../device-profile.js';
 
 test('settings groups expose rates, credits and legal links', { tags: ['core'] }, async ({ start, agent, app, screen, device }) => {
   const address = deviceProfile === 'ipad'
-    ? screen.getByTestId(/^SafariWindow\?/).getByTestId('TabBarItemTitleContainer').first()
+    ? screen.getByTestId(/^SearchFieldItemView\?isActive=true/).first()
     : screen.getByTestId(/^CapsuleNavigationBar\?/).first();
   const focusedAddress = async () => {
     await address.tap();
