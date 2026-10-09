@@ -88,6 +88,8 @@ The fixtures use the production provider decoders with a fixed HTTP client. Fawa
 
 Home Screen setup uses [widgetctl](https://github.com/DimaMishchenko/widgetctl), pinned as a GitHub dev dependency. It installs/configures the requested kind and size, preserves other apps’ widgets and unloads its helper after the module. Tests still validate rendered data and interactions. Set `CURRENCY_E2E_WIDGET_SETUP=gallery` to exercise system installation; private-configuration cases then skip. Lock Screen installation uses system UI.
 
+Private History display fixtures explicitly configure EUR/USD/month because replacing a widget can retain its previous pair. Board checks reveal the installed widget again after returning from the app.
+
 Cache remains enabled and local, ignored by Git. Fresh checkouts record their own. Inspect it with `npx e2e cache ls` or `stats`; `clear` removes all recordings. Unused entries are not automatically pruned. Keep goal/test identities stable and bump `app.identity` when fixture semantics change. Diagnose failed outcomes before accepting replacement recordings. `--no-cache` neither reads nor writes cache. Visual assertions and cache misses still require model access; these simulator tests run locally, not in CI.
 
 ## Limitations
