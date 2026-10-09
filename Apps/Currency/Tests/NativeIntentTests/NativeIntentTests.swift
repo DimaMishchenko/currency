@@ -30,8 +30,7 @@ final class NativeIntentTests: XCTestCase {
 
   func testMetalIntentReadsSavedGramPreferenceAfterAppTermination() async throws {
     let app = launchReadyApp()
-    app.buttons["Options"].tap()
-    app.buttons["converter.settings"].tap()
+    openSettings(app)
     let unit = app.buttons["settings.metalUnit"]
     XCTAssertTrue(unit.waitForExistence(timeout: 5))
     unit.tap()
@@ -50,8 +49,7 @@ final class NativeIntentTests: XCTestCase {
     XCTAssertFalse(text.contains("troy oz"))
     XCTAssertNotEqual(app.state, .runningForeground)
     _ = launchReadyApp()
-    app.buttons["Options"].tap()
-    app.buttons["converter.settings"].tap()
+    openSettings(app)
     app.buttons["settings.metalUnit"].tap()
     app.buttons["settings.metalUnit.troyOunce"].tap()
   }
@@ -267,8 +265,7 @@ final class NativeIntentTests: XCTestCase {
     app.buttons["Close"].tap()
     let restored = try await annotationIDs(hidden: false)
     XCTAssertEqual(restored, visible)
-    app.buttons["Options"].tap()
-    app.buttons["converter.settings"].tap()
+    openSettings(app)
     let hidden = try await annotationIDs(hidden: true)
     XCTAssertTrue(hidden.isEmpty, "Hidden converter annotations: \(hidden)")
   }
@@ -289,6 +286,23 @@ final class NativeIntentTests: XCTestCase {
     let app = XCUIApplication(bundleIdentifier: "com.dimasike.currency")
     app.launchArguments = ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
     return app
+  }
+
+  private func openSettings(_ app: XCUIApplication) {
+    app.buttons["Options"].tap()
+    let menuItem = app.buttons["converter.settings"]
+    XCTAssertTrue(menuItem.waitForExistence(timeout: 5))
+    let hittable = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "hittable == true"), object: menuItem)
+    XCTAssertEqual(XCTWaiter.wait(for: [hittable], timeout: 5), .completed)
+    menuItem.tap()
+    let theme = app.buttons["settings.theme"]
+    if !theme.waitForExistence(timeout: 2), menuItem.exists, menuItem.isHittable {
+      menuItem.tap()
+    }
+    if !theme.waitForExistence(timeout: 5) {
+      XCTFail("Settings did not open. \(app.debugDescription)")
+    }
   }
 
   private func launchReadyApp() -> XCUIApplication {

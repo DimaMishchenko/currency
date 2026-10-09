@@ -713,95 +713,6 @@
         }
       }
     },
-    "gettingStarted": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Getting started"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "入门"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "使い方"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Primeros pasos"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Erste Schritte"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Premiers pas"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Primeiros passos"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "시작하기"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "入門"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Primi passi"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Başlangıç"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Начало работы"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Початок роботи"
-          }
-        },
-        "et": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Alustamine"
-          }
-        }
-      }
-    },
     "appearanceSystem": {
       "extractionState": "manual",
       "localizations": {
@@ -1877,85 +1788,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "About these rates"
+            "value": "Exchange rates"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "关于这些汇率"
+            "value": "汇率"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "レートについて"
+            "value": "為替レート"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sobre estos tipos de cambio"
+            "value": "Tipos de cambio"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Über diese Kurse"
+            "value": "Wechselkurse"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "À propos de ces taux"
+            "value": "Taux de change"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sobre estas taxas"
+            "value": "Taxas de câmbio"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "환율 정보"
+            "value": "환율"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "關於這些匯率"
+            "value": "匯率"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Informazioni sui tassi"
+            "value": "Tassi di cambio"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bu kurlar hakkında"
+            "value": "Döviz kurları"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Об этих курсах"
+            "value": "Курсы валют"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Про ці курси"
+            "value": "Курси валют"
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Nende kursside kohta"
+            "value": "Vahetuskursid"
           }
         }
       }
@@ -1967,85 +1878,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Saved for offline use. Bank fees aren’t included."
+            "value": "Estimates only, not financial advice. Rates may be delayed or saved offline; fees and spreads are excluded. Verify the final rate with your provider."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "已保存以供离线使用。不含银行手续费。"
+            "value": "仅供估算，不构成财务建议。汇率可能延迟或保存在离线缓存中，不含手续费和买卖价差。请向服务提供商确认最终汇率。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "オフライン用に保存済み。銀行手数料は含みません。"
+            "value": "概算であり、金融上の助言ではありません。レートは遅延またはオフライン保存されている場合があり、手数料やスプレッドは含まれません。最終レートはサービス提供元に確認してください。"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Guardados para uso sin conexión. No incluyen comisiones bancarias."
+            "value": "Solo estimaciones, no asesoramiento financiero. Los tipos pueden estar retrasados o guardados sin conexión; no incluyen comisiones ni diferenciales. Confirma el tipo final con tu proveedor."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Für die Offline-Nutzung gespeichert. Bankgebühren sind nicht enthalten."
+            "value": "Nur Schätzwerte, keine Finanzberatung. Kurse können verzögert oder offline gespeichert sein; Gebühren und Spreads sind nicht enthalten. Prüfe den endgültigen Kurs bei deinem Anbieter."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Enregistrés pour une utilisation hors ligne. Les frais bancaires ne sont pas inclus."
+            "value": "Estimations uniquement, sans conseil financier. Les taux peuvent être différés ou enregistrés hors ligne ; les frais et écarts de taux sont exclus. Vérifie le taux final auprès de ton prestataire."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Salvas para uso offline. Tarifas bancárias não estão incluídas."
+            "value": "Apenas estimativas, não aconselhamento financeiro. As taxas podem estar atrasadas ou salvas offline; tarifas e spreads não estão incluídos. Confirme a taxa final com seu provedor."
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "오프라인 사용을 위해 저장되었습니다. 은행 수수료는 포함되지 않습니다."
+            "value": "추정치이며 금융 조언이 아닙니다. 환율이 지연되거나 오프라인에 저장된 값일 수 있으며, 수수료와 스프레드는 포함되지 않습니다. 최종 환율은 서비스 제공업체에 확인하세요."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "已儲存以供離線使用。不含銀行手續費。"
+            "value": "僅供估算，不構成財務建議。匯率可能延遲或儲存在離線快取中，不含手續費和買賣價差。請向服務提供商確認最終匯率。"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Salvati per l’uso offline. Le commissioni bancarie non sono incluse."
+            "value": "Solo stime, non consigli finanziari. I tassi possono essere ritardati o salvati offline; commissioni e spread sono esclusi. Verifica il tasso finale con il tuo fornitore."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Çevrimdışı kullanım için kaydedildi. Banka ücretleri dahil değildir."
+            "value": "Yalnızca tahmini değerlerdir, finansal tavsiye değildir. Kurlar gecikmeli veya çevrimdışı kaydedilmiş olabilir; ücretler ve alış-satış farkları dahil değildir. Nihai kuru hizmet sağlayıcınızla doğrulayın."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Сохранены для работы без интернета. Банковские комиссии не включены."
+            "value": "Только приблизительные значения, не финансовая рекомендация. Курсы могут быть устаревшими или сохранёнными офлайн; комиссии и спреды не включены. Уточните итоговый курс у поставщика услуг."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Збережено для роботи без інтернету. Банківські комісії не включено."
+            "value": "Лише приблизні значення, не фінансова порада. Курси можуть бути застарілими або збереженими офлайн; комісії та спреди не включено. Уточніть остаточний курс у постачальника послуг."
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Salvestatud võrguühenduseta kasutamiseks. Pangatasud ei sisaldu."
+            "value": "Ainult hinnangud, mitte finantsnõuanded. Kursid võivad olla viivitusega või võrguühenduseta salvestatud; tasud ja kursivahed ei sisaldu. Kontrolli lõplikku kurssi teenusepakkujalt."
           }
         }
       }
@@ -3218,85 +3129,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Daily fiat reference rates and historical exchange rates."
+            "value": "Daily reference and historical rates from central banks and official institutions."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "法定货币每日参考汇率和历史汇率。"
+            "value": "来自中央银行和官方机构的每日参考汇率及历史汇率。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "法定通貨の日次参考レートと過去の為替レート。"
+            "value": "中央銀行や公的機関の日次参照レートと過去のレート。"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tipos de cambio de referencia diarios de monedas fiduciarias y tipos de cambio históricos."
+            "value": "Tipos de referencia diarios e históricos de bancos centrales e instituciones oficiales."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tägliche Fiatreferenzkurse und historische Wechselkurse."
+            "value": "Tägliche Referenzkurse und historische Kurse von Zentralbanken und offiziellen Institutionen."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Taux de change de référence quotidiens des monnaies fiduciaires et taux de change historiques."
+            "value": "Taux de référence quotidiens et historiques des banques centrales et institutions officielles."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Taxas de câmbio de referência diárias de moedas fiduciárias e taxas de câmbio históricas."
+            "value": "Taxas de referência diárias e históricas de bancos centrais e instituições oficiais."
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "법정 통화의 일일 참고 환율 및 과거 환율입니다."
+            "value": "중앙은행 및 공식 기관의 일일 기준 환율과 과거 환율."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "法定貨幣每日參考匯率和歷史匯率。"
+            "value": "來自中央銀行和官方機構的每日參考匯率及歷史匯率。"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tassi di riferimento giornalieri delle valute tradizionali e tassi di cambio storici."
+            "value": "Tassi di riferimento giornalieri e storici di banche centrali e istituzioni ufficiali."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Günlük itibari para referans kurları ve geçmiş döviz kurları."
+            "value": "Merkez bankaları ve resmî kurumların günlük referans ve geçmiş kurları."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ежедневные справочные курсы обычных валют и исторические курсы обмена."
+            "value": "Ежедневные справочные и исторические курсы центральных банков и официальных учреждений."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Щоденні довідкові курси звичайних валют та історичні курси обміну."
+            "value": "Щоденні довідкові та історичні курси центральних банків і офіційних установ."
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tavavaluutade igapäevased võrdluskursid ja ajaloolised vahetuskursid."
+            "value": "Keskpankade ja ametlike asutuste päevased võrdluskursid ning ajaloolised kursid."
           }
         }
       }
@@ -6145,6 +6056,540 @@
           "stringUnit": {
             "state": "translated",
             "value": "Leidsid vea või sul on idee? Saada mulle tagasisidet."
+          }
+        }
+      }
+    },
+    "personalization": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personalization"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personalisierung"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personalización"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Isikupärastamine"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personnalisation"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personalizzazione"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "カスタマイズ"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "개인화"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personalização"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Персонализация"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Персоналізація"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kişiselleştirme"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "个性化"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "個人化"
+          }
+        }
+      }
+    },
+    "help": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Help"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hilfe"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ayuda"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abi"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aide"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aiuto"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ヘルプ"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "도움말"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajuda"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Помощь"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Допомога"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yardım"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "帮助"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "協助"
+          }
+        }
+      }
+    },
+    "about": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Über die App"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acerca de"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teave"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À propos"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Informazioni"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このアプリについて"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "앱 정보"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sobre"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "О приложении"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Про застосунок"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hakkında"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关于"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "關於"
+          }
+        }
+      }
+    },
+    "privacyPolicy": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Privacy policy"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Datenschutzerklärung"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Política de privacidad"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Privaatsuspoliitika"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Politique de confidentialité"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Informativa sulla privacy"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "プライバシーポリシー"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "개인정보 처리방침"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Política de privacidade"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Политика конфиденциальности"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Політика конфіденційності"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gizlilik politikası"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隐私政策"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隱私權政策"
+          }
+        }
+      }
+    },
+    "termsOfUse": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terms of use"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nutzungsbedingungen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Condiciones de uso"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kasutustingimused"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conditions d’utilisation"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Condizioni d’uso"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "利用規約"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이용약관"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Termos de uso"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Условия использования"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Умови використання"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kullanım koşulları"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用条款"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用條款"
+          }
+        }
+      }
+    },
+    "openSource": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open source"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quellcode"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Código abierto"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avatud lähtekood"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Code source"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Codice sorgente"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "オープンソース"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오픈 소스"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Código aberto"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открытый исходный код"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Açık kaynak"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відкритий вихідний код"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开源代码"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "開放原始碼"
           }
         }
       }

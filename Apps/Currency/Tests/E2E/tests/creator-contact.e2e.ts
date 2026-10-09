@@ -7,11 +7,12 @@ test('creator website opens in Safari and preserves Settings', { tags: ['core'] 
   await device.openLink('https://example.com', { app: 'com.apple.mobilesafari' });
   const address = deviceProfile === 'ipad'
     ? screen.getByTestId(/^SafariWindow\?/).getByTestId('TabBarItemTitleContainer').first()
-    : screen.getByTestId('TabBarItemTitle');
+    : screen.getByLabel('Address', { exact: true });
   await expect(address).toHaveValue(/^(?:\u200e)?(?:https:\/\/)?example\.com\/?$/);
   await start('ready-converter');
-  await agent.act('Open Options and tap Settings. Finish on the Settings screen showing Theme and Accent color.');
-  await agent.act('Scroll Settings to the very bottom so the creator footer and Website contact button are visible.');
+  await screen.getByTestId('converter.options').tap();
+  await screen.getByTestId('converter.settings').tap();
+  await agent.act('Scroll Settings to the bottom so the About section, creator footer and Website contact button are visible.');
   await screen.getByTestId('settings.contact.website').tap();
   await device.openApp('com.apple.mobilesafari');
   await expect(address).toHaveValue(/^(?:\u200e)?(?:https:\/\/)?dimasike\.com\/?$/);
@@ -27,13 +28,17 @@ test('feedback email fallback and X preserve Settings', { tags: ['core'] }, asyn
   await device.openLink('https://example.com', { app: 'com.apple.mobilesafari' });
   const address = deviceProfile === 'ipad'
     ? screen.getByTestId(/^SafariWindow\?/).getByTestId('TabBarItemTitleContainer').first()
-    : screen.getByTestId('TabBarItemTitle');
+    : screen.getByLabel('Address', { exact: true });
   await expect(address).toHaveValue(/^(?:\u200e)?(?:https:\/\/)?example\.com\/?$/);
   await start('ready-converter');
-  await agent.act('Open Options and tap Settings, then scroll to the very bottom to show the single Feedback row and its bug/idea description above the creator portrait.');
+  await screen.getByTestId('converter.options').tap();
+  await screen.getByTestId('converter.settings').tap();
+  await agent.act('Scroll Settings until the Help section, its single Feedback row and bug/idea description are visible. Keep Feedback visible; the creator footer is in the separate About section below.');
   const feedback = screen.getByTestId('settings.feedback');
   const emailOption = screen.getByTestId('settings.feedback.email').last();
   const xOption = screen.getByTestId('settings.feedback.x').last();
+  await expect(screen.getByText('Help')).toBeVisible();
+  await expect(feedback).toBeVisible();
   await expect(screen.getByText('Found a bug or have an idea? Send me your feedback.')).toBeVisible();
   await feedback.tap();
   await expect(emailOption).toBeVisible();
@@ -55,5 +60,5 @@ test('feedback email fallback and X preserve Settings', { tags: ['core'] }, asyn
   await app.screenshot('feedback-x-safari');
   await device.openApp('com.dimasike.currency');
   await expect(feedback).toBeVisible();
-  await expect(screen.getByText('Made by Dimasike')).toBeVisible();
+  await expect(screen.getByText('Help')).toBeVisible();
 });

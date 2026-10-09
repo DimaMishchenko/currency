@@ -62,8 +62,9 @@ These are representative outcomes, not exhaustive coverage of each feature ID.
 | PREF-05, WID-04–08 | [metal-widget-display](tests/metal-widget-display.e2e.ts) | Board, Cash, Pocket, Mental Math and History show Gold amounts and visible measurement units |
 | PREF-05, WID-02, WID-10 | [metal-widget](tests/metal-widget.e2e.ts) | Saved grams preference reaches Calculator; keypad edits return to app with matching metal conversion |
 | PREF-05, CONV-01, CONV-05 | [metal-measurement](tests/metal-measurement.e2e.ts) | Seeded metal destination units and exact displayed conversions change; grams and seeded metal source weight survive restart |
-| PREF-01, PREF-04, PREF-06–08 | [preferences](tests/preferences.e2e.ts) | Creator footer below Feedback and Email/Website/X controls are visible in light/dark appearance; a focused footer journey checks aligned outer insets, Email/Website/X icons, and readable single-line pills and the portrait is visible; Dark persists, converter stays unchanged and version remains visible |
-| PREF-06, PREF-08 | [creator-contact](tests/creator-contact.e2e.ts) | Website opens dimasike.com in Safari; returning preserves the Settings screen and theme; Feedback opens an Email/X alert, cancellation preserves Settings, selected Email offers a copyable address on simulators without Mail, and selected X opens its website |
+| PREF-04 | [settings-information](tests/settings-information.e2e.ts) | Rates disclaimer, sources, credits and About legal/source controls are accessible; Open source opens the Currency repository in Safari; returning preserves Settings |
+| PREF-01, PREF-04, PREF-06–08 | [preferences](tests/preferences.e2e.ts) | Help feedback and About legal/creator controls are visible; creator contact pills align with native legal rows; light/dark appearance, theme persistence, converter values and readable version are preserved |
+| PREF-06, PREF-08 | [creator-contact](tests/creator-contact.e2e.ts) | Website opens dimasike.com in Safari; returning preserves the Settings screen and theme; Feedback in Help opens an Email/X alert, cancellation preserves Settings, selected Email offers a copyable address on simulators without Mail, and selected X opens its website |
 | WID-02, WID-10, CONV-05 | [home-screen-widget](tests/home-screen-widget.e2e.ts), [app-to-widget](tests/app-to-widget.e2e.ts) | Calculator keypad → app and app edits → widget |
 | WID-04–08, WID-10 | [widget-display](tests/widget-display.e2e.ts) | Board, Cash, Pocket, Mental Math and History data; additional sizes |
 | WID-04, WID-06–07 | [widget-configuration](tests/widget-configuration.e2e.ts) | Reversed pairs and Custom Board amount/list independent of app input |
@@ -81,6 +82,7 @@ Cache remains enabled and local, ignored by Git. Fresh checkouts record their ow
 
 ## Limitations
 
+- External links verify the exact native browser URL and return on iPhone. On iPad, Safari exposes only the hostname and the pinned driver cannot reliably copy the full address, so that browser check is blocked; Settings layout is covered separately. Website availability depends on the network.
 - Menu pickers can ignore whole-row driver taps. Target the visible selected-value text (as in the measurement journey), then select the option by its identifier.
 - Replay reliability is provisional: mobile screen identities and keypad targeting have caused misses or failures. Keep native outcome assertions strict.
 - The driver misprojects some widget descendants. Calculator tests use a bounded tap workaround for the verified medium, two-currency and three-currency, English iPhone layouts; three-currency output also needs vision.

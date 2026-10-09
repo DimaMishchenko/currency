@@ -35,3 +35,7 @@ Open the `Currency` scheme and choose an iOS 26+ simulator. No Tuist account is 
 ## Acknowledgements
 
 [e2e](https://github.com/tester-army/e2e) powers the real-app end-to-end test suite.
+
+## App information
+
+[Privacy Policy](Documentation/PrivacyPolicy.md) · [Terms of Use](Documentation/TermsOfUse.md)
