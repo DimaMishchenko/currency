@@ -35,10 +35,11 @@ test(`provider policy ${mode} preserves crypto fallback, ranges and credits afte
     }
     await source.tap();
     await expect(source).toHaveValue('Expanded');
-    await agent.act('Scroll in Details until the current conversion provider information below the expanded source disclosure is visible. Keep Details open.');
+    await agent.act('Scroll in Details until the exact text "Crypto history uses daily rates and completed hourly candles when available. Historical and current conversion sources may differ." is visible. Use that exact text when scrolling to text. Keep Details open.');
     await expect(screen.getByText(enhanced ? /Coinbase.*retrieved/i : /Fawaz · daily ·/i)).toBeVisible();
     await app.screenshot(capture);
-    await screen.getByTestId('currency.details.close').tap();
+    await agent.act('Close Details & history with the circular X at the top right and return to the converter.');
+    await expect(screen.getByTestId('currency.details.close')).toBeHidden();
     await expect(bitcoin).toHaveAccessibleName(expectedAmount);
   };
 
