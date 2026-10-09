@@ -120,6 +120,28 @@ struct CurrencyDetailsTests {
       CurrencyDetailsModel.ranges == [.day, .week, .month, .quarter, .yearToDate, .year, .all])
   }
 
+  @Test func injectedDailyCapabilityKeepsCryptoHistoryWithoutIntradayControls() async {
+    var capabilityPair: [String] = []
+    var requestedRange: HistoryRange?
+    let model = CurrencyDetailsModel(
+      input: .init(
+        code: "EUR", reference: "BTC", snapshot: RateSnapshot(), referencePolicy: .requestedPair),
+      dependencies: .init(
+        supportsIntraday: { base, quote in
+          capabilityPair = [base, quote]
+          return false
+        },
+        loadHistory: { _, _, range in
+          requestedRange = range
+          return HistoryResult(series: nil, issue: .unavailable)
+        }))
+    #expect(!model.availableRanges.contains(.day))
+    #expect(capabilityPair == ["BTC", "EUR"])
+    #expect(model.availableRanges.contains(.month))
+    await model.load()
+    #expect(requestedRange == .month)
+  }
+
   @Test func supersededNoncooperatingRequestCannotReplaceNewerRange() async {
     let pending = PendingHistory()
     let model = CurrencyDetailsModel(

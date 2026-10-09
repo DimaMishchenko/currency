@@ -5,15 +5,20 @@ import Foundation
 public struct RateStore: Sendable {
   /// Directory shared by the hosts that exchange rate snapshots.
   public let directory: URL
+  private let policy: RateProviderPolicy?
   /// Creates a coordinated rate store in a host-supplied directory.
-  public init(directory: URL) { self.directory = directory }
+  /// A nil policy preserves injected provider provenance and a thirty-minute refresh cadence.
+  public init(directory: URL, policy: RateProviderPolicy? = nil) {
+    self.directory = directory
+    self.policy = policy
+  }
   private var rates: RateCache { RateCache(directory: directory) }
   /// Loads the latest valid snapshot from coordinated shared storage.
-  public func loadRates() -> RateSnapshot { rates.load() }
+  public func loadRates() -> RateSnapshot { filter(rates.load()) }
   /// Refreshes shared rates, preserving newer results committed by another host.
   ///
   /// Network requests run outside file coordination. Unless forced, attempts are spaced
-  /// thirty minutes apart. The final commit merges publication and observation metadata.
+  /// according to the selected provider cadence. The final commit merges publication and observation metadata.
   public func refreshRates(
     using service: RateService, force: Bool = false, now: Date = .now,
     providerTimeout: Duration? = nil
@@ -21,7 +26,8 @@ public struct RateStore: Sendable {
     let previous = loadRates()
     guard
       force || now < (previous.checkedAt ?? .distantPast)
-        || now.timeIntervalSince(previous.checkedAt ?? .distantPast) >= 1800
+        || now.timeIntervalSince(previous.checkedAt ?? .distantPast)
+          >= (policy?.refreshInterval ?? 1800)
     else {
       return RefreshResult(snapshot: previous, warning: nil)
     }
@@ -30,12 +36,16 @@ public struct RateStore: Sendable {
     try Task.checkCancellation()
     return try coordinate("rates.json") {
       let current = loadRates()
-      let merged = current.merging(result.snapshot)
+      let merged = filter(current.merging(filter(result.snapshot)))
       try rates.save(merged)
       return RefreshResult(
         snapshot: merged,
         warning: (current.checkedAt ?? .distantPast) > now ? nil : result.warning)
     }
+  }
+
+  private func filter(_ snapshot: RateSnapshot) -> RateSnapshot {
+    policy?.filter(snapshot) ?? snapshot
   }
 
   func coordinate<Value>(_ filename: String, action: () throws -> Value) throws -> Value {
@@ -45,10 +55,9 @@ public struct RateStore: Sendable {
   public func saveBootstrapRates(_ snapshot: RateSnapshot, now: Date = .now) throws -> RateSnapshot
   {
     try coordinate("rates.json") {
-      // The incoming snapshot wins equal-attempt ties: it includes later provider deliveries.
       let saved = loadRates()
       let current = saved.hasValidFetchTimestamp(now: now) ? saved : RateSnapshot()
-      let merged = snapshot.merging(current)
+      let merged = filter(filter(snapshot).merging(current))
       try RateCache(directory: directory).save(merged)
       return merged
     }

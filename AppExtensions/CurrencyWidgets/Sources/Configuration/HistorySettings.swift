@@ -1,5 +1,6 @@
 import AppIntents
 import Conversion
+import CurrencyApplication
 import ExchangeRates
 import Foundation
 import Widgets
@@ -213,6 +214,8 @@ struct HistorySettings: WidgetConfigurationIntent {
       default: choice.id
       }
     }
-    return HistoryWidgetPair(app: input, base: resolve(base), quote: resolve(comparison))
+    return HistoryWidgetPair(
+      app: input, base: resolve(base), quote: resolve(comparison),
+      policy: CurrencyRateConfiguration.policy)
   }
 }

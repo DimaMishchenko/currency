@@ -367,85 +367,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Crypto history uses completed Coinbase candles and, where needed, reference exchange rates. Historical and current conversion sources may differ."
+            "value": "Crypto history uses daily rates and completed hourly candles when available. Historical and current conversion sources may differ."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "加密货币历史使用 Coinbase 已收盘的 K 线，并在需要时使用参考汇率。历史和当前换算的数据来源可能不同。"
+            "value": "加密货币历史使用每日汇率，以及可用时已收盘的小时K线。历史和当前换算的数据来源可能不同。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "暗号資産の履歴にはCoinbaseの確定済みローソク足を使用し、必要に応じて参考為替レートも使用します。過去と現在の換算データは異なる提供元を使う場合があります。"
+            "value": "暗号資産の履歴には日次レートと、利用可能な場合は確定済みの時間足を使用します。過去と現在の換算データは異なる提供元を使う場合があります。"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "El historial de criptomonedas usa velas cerradas de Coinbase y, cuando es necesario, tipos de cambio de referencia. Las fuentes de las conversiones históricas y actuales pueden diferir."
+            "value": "El historial de criptomonedas usa tipos diarios y velas horarias cerradas cuando están disponibles. Las fuentes históricas y actuales pueden diferir."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Der Kryptoverlauf verwendet abgeschlossene Coinbase-Kerzen und bei Bedarf Referenzwechselkurse. Historische und aktuelle Umrechnungskurse können aus unterschiedlichen Quellen stammen."
+            "value": "Der Kryptoverlauf verwendet Tageskurse und, wenn verfügbar, abgeschlossene Stundenkerzen. Historische und aktuelle Umrechnungskurse können aus unterschiedlichen Quellen stammen."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "L’historique des cryptomonnaies utilise les bougies clôturées de Coinbase et, si nécessaire, des taux de change de référence. Les sources des conversions historiques et actuelles peuvent différer."
+            "value": "L’historique des cryptomonnaies utilise des taux quotidiens et, si disponibles, des bougies horaires clôturées. Les sources historiques et actuelles peuvent différer."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "O histórico de criptomoedas usa candles fechados da Coinbase e, quando necessário, taxas de câmbio de referência. As fontes das conversões históricas e atuais podem diferir."
+            "value": "O histórico de criptomoedas usa taxas diárias e candles horários fechados, quando disponíveis. As fontes históricas e atuais podem diferir."
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "암호화폐의 과거 데이터는 Coinbase의 마감된 캔들을 사용하며, 필요한 경우 참고 환율도 적용합니다. 과거 환율과 현재 환율의 데이터 출처가 다를 수 있습니다."
+            "value": "암호화폐의 과거 데이터는 일별 환율과 사용 가능한 경우 마감된 시간별 캔들을 사용합니다. 과거 환율과 현재 환율의 데이터 출처가 다를 수 있습니다."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "加密貨幣歷史使用 Coinbase 已收盤的 K 線，並在需要時使用參考匯率。歷史和目前換算的資料來源可能不同。"
+            "value": "加密貨幣歷史使用每日匯率，以及可用時已收盤的小時K線。歷史和目前換算的資料來源可能不同。"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "La cronologia delle criptovalute usa candele completate di Coinbase e, quando necessario, tassi di cambio di riferimento. Le fonti delle conversioni storiche e attuali possono differire."
+            "value": "La cronologia delle criptovalute usa tassi giornalieri e, se disponibili, candele orarie completate. Le fonti storiche e attuali possono differire."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kripto para geçmişi, tamamlanmış Coinbase mumlarını ve gerektiğinde referans döviz kurlarını kullanır. Geçmiş ve güncel çevirme kurları farklı kaynaklardan gelebilir."
+            "value": "Kripto para geçmişi günlük kurları ve varsa tamamlanmış saatlik mumları kullanır. Geçmiş ve güncel kurların kaynakları farklı olabilir."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "История криптовалют использует завершённые свечи Coinbase и, при необходимости, справочные курсы обмена. Источники исторических и текущих курсов могут отличаться."
+            "value": "История криптовалют использует ежедневные курсы и, если доступны, завершённые часовые свечи. Источники исторических и текущих курсов могут отличаться."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Історія криптовалют використовує завершені свічки Coinbase та, за потреби, довідкові курси обміну. Джерела історичних і поточних курсів можуть відрізнятися."
+            "value": "Історія криптовалют використовує щоденні курси та, за наявності, завершені годинні свічки. Джерела історичних і поточних курсів можуть відрізнятися."
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Krüptovaluutade ajalugu põhineb Coinbase’i suletud hinnaküünaldel ja vajaduse korral võrdluskurssidel. Ajalooliste ja praeguste vahetuskursside allikad võivad erineda."
+            "value": "Krüptovaluutade ajalugu kasutab päevakursse ja võimaluse korral suletud tunniküünlaid. Ajalooliste ja praeguste vahetuskursside allikad võivad erineda."
           }
         }
       }

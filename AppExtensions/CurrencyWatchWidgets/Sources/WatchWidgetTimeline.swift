@@ -1,5 +1,6 @@
 import AppIntents
 import Conversion
+import CurrencyApplication
 import ExchangeRates
 import Foundation
 import WidgetKit
@@ -108,7 +109,9 @@ enum WatchWidgetComposition {
       style: style, key: key, codes: [base] + selected, amount: initial, app: app)
     return WatchWidgetEntry(
       date: now, style: style, source: base, targets: selected, input: input, key: key,
-      initialAmount: initial, snapshot: RateStore(directory: directory).loadRates(),
+      initialAmount: initial,
+      snapshot: RateStore(directory: directory, policy: CurrencyRateConfiguration.policy)
+        .loadRates(),
       configurationIsValid: WidgetMath.parseAmount(amount) != nil
         && CurrencyCatalog.codes.contains(base)
         && (style != .cash
@@ -149,9 +152,12 @@ enum WatchWidgetComposition {
     guard Date().timeIntervalSince(entry.input.editedAt ?? .distantPast) >= 60 else { return entry }
     var refreshed = entry
     do {
-      let result = try await RateStore(directory: directory())
-        .refreshRates(
-          using: RateService(), force: entry.snapshot.quotes.isEmpty, providerTimeout: .seconds(2))
+      let result = try await RateStore(
+        directory: directory(), policy: CurrencyRateConfiguration.policy
+      )
+      .refreshRates(
+        using: RateService(policy: CurrencyRateConfiguration.policy),
+        force: entry.snapshot.quotes.isEmpty, providerTimeout: .seconds(2))
       refreshed = WatchWidgetEntry(
         date: .now, style: entry.style, source: entry.source, targets: entry.targets,
         input: widgetInput(
@@ -178,7 +184,10 @@ struct WatchPairTimeline: AppIntentTimelineProvider {
     for configuration: WatchPairSettings, in context: Context
   ) async -> Timeline<WatchWidgetEntry> {
     let current = await WatchWidgetComposition.refresh(entry(configuration))
-    return Timeline(entries: [current], policy: .after(current.date.addingTimeInterval(1800)))
+    return Timeline(
+      entries: [current],
+      policy: .after(
+        current.date.addingTimeInterval(CurrencyRateConfiguration.widgetRefreshInterval)))
   }
   private func entry(_ configuration: WatchPairSettings) -> WatchWidgetEntry {
     WatchWidgetComposition.entry(
@@ -200,7 +209,10 @@ struct WatchCashTimeline: AppIntentTimelineProvider {
     for configuration: WatchCashSettings, in context: Context
   ) async -> Timeline<WatchWidgetEntry> {
     let current = await WatchWidgetComposition.refresh(entry(configuration))
-    return Timeline(entries: [current], policy: .after(current.date.addingTimeInterval(1800)))
+    return Timeline(
+      entries: [current],
+      policy: .after(
+        current.date.addingTimeInterval(CurrencyRateConfiguration.widgetRefreshInterval)))
   }
   private func entry(_ configuration: WatchCashSettings) -> WatchWidgetEntry {
     WatchWidgetComposition.entry(
@@ -224,7 +236,10 @@ struct WatchBoardTimeline: AppIntentTimelineProvider {
     for configuration: WatchBoardSettings, in context: Context
   ) async -> Timeline<WatchWidgetEntry> {
     let current = await WatchWidgetComposition.refresh(entry(configuration))
-    return Timeline(entries: [current], policy: .after(current.date.addingTimeInterval(1800)))
+    return Timeline(
+      entries: [current],
+      policy: .after(
+        current.date.addingTimeInterval(CurrencyRateConfiguration.widgetRefreshInterval)))
   }
   private func entry(_ configuration: WatchBoardSettings) -> WatchWidgetEntry {
     WatchWidgetComposition.entry(
@@ -259,12 +274,13 @@ struct WatchHistoryTimeline: AppIntentTimelineProvider {
     let now = Date()
     let pair = HistoryWidgetPair(
       app: WatchWidgetComposition.input(), base: configuration.source?.id,
-      quote: configuration.quote?.id)
-    let range = configuration.range.value
+      quote: configuration.quote?.id, policy: CurrencyRateConfiguration.policy)
+    let range = pair.normalizedRange(configuration.range.value)
     let result: HistoryResult
     if let request = pair.historyRequest {
       result = await HistoryService(
-        directory: WatchWidgetComposition.directory(), client: client
+        directory: WatchWidgetComposition.directory(), client: client,
+        policy: CurrencyRateConfiguration.policy
       )
       .load(
         base: request.base, quote: request.quote, range: range, now: now,

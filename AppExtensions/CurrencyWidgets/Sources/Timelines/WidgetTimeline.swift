@@ -46,7 +46,8 @@ struct SuiteTimeline<Configuration: SuiteConfiguration>: AppIntentTimelineProvid
     }
     return Timeline(
       entries: entries,
-      policy: .after(dependencies.now().addingTimeInterval(retry ? 300 : 1800)))
+      policy: .after(
+        dependencies.now().addingTimeInterval(retry ? 300 : dependencies.refreshInterval)))
   }
 
   func entry(_ configuration: Configuration) -> SuiteEntry {

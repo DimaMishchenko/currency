@@ -35,10 +35,10 @@ Owners: ExchangeRates domain, [CurrencyDetails](../Features/CurrencyDetails/Sour
 
 | ID | Capability / entry | Observable outcome |
 | --- | --- | --- |
-| RATE-01 | Initial bootstrap, foreground refresh, explicit rate refresh | Available rates update conversion; loading, provider failures, missing rates and cached fallback are represented without fabricating a successful fetch. |
+| RATE-01 | Initial bootstrap, foreground refresh, explicit rate refresh | Fawaz supplies daily fiat, crypto and metal rates. The internal Coinbase build flag is enabled by default and adds current crypto rates with more frequent refresh attempts. Disabling it excludes Coinbase quotes from cached reads across the phone, widgets, Watch and system actions; loading, failures and daily fallback remain explicit. |
 | RATE-02 | Current rate/source information in converter, details and Settings | Currency-specific provenance, timestamps and warning states correspond to the snapshot used for conversion. |
 | HIST-01 | Currency row → Details & history | The requested currency and its applicable reference pair are shown; opening details does not change saved selections. |
-| HIST-02 | History range controls and chart | Available 1D, 1W, 1M, 3M, 1Y, YTD and All ranges load the matching series. Unsupported pairs, missing intraday data, unavailable history and cached series have explicit states. |
+| HIST-02 | History range controls and chart | Fawaz daily history supports 1W, 1M, 3M, 1Y, YTD and All, limited to its archive from March 2024; All uses monthly reference samples. Enabled Coinbase adds 1D completed hourly observations for supported crypto pairs. Disabled mode hides 1D and rejects incompatible cached history. Missing observations and cached fallback remain explicit. |
 | HIST-03 | Rate source disclosure | Expanded content explains current/historical sources and reference-rate gaps; collapsing restores the compact disclosure. |
 | HIST-04 | Close details or change range while loading | Returning preserves converter input; an earlier load does not replace the newly selected range or a dismissed flow. |
 | HIST-05 | Select a point on the history chart | The selected point’s date and value are shown for the current pair/range. |
@@ -74,7 +74,7 @@ Owners: [widget guide](../Features/WidgetOnboarding/Sources/WidgetOnboardingUI/O
 | WID-05 | Cash: medium | Configured base/comparison and cash presets/keypad produce the corresponding amounts, including Local setup/unavailable states where applicable. |
 | WID-06 | Pocket Rate: small | Show a convenient reference amount and conversion for the configured pair. |
 | WID-07 | Mental Math: small | Show the configured pair’s approximate mental-conversion rule and its accuracy information. |
-| WID-08 | History: small/medium | Configured base/quote/range show history and its current, cached or unavailable state. |
+| WID-08 | History: small/medium | Configured base/quote/range show history and its current, cached or unavailable state. Disabling Coinbase turns a saved 1D configuration into 1M; 1D requests hourly refresh and other ranges daily refresh. |
 | WID-09 | Currency Icon: accessory circular Lock Screen widget | The configured currency symbol appears in the system accessory presentation. |
 | WID-10 | System gallery, Edit Widget, taps, removal and reload | Installation/configuration produce the selected widget; intents execute in the real extension; removal works and shared data remains consistent. |
 
@@ -94,22 +94,22 @@ Owners: [SystemActions](../Apps/Currency/App/Sources/SystemActions), [CurrencyRo
 | SYS-06 | `currency://converter?v=1`, `currency://local-currency` | Open the converter or location setup respectively; malformed/unsupported versioned content URLs are rejected. |
 | SYS-07 | Published App Shortcut phrases and system discovery | Currency actions can be discovered/configured/run through the actual system surface. Siri/device behavior is distinct from native intent contract execution. |
 
-## Apple Watch (pending PR #75)
+## Apple Watch
 
-These capabilities are implemented in [PR #75](https://github.com/DimaMishchenko/currency/pull/75), targeting watchOS 26+, and are not yet part of `main`. Ownership follows the Watch application composition, HomeWatchUI, CurrencyDetailsWatchUI and CurrencyWatchWidgets, reusing the Conversion, ExchangeRates and Widgets domains. Preserve these IDs when the feature lands and remove this pending status.
+These capabilities target watchOS 26+. Ownership follows the Watch application composition, HomeWatchUI, CurrencyDetailsWatchUI and CurrencyWatchWidgets, reusing the Conversion, ExchangeRates and Widgets domains.
 
 | ID | Capability / entry | Observable outcome |
 | --- | --- | --- |
 | WATCH-01 | Open the independent Watch app | The source amount and first conversion appear together on the small Watch; the app fetches rates directly and remains useful without an iPhone connection. |
 | WATCH-02 | Tap source amount → decimal keypad | Digits, locale decimal separator and deletion edit a local draft; Done commits the amount and updates conversions, Cancel keeps the previous amount. The keypad fits without scrolling; there are no in-app 1/10/100 presets. |
 | WATCH-03 | Source picker, Add currency and favorite row actions | Flag/icon currency choices update the source or destinations without duplicates. Favorite rows can become the base or be removed; selections and custom amount survive restart. |
-| WATCH-04 | Favorite row → currency details/history | Show currency identity, inverse rate, selected history range/chart and the reference-rate note. No provider/source sections, saved-rate label or standalone swap action are shown in the app. Metal conversion rates and history use the shared troy-ounce/gram/kilogram preference. |
+| WATCH-04 | Favorite row → currency details/history | Show currency identity, inverse rate, selected history range/chart and the reference-rate note. The shared Coinbase flag controls 1D availability; daily ranges use Fawaz. No provider/source sections, saved-rate label or standalone swap action are shown in the app. Metal conversion rates and history use the shared troy-ounce/gram/kilogram preference. |
 | WATCH-05 | Refresh rates, offline and unavailable history | Explicit refresh preserves cached rates/history; loading, stale, missing and failed-refresh states remain distinguishable without claiming a successful fetch. |
 | WATCH-06 | iPhone preferred-currency synchronization | Preferred currencies and metal measurement synchronize opportunistically; Watch base and physical metal amount remain local, and connectivity is not required for direct fetch/cache use. |
 | WATCH-07 | Pocket Rate in Smart Stack | Configure source/comparison currencies, then use 1/10/100 and swap buttons to update the displayed pair/conversion. Setup has no amount field; taps on conversion content open the corresponding Watch route. |
 | WATCH-14 | Metal measurement from iPhone settings | Follow the iPhone app’s troy-ounce/gram/kilogram setting through companion preference sync, without a Watch picker; conversions, details, history, widgets and Siri show that unit, and source-metal quantity is preserved. Cash keeps the same physical gram presets as the iPhone widget and translates routes into the selected app unit. |
 | WATCH-08 | Currency Board and Favorite Pairs | Configure base, destinations and amount. Board aligns flag/code left and value right, with a bold source row; Favorite Pairs centers the flagged source above three flagged destination links. |
-| WATCH-09 | History widget | Configured pair/range displays trend, period/change, current value and date, with explicit cached/unavailable behavior. The chart uses the space previously occupied by the daily-reference footer. |
+| WATCH-09 | History widget | Configured pair/range displays trend, period/change, current value and date, with explicit cached/unavailable behavior. The shared Coinbase flag controls 1D availability; saved 1D falls back to 1M when disabled. The chart uses the space previously occupied by the daily-reference footer. |
 | WATCH-10 | Know Your Cash widget | Configure currencies only; banknote or metal-weight buttons choose the amount and update conversion with the correct units. Opening the app preserves the displayed conversion semantics. |
 | WATCH-11 | Mental Math widget | Display a simple rounded conversion rule for the configured pair without an error percentage. |
 | WATCH-12 | Watch-face complications | Pocket Rate supports rectangular, circular, inline and corner families. Cash, Board, History and Mental Math support the first three; Favorite Pairs is rectangular only. Corner selection offers only Pocket Rate, with both compact values on the outer curve, one arrow, names/units inside and full values in accessibility. Verify slot fitting, including bottom-right 100-unit conversions. |

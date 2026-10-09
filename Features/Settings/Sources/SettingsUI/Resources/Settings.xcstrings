@@ -3307,85 +3307,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Daily cryptocurrency rates and backup exchange rates."
+            "value": "Daily exchange rates and history."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "加密货币每日汇率和备用汇率。"
+            "value": "每日汇率和历史数据。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "暗号資産の日次レートと代替為替レート。"
+            "value": "日次の為替レートと履歴。"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tipos de cambio diarios de criptomonedas y tipos de cambio de respaldo."
+            "value": "Tipos de cambio e historial diarios."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tägliche Kryptowährungskurse und Ersatzwechselkurse."
+            "value": "Tägliche Wechselkurse und Kursverläufe."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Taux crypto quotidiens et taux de change de secours."
+            "value": "Taux de change et historique quotidiens."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Taxas de câmbio diárias de criptomoedas e taxas de câmbio de reserva."
+            "value": "Taxas de câmbio e histórico diários."
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "암호화폐 일일 환율 및 대체 환율입니다."
+            "value": "일별 환율과 과거 데이터."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "加密貨幣每日匯率和備用匯率。"
+            "value": "每日匯率和歷史資料。"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tassi giornalieri delle criptovalute e tassi di cambio di riserva."
+            "value": "Tassi di cambio e cronologia giornalieri."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Günlük kripto para kurları ve yedek döviz kurları."
+            "value": "Günlük döviz kurları ve geçmiş veriler."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ежедневные курсы криптовалют и резервные курсы обмена."
+            "value": "Ежедневные курсы валют и история."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Щоденні курси криптовалют і резервні курси обміну."
+            "value": "Щоденні курси валют та історія."
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Krüptovaluutade igapäevased kursid ja varuvahetuskursid."
+            "value": "Igapäevased vahetuskursid ja kursiajalugu."
           }
         }
       }

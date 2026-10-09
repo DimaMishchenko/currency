@@ -1,5 +1,6 @@
 import AppIntents
 import Conversion
+import CurrencyApplication
 import ExchangeRates
 import Foundation
 import Widgets
@@ -202,7 +203,8 @@ struct WatchHistoryRangeOptions: DynamicOptionsProvider {
 
   func results() async throws -> [WatchHistoryRange] {
     let pair = HistoryWidgetPair(
-      app: WatchWidgetAppGroup.input(), base: settings?.source.id, quote: settings?.quote.id)
+      app: WatchWidgetAppGroup.input(), base: settings?.source.id, quote: settings?.quote.id,
+      policy: CurrencyRateConfiguration.policy)
     return pair.supportsIntradayHistory
       ? WatchHistoryRange.allCases
       : WatchHistoryRange.allCases.filter { $0 != .day }

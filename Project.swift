@@ -177,6 +177,7 @@ let project = Project(
       entitlements: .file(
         path: "AppExtensions/CurrencyWatchWidgets/Configuration/CurrencyWatchWidgets.entitlements"),
       dependencies: [
+        .target(name: "CurrencyApplication"),
         .target(name: "Conversion"), .target(name: "ExchangeRates"),
         .target(name: "ExchangeRatesUI"), .target(name: "Widgets")
       ],
@@ -281,6 +282,7 @@ let project = Project(
       entitlements: .file(
         path: "AppExtensions/CurrencyWidgets/Configuration/Currency.entitlements"),
       dependencies: [
+        .target(name: "CurrencyApplication"),
         .target(name: "Conversion"), .target(name: "ExchangeRates"),
         .target(name: "ExchangeRatesUI"), .target(name: "LocalCurrency"),
         .target(name: "Widgets"), .target(name: "WidgetsUI")
@@ -453,6 +455,7 @@ let project = Project(
       infoPlist: .default,
       buildableFolders: ["AppExtensions/CurrencyWidgets/Tests/WidgetIntegrationTests"],
       dependencies: [
+        .target(name: "CurrencyApplication"),
         .target(name: "Conversion"), .target(name: "ExchangeRates"),
         .target(name: "ExchangeRatesUI"), .target(name: "LocalCurrency"),
         .target(name: "Widgets"), .target(name: "WidgetsUI")

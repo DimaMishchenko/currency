@@ -29,6 +29,17 @@ xcrun simctl install "$WATCH_SIMULATOR_UDID" "$WATCH_APP"
 
 Confirm `TeamIdentifier` matches the project team. Verify a custom pair such as GBP/CZK through the native widget editor, installed Smart Stack and corner complication, rather than accepting a default EUR/USD rendering as configuration proof. Board/Favorite Pairs must also retain configured amount/targets; Cash must use its configured currencies; History must retain its pair/range. Snapshots use configured cached data, while timeline refreshes fetch live data.
 
+## Provider mode acceptance
+
+Use one explicitly owned Watch simulator, separate enabled/disabled builds and device-targeted controls. `CURRENCY_DISABLE_COINBASE` must reach CurrencyApplication and both Watch executables; changing an assertion environment variable does not change the binary. Keep the independent Watch networking path active.
+
+1. Install the enabled CurrencyWatch app. Launch from a fresh container, add BTC to My Currencies and open Bitcoin details. The History range picker must offer One day alongside the daily ranges. Select it and verify a rendered BTC/USD chart or an explicit network issue; availability alone does not prove downloaded candles.
+2. Return, terminate and relaunch the app. Verify the selected pair and available One day range persist. Capture native accessibility state and screenshots with the owned UDID.
+3. Terminate and replace the app with the disabled build while retaining its container. Open the same Bitcoin details. One day must be absent; daily ranges remain available. A saved Coinbase overlay must be excluded in favor of its Fawaz daily fallback, and an old hourly cache must not appear as a daily chart.
+4. Repeat a warm launch and verify the disabled capability and saved pair. If checking deterministic amounts, seed a coherent real `rates.json` with distinct Coinbase/Fawaz values and both daily fallbacks before launch; record whether direct network refresh replaced it. Seed chart data only in the matching `history-<policy>-<provider>-BTC-USD-<range>.json` namespace.
+
+Use `serve-sim` with the Watch UDID for native controls and screenshots; the iPhone E2E runner does not support this surface. If the Watch accessibility tree contains only an application root, stop automated picker navigation and record that gap; `simctl openurl` may also be unsupported. Save local evidence outside tracked documentation. A compiled Watch target, fixture inspection or failed driver connection does not count as a completed native journey. Spoken Siri, physical companion transport and installed complication configuration remain separate acceptance checks.
+
 ## Metal measurement acceptance
 
 The iPhone E2E driver does not cover Watch surfaces. Keep this native Watch journey for WATCH-14 on an explicitly owned simulator; use the selected CompanionSync, Home editing, Watch route and shared metal/widget tests for numerical and synchronization regressions.
