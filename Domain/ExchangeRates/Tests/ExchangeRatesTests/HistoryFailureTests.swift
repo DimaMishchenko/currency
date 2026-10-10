@@ -3,50 +3,78 @@ import Testing
 
 @testable import ExchangeRates
 
-private actor FailingPageClient: HTTPClient {
-  private(set) var calls = 0
-  func get(_ url: URL) async throws -> Data {
-    calls += 1
-    guard calls == 1 else { throw RateError.http(429) }
-    let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems
-    let raw = try #require(query?.first(where: { $0.name == "start" })?.value)
-    let start = try #require(ISO8601DateFormatter().date(from: raw)).timeIntervalSince1970
-    return try JSONEncoder()
-      .encode([
-        [start + 86400, 1, 5, 2, 3, 1], [start + 172800, 1, 5, 2, 4, 1]
-      ])
-  }
-}
-
 @Suite struct HistoryFailureTests {
-  @Test func failedPaginationDoesNotSaveAnIncompleteChart() async throws {
+  @Test func failedDailyRequestPreservesOnlyCompatibleCompleteChart() async throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }
-    let client = FailingPageClient()
-    let result = await HistoryService(directory: directory, client: client)
-      .load(base: "BTC", quote: "USD", range: .year)
-    #expect(await client.calls == 2)
-    #expect(result.series == nil)
-    #expect(result.issue == .unavailable)
-    #expect(
-      !FileManager.default.fileExists(
-        atPath: directory.appendingPathComponent("history-BTC-USD-365.json").path))
+    let client = DailyHistoryHTTP()
+    let now = try historyDate("2026-01-08T12:00:00Z")
+    let service = HistoryService(directory: directory, client: client)
+    let first = await service.load(base: "BTC", quote: "USD", range: .week, now: now)
+    let file = directory.appendingPathComponent("history-daily-fawaz-BTC-USD-7.json")
+    let original = try Data(contentsOf: file)
+    await client.failRequests()
+    let failed = await service.load(
+      base: "BTC", quote: "USD", range: .week,
+      now: now.addingTimeInterval(86400))
+    #expect(failed.series?.points == first.series?.points)
+    #expect(failed.issue == .usingCachedSeries)
+    #expect(try Data(contentsOf: file) == original)
   }
 
-  @Test func failedPaginationPreservesExistingChart() async throws {
+  @Test(arguments: [RateProviderID.coinbase, .frankfurter, .custom("Coinbase + Frankfurter")])
+  func incompatibleCacheNeverReturnsFreshOrOffline(provider: RateProviderID) async throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-    let file = directory.appendingPathComponent("history-BTC-USD-365.json")
+    let now = try historyDate("2026-01-08T12:00:00Z")
     let saved = HistorySeries(
-      points: [HistoryPoint(date: .distantPast, value: 5)],
-      source: .init(provider: .custom("saved")), fetchedAt: .distantPast)
-    let original = try JSONEncoder().encode(saved)
-    try original.write(to: file)
-    let result = await HistoryService(directory: directory, client: FailingPageClient())
-      .load(base: "BTC", quote: "USD", range: .year)
-    #expect(result.series?.points == saved.points)
-    #expect(result.issue == .usingCachedSeries)
-    #expect(try Data(contentsOf: file) == original)
+      points: [
+        .init(date: now.addingTimeInterval(-86400), value: 2), .init(date: now, value: 3)
+      ], source: .init(provider: provider, observation: .dailyReference), fetchedAt: now)
+    let data = try JSONEncoder().encode(saved)
+    try data.write(to: directory.appendingPathComponent("history-daily-fawaz-BTC-USD-7.json"))
+    try data.write(to: directory.appendingPathComponent("history-BTC-USD-7.json"))
+    let client = DailyHistoryHTTP()
+    await client.failRequests()
+    let result = await HistoryService(directory: directory, client: client)
+      .load(base: "BTC", quote: "USD", range: .week, now: now)
+    #expect(result.series == nil)
+    #expect(result.issue == .unavailable)
+    #expect(await !client.urls.isEmpty)
+  }
+
+  @Test func policyModeSeparatesSeriesCachesAndDisabledHourlyNeverReadsSavedCoinbase() async throws
+  {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let now = try historyDate("2026-01-08T12:00:00Z")
+    let client = DailyHistoryHTTP()
+    let enhanced = HistoryService(directory: directory, client: client, policy: .coinbaseEnhanced)
+    #expect(enhanced.supportsIntraday(base: "BTC", quote: "USD"))
+    _ = await enhanced.load(base: "BTC", quote: "USD", range: .week, now: now)
+    let daily = HistoryService(directory: directory, client: client)
+    #expect(!daily.supportsIntraday(base: "BTC", quote: "USD"))
+    _ = await daily.load(base: "BTC", quote: "USD", range: .week, now: now)
+    let before = await client.urls.count
+    let saved = HistorySeries(
+      points: [
+        .init(date: now.addingTimeInterval(-7200), value: 2),
+        .init(date: now.addingTimeInterval(-3600), value: 3)
+      ],
+      source: .init(provider: .coinbase, observation: .hourlyClose, timeZone: .gmt), fetchedAt: now)
+    try JSONEncoder().encode(saved)
+      .write(
+        to: directory.appendingPathComponent("history-coinbaseEnhanced-coinbase-BTC-USD-1.json"))
+    let result = await daily.load(base: "BTC", quote: "USD", range: .day, now: now)
+    #expect(result.series == nil)
+    #expect(result.issue == .intradayUnavailable)
+    #expect(await client.urls.count == before)
+    for mode in ["daily", "coinbaseEnhanced"] {
+      #expect(
+        FileManager.default.fileExists(
+          atPath:
+            directory.appendingPathComponent("history-\(mode)-fawaz-BTC-USD-7.json").path))
+    }
   }
 }

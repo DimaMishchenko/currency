@@ -17,9 +17,11 @@ The package does not know about UI, App Groups, widgets, or polling schedules. H
 - ``CurrencyCatalog``
 - ``CurrencyCode``
 - ``RateCache``
+- ``RateStore``
 
 ### Refreshing quotes
 
+- ``RateProviderPolicy``
 - ``RateService``
 - ``RefreshResult``
 - ``RefreshWarning``

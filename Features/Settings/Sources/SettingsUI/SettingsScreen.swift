@@ -723,19 +723,13 @@ struct SettingsScreen: View {
   private var sourceInformation: some View {
     Section(.Settings.sources) {
       sourceCredit(
-        "Frankfurter", description: .Settings.frankfurterCredit,
-        website: "https://frankfurter.dev/")
-      sourceCredit(
-        "European Central Bank", description: .Settings.ecbCredit,
-        website:
-          "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html"
-      )
-      sourceCredit(
         "Fawaz Exchange API", description: .Settings.fawazCredit,
         website: "https://github.com/fawazahmed0/exchange-api")
-      sourceCredit(
-        "Coinbase", description: .Settings.coinbaseCredit,
-        website: "https://docs.cdp.coinbase.com/coinbase-app/track-apis/exchange-rates")
+      if model.usesCoinbase {
+        sourceCredit(
+          "Coinbase", description: .Settings.coinbaseCredit,
+          website: "https://docs.cdp.coinbase.com/coinbase-app/track-apis/exchange-rates")
+      }
     }
   }
 

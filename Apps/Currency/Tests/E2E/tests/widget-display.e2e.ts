@@ -1,4 +1,4 @@
-import { unloadWidgetHelper } from '../simulator-widgets.js';
+import { revealWidget, unloadWidgetHelper, widgetSetupMethod } from '../simulator-widgets.js';
 import { expect } from 'e2e';
 import { test } from '../widget-gallery-fixtures.js';
 
@@ -22,6 +22,8 @@ test('medium Currency board displays default amounts and follows app amount chan
 
   await device.home();
   await device.openApp('com.apple.springboard');
+  if (widgetSetupMethod() === 'private') await revealWidget('Currency board', 'Medium');
+  else await agent.act('Show the Home Screen page containing the installed Currency board widget.');
   await expect(board).toBeVisible();
   await agent.waitFor(`${boardLayout} The medium Currency board now shows an EUR entry with exactly 42 and a USD entry with exactly 84. It no longer shows the old EUR 1 and USD 2 amounts.`, { vision: 'only', timeout: 30_000 });
   await app.screenshot('widget-board-medium-eur-42-usd-84');

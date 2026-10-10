@@ -20,6 +20,14 @@ handshake. The native suite starts from a stopped app and runs serially on the o
 
 For command-line Xcode builds, use `set -o pipefail` and pipe combined output through `xcbeautify`. Use a separate simulator and derived-data directory for parallel work.
 
+## Rate provider configuration
+
+`CurrencyRateConfiguration.coinbaseEnabled` is the shared code-level feature flag for the phone app, widgets, independent Watch app and Watch widgets. It is `true` by default; set it to `false` and rebuild normally to use only Fawaz. There are no compiler options or separate build configurations.
+
+Both modes use Fawaz for daily rates and daily history. Enabled Coinbase adds current crypto rates and supported 24-hour hourly charts. When disabled, the app hides 1D, normalizes saved 1D widgets to 1M, excludes incompatible cached data, and reduces automatic rate attempts from 30 minutes to six hours. Foreground polling is one minute when enabled and six hours when disabled; WidgetKit controls actual timeline delivery. Explicit refresh remains available.
+
+Fawaz history starts on 2 March 2024. All uses month-end/current-month reference samples; the other daily ranges use available dated publications. Neither mode fabricates missing history or labels daily reference samples as exchange closes.
+
 ## Dependency cache
 
 Tuist defines repository modules as native targets in a single Currency project. Default generation keeps their source visible and substitutes only external dependencies with cached binaries. `Tuist/Package.swift` is reserved for external dependencies. Normal development does not require authentication or custom build scripts.

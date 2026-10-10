@@ -15,16 +15,27 @@ public struct RefreshResult: Sendable {
 
 /// Coordinates rate providers and preserves usable cached quotes.
 public actor RateService {
-  private let fiat: any RateProvider
+  private let fiat: (any RateProvider)?
   private let daily: any RateProvider
 
   private let crypto: (any RateProvider)?
+  private let policy: RateProviderPolicy?
   private let sleep: @Sendable (Duration) async throws -> Void
-  /// Creates a rate service from its providers.
+  /// Creates the provider set selected by the application, defaulting to daily Fawaz data.
+  public init(policy: RateProviderPolicy = .daily, client: any HTTPClient = NetworkClient()) {
+    self.policy = policy
+    self.fiat = nil
+    self.daily = FawazProvider(client: client)
+    self.crypto = policy == .coinbaseEnhanced ? CoinbaseProvider(client: client) : nil
+    self.sleep = { try await Task.sleep(for: $0) }
+  }
+
+  /// Creates a rate service from explicitly supplied providers.
   public init(
-    fiat: any RateProvider = FallbackRateProvider(), daily: any RateProvider = FawazProvider(),
-    crypto: (any RateProvider)? = CoinbaseProvider()
+    fiat: any RateProvider, daily: any RateProvider = FawazProvider(),
+    crypto: (any RateProvider)? = nil
   ) {
+    self.policy = nil
     self.fiat = fiat
     self.daily = daily
     self.crypto = crypto
@@ -35,6 +46,7 @@ public actor RateService {
     fiat: any RateProvider, daily: any RateProvider, crypto: (any RateProvider)?,
     sleep: @escaping @Sendable (Duration) async throws -> Void
   ) {
+    self.policy = nil
     self.fiat = fiat
     self.daily = daily
     self.crypto = crypto
@@ -57,12 +69,14 @@ public actor RateService {
     previous: RateSnapshot, force: Bool = false, now: Date = .now,
     providerTimeout: Duration? = nil
   ) async -> RefreshResult {
+    let previous = policy?.filter(previous) ?? previous
     guard !Task.isCancelled else { return RefreshResult(snapshot: previous, warning: nil) }
     let refreshFiat =
-      force
-      || !RateSnapshot.isFresh(
-        previous.fiatFetchedAt ?? (previous.fiatQuotes == nil ? previous.dailyFetchedAt : nil),
-        now: now)
+      fiat != nil
+      && (force
+        || !RateSnapshot.isFresh(
+          previous.fiatFetchedAt ?? (previous.fiatQuotes == nil ? previous.dailyFetchedAt : nil),
+          now: now))
     let refreshSupplemental =
       force
       || !RateSnapshot.isFresh(
@@ -100,14 +114,15 @@ public actor RateService {
     }
     let success = fiatQuotes != nil || supplementalQuotes != nil || live != nil
     let warning: RefreshWarning? =
-      refreshFiat && fiatQuotes == nil && refreshSupplemental && supplementalQuotes == nil
+      (fiat == nil || refreshFiat && fiatQuotes == nil) && refreshSupplemental
+        && supplementalQuotes == nil
       ? .dailyRatesUnavailable
       : crypto != nil && !CurrencyCatalog.crypto.isSubset(of: Set(live?.keys.map { $0 } ?? []))
         ? .partialCryptoFallback : nil
     return RefreshResult(
       snapshot: RateSnapshot(
         quotes: quotes, fetchedAt: success ? now : previous.fetchedAt, dailyQuotes: dailyQuotes,
-        dailyFetchedAt: fiatQuotes != nil && supplementalQuotes != nil
+        dailyFetchedAt: (fiat == nil || fiatQuotes != nil) && supplementalQuotes != nil
           ? now : previous.dailyFetchedAt,
         checkedAt: now, fiatFetchedAt: fiatTime, supplementalFetchedAt: supplementalTime,
         fiatQuotes: primary, supplementalQuotes: supplemental), warning: warning)
@@ -117,8 +132,9 @@ public actor RateService {
   /// own the foreground deadline, so an uncooperative provider cannot keep recovery pending.
   /// The stream preserves daily fallbacks and the primary provider's freshness precedence.
   public func bootstrap(previous: RateSnapshot, now: Date = .now) -> AsyncStream<BootstrapUpdate> {
+    let previous = policy?.filter(previous) ?? previous
     let providers: [(Int, any RateProvider)] =
-      [(0, daily), (1, fiat)]
+      [(0, daily)] + (fiat.map { [(1, $0)] } ?? [])
       + (crypto.map { [(2, $0)] } ?? [])
     return AsyncStream { continuation in
       let worker = Task {
@@ -193,7 +209,8 @@ public actor RateService {
                 snapshot: RateSnapshot(
                   quotes: effective, fetchedAt: succeeded ? now : previous.fetchedAt,
                   dailyQuotes: dailyQuotes,
-                  dailyFetchedAt: results[0]?.quotes != nil && results[1]?.quotes != nil
+                  dailyFetchedAt: results[0]?.quotes != nil
+                    && (fiat == nil || results[1]?.quotes != nil)
                     ? now : previous.dailyFetchedAt,
                   checkedAt: now, fiatFetchedAt: fiatTime, supplementalFetchedAt: supplementalTime,
                   fiatQuotes: primary, supplementalQuotes: supplemental),

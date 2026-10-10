@@ -1,6 +1,7 @@
 #if DEBUG && targetEnvironment(simulator)
   import Conversion
   import CoordinatedFiles
+  import CurrencyApplication
   import ExchangeRates
   import Foundation
   import Home
@@ -15,6 +16,7 @@
       case readyConverter = "ready-converter"
       case readyMetals = "ready-metals"
       case readyMetalSource = "ready-metal-source"
+      case readyCrypto = "ready-crypto"
     }
 
     enum StartupError: Error, Equatable {
@@ -34,8 +36,7 @@
         try seed(state, directory: directory(), defaults: defaults, now: now)
         WidgetCenter.shared.reloadAllTimelines()
       }
-      let provider = FixedRateProvider()
-      return RateService(fiat: provider, daily: provider, crypto: nil)
+      return RateService(policy: CurrencyRateConfiguration.policy, client: FixedRateClient())
     }
 
     private static func parse(
@@ -72,39 +73,38 @@
     private static func seed(
       _ state: InitialState, directory: URL, defaults: UserDefaults, now: Date
     ) throws {
-      let rates = RateStore(directory: directory)
+      let policy = CurrencyRateConfiguration.policy
+      let rates = RateStore(directory: directory, policy: policy)
+      let daily = FixedRateClient.quotes(now: now)
+      var effective = daily
+      effective["BTC"] = FixedRateClient.coinbaseQuote(now: now)
       try FileCoordination.write(at: directory.appendingPathComponent("rates.json")) {
         try RateCache(directory: directory)
           .save(
-            RateSnapshot(quotes: FixedRateProvider.quotes(now: now), fetchedAt: now, checkedAt: now)
-          )
+            RateSnapshot(
+              quotes: effective, fetchedAt: now, dailyQuotes: daily, dailyFetchedAt: now,
+              checkedAt: now, supplementalFetchedAt: now, supplementalQuotes: daily))
       }
-      let historyFile = directory.appendingPathComponent("history-EUR-USD-30.json")
-      let history = HistorySeries(
+      for mode in [RateProviderPolicy.daily, .coinbaseEnhanced] {
+        try seedHistory(
+          base: "EUR", quote: "USD", values: [1.8, 2], mode: mode,
+          directory: directory, now: now)
+        try seedHistory(
+          base: "EUR", quote: "XAU", values: [0.009, 0.01], mode: mode,
+          directory: directory, now: now)
+        try seedHistory(
+          base: "BTC", quote: "USD", values: [90_000, 100_000], mode: mode,
+          directory: directory, now: now)
+      }
+      let hourly = HistorySeries(
         points: [
-          HistoryPoint(date: now.addingTimeInterval(-7 * 86400), value: 1.8),
-          HistoryPoint(date: now.addingTimeInterval(-86400), value: 2)
-        ], source: .init(provider: .ecb, observation: .dailyReference), fetchedAt: now)
-      try FileCoordination.write(at: historyFile) {
-        try JSONEncoder().encode(history).write(to: historyFile, options: .atomic)
-      }
-      let seededHistory = try JSONDecoder()
-        .decode(
-          HistorySeries.self, from: Data(contentsOf: historyFile))
-      guard seededHistory.points == history.points, seededHistory.source == history.source,
-        seededHistory.fetchedAt == now
-      else { throw StartupError.seedVerificationFailed }
-      if state == .readyMetals || state == .readyMetalSource {
-        let metalHistory = HistorySeries(
-          points: [
-            HistoryPoint(date: now.addingTimeInterval(-7 * 86400), value: 0.009),
-            HistoryPoint(date: now.addingTimeInterval(-86400), value: 0.01)
-          ], source: .init(provider: .ecb, observation: .dailyReference), fetchedAt: now)
-        let metalHistoryFile = directory.appendingPathComponent("history-EUR-XAU-30.json")
-        try FileCoordination.write(at: metalHistoryFile) {
-          try JSONEncoder().encode(metalHistory).write(to: metalHistoryFile, options: .atomic)
-        }
-      }
+          HistoryPoint(date: now.addingTimeInterval(-2 * 3600), value: 45_000),
+          HistoryPoint(date: now.addingTimeInterval(-3600), value: 50_000)
+        ], source: .init(provider: .coinbase, observation: .hourlyClose, timeZone: .gmt),
+        fetchedAt: now)
+      try writeHistory(
+        hourly, filename: "history-coinbaseEnhanced-coinbase-BTC-USD-1.json",
+        directory: directory)
       let files = [
         "input.json", "onboarding.json", "widget-location-refresh.json",
         "widget-location.json", "widget-location-status.json"
@@ -121,11 +121,15 @@
       let conversion = ConversionStore(directory: directory)
       let progress = OnboardingProgressStore(directory: directory)
       switch state {
-      case .readyConverter, .readyMetals, .readyMetalSource:
+      case .readyConverter, .readyMetals, .readyMetalSource, .readyCrypto:
         let input = try conversion.updateInput {
           $0 = ConverterState()
           $0.setDestinations(state == .readyMetals ? ["USD", "XAU"] : ["USD"])
           if state == .readyMetalSource { $0.changeSource("XAU") }
+          if state == .readyCrypto {
+            $0.changeSource("USD")
+            $0.setDestinations(["BTC"])
+          }
         }
         try progress.save(OnboardingProgress(draft: input, step: .ready, completed: true))
         guard conversion.input() == input, progress.load()?.completed == true,
@@ -149,25 +153,107 @@
       let seededRates = rates.loadRates()
       guard seededRates.quotes["EUR"]?.value == 1, seededRates.quotes["USD"]?.value == 2,
         seededRates.quotes["CHF"]?.value == 0.5, seededRates.quotes["CZK"]?.value == 25,
-        seededRates.checkedAt == now, discoveryStore.load() == discovery
+        seededRates.quotes["BTC"]?.value == (policy == .coinbaseEnhanced ? 0.00004 : 0.00002),
+        seededRates.quotes["BTC"]?.source.provider
+          == (policy == .coinbaseEnhanced ? .coinbase : .fawaz),
+        discoveryStore.load() == discovery
       else { throw StartupError.seedVerificationFailed }
     }
-  }
 
-  private struct FixedRateProvider: RateProvider {
-    func fetch() async throws -> [String: ExchangeRate] {
-      try Task.checkCancellation()
-      return Self.quotes(now: .now)
+    private static func seedHistory(
+      base: String, quote: String, values: [Double], mode: RateProviderPolicy,
+      directory: URL, now: Date
+    ) throws {
+      var calendar = Calendar(identifier: .gregorian)
+      calendar.timeZone = .gmt
+      guard
+        let yearStart = calendar.date(
+          from: DateComponents(year: calendar.component(.year, from: now), month: 1, day: 1))
+      else { throw StartupError.seedVerificationFailed }
+      for range in HistoryRange.allCases where range != .day {
+        let first =
+          range == .yearToDate
+          ? yearStart
+          : now.addingTimeInterval(-Double(range == .all ? 60 : max(2, range.rawValue - 1)) * 86400)
+        let series = HistorySeries(
+          points: [
+            HistoryPoint(date: first, value: values[0]),
+            HistoryPoint(date: now.addingTimeInterval(-86400), value: values[1])
+          ],
+          source: .init(
+            provider: .fawaz,
+            observation: range == .all ? .monthlyReference : .dailyReference, timeZone: .gmt),
+          fetchedAt: now)
+        let interval =
+          range == .yearToDate
+          ? "\(range.rawValue)-\(calendar.component(.year, from: now))" : "\(range.rawValue)"
+        try writeHistory(
+          series,
+          filename: "history-\(mode.rawValue)-fawaz-\(base)-\(quote)-\(interval).json",
+          directory: directory)
+      }
     }
 
+    private static func writeHistory(
+      _ history: HistorySeries, filename: String, directory: URL
+    ) throws {
+      let file = directory.appendingPathComponent(filename)
+      try FileCoordination.write(at: file) {
+        try JSONEncoder().encode(history).write(to: file, options: .atomic)
+      }
+      let saved = try JSONDecoder().decode(HistorySeries.self, from: Data(contentsOf: file))
+      guard saved.points == history.points, saved.source == history.source,
+        saved.fetchedAt == history.fetchedAt
+      else { throw StartupError.seedVerificationFailed }
+    }
+
+  }
+
+  private struct FixedRateClient: HTTPClient {
+    func get(_ url: URL) async throws -> Data {
+      try Task.checkCancellation()
+      if url.host == "api.coinbase.com", url.path == "/v2/exchange-rates",
+        CurrencyRateConfiguration.coinbaseEnabled
+      {
+        var values = Dictionary(
+          uniqueKeysWithValues: CurrencyCatalog.crypto.map { ($0, "0.00004") })
+        values["EUR"] = "1"
+        return try JSONSerialization.data(withJSONObject: [
+          "data": ["currency": "EUR", "rates": values]
+        ])
+      }
+      guard ["cdn.jsdelivr.net", "latest.currency-api.pages.dev"].contains(url.host ?? ""),
+        url.path.hasSuffix("/currencies/eur.min.json")
+      else { throw RateError.unavailable }
+      struct Payload: Encodable { let date: String; let eur: [String: Decimal] }
+      return try JSONEncoder()
+        .encode(
+          Payload(
+            date: Self.day(.now),
+            eur: Dictionary(
+              uniqueKeysWithValues: Self.quotes(now: .now)
+                .map {
+                  ($0.key.lowercased(), $0.value.value)
+                })))
+    }
+
+    static func day(_ now: Date) -> String { String(now.ISO8601Format().prefix(10)) }
+
     static func quotes(now: Date) -> [String: ExchangeRate] {
-      let day = now.formatted(.iso8601.year().month().day().dateSeparator(.dash))
-      let values: [String: Decimal] = ["EUR": 1, "USD": 2, "CHF": 0.5, "CZK": 25, "XAU": 0.01]
-      return
-        values
-        .mapValues {
-          ExchangeRate($0, published: day, source: .init(provider: .ecb), cachedAt: now)
-        }
+      let values: [String: Decimal] = [
+        "EUR": 1, "USD": 2, "CHF": 0.5, "CZK": 25, "XAU": 0.01, "BTC": 0.00002
+      ]
+      return values.mapValues {
+        ExchangeRate(
+          $0, published: day(now),
+          source: .init(provider: .fawaz, observation: .dailyRate), cachedAt: now)
+      }
+    }
+
+    static func coinbaseQuote(now: Date) -> ExchangeRate {
+      ExchangeRate(
+        0.00004, published: day(now),
+        source: .init(provider: .coinbase, observation: .exchangeRate), retrievedAt: now)
     }
   }
 #endif

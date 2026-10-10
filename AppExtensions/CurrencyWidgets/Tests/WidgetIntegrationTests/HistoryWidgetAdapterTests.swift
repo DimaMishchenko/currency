@@ -1,4 +1,5 @@
 import Conversion
+import CurrencyApplication
 import ExchangeRates
 import Foundation
 import LocalCurrency
@@ -9,6 +10,37 @@ import Widgets
 
 @Suite struct HistoryWidgetAdapterTests {
   private let now = Date(timeIntervalSince1970: 1_790_035_200)
+  private var cryptoRanges: [HistoryWidgetRange] {
+    CurrencyRateConfiguration.coinbaseEnabled
+      ? HistoryWidgetRange.allCases
+      : HistoryWidgetRange.allCases.filter { $0 != .day }
+  }
+  private var effectiveDay: HistoryRange {
+    CurrencyRateConfiguration.coinbaseEnabled ? .day : .month
+  }
+
+  @Test func liveBuildPolicyControlsSavedDayRangeAndTimeline() async {
+    let now = now
+    let requests = Mutex<[HistoryRange]>([])
+    let provider = HistoryTimeline(
+      dependencies: .init(
+        input: { ConverterState() },
+        load: { _, _, range, _ in
+          requests.withLock { $0.append(range) }
+          return HistoryResult(series: nil, issue: .unavailable)
+        }, now: { now }))
+    let settings = HistorySettings()
+    settings.base = HistoryCurrency("BTC")
+    settings.comparison = HistoryCurrency("USD")
+    settings.range = .day
+    let timeline = await provider.loadTimeline(settings)
+    let enhanced = CurrencyRateConfiguration.coinbaseEnabled
+    #expect(requests.withLock { $0 } == [enhanced ? .day : .month])
+    #expect(settings.range == .day)
+    #expect(settings.availableRanges(input: ConverterState()).contains(.day) == enhanced)
+    #expect(timeline.entries.first?.snapshot.pair.policy == CurrencyRateConfiguration.policy)
+    #expect(timeline.policy == .after(now.addingTimeInterval(enhanced ? 3_600 : 86_400)))
+  }
 
   @Test func nativeDefaultsFollowAppAndOverridesAreIndependent() {
     var input = ConverterState()
@@ -86,8 +118,10 @@ import Widgets
       settings.range = range
       #expect(settings.pair(input: input).base == "BTC")
       #expect(settings.pair(input: input).quote == "USD")
-      #expect(settings.effectiveRange(for: settings.pair(input: input)) == range.range)
-      #expect(settings.availableRanges(input: input) == HistoryWidgetRange.allCases)
+      #expect(
+        settings.effectiveRange(for: settings.pair(input: input))
+          == (range == .day ? effectiveDay : range.range))
+      #expect(settings.availableRanges(input: input) == cryptoRanges)
     }
     input.changeSource("CHF")
     input.setDestinations(["JPY"])
@@ -134,26 +168,26 @@ import Widgets
     let saved = input
     let settings = HistorySettings()
     let fiatRanges: [HistoryWidgetRange] = [.week, .month, .quarter, .year, .all]
-    #expect(settings.availableRanges(input: saved) == HistoryWidgetRange.allCases)
+    #expect(settings.availableRanges(input: saved) == cryptoRanges)
     #expect(
       try await HistoryRangeOptionsProvider(readInput: { saved }).results()
-        == HistoryWidgetRange.allCases)
+        == cryptoRanges)
 
     settings.base = HistoryCurrency("USD")
     settings.comparison = HistoryCurrency("BTC")
-    #expect(settings.availableRanges(input: saved) == HistoryWidgetRange.allCases)
+    #expect(settings.availableRanges(input: saved) == cryptoRanges)
     settings.comparison = HistoryCurrency("EUR")
     #expect(settings.availableRanges(input: saved) == fiatRanges)
     settings.base = HistoryCurrency("BTC")
-    #expect(settings.availableRanges(input: saved) == HistoryWidgetRange.allCases)
+    #expect(settings.availableRanges(input: saved) == cryptoRanges)
     settings.comparison = HistoryCurrency("USD")
-    #expect(settings.availableRanges(input: saved) == HistoryWidgetRange.allCases)
+    #expect(settings.availableRanges(input: saved) == cryptoRanges)
     settings.comparison = HistoryCurrency("ETH")
-    #expect(settings.availableRanges(input: saved) == HistoryWidgetRange.allCases)
+    #expect(settings.availableRanges(input: saved) == cryptoRanges)
 
     input.changeSource("EUR")
     input.setDestinations(["CZK"])
-    #expect(settings.availableRanges(input: input) == HistoryWidgetRange.allCases)
+    #expect(settings.availableRanges(input: input) == cryptoRanges)
     settings.base = nil
     settings.comparison = nil
     #expect(settings.availableRanges(input: input) == fiatRanges)
@@ -163,9 +197,20 @@ import Widgets
     settings.comparison = HistoryCurrency("@local")
     #expect(
       settings.availableRanges(input: input, localCurrency: "USD")
-        == HistoryWidgetRange.allCases)
+        == cryptoRanges)
     #expect(settings.availableRanges(input: input, localCurrency: "CZK") == fiatRanges)
     #expect(settings.availableRanges(input: input) == fiatRanges)
+  }
+
+  @Test func dailyProviderHidesIntradayOptionsAndNormalizesSavedSelection() {
+    let pair = HistoryWidgetPair(
+      app: ConverterState(), base: "BTC", quote: "USD", policy: .daily)
+    let settings = HistorySettings()
+    settings.range = .day
+    #expect(!HistoryWidgetRange.available(for: pair).contains(.day))
+    #expect(HistoryWidgetRange.available(for: pair).contains(.month))
+    #expect(settings.effectiveRange(for: pair) == .month)
+    #expect(settings.range == .day)
   }
 
   @Test func rangeDefaultsAndFallbackOnlyReplaceUnsupportedDay() async throws {
@@ -339,7 +384,7 @@ import Widgets
     settings.range = .day
     let entry = await provider.entry(settings)
     #expect(requested.withLock { $0 } == ["BTC", "USD"])
-    #expect(entry.snapshot.range == .day)
+    #expect(entry.snapshot.range == effectiveDay)
     #expect(entry.snapshot.pair.base == "USD")
     #expect(entry.snapshot.pair.quote == "BTC")
     #expect(entry.snapshot.latest?.value == 0.00001)
@@ -397,24 +442,27 @@ import Widgets
     settings.comparison = HistoryCurrency(comparison)
     settings.range = .day
     let crypto = await provider.loadTimeline(settings)
-    #expect(requests.withLock { $0 }.map(\.2) == [.day])
-    #expect(crypto.entries.first?.snapshot.range == .day)
-    #expect(crypto.policy == .after(now.addingTimeInterval(3600)))
+    #expect(requests.withLock { $0 }.map(\.2) == [effectiveDay])
+    #expect(crypto.entries.first?.snapshot.range == effectiveDay)
+    #expect(
+      crypto.policy
+        == .after(now.addingTimeInterval(CurrencyRateConfiguration.coinbaseEnabled ? 3600 : 86_400))
+    )
 
     settings.base = HistoryCurrency("EUR")
     settings.comparison = HistoryCurrency("CZK")
     let fiat = await provider.loadTimeline(settings)
-    #expect(requests.withLock { $0 }.map(\.2) == [.day, .month])
+    #expect(requests.withLock { $0 }.map(\.2) == [effectiveDay, .month])
     #expect(fiat.entries.first?.snapshot.range == .month)
     #expect(fiat.policy == .after(now.addingTimeInterval(86_400)))
 
     settings.range = .week
     _ = await provider.entry(settings)
-    #expect(requests.withLock { $0 }.map(\.2) == [.day, .month, .week])
+    #expect(requests.withLock { $0 }.map(\.2) == [effectiveDay, .month, .week])
   }
 
   @Test(arguments: HistoryWidgetRange.allCases)
-  func supportedCryptoRangeSchedulesTheCanonicalHourlyRefresh(range: HistoryWidgetRange) async {
+  func cryptoRangeSchedulesOnlyIntradayHourlyRefresh(range: HistoryWidgetRange) async {
     let now = now.addingTimeInterval(2220)
     let requests = Mutex<[HistoryRange]>([])
     let provider = HistoryTimeline(
@@ -429,9 +477,13 @@ import Widgets
     settings.comparison = HistoryCurrency("EUR")
     settings.range = range
     let timeline = await provider.loadTimeline(settings)
-    #expect(requests.withLock { $0 } == [range.range])
-    #expect(timeline.entries.first?.snapshot.range == range.range)
-    #expect(timeline.policy == .after(HistoryService.nextHour(after: now)))
+    #expect(requests.withLock { $0 } == [range == .day ? effectiveDay : range.range])
+    #expect(timeline.entries.first?.snapshot.range == (range == .day ? effectiveDay : range.range))
+    #expect(
+      timeline.policy
+        == .after(
+          range == .day && CurrencyRateConfiguration.coinbaseEnabled
+            ? HistoryService.nextHour(after: now) : now.addingTimeInterval(86_400)))
   }
 
   @Test func unsupportedPairSkipsNetworkAndFailedLoadHasNoSampleData() async throws {
@@ -455,6 +507,6 @@ import Widgets
     #expect(calls.withLock { $0 } == 1)
     #expect(timeline.entries.first?.snapshot.series == nil)
     #expect(timeline.entries.first?.snapshot.latest == nil)
-    #expect(timeline.policy == .after(HistoryService.nextHour(after: now)))
+    #expect(timeline.policy == .after(now.addingTimeInterval(86_400)))
   }
 }

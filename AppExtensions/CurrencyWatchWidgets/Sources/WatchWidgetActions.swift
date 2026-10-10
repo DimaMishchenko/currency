@@ -1,5 +1,6 @@
 import AppIntents
 import Conversion
+import CurrencyApplication
 import ExchangeRates
 import Foundation
 import WidgetKit
@@ -68,7 +69,8 @@ struct WatchWidgetSwapIntent: AppIntent {
   func perform() async throws -> some IntentResult {
     guard codes.count >= 2 else { return .result() }
     let directory = WatchWidgetAppGroup.directory()
-    let rates = RateStore(directory: directory).loadRates()
+    let rates = RateStore(directory: directory, policy: CurrencyRateConfiguration.policy)
+      .loadRates()
     try WidgetStore(directory: directory)
       .updateWidgetInput(
         key: key, codes: codes, amount: initialAmount

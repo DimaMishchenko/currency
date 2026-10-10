@@ -4,7 +4,6 @@ import Foundation
 import LocalCurrency
 import Widgets
 
-/// Capabilities supplied to WidgetKit timeline providers by extension composition.
 struct WidgetTimelineDependencies: Sendable {
   let input: @Sendable () -> ConverterState
   let rates: @Sendable () -> RateSnapshot
@@ -13,9 +12,9 @@ struct WidgetTimelineDependencies: Sendable {
   let refreshRates: @Sendable (_ force: Bool) async throws -> RefreshResult
   let refreshLocalCurrency: @Sendable () async -> Void
   let now: @Sendable () -> Date
+  var refreshInterval: TimeInterval = 1_800
 }
 
-/// Focused capabilities for one installed AppIntent interaction.
 struct WidgetActionDependencies: Sendable {
   let rates: @Sendable () -> RateSnapshot
   let apply: @Sendable (WidgetCommand, String, RateSnapshot?) throws -> Bool

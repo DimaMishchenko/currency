@@ -57,6 +57,7 @@ These are representative outcomes, not exhaustive coverage of each feature ID.
 | ONB-01–02 | [onboarding](tests/onboarding.e2e.ts) | Currency selection, Back, completion and restart |
 | CONV-01, CONV-05 | [converter](tests/converter.e2e.ts) | EUR 42 → USD 84 persists after restart |
 | CONV-02–03, CONV-05 | [currency-selection](tests/currency-selection.e2e.ts) | Change source, add/remove currencies, exact amounts and restart |
+| CONV-01, HIST-01–04, PREF-04 | [provider-policy](tests/provider-policy.e2e.ts) | Configured Fawaz/Coinbase conversion, history provenance, 1D capability, source credits and saved-cache filtering after restart (run both builds) |
 | HIST-01–04 | [converter-details](tests/converter-details.e2e.ts) | Rate, period selection, source explanation and return |
 | PREF-05, ONB-01–02 | [metal-widget-preview](tests/metal-widget-preview.e2e.ts) | Replayed Calculator and Board showcase previews retain the saved grams preference and converted Gold amount |
 | PREF-05, WID-04–08 | [metal-widget-display](tests/metal-widget-display.e2e.ts) | Board, Cash, Pocket, Mental Math and History show Gold amounts and visible measurement units |
@@ -74,9 +75,19 @@ For widget/shared-data changes, run the affected widget and both Calculator shar
 
 ## Fixtures, widgets and cache
 
-Start each case once with a matching fixture. `fresh-onboarding` and `ready-converter` cover general flows; `ready-metals` adds Gold as a destination and `ready-metal-source` starts with one troy ounce of Gold for measurement checks. The first launch resets real stores; restart keeps edits. Fixed rates are EUR 1 / USD 2 / CHF 0.5 / CZK 25 / XAU 0.01 troy oz, with seeded EUR/USD history and EUR/Gold history for metal fixtures. Keep `-CurrencyE2EState` out of default launch arguments.
+Start each case once with a matching fixture. `fresh-onboarding` and `ready-converter` cover general flows; `ready-metals` adds Gold as a destination and `ready-metal-source` starts with one troy ounce of Gold for measurement checks. The first launch resets real stores; restart keeps edits. Fixed rates are EUR 1 / USD 2 / CHF 0.5 / CZK 25 / XAU 0.01 troy oz, with Fawaz history caches for EUR/USD, EUR/Gold and BTC/USD. `ready-crypto` starts USD 1 → Bitcoin: 0.00001 from Fawaz, or 0.00002 with Coinbase enabled. Its stored snapshot deliberately contains a Coinbase overlay plus the daily fallback, so disabling the flag exercises cache exclusion. Restart omits fixture state and preserves the real stores. Keep `-CurrencyE2EState` out of default launch arguments.
+
+Run the same provider journey with the normal app build. It reads `CurrencyRateConfiguration.coinbaseEnabled` from source for its expected outcomes and cache identity. After changing that Boolean, rebuild the app before rerunning; no environment mode or special test suite is needed.
+
+```sh
+npm run test:e2e -- tests/provider-policy.e2e.ts
+```
+
+The fixtures use the production provider decoders with a fixed HTTP client. Fawaz supplies every asset; Coinbase supplies crypto only when the flag is enabled. Fresh namespaced chart caches avoid live network timing. This journey proves same-build relaunch filtering of a deliberately incompatible cached overlay; changing the flag and reinstalling on one retained app container is a separate upgrade check.
 
 Home Screen setup uses [widgetctl](https://github.com/DimaMishchenko/widgetctl), pinned as a GitHub dev dependency. It installs/configures the requested kind and size, preserves other apps’ widgets and unloads its helper after the module. Tests still validate rendered data and interactions. Set `CURRENCY_E2E_WIDGET_SETUP=gallery` to exercise system installation; private-configuration cases then skip. Lock Screen installation uses system UI.
+
+Private History display fixtures explicitly configure EUR/USD/month because replacing a widget can retain its previous pair. Board checks reveal the installed widget again after returning from the app.
 
 Cache remains enabled and local, ignored by Git. Fresh checkouts record their own. Inspect it with `npx e2e cache ls` or `stats`; `clear` removes all recordings. Unused entries are not automatically pruned. Keep goal/test identities stable and bump `app.identity` when fixture semantics change. Diagnose failed outcomes before accepting replacement recordings. `--no-cache` neither reads nor writes cache. Visual assertions and cache misses still require model access; these simulator tests run locally, not in CI.
 

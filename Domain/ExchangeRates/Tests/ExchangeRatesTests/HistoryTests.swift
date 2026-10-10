@@ -3,130 +3,144 @@ import Testing
 
 @testable import ExchangeRates
 
-private let day = "2026-01-02"
+actor DailyHistoryHTTP: HTTPClient {
+  private(set) var urls: [URL] = []
+  var failing = false
+  var wrongDate = false
+  var failPrimary = false
+  var missingDay: String?
+  func failRequests() { failing = true }
+  func returnWrongDate() { wrongDate = true }
+  func setMissingDay(_ day: String) { missingDay = day }
+  func failPrimaryRequests() { failPrimary = true }
 
-private actor LongHistoryHTTP: HTTPClient {
-  var urls: [URL] = []
   func get(_ url: URL) async throws -> Data {
     urls.append(url)
-    guard let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems,
-      let raw = query.first(where: { $0.name == "start" })?.value,
-      let date = ISO8601DateFormatter().date(from: raw)
-    else { throw RateError.invalidData }
-    let start = date.timeIntervalSince1970
-    if query.contains(URLQueryItem(name: "granularity", value: "3600")) {
-      return try JSONEncoder()
-        .encode([
-          [start + 22 * 3600, 1, 10, 2, 5, 1], [start + 23 * 3600, 1, 10, 2, 6, 1]
-        ])
+    if failing || (failPrimary && url.host == "cdn.jsdelivr.net") { throw RateError.http(503) }
+    let day: String
+    if let segment = url.absoluteString.components(separatedBy: "currency-api@").last,
+      segment != url.absoluteString
+    {
+      day = String(segment.prefix(10))
+    } else {
+      day = String((url.host ?? "").prefix(10))
     }
-    return try JSONEncoder()
-      .encode([[start + 86400, 1, 5, 2, 3, 1], [start + 172800, 1, 5, 2, 4, 1]])
-  }
-}
-
-private actor MaxFiatHTTP: HTTPClient {
-  var urls: [URL] = []
-  func get(_ url: URL) async throws -> Data {
-    urls.append(url)
+    if day == missingDay { throw RateError.http(404) }
+    let date = wrongDate ? "2020-01-01" : day
     return Data(
-      #"[{"date":"1999-01-01","base":"EUR","quote":"USD","rate":1.1},{"date":"2026-01-01","base":"EUR","quote":"USD","rate":1.2}]"#
+      "{\"date\":\"\(date)\",\"eur\":{\"usd\":2,\"btc\":0.00002,\"eth\":0.0005,\"xau\":0.001,\"xag\":0.05}}"
         .utf8)
   }
 }
 
-private actor HistoryHTTP: HTTPClient {
-  var calls = 0
-  func get(_ url: URL) async throws -> Data {
-    calls += 1
-    if calls > 1 { throw RateError.http(429) }
-    return Data(
-      #"[{"date":"2026-01-02","base":"USD","quote":"EUR","rate":0.8},{"date":"2026-01-03","base":"USD","quote":"EUR","rate":0.9}]"#
-        .utf8)
-  }
+func historyDate(_ string: String) throws -> Date {
+  try #require(ISO8601DateFormatter().date(from: string))
 }
 
 @Suite struct HistoryTests {
-  @Test func dailyWidgetCacheAvoidsRepeatedFetchesUntilExpiry() async throws {
+  @Test(arguments: [
+    ("BTC", "USD", 100_000.0), ("BTC", "ETH", 25.0),
+    ("USD", "BTC", 0.00001), ("XAU", "EUR", 1_000.0), ("XAU", "XAG", 50.0)
+  ])
+  func dailyHistoryCrossRatesUseOnlyFawaz(base: String, quote: String, value: Double) async throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }
-    let client = HistoryHTTP()
-    let service = HistoryService(directory: directory, client: client)
-    let now = Date(timeIntervalSince1970: 1_767_398_400)
+    let client = DailyHistoryHTTP()
+    let now = try historyDate("2026-01-08T12:00:00Z")
+    let result = await HistoryService(directory: directory, client: client)
+      .load(base: base, quote: quote, range: .week, now: now)
+    let series = try #require(result.series)
+    #expect(result.issue == nil)
+    #expect(series.points.count == 8)
+    #expect(series.points.allSatisfy { abs($0.value - value) < 0.000001 })
+    #expect(series.source == .init(provider: .fawaz, observation: .dailyReference, timeZone: .gmt))
+    #expect(await client.urls.allSatisfy { $0.host == "cdn.jsdelivr.net" })
+  }
+
+  @Test func sharedDatedPayloadsAvoidRepeatedPairAndRangeRequests() async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let client = DailyHistoryHTTP()
+    let now = try historyDate("2026-01-08T12:00:00Z")
+    let service = HistoryService(directory: directory, client: client, policy: .coinbaseEnhanced)
+    let first = await service.load(base: "BTC", quote: "EUR", range: .week, now: now)
+    #expect(first.series?.source.latestObservation == nil)
+    _ = await service.load(base: "USD", quote: "XAU", range: .week, now: now)
     _ = await service.load(
-      base: "USD", quote: "EUR", range: .month, now: now, cacheLifetime: 86_400)
-    let fresh = await service.load(
-      base: "USD", quote: "EUR", range: .month,
-      now: now.addingTimeInterval(86_399), cacheLifetime: 86_400)
-    #expect(await client.calls == 1)
-    #expect(fresh.issue == nil)
-    let expired = await service.load(
-      base: "USD", quote: "EUR", range: .month,
-      now: now.addingTimeInterval(86_400), cacheLifetime: 86_400)
-    #expect(await client.calls == 2)
-    #expect(expired.issue == .usingCachedSeries)
-    #expect(expired.series?.points.last?.value == 0.9)
+      base: "BTC", quote: "EUR", range: .week, now: now.addingTimeInterval(21600))
+    #expect(await client.urls.count == 8)
+    #expect(await client.urls.allSatisfy { $0.host == "cdn.jsdelivr.net" })
   }
 
-  @Test func longHistoryWindowsAndMonthlyCloses() {
-    let start = Date(timeIntervalSince1970: 0)
-    let end = start.addingTimeInterval(366 * 86400)
-    let windows = HistoryService.candleWindows(start: start, end: end)
-    #expect(windows.count == 2)
-    #expect(windows.first?.start == start)
-    #expect(windows.last?.end == end)
-    #expect(windows[0].end == windows[1].start)
-    #expect(windows.allSatisfy { $0.end.timeIntervalSince($0.start) <= 299 * 86400 })
-    let points = [
-      HistoryPoint(date: start, value: 1),
-      HistoryPoint(date: start.addingTimeInterval(86400), value: 2),
-      HistoryPoint(date: start.addingTimeInterval(40 * 86400), value: 3)
-    ]
-    #expect(HistoryService.monthlyCloses(points.reversed()).map(\.value) == [2, 3])
-  }
-
-  @Test func yearlyCryptoFetchesEveryPageAndCaches() async throws {
+  @Test func allHistorySamplesAvailableMonthEndsWithoutDailyFanout() async throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }
-    let client = LongHistoryHTTP()
+    let client = DailyHistoryHTTP()
+    let now = try historyDate("2026-10-09T12:00:00Z")
+    let result = await HistoryService(directory: directory, client: client)
+      .load(base: "EUR", quote: "USD", range: .all, now: now)
+    #expect(result.series?.source.observation == .monthlyReference)
+    #expect(result.series?.points.count == 32)
+    #expect(result.series?.points.first?.date == (try historyDate("2024-03-31T00:00:00Z")))
+    #expect(result.series?.points.last?.date == (try historyDate("2026-10-09T00:00:00Z")))
+    #expect(await client.urls.count == 32)
+  }
+
+  @Test func yearToDateUsesJanuaryFirstAndArchiveBoundary() async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let client = DailyHistoryHTTP()
     let service = HistoryService(directory: directory, client: client)
-    let now = try #require(ISO8601DateFormatter().date(from: "2026-01-02T00:00:00Z"))
-    let result = await service.load(base: "BTC", quote: "USD", range: .year, now: now)
-    #expect(result.series?.points.count == 5)
-    #expect(result.series?.source.latestObservation == .hourlyClose)
-    #expect(await client.urls.count == 3)
-    let daily = try JSONDecoder()
-      .decode(
-        HistorySeries.self,
-        from: Data(contentsOf: directory.appendingPathComponent("history-BTC-USD-365.json")))
-    #expect(daily.points.count == 4)
-    #expect(daily.source.latestObservation == nil)
-    _ = await service.load(base: "BTC", quote: "USD", range: .year, now: now)
-    #expect(await client.urls.count == 3)
-    let urls = await client.urls
+    let result = await service.load(
+      base: "EUR", quote: "USD", range: .yearToDate,
+      now: try historyDate("2026-01-03T12:00:00Z"))
+    #expect(result.series?.points.count == 3)
+    #expect(result.series?.points.first?.date == (try historyDate("2026-01-01T00:00:00Z")))
+    let archive = HistoryService.dailyDates(
+      start: .distantPast,
+      now: try historyDate("2024-03-03T12:00:00Z"), monthly: false)
+    #expect(archive.count == 2)
+    #expect(archive.first == (try historyDate("2024-03-02T00:00:00Z")))
+    await client.failRequests()
+    let rollover = await service.load(
+      base: "EUR", quote: "USD", range: .yearToDate,
+      now: try historyDate("2027-01-01T12:00:00Z"))
+    #expect(rollover.series == nil)
+  }
+
+  @Test func datedEndpointFallbackAndWrongDateRejection() async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let client = DailyHistoryHTTP()
+    await client.failPrimaryRequests()
+    let now = try historyDate("2026-01-03T12:00:00Z")
+    let result = await HistoryService(directory: directory, client: client)
+      .load(base: "EUR", quote: "USD", range: .yearToDate, now: now)
+    #expect(result.series?.points.count == 3)
+    #expect(await client.urls.count == 6)
+    await client.returnWrongDate()
+    let invalid = await HistoryService(
+      directory: directory.appendingPathComponent("invalid"), client: client
+    )
+    .load(base: "EUR", quote: "USD", range: .yearToDate, now: now)
+    #expect(invalid.series == nil)
+    #expect(invalid.issue == .unavailable)
+  }
+
+  @Test func unavailableArchiveDatesAreSkippedWithoutInventingObservations() async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let client = DailyHistoryHTTP()
+    await client.setMissingDay("2026-01-02")
+    let result = await HistoryService(directory: directory, client: client)
+      .load(
+        base: "EUR", quote: "USD", range: .yearToDate,
+        now: try historyDate("2026-01-03T12:00:00Z"))
+    #expect(result.issue == nil)
     #expect(
-      urls.filter {
-        URLComponents(url: $0, resolvingAgainstBaseURL: false)?.queryItems?
-          .contains(URLQueryItem(name: "granularity", value: "86400")) == true
-      }
-      .count == 2)
-  }
-
-  @Test func maxFiatRequestsMonthlyHistoryAndCachesForOneDay() async throws {
-    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-    defer { try? FileManager.default.removeItem(at: directory) }
-    let client = MaxFiatHTTP()
-    let service = HistoryService(directory: directory, client: client)
-    let now = Date()
-    let result = await service.load(base: "EUR", quote: "USD", range: .all, now: now)
-    #expect(result.series?.points.count == 2)
-    let url = try #require(await client.urls.first)
-    let query = try #require(URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems)
-    #expect(query.contains(URLQueryItem(name: "from", value: "1948-01-01")))
-    #expect(query.contains(URLQueryItem(name: "group", value: "month")))
-    _ = await service.load(
-      base: "EUR", quote: "USD", range: .all, now: now.addingTimeInterval(43200))
-    #expect(await client.urls.count == 1)
+      result.series?.points.map { String($0.date.ISO8601Format().prefix(10)) }
+        == ["2026-01-01", "2026-01-03"])
+    #expect(await client.urls.count == 4)
   }
 
   @Test func historySortsAndUsesCompletedClose() throws {
@@ -137,11 +151,5 @@ private actor HistoryHTTP: HTTPClient {
     #expect(throws: (any Error).self) {
       try HistoryService.decodeCandles(Data("[[1,2]]".utf8), start: .distantPast, end: .now)
     }
-    let fiat = Data(
-      #"[{"date":"2026-01-03","base":"USD","quote":"EUR","rate":0.9},{"date":"2026-01-02","base":"USD","quote":"EUR","rate":0.8}]"#
-        .utf8)
-    #expect(
-      try HistoryService.decodeFiat(fiat, base: "USD", quote: "EUR").map(\.value) == [0.8, 0.9])
   }
-
 }

@@ -1,4 +1,5 @@
 import Conversion
+import CurrencyApplication
 import ExchangeRates
 import Foundation
 import LocalCurrency
@@ -34,7 +35,7 @@ enum WidgetComposition {
   static func timeline() -> WidgetTimelineDependencies {
     let directory = directory()
     let conversion = ConversionStore(directory: directory)
-    let rates = RateStore(directory: directory)
+    let rates = RateStore(directory: directory, policy: CurrencyRateConfiguration.policy)
     let local = LocalCurrencyStore(directory: directory)
     let widgets = WidgetStore(directory: directory)
     return WidgetTimelineDependencies(
@@ -45,21 +46,24 @@ enum WidgetComposition {
       },
       refreshRates: { force in
         try await rates.refreshRates(
-          using: RateService(), force: force, providerTimeout: .seconds(2))
+          using: RateService(policy: CurrencyRateConfiguration.policy), force: force,
+          providerTimeout: .seconds(2))
       },
       refreshLocalCurrency: {
         let controller = await LocalCurrencyController(
           store: local, timeoutDuration: .seconds(5), reloadWidgets: {})
         await controller.refreshForWidget()
       },
-      now: { .now })
+      now: { .now }, refreshInterval: CurrencyRateConfiguration.widgetRefreshInterval)
   }
 
   static func history() -> HistoryTimelineDependencies {
     let directory = directory()
     let conversion = ConversionStore(directory: directory)
     let local = LocalCurrencyStore(directory: directory)
-    let history = HistoryService(directory: directory, client: NetworkClient(timeout: 10))
+    let history = HistoryService(
+      directory: directory, client: NetworkClient(timeout: 10),
+      policy: CurrencyRateConfiguration.policy)
     return HistoryTimelineDependencies(
       input: { conversion.input() },
       load: { base, quote, range, now in
@@ -72,7 +76,7 @@ enum WidgetComposition {
 
   static func action() -> WidgetActionDependencies {
     let directory = directory()
-    let rates = RateStore(directory: directory)
+    let rates = RateStore(directory: directory, policy: CurrencyRateConfiguration.policy)
     let widgets = WidgetStore(directory: directory)
     return WidgetActionDependencies(
       rates: { rates.loadRates() },

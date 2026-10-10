@@ -1,7 +1,7 @@
 import { test as mobileTest } from '@e2e-dev/mobile';
 import { deviceProfile } from './device-profile.js';
 
-type InitialState = 'fresh-onboarding' | 'ready-converter' | 'ready-metals' | 'ready-metal-source';
+type InitialState = 'fresh-onboarding' | 'ready-converter' | 'ready-metals' | 'ready-metal-source' | 'ready-crypto';
 const worker = globalThis as typeof globalThis & { currencyE2EInstallation?: Promise<unknown> };
 
 export const test = mobileTest.extend<{ start: (state: InitialState) => Promise<void> }>({

@@ -41,8 +41,17 @@ public struct CurrencyDetailsDependencies {
   /// Loads a series for (base currency, quote currency, range), preserving typed issues.
   public var loadHistory: (String, String, HistoryRange) async -> HistoryResult
 
+  /// Whether configured providers offer hourly history for the requested pair.
+  public var supportsIntraday: (String, String) -> Bool
+
   /// Creates explicit history loading without selecting a live provider.
-  public init(loadHistory: @escaping (String, String, HistoryRange) async -> HistoryResult) {
+  public init(
+    supportsIntraday: @escaping (String, String) -> Bool = {
+      HistoryService.supportsIntraday(base: $0, quote: $1)
+    },
+    loadHistory: @escaping (String, String, HistoryRange) async -> HistoryResult
+  ) {
+    self.supportsIntraday = supportsIntraday
     self.loadHistory = loadHistory
   }
 }
@@ -59,7 +68,7 @@ public final class CurrencyDetailsModel {
   public var availableRanges: [HistoryRange] {
     let request = historyRequest
     return Self.ranges.filter {
-      $0 != .day || HistoryService.supportsIntraday(base: request.base, quote: request.quote)
+      $0 != .day || dependencies.supportsIntraday(request.base, request.quote)
     }
   }
 

@@ -46,7 +46,7 @@ test('settings groups expose rates, credits and legal links', { tags: ['core'] }
   await expect(screen.getByText(/Estimates only, not financial advice/)).toBeVisible();
   await screen.getByRole('button', 'Settings', { exact: true }).tap();
   await screen.getByTestId('settings.sources').tap();
-  await expect(screen.getByText('Frankfurter', { exact: true })).toBeVisible();
+  await expect(screen.getByText('Fawaz Exchange API', { exact: true })).toBeVisible();
   await screen.getByRole('button', 'Settings', { exact: true }).tap();
   await agent.act('Scroll Settings until the About section with Acknowledgements, Privacy policy, Terms of use and Open source is visible. Stay in Settings.');
   await expect(screen.getByText('About', { exact: true })).toBeVisible();
