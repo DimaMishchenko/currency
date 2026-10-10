@@ -2,6 +2,7 @@ import { mobile } from '@e2e-dev/mobile';
 import type { E2EConfig } from 'e2e';
 import { chatgpt } from 'e2e/oauth/chatgpt';
 import { targetName } from './device-profile.js';
+import { coinbaseEnabled } from './provider-configuration.js';
 
 const udid = process.env.CURRENCY_E2E_UDID?.trim();
 if (!udid) {
@@ -15,7 +16,7 @@ export default {
       name: targetName,
       engine: mobile({ platform: 'ios', device: udid, session: `currency-e2e-${targetName}` }),
       app: {
-        identity: `currency-fixtures-v5-${process.env.CURRENCY_E2E_COINBASE ?? 'on'}`,
+        identity: `currency-fixtures-v6-${coinbaseEnabled}`,
         bundleId: 'com.dimasike.currency',
         appPath: process.env.CURRENCY_E2E_APP_PATH ?? '../../../../.validation/e2e/DerivedData/Build/Products/Debug-iphonesimulator/Currency.app',
         launchArguments: ['-AppleLanguages', '(en)', '-AppleLocale', 'en_US', '-CurrencyE2E'],

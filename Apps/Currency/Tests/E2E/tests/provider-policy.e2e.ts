@@ -1,11 +1,9 @@
 import { expect } from 'e2e';
 import { test } from '../fixtures.js';
+import { coinbaseEnabled } from '../provider-configuration.js';
 
-const mode = process.env.CURRENCY_E2E_COINBASE ?? 'on';
-if (mode !== 'on' && mode !== 'off') {
-  throw new Error('CURRENCY_E2E_COINBASE must be on or off and match the installed build.');
-}
-const enhanced = mode === 'on';
+const enhanced = coinbaseEnabled;
+const mode = enhanced ? 'on' : 'off';
 
 test(`provider policy ${mode} preserves crypto fallback, ranges and credits after restart`, { tags: ['core', 'providers'] }, async ({ start, app, agent, screen }) => {
   await start('ready-crypto');

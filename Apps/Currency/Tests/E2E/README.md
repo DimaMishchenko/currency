@@ -75,16 +75,15 @@ For widget/shared-data changes, run the affected widget and both Calculator shar
 
 ## Fixtures, widgets and cache
 
-Start each case once with a matching fixture. `fresh-onboarding` and `ready-converter` cover general flows; `ready-metals` adds Gold as a destination and `ready-metal-source` starts with one troy ounce of Gold for measurement checks. The first launch resets real stores; restart keeps edits. Fixed rates are EUR 1 / USD 2 / CHF 0.5 / CZK 25 / XAU 0.01 troy oz, with Fawaz history caches for EUR/USD, EUR/Gold and BTC/USD. `ready-crypto` starts USD 1 → Bitcoin: 0.00001 from Fawaz, or 0.00002 with Coinbase enabled. Its stored snapshot deliberately contains a Coinbase overlay plus the daily fallback, so the disabled build exercises cache exclusion. Restart omits fixture state and preserves the real stores. Keep `-CurrencyE2EState` out of default launch arguments.
+Start each case once with a matching fixture. `fresh-onboarding` and `ready-converter` cover general flows; `ready-metals` adds Gold as a destination and `ready-metal-source` starts with one troy ounce of Gold for measurement checks. The first launch resets real stores; restart keeps edits. Fixed rates are EUR 1 / USD 2 / CHF 0.5 / CZK 25 / XAU 0.01 troy oz, with Fawaz history caches for EUR/USD, EUR/Gold and BTC/USD. `ready-crypto` starts USD 1 → Bitcoin: 0.00001 from Fawaz, or 0.00002 with Coinbase enabled. Its stored snapshot deliberately contains a Coinbase overlay plus the daily fallback, so disabling the flag exercises cache exclusion. Restart omits fixture state and preserves the real stores. Keep `-CurrencyE2EState` out of default launch arguments.
 
-Run provider coverage with both separately built apps. `CURRENCY_E2E_COINBASE` selects assertions and recording identity; it does not change app behavior. The off build must compile every target, including CurrencyApplication, with `CURRENCY_DISABLE_COINBASE` (append it to the existing Swift conditions). Use separate DerivedData directories, then select the app explicitly:
+Run the same provider journey with the normal app build. It reads `CurrencyRateConfiguration.coinbaseEnabled` from source for its expected outcomes and cache identity. After changing that Boolean, rebuild the app before rerunning; no environment mode or special test suite is needed.
 
 ```sh
-CURRENCY_E2E_COINBASE=on CURRENCY_E2E_APP_PATH=<absolute-enabled-Currency.app> npm run test:e2e -- tests/provider-policy.e2e.ts
-CURRENCY_E2E_COINBASE=off CURRENCY_E2E_APP_PATH=<absolute-disabled-Currency.app> npm run test:e2e -- tests/provider-policy.e2e.ts
+npm run test:e2e -- tests/provider-policy.e2e.ts
 ```
 
-The fixtures use the production provider decoders with a fixed HTTP client. Fawaz supplies every asset; Coinbase supplies crypto only in the enabled build. Fresh namespaced chart caches avoid live network timing. This journey proves same-build relaunch filtering of a deliberately incompatible cached overlay; changing installed builds on one retained app container is a separate upgrade check.
+The fixtures use the production provider decoders with a fixed HTTP client. Fawaz supplies every asset; Coinbase supplies crypto only when the flag is enabled. Fresh namespaced chart caches avoid live network timing. This journey proves same-build relaunch filtering of a deliberately incompatible cached overlay; changing the flag and reinstalling on one retained app container is a separate upgrade check.
 
 Home Screen setup uses [widgetctl](https://github.com/DimaMishchenko/widgetctl), pinned as a GitHub dev dependency. It installs/configures the requested kind and size, preserves other apps’ widgets and unloads its helper after the module. Tests still validate rendered data and interactions. Set `CURRENCY_E2E_WIDGET_SETUP=gallery` to exercise system installation; private-configuration cases then skip. Lock Screen installation uses system UI.
 

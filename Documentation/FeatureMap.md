@@ -35,7 +35,7 @@ Owners: ExchangeRates domain, [CurrencyDetails](../Features/CurrencyDetails/Sour
 
 | ID | Capability / entry | Observable outcome |
 | --- | --- | --- |
-| RATE-01 | Initial bootstrap, foreground refresh, explicit rate refresh | Fawaz supplies daily fiat, crypto and metal rates. The internal Coinbase build flag is enabled by default and adds current crypto rates with more frequent refresh attempts. Disabling it excludes Coinbase quotes from cached reads across the phone, widgets, Watch and system actions; loading, failures and daily fallback remain explicit. |
+| RATE-01 | Initial bootstrap, foreground refresh, explicit rate refresh | Fawaz supplies daily fiat, crypto and metal rates. The internal Coinbase code-level flag is enabled by default and adds current crypto rates with more frequent refresh attempts. Disabling it excludes Coinbase quotes from cached reads across the phone, widgets, Watch and system actions; loading, failures and daily fallback remain explicit. |
 | RATE-02 | Current rate/source information in converter, details and Settings | Currency-specific provenance, timestamps and warning states correspond to the snapshot used for conversion. |
 | HIST-01 | Currency row → Details & history | The requested currency and its applicable reference pair are shown; opening details does not change saved selections. |
 | HIST-02 | History range controls and chart | Fawaz daily history supports 1W, 1M, 3M, 1Y, YTD and All, limited to its archive from March 2024; All uses monthly reference samples. Enabled Coinbase adds 1D completed hourly observations for supported crypto pairs. Disabled mode hides 1D and rejects incompatible cached history. Missing observations and cached fallback remain explicit. |

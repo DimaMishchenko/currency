@@ -1,18 +1,12 @@
 import ExchangeRates
 import Foundation
 
-/// Shared build configuration for the app, extensions and independent Watch app.
+/// Shared provider configuration for the app, extensions and independent Watch app.
 public enum CurrencyRateConfiguration {
-  /// Set CURRENCY_DISABLE_COINBASE when building to use only daily Fawaz data.
-  public static let coinbaseEnabled: Bool = {
-    #if CURRENCY_DISABLE_COINBASE
-      false
-    #else
-      true
-    #endif
-  }()
+  /// Enables Coinbase current crypto quotes and supported 24-hour charts.
+  public static let coinbaseEnabled = true
 
-  /// Provider capabilities selected once at each executable composition root.
+  /// Provider capabilities selected at each executable composition root.
   public static var policy: RateProviderPolicy {
     coinbaseEnabled ? .coinbaseEnhanced : .daily
   }

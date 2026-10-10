@@ -22,9 +22,9 @@ For command-line Xcode builds, use `set -o pipefail` and pipe combined output th
 
 ## Rate provider configuration
 
-`CurrencyRateConfiguration` supplies one internal build flag to the phone app, widgets, independent Watch app and Watch widgets. Coinbase is enabled by default. Build every executable with `OTHER_SWIFT_FLAGS='$(inherited) -D CURRENCY_DISABLE_COINBASE'` to disable it; do not mix configurations across embedded targets.
+`CurrencyRateConfiguration.coinbaseEnabled` is the shared code-level feature flag for the phone app, widgets, independent Watch app and Watch widgets. It is `true` by default; set it to `false` and rebuild normally to use only Fawaz. There are no compiler options or separate build configurations.
 
-Both modes use Fawaz for daily rates and daily history. Enabled Coinbase adds current crypto rates and supported 24-hour hourly charts. Disabled builds hide 1D, normalize saved 1D widgets to 1M, exclude incompatible cached data, and reduce automatic rate attempts from 30 minutes to six hours. Foreground polling is one minute when enabled and six hours when disabled; WidgetKit controls actual timeline delivery. Explicit refresh remains available.
+Both modes use Fawaz for daily rates and daily history. Enabled Coinbase adds current crypto rates and supported 24-hour hourly charts. When disabled, the app hides 1D, normalizes saved 1D widgets to 1M, excludes incompatible cached data, and reduces automatic rate attempts from 30 minutes to six hours. Foreground polling is one minute when enabled and six hours when disabled; WidgetKit controls actual timeline delivery. Explicit refresh remains available.
 
 Fawaz history starts on 2 March 2024. All uses month-end/current-month reference samples; the other daily ranges use available dated publications. Neither mode fabricates missing history or labels daily reference samples as exchange closes.
 

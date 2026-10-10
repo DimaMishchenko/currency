@@ -144,27 +144,6 @@ jobs:
             -derivedDataPath "$RUNNER_TEMP/CurrencyTestsDerivedData" \
             CODE_SIGN_IDENTITY=- \
             2>&1 | xcbeautify
-      - name: Test Fawaz-only build configuration
-        if: needs.changes.outputs.xcode == 'true'
-        run: |
-          set -o pipefail
-          xcodebuild test \
-            -workspace Currency.xcworkspace \
-            -scheme CurrencyTests \
-            -configuration Debug \
-            -destination "platform=iOS Simulator,id=$CURRENCY_TEST_SIMULATOR" \
-            -derivedDataPath "$RUNNER_TEMP/CurrencyDailyTestsDerivedData" \
-            -collect-test-diagnostics never \
-            -only-testing:ExchangeRatesPackageTests \
-            -only-testing:CurrencyDetailsPackageTests \
-            -only-testing:WidgetsPackageTests \
-            -only-testing:SettingsPackageTests \
-            -only-testing:CurrencyApplicationTests \
-            -only-testing:ApplicationIntegrationTests/ProviderPolicyIntegrationTests \
-            -only-testing:WidgetIntegrationTests \
-            CODE_SIGN_IDENTITY=- \
-            OTHER_SWIFT_FLAGS='$(inherited) -D CURRENCY_DISABLE_COINBASE' \
-            2>&1 | xcbeautify
       - name: Check compiler-extracted localization coverage
         if: needs.changes.outputs.xcode == 'true'
         timeout-minutes: 1
