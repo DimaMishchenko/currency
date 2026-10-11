@@ -67,7 +67,7 @@ jobs:
               exit 1
             fi
           done
-      - uses: jdx/mise-action@v4
+      - uses: jdx/mise-action@v5
       - name: Install tools
         run: brew install xcbeautify asc
       - name: Install Tuist dependencies

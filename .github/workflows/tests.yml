@@ -79,7 +79,7 @@ jobs:
         run: |
           config=$(mktemp -d "$RUNNER_TEMP/currency-tuist.XXXXXX")
           echo "TUIST_XDG_CONFIG_HOME=$config" >> "$GITHUB_ENV"
-      - uses: jdx/mise-action@v4
+      - uses: jdx/mise-action@v5
         if: needs.changes.outputs.xcode == 'true'
       - name: Install build formatter
         if: needs.changes.outputs.xcode == 'true'
