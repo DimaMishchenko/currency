@@ -38,7 +38,7 @@ jobs:
         run: |
           python3 Scripts/CI/test_skip_rules.py
           python3 Scripts/CI/test_project_structure.py
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
       - name: Check E2E integration types
