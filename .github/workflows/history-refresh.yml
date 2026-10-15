@@ -1,6 +1,10 @@
 name: Refresh bundled history
 
 on:
+  pull_request:
+    paths:
+      - 'Scripts/History/**'
+      - '.github/workflows/history-refresh.yml'
   schedule:
     - cron: '0 6 1 * *'
   workflow_dispatch:
@@ -9,12 +13,15 @@ permissions:
   contents: read
 
 concurrency:
-  group: currency-history-refresh
+  group: currency-history-refresh-${{ github.event.pull_request.number || 'main' }}
   cancel-in-progress: false
 
 jobs:
   generate:
-    if: github.ref == 'refs/heads/main'
+    if: >-
+      github.event_name == 'pull_request' ||
+      (github.ref == 'refs/heads/main' &&
+       (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'))
     runs-on: ubuntu-latest
     timeout-minutes: 30
     outputs:
@@ -23,7 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: main
+          ref: ${{ github.event_name == 'pull_request' && github.sha || 'main' }}
           persist-credentials: false
       - name: Test archive generation
         run: python3 -m unittest discover -s Scripts/History -p 'test_*.py'
@@ -33,7 +40,7 @@ jobs:
           echo "base_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           python3 Scripts/History/generate_archive.py
       - uses: actions/upload-artifact@v7
-        if: steps.generate.outputs.changed == 'true'
+        if: github.event_name != 'pull_request' && steps.generate.outputs.changed == 'true'
         with:
           name: currency-history-refresh
           path: Domain/ExchangeRates/Sources/ExchangeRates/Resources/history-monthly-v1.json
@@ -41,7 +48,11 @@ jobs:
           retention-days: 7
   propose:
     needs: generate
-    if: needs.generate.outputs.changed == 'true'
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name != 'pull_request' &&
+      (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') &&
+      needs.generate.outputs.changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
