@@ -9,8 +9,9 @@ private final class PendingHistory {
   func load(_ range: HistoryRange) async -> HistoryResult {
     await withCheckedContinuation { requests[range] = $0 }
   }
-  func finish(_ range: HistoryRange, issue: HistoryIssue?) {
-    requests.removeValue(forKey: range)?.resume(returning: HistoryResult(series: nil, issue: issue))
+  func finish(_ range: HistoryRange, series: HistorySeries? = nil, issue: HistoryIssue?) {
+    requests.removeValue(forKey: range)?
+      .resume(returning: HistoryResult(series: series, issue: issue))
   }
 }
 
@@ -231,6 +232,32 @@ struct CurrencyDetailsTests {
     #expect(model.availableRanges.contains(.month))
     await model.load()
     #expect(requestedRange == .month)
+  }
+
+  @Test func rangeChangesReplaceTheChartWithLoadingUntilTheRequestedHistoryArrives() async {
+    let pending = PendingHistory()
+    let model = CurrencyDetailsModel(
+      input: .init(code: "EUR", reference: "USD", snapshot: RateSnapshot()),
+      dependencies: .init { _, _, range in await pending.load(range) })
+    let date = Date(timeIntervalSince1970: 1_700_000_000)
+    for (index, range) in [HistoryRange.month, .year, .month].enumerated() {
+      model.range = range
+      let request = Task { await model.load() }
+      while pending.requests[range] == nil { await Task.yield() }
+      #expect(model.phase == .loading)
+      #expect(model.series == nil)
+      #expect(model.issue == nil)
+      let series = HistorySeries(
+        points: [
+          HistoryPoint(date: date, value: Double(index + 1)),
+          HistoryPoint(date: date.addingTimeInterval(86400), value: Double(index + 2))
+        ], source: .init(provider: .custom("test")), fetchedAt: date.addingTimeInterval(86400))
+      pending.finish(range, series: series, issue: index == 0 ? .usingCachedSeries : nil)
+      await request.value
+      #expect(model.phase == .loaded)
+      #expect(model.series?.points == series.points)
+      #expect(model.issue == (index == 0 ? .usingCachedSeries : nil))
+    }
   }
 
   @Test func supersededNoncooperatingRequestCannotReplaceNewerRange() async {

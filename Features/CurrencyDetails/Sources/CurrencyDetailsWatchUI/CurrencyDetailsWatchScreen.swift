@@ -45,6 +45,8 @@ public struct CurrencyDetailsWatchScreen: View {
         .accessibilityIdentifier("watch.details.range")
         if model.phase == .loading || model.phase == .idle {
           ProgressView().accessibilityLabel(Text(.Watch.loadingHistory))
+            .accessibilityIdentifier("watch.details.loading")
+            .id(model.range)
         } else if let series = model.series, !series.points.isEmpty {
           VStack(alignment: .leading, spacing: 4) {
             HStack {

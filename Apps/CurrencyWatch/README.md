@@ -40,6 +40,12 @@ Use one explicitly owned Watch simulator and device-targeted controls. Keep the 
 
 Use `serve-sim` with the Watch UDID for native controls and screenshots; the iPhone E2E runner does not support this surface. If the Watch accessibility tree contains only an application root, stop automated picker navigation and record that gap; `simctl openurl` may also be unsupported. Save local evidence outside tracked documentation. A compiled Watch target, fixture inspection or failed driver connection does not count as a completed native journey. Spoken Siri, physical companion transport and installed complication configuration remain separate acceptance checks.
 
+## History loading acceptance
+
+For WATCH-04–05, use an owned Watch simulator and open a favorite currency's details. Keep the chart row visible while changing ranges. Check the first load, Month → Year → Month, and rapid changes while a request is pending. An uncached/pending request must show the animated history spinner (`watch.details.loading`), then replace it with the selected range's chart or explicit unavailable state. The row must not become blank after its first chart. A completed cache hit may replace the chart immediately without an artificial loading delay. Late responses must not replace the selected range.
+
+The shared `CurrencyDetailsTests` exercise Month → Year → Month with suspended responses, checking that previous chart data/issues disappear during loading and that each requested result replaces the loader. The native journey additionally checks spinner rendering after Watch list-row reuse. If the Watch accessibility tree exposes only the app root, picker automation is blocked; model tests alone do not prove the native spinner. Preserve screenshots of initial and repeated pending requests, and distinguish controlled delayed-response rendering checks from live picker/provider acceptance.
+
 ## Metal measurement acceptance
 
 The iPhone E2E driver does not cover Watch surfaces. Keep this native Watch journey for WATCH-14 on an explicitly owned simulator; use the selected CompanionSync, Home editing, Watch route and shared metal/widget tests for numerical and synchronization regressions.
