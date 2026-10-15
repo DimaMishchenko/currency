@@ -57,9 +57,10 @@ These are representative outcomes, not exhaustive coverage of each feature ID.
 | ONB-01–02 | [onboarding](tests/onboarding.e2e.ts) | Currency selection, Back, completion and restart |
 | CONV-01, CONV-05 | [converter](tests/converter.e2e.ts) | EUR 42 → USD 84 persists after restart |
 | CONV-02–03, CONV-05 | [currency-selection](tests/currency-selection.e2e.ts) | Change source, add/remove currencies, exact amounts and restart |
-| CONV-01, HIST-01–04, PREF-04 | [provider-policy](tests/provider-policy.e2e.ts) | Configured Fawaz/Coin Metrics conversion, 24-hour minute-reference provenance, All monthly sources, approximate conversion notices, 1D capability, source credits and saved-cache compatibility after restart |
+| CONV-01, HIST-01–04, PREF-04 | [provider-policy](tests/provider-policy.e2e.ts) | Configured Fawaz/Coin Metrics conversion, 24-hour minute-reference provenance, All monthly sources, no spurious USD approximation and retained non-USD daily-FX notices, 1D capability, source credits and saved-cache compatibility after restart |
 | HIST-02 | [history-archive](tests/history-archive.e2e.ts) | With the seeded All cache removed, the real bundled BTC/USD history starts in 2010 and exposes monthly source/date information |
 | HIST-02–03, WID-08 | [converted-crypto-history](tests/converted-crypto-history.e2e.ts) | An installed BTC/EUR History widget fetches a complete live day with the app closed and retains its historical USD/EUR rate, provider and publication date; requires network |
+| RATE-01–02, HIST-01–04, CONV-05, PREF-04 | [live-app-provider](tests/live-app-provider.e2e.ts) | Disable the fixture network adapter, force-refresh all 22 crypto quotes, inspect the real phone 1D chart and bundled All history from 2010, then relaunch and verify saved input/chart reuse; requires network |
 | HIST-02, WID-08 | [widget-live-provider](tests/widget-live-provider.e2e.ts) | With the app terminated and the seeded 1D cache removed, an installed widget fetches and persists a complete live Coin Metrics day; requires network |
 | HIST-01–04 | [converter-details](tests/converter-details.e2e.ts) | Rate, period selection, source explanation and return |
 | PREF-05, ONB-01–02 | [metal-widget-preview](tests/metal-widget-preview.e2e.ts) | Replayed Calculator and Board showcase previews retain the saved grams preference and converted Gold amount |
@@ -118,3 +119,5 @@ xcrun simctl shutdown "$CURRENCY_E2E_UDID"
 Watch metal measurement (WATCH-14) uses the [maintained native Watch journey](../../../CurrencyWatch/README.md#metal-measurement-acceptance). The iPhone E2E driver does not cover Watch. Numerical, stale-draft and preference-sync regressions remain in the native unit test targets.
 
 The `live-providers` journey is an explicit network acceptance check: `npx e2e run tests/widget-live-provider.e2e.ts`. It terminates the app, removes only the test-owned BTC/USD 1D cache, configures the installed History widget, and asserts the extension wrote positive minute-reference data spanning at least 23h45m before capturing its UI. Provider availability failures remain failures; no fabricated or daily history replaces 1D.
+
+The live phone journey uses fixtures only to create completed onboarding and a saved currency selection. It deletes the test-owned rate/1D/All caches and relaunches without `-CurrencyE2E`; network responses and persisted observations must then come from the production providers. Provider outages remain failures.

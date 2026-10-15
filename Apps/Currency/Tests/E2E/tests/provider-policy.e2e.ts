@@ -36,7 +36,8 @@ test('crypto reference prices preserve ranges, provenance and credits after rest
     await source.tap();
     await expect(source).toHaveValue('Expanded');
     await agent.act('Scroll in Details until the exact text "Crypto history combines daily and monthly reference data with intraday prices when available. Converted prices may be approximate. Historical and current sources can differ." is visible. Use that exact text when scrolling to text. Keep Details open.');
-    await expect(screen.getByText(/Coin Metrics.*minute reference prices.*approximate conversion/i)).toBeVisible();
+    await expect(screen.getByText(/Coin Metrics.*minute reference prices.*approximate conversion/i)).toBeHidden();
+    await expect(screen.getByText(/^Approximate conversion:/i)).toBeHidden();
     await app.screenshot(capture);
     await agent.act('Close Details & history with the circular X at the top right and return to the converter.');
     await expect(screen.getByTestId('currency.details.close')).toBeHidden();
@@ -53,8 +54,9 @@ test('crypto reference prices preserve ranges, provenance and credits after rest
   await screen.getByTestId('converter.settings').tap();
   await screen.getByTestId('settings.rates').tap();
   await agent.act('Scroll Rates until the BTC quote and its source information are visible. Keep Rates open.');
-  await expect(screen.getByText(/Coin Metrics.*minute reference prices.*approximate conversion/i).first()).toBeVisible();
-  await expect(screen.getByText(/Approximate conversion: 1 EUR = 2 USD \(Fawaz,/i).first()).toBeVisible();
+  await expect(screen.getByText(/Coin Metrics.*minute reference prices/i).first()).toBeVisible();
+  await expect(screen.getByText(/Coin Metrics.*approximate conversion/i)).toBeHidden();
+  await expect(screen.getByText(/^Approximate conversion:/i)).toBeHidden();
   await expect(screen.getByText(/Observed/i).first()).toBeVisible();
   await app.screenshot('crypto-reference-rates-provenance');
   await screen.getByRole('button', 'Settings', { exact: true }).tap();
@@ -64,4 +66,20 @@ test('crypto reference prices preserve ranges, provenance and credits after rest
   await expect(coinMetrics).toBeVisible();
   await expect(screen.getByText('Frankfurter', { exact: true })).toBeVisible();
   await app.screenshot('crypto-reference-credits');
+});
+
+
+test('non-USD crypto conversion keeps its dated daily FX notice', { tags: ['core', 'providers'] }, async ({ start, app, agent, screen }) => {
+  await start('ready-crypto');
+  await agent.act('Open the source currency picker. Use its Search field to search EUR, then select the Euro result and return to the converter without editing the amount.');
+  await expect(screen.getByTestId('converter.source')).toHaveAccessibleName(/Euro/i);
+  await expect(screen.getByRole('button', 'Edit amount in EUR')).toHaveValue('1');
+  await expect(screen.getByRole('button', /^Bitcoin,/i)).toHaveAccessibleName('Bitcoin, 0.00004');
+  await screen.getByTestId('converter.options').tap();
+  await screen.getByTestId('converter.settings').tap();
+  await screen.getByTestId('settings.rates').tap();
+  await agent.act('Scroll Rates until the BTC quote and its source information are visible. Keep Rates open.');
+  await expect(screen.getByText(/Coin Metrics.*minute reference prices.*approximate conversion/i).first()).toBeVisible();
+  await expect(screen.getByText(/Approximate conversion: 1 EUR = 2 USD \(Fawaz,/i).first()).toBeVisible();
+  await app.screenshot('crypto-eur-actual-daily-fx-approximation');
 });

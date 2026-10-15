@@ -36,13 +36,17 @@ public struct SettingsPreferences: Sendable, Equatable {
 public struct SettingsRateState: Sendable {
   /// The latest supplied rate or location observation.
   public var snapshot: RateSnapshot
+  /// The converter source currency supplied by the host.
+  public var base: String
   /// Ordered canonical currency codes used by this presentation.
   public var codes: [String]
   /// Recoverable provider condition accompanying the current rates.
   public var warning: RefreshWarning?
   /// Creates the owned value or model with explicit host inputs and operations.
-  public init(snapshot: RateSnapshot, codes: [String], warning: RefreshWarning? = nil) {
+  public init(snapshot: RateSnapshot, base: String, codes: [String], warning: RefreshWarning? = nil)
+  {
     self.snapshot = snapshot
+    self.base = base
     self.codes = codes
     self.warning = warning
   }

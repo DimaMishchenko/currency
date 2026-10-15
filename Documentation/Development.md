@@ -26,7 +26,7 @@ Coin Metrics Community supplies current crypto reference prices and supported 1D
 
 The app uses the domain’s `.intradayEnhanced` policy. The reusable `.daily` policy remains available to package consumers and baseline/fallback tests.
 
-Crypto prices converted from USD using a dated daily fiat reference are approximate estimates, not intraday FX. All uses bundled completed-month samples where available and omits the incomplete current month. Bundled Fawaz observations use March 2, 2024 and then each completed month’s first day; missing completed months may be fetched. These are reference observations, not exchange closes. Preserve source metadata, gaps and [data licence notices](DataSources.md) when refreshing bundled data with `Scripts/History/generate_archive.py`.
+Crypto prices converted from USD using a dated daily fiat reference are approximate estimates, not intraday FX. All uses bundled completed-month samples where available and omits the incomplete current month. Bundled Fawaz observations use March 2, 2024 and then each completed month’s first day; missing completed months may be fetched. These are reference observations, not exchange closes. Preserve source metadata, gaps and [data licence notices](DataSources.md) when refreshing bundled data with `Scripts/History/generate_archive.py`. The [monthly refresh workflow](../Scripts/History/README.md) proposes meaningful archive changes through a review PR; unchanged data is skipped.
 
 ## Dependency cache
 

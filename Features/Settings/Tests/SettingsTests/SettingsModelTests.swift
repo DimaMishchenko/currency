@@ -8,13 +8,15 @@ import Testing
 @MainActor @Suite struct SettingsModelTests {
   private func dependencies(
     refresh: @escaping () async throws -> SettingsRateState = {
-      SettingsRateState(snapshot: RateSnapshot(), codes: [])
+      SettingsRateState(snapshot: RateSnapshot(), base: "EUR", codes: [])
     },
     replay: (() throws -> Void)? = nil,
     output: @escaping (SettingsOutput) -> Void = { _ in }
   ) -> SettingsDependencies {
     SettingsDependencies(
-      readState: { SettingsRateState(snapshot: RateSnapshot(), codes: ["EUR", "USD"]) },
+      readState: {
+        SettingsRateState(snapshot: RateSnapshot(), base: "EUR", codes: ["EUR", "USD"])
+      },
       changes: { AsyncStream<Void>(bufferingPolicy: .unbounded) { _ in } },
       readPreferences: { SettingsPreferences(theme: .system, accent: .primary) },
       setTheme: { _ in }, setAccent: { _ in }, setMetalUnit: { _ in }, refresh: refresh,
@@ -56,7 +58,8 @@ import Testing
     while continuation == nil { await Task.yield() }
     #expect(calls == 1)
     model.stop()
-    continuation?.resume(returning: SettingsRateState(snapshot: RateSnapshot(), codes: ["JPY"]))
+    continuation?
+      .resume(returning: SettingsRateState(snapshot: RateSnapshot(), base: "JPY", codes: ["JPY"]))
     await Task.yield()
     #expect(model.rates.codes == ["EUR", "USD"])
     #expect(!model.isRefreshing)
@@ -65,12 +68,13 @@ import Testing
     var preferences = SettingsPreferences(theme: .system, accent: .primary)
     let model = SettingsModel(
       dependencies: SettingsDependencies(
-        readState: { SettingsRateState(snapshot: RateSnapshot(), codes: []) },
+        readState: { SettingsRateState(snapshot: RateSnapshot(), base: "EUR", codes: []) },
         changes: { AsyncStream<Void>(bufferingPolicy: .unbounded) { _ in } },
         readPreferences: { preferences },
         setTheme: { preferences.theme = $0 }, setAccent: { preferences.accent = $0 },
         setMetalUnit: { preferences.metalUnit = $0 },
-        refresh: { SettingsRateState(snapshot: RateSnapshot(), codes: []) }, replay: nil,
+        refresh: { SettingsRateState(snapshot: RateSnapshot(), base: "EUR", codes: []) },
+        replay: nil,
         output: { _ in }))
     model.setTheme(.dark)
     model.setAccent(.teal)
@@ -78,7 +82,7 @@ import Testing
     #expect(model.preferences == SettingsPreferences(theme: .dark, accent: .teal, metalUnit: .gram))
   }
   @Test func measurementSaveInvalidatesObservedPreferencesWithoutRateChanges() {
-    let state = SettingsRateState(snapshot: RateSnapshot(), codes: ["EUR", "USD"])
+    let state = SettingsRateState(snapshot: RateSnapshot(), base: "EUR", codes: ["EUR", "USD"])
     var preferences = SettingsPreferences(theme: .system, accent: .primary)
     let model = SettingsModel(
       dependencies: SettingsDependencies(
@@ -102,7 +106,7 @@ import Testing
   }
 
   @Test func hostPreferenceCommitInvalidatesObservationWithoutRateChanges() async {
-    let state = SettingsRateState(snapshot: RateSnapshot(), codes: ["EUR", "USD"])
+    let state = SettingsRateState(snapshot: RateSnapshot(), base: "EUR", codes: ["EUR", "USD"])
     var preferences = SettingsPreferences(theme: .system, accent: .primary)
     let stream = AsyncStream<Void>.makeStream()
     var subscribed = false
@@ -141,12 +145,12 @@ import Testing
   @Test func failedMeasurementSavePreservesAuthoritativePreference() {
     let model = SettingsModel(
       dependencies: SettingsDependencies(
-        readState: { SettingsRateState(snapshot: RateSnapshot(), codes: []) },
+        readState: { SettingsRateState(snapshot: RateSnapshot(), base: "EUR", codes: []) },
         changes: { AsyncStream { $0.finish() } },
         readPreferences: { SettingsPreferences(theme: .system, accent: .primary) },
         setTheme: { _ in }, setAccent: { _ in },
         setMetalUnit: { _ in throw CocoaError(.fileWriteUnknown) },
-        refresh: { SettingsRateState(snapshot: RateSnapshot(), codes: []) },
+        refresh: { SettingsRateState(snapshot: RateSnapshot(), base: "EUR", codes: []) },
         replay: nil, output: { _ in }))
     model.setMetalUnit(.gram)
     #expect(model.preferences.metalUnit == .troyOunce)
@@ -154,7 +158,7 @@ import Testing
   }
 
   @Test func hostCommitsRefreshDisplayedStateUntilFlowTeardown() async {
-    var state = SettingsRateState(snapshot: RateSnapshot(), codes: ["EUR"])
+    var state = SettingsRateState(snapshot: RateSnapshot(), base: "EUR", codes: ["EUR"])
     let stream = AsyncStream<Void>.makeStream()
     let model = SettingsModel(
       dependencies: SettingsDependencies(
@@ -163,16 +167,20 @@ import Testing
         setTheme: { _ in }, setAccent: { _ in }, setMetalUnit: { _ in }, refresh: { state },
         replay: nil, output: { _ in }))
     let lifetime = Task { await model.run() }
+    state.base = "JPY"
     state.codes = ["EUR", "JPY"]
     stream.continuation.yield(())
     for _ in 0..<100 where model.rates.codes != state.codes { await Task.yield() }
     #expect(model.rates.codes == ["EUR", "JPY"])
+    #expect(model.rates.base == "JPY")
     lifetime.cancel()
     await lifetime.value
+    state.base = "USD"
     state.codes = ["USD"]
     stream.continuation.yield(())
     await Task.yield()
     #expect(model.rates.codes == ["EUR", "JPY"])
+    #expect(model.rates.base == "JPY")
   }
 
 }

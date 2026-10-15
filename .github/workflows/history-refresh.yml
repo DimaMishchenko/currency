@@ -1,0 +1,67 @@
+name: Refresh bundled history
+
+on:
+  schedule:
+    - cron: '0 6 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: currency-history-refresh
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      changed: ${{ steps.generate.outputs.changed }}
+      base_sha: ${{ steps.generate.outputs.base_sha }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Test archive generation
+        run: python3 -m unittest discover -s Scripts/History -p 'test_*.py'
+      - name: Refresh selected history and provenance
+        id: generate
+        run: |
+          echo "base_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          python3 Scripts/History/generate_archive.py
+      - uses: actions/upload-artifact@v7
+        if: steps.generate.outputs.changed == 'true'
+        with:
+          name: currency-history-refresh
+          path: Domain/ExchangeRates/Sources/ExchangeRates/Resources/history-monthly-v1.json
+          if-no-files-found: error
+          retention-days: 7
+  propose:
+    needs: generate
+    if: needs.generate.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: currency-history-refresh
+          path: ${{ runner.temp }}/currency-history-refresh
+      - name: Update the dedicated review branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          BASE_SHA: ${{ needs.generate.outputs.base_sha }}
+        run: >-
+          python3 Scripts/History/propose_refresh.py
+          --candidate "$RUNNER_TEMP/currency-history-refresh/history-monthly-v1.json"

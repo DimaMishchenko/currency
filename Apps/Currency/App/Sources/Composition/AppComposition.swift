@@ -209,7 +209,8 @@ final class AppComposition {
   private var settingsState: SettingsRateState {
     let input = conversion.input()
     return SettingsRateState(
-      snapshot: rates.loadRates(), codes: [input.source] + input.destinations, warning: warning)
+      snapshot: rates.loadRates(), base: input.source,
+      codes: [input.source] + input.destinations, warning: warning)
   }
   func settings(scene: CurrencyScene) -> SettingsDependencies {
     SettingsDependencies(

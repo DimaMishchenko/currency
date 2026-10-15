@@ -696,10 +696,13 @@ struct SettingsScreen: View {
       VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
         Text(verbatim: code).font(AppStyle.font(.body, weight: .medium))
         if let rate = snapshot.quotes[code] {
-          if let conversion = RateMessages.conversionDescription(rate.source, locale: locale) {
+          let source =
+            CurrencyDisplay.quoteSource(
+              snapshot, code: code, base: model.rates.base, destinations: codes) ?? rate.source
+          if let conversion = RateMessages.conversionDescription(source, locale: locale) {
             Text(conversion).font(AppStyle.font(.caption)).foregroundStyle(.secondary)
           }
-          Text(RateMessages.providerDescription(rate.source, locale: locale))
+          Text(RateMessages.providerDescription(source, locale: locale))
             .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
           Group {
             if let observed = rate.observedAt {

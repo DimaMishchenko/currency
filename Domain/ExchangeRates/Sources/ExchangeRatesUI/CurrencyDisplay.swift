@@ -135,13 +135,67 @@ extension CurrencyDisplay {
     _ snapshot: RateSnapshot, from: String, to: String, locale: Locale = .current
   ) -> String {
     let descriptions = [snapshot.quotes[from], snapshot.quotes[to]].compactMap { $0 }
-      .map {
+      .map { rate in
+        let source = presentationSource(rate.source, snapshot: snapshot, from: from, to: to)
         let detail =
-          RateMessages.providerDescription($0.source, locale: locale) + " · "
-          + publicationDate($0.published, locale: locale)
-        return [detail, RateMessages.conversionDescription($0.source, locale: locale)]
+          RateMessages.providerDescription(source, locale: locale) + " · "
+          + publicationDate(rate.published, locale: locale)
+        return [detail, RateMessages.conversionDescription(source, locale: locale)]
           .compactMap { $0 }.joined(separator: "\n")
       }
     return Set(descriptions).sorted().joined(separator: " / ")
   }
+
+  /// Describes only the FX input that remains in the requested conversion.
+  public static func presentationSource(
+    _ source: RateSource, snapshot: RateSnapshot, from: String, to: String
+  ) -> RateSource {
+    guard source.provider == .coinMetrics, source.conversion != nil else { return source }
+    guard from == to || normalizationCancels(snapshot, from: from, to: to) else { return source }
+    return RateSource(
+      provider: source.provider, observation: source.observation, timeZone: source.timeZone,
+      latestObservation: source.latestObservation,
+      contributingProviders: source.contributingProviders)
+  }
+
+  /// Presents a quote in the context of the selected base and destination currencies.
+  public static func quoteSource(
+    _ snapshot: RateSnapshot, code: String, base: String, destinations: [String]
+  ) -> RateSource? {
+    guard let source = snapshot.quotes[code]?.source else { return nil }
+    let comparisons = code == base ? destinations.filter { $0 != base } : [code]
+    let sources = comparisons.map {
+      presentationSource(source, snapshot: snapshot, from: base, to: $0)
+    }
+    return sources.first { $0.conversion != nil } ?? sources.first
+      ?? presentationSource(source, snapshot: snapshot, from: base, to: base)
+  }
+
+  private static func normalizationCancels(
+    _ snapshot: RateSnapshot, from: String, to: String
+  ) -> Bool {
+    guard let first = snapshot.quotes[from], let second = snapshot.quotes[to] else { return false }
+    if first.source.provider == .coinMetrics, second.source.provider == .coinMetrics,
+      let anchor = first.source.conversion, anchor.base == "EUR", anchor.quote == "USD",
+      anchor.value > 0, !anchor.value.isNaN, anchor == second.source.conversion
+    {
+      return true
+    }
+    let crypto: ExchangeRate
+    let usd: ExchangeRate
+    if from == "USD" {
+      crypto = second; usd = first
+    } else if to == "USD" {
+      crypto = first; usd = second
+    } else {
+      return false
+    }
+    guard crypto.source.provider == .coinMetrics, let anchor = crypto.source.conversion else {
+      return false
+    }
+    return anchor.base == "EUR" && anchor.quote == "USD" && anchor.value > 0
+      && !anchor.value.isNaN && anchor.value == usd.value
+      && anchor.provider == usd.source.provider && anchor.published == usd.published
+  }
+
 }

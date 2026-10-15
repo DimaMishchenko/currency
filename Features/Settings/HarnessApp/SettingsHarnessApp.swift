@@ -12,7 +12,7 @@ import SwiftUI
   var rates: SettingsRateState {
     let date = Date(timeIntervalSince1970: 1_791_050_760)
     let snapshot = dated ? RateSnapshot(fetchedAt: date, checkedAt: date) : RateSnapshot()
-    return SettingsRateState(snapshot: snapshot, codes: ["EUR", "USD"])
+    return SettingsRateState(snapshot: snapshot, base: "EUR", codes: ["EUR", "USD"])
   }
   init(failing: Bool, dated: Bool) {
     self.failing = failing
