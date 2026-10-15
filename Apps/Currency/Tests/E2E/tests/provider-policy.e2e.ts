@@ -22,6 +22,7 @@ test('crypto reference prices preserve ranges, provenance and credits after rest
     await day.tap();
     await expect(day).toBeSelected();
     await expect(source.filter({ hasText: /Coin Metrics.*minute reference prices/i })).toBeVisible();
+    await expect(screen.getByText('50,000 USD', { exact: true })).toBeVisible();
     const all = ranges.getByRole('tab', 'All available history', { exact: true });
     await all.tap();
     await expect(all).toBeSelected();
@@ -30,6 +31,8 @@ test('crypto reference prices preserve ranges, provenance and credits after rest
     await app.screenshot(`${capture}-all-reference-history`);
     await day.tap();
     await expect(day).toBeSelected();
+    await expect(source.filter({ hasText: /Coin Metrics.*minute reference prices/i })).toBeVisible();
+    await expect(screen.getByText('50,000 USD', { exact: true })).toBeVisible();
     await source.tap();
     await expect(source).toHaveValue('Expanded');
     await agent.act('Scroll in Details until the exact text "Crypto history combines daily and monthly reference data with intraday prices when available. Converted prices may be approximate. Historical and current sources can differ." is visible. Use that exact text when scrolling to text. Keep Details open.');

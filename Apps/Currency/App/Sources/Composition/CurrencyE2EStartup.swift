@@ -104,7 +104,7 @@
               date: end.addingTimeInterval(Double(index - 288) * 300),
               value: 45_000 + Double(index) * 5_000 / 288)
           }, source: .init(provider: .coinMetrics, observation: .minuteReference, timeZone: .gmt),
-        fetchedAt: now)
+        fetchedAt: end)
       try writeHistory(
         intraday, filename: "history-v2-intradayEnhanced-BTC-USD-1.json",
         directory: directory)
