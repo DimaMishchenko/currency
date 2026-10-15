@@ -6,6 +6,7 @@ public struct CoinMetricsClient: Sendable {
   private let acquire: @Sendable () async throws -> Void
   private let sleep: @Sendable (Duration) async throws -> Void
 
+  /// Uses a supplied transport and process-shared Community request pacing.
   public init(client: any HTTPClient = NetworkClient()) {
     self.client = client
     self.acquire = { try await CoinMetricsPacer.shared.acquire() }
@@ -33,8 +34,10 @@ public struct CoinMetricsClient: Sendable {
     else {
       throw RateError.invalidData
     }
-    var components = URLComponents(
-      string: "https://community-api.coinmetrics.io/v4/timeseries/asset-metrics")!
+    guard
+      var components = URLComponents(
+        string: "https://community-api.coinmetrics.io/v4/timeseries/asset-metrics")
+    else { throw RateError.invalidData }
     components.queryItems = [
       .init(name: "assets", value: assets.sorted().joined(separator: ",")),
       .init(name: "metrics", value: "ReferenceRateUSD"),

@@ -59,6 +59,15 @@ test(`provider policy ${mode} preserves crypto fallback, ranges and credits afte
 
   await screen.getByTestId('converter.options').tap();
   await screen.getByTestId('converter.settings').tap();
+  await screen.getByTestId('settings.rates').tap();
+  await agent.act('Scroll Rates until the BTC quote and its source information are visible. Keep Rates open.');
+  await expect(screen.getByText(enhanced ? /Coin Metrics.*minute reference prices.*approximate conversion/i : /Fawaz · daily/i).first()).toBeVisible();
+  if (enhanced) {
+    await expect(screen.getByText(/Approximate conversion: 1 EUR = 2 USD \(Fawaz,/i).first()).toBeVisible();
+    await expect(screen.getByText(/Observed/i).first()).toBeVisible();
+  }
+  await app.screenshot(`provider-${mode}-rates-provenance`);
+  await screen.getByRole('button', 'Settings', { exact: true }).tap();
   await screen.getByTestId('settings.sources').tap();
   await expect(screen.getByText('Fawaz Exchange API', { exact: true })).toBeVisible();
   const coinMetrics = screen.getByText('Coin Metrics', { exact: true });

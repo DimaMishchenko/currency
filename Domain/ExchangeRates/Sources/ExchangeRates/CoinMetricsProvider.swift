@@ -6,6 +6,7 @@ public struct CoinMetricsProvider: RateProvider {
   private let daily: any RateProvider
   private let now: @Sendable () -> Date
 
+  /// Fetches reference observations and their daily FX anchor through one transport.
   public init(client: any HTTPClient = NetworkClient()) {
     metrics = CoinMetricsClient(client: client)
     daily = FawazProvider(client: client)
@@ -18,6 +19,7 @@ public struct CoinMetricsProvider: RateProvider {
     self.now = now
   }
 
+  /// Returns fresh crypto quotes with their observed time and daily FX provenance.
   public func fetch() async throws -> [String: ExchangeRate] {
     let time = now()
     async let observations = metrics.observations(

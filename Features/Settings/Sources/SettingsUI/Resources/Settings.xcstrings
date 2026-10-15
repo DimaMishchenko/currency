@@ -2595,85 +2595,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Last trade %@"
+            "value": "Observed %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "最后交易 %@"
+            "value": "观测时间 %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "最終取引 %@"
+            "value": "観測 %@"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Última operación %@"
+            "value": "Observado %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Letzter Handel %@"
+            "value": "Beobachtet %@"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dernière transaction %@"
+            "value": "Observé %@"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Última negociação %@"
+            "value": "Observado %@"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "마지막 거래 %@"
+            "value": "관측 시각 %@"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "最後交易 %@"
+            "value": "觀測時間 %@"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ultimo scambio %@"
+            "value": "Osservato %@"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Son işlem %@"
+            "value": "Gözlem zamanı %@"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Последняя сделка %@"
+            "value": "Наблюдение %@"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Остання угода %@"
+            "value": "Спостереження %@"
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Viimane tehing %@"
+            "value": "Vaadeldud %@"
           }
         }
       }

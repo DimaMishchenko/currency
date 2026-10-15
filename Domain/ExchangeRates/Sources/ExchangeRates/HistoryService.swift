@@ -81,26 +81,34 @@ public actor HistoryService {
       } else {
         let start: Date
         if range == .all {
-          start = calendar.date(from: DateComponents(year: 2024, month: 3, day: 2))!
+          guard let date = calendar.date(from: DateComponents(year: 2024, month: 3, day: 2))
+          else { throw RateError.invalidData }
+          start = date
         } else if range == .year {
-          start = calendar.date(byAdding: .year, value: -1, to: now)!
+          guard let date = calendar.date(byAdding: .year, value: -1, to: now)
+          else { throw RateError.invalidData }
+          start = date
         } else if range == .yearToDate {
-          start = calendar.date(from: DateComponents(year: year, month: 1, day: 1))!
+          guard let date = calendar.date(from: DateComponents(year: year, month: 1, day: 1))
+          else { throw RateError.invalidData }
+          start = date
         } else {
           start = now.addingTimeInterval(-Double(range.rawValue) * 86400)
         }
         let older =
           range == .all ? try BundledHistory.points(base: base, quote: quote, through: now) : []
+        guard let monthStart = calendar.dateInterval(of: .month, for: now)?.start
+        else { throw RateError.invalidData }
         let bundledRecent =
           range == .all
           ? BundledHistory.recentPoints(
             base: base, quote: quote,
-            through: calendar.dateInterval(of: .month, for: now)!.start.addingTimeInterval(-1)) : []
+            through: monthStart.addingTimeInterval(-1)) : []
         let recent: [HistoryPoint]
         if range == .all {
-          let monthStart = calendar.dateInterval(of: .month, for: now)!.start
           let lastBundled = bundledRecent.last?.date ?? start.addingTimeInterval(-86400)
-          let missingStart = calendar.date(byAdding: .month, value: 1, to: lastBundled)!
+          guard let missingStart = calendar.date(byAdding: .month, value: 1, to: lastBundled)
+          else { throw RateError.invalidData }
           let latest: [HistoryPoint]?
           if missingStart >= monthStart {
             latest = []

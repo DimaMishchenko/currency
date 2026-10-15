@@ -16,8 +16,9 @@ public enum RateProviderID: Codable, Sendable, Equatable {
   private enum CodingKeys: String, CodingKey {
     case ecb, frankfurter, fawaz, coinMetrics, custom, coinbase
   }
-  private enum ValueKeys: String, CodingKey { case _0 }
+  private enum ValueKeys: String, CodingKey { case value = "_0" }
 
+  /// Decodes provider identity, retaining legacy identities for cache rejection.
   public init(from decoder: any Decoder) throws {
     let values = try decoder.container(keyedBy: CodingKeys.self)
     guard values.allKeys.count == 1, let key = values.allKeys.first else {
@@ -32,10 +33,11 @@ public enum RateProviderID: Codable, Sendable, Equatable {
     case .custom:
       self = .custom(
         try values.nestedContainer(keyedBy: ValueKeys.self, forKey: key)
-          .decode(String.self, forKey: ._0))
+          .decode(String.self, forKey: .value))
     }
   }
 
+  /// Preserves the existing provider cache representation.
   public func encode(to encoder: any Encoder) throws {
     var values = encoder.container(keyedBy: CodingKeys.self)
     let key: CodingKeys
@@ -46,7 +48,7 @@ public enum RateProviderID: Codable, Sendable, Equatable {
     case .coinMetrics: key = .coinMetrics
     case .custom(let name):
       var nested = values.nestedContainer(keyedBy: ValueKeys.self, forKey: .custom)
-      try nested.encode(name, forKey: ._0)
+      try nested.encode(name, forKey: .value)
       return
     }
     _ = values.nestedContainer(keyedBy: ValueKeys.self, forKey: key)
@@ -86,9 +88,12 @@ public struct RateConversion: Codable, Sendable, Equatable {
   public let published: String
   /// Quote currency units per one base currency unit.
   public let value: Decimal
+  /// Currency being converted from.
   public let base: String
+  /// Currency being converted to.
   public let quote: String
 
+  /// Records the exact daily input used for an approximate conversion.
   public init(
     provider: RateProviderID, published: String, value: Decimal, base: String, quote: String
   ) {

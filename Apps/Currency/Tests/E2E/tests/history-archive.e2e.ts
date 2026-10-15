@@ -14,7 +14,7 @@ test('All history renders the actual bundled Bitcoin archive from 2010', { tags:
   if (existsSync(cache)) unlinkSync(cache);
   await agent.act('Open Details & history for the Bitcoin destination currency.');
   await expect(screen.getByTestId('currency.details.BTC')).toBeVisible();
-  const all = screen.getByTestId('currency.details.historyRange').getByRole('tab', 'All', { exact: true });
+  const all = screen.getByTestId('currency.details.historyRange').getByRole('tab', 'All available history', { exact: true });
   await all.tap();
   await expect(all).toBeSelected();
   const source = screen.getByTestId('currency.details.sourceDisclosure').filter({ hasText: /Fawaz.*Coin Metrics.*monthly reference/i });
