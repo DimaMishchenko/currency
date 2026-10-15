@@ -71,7 +71,7 @@ private struct WatchRoot: View {
       detail = WatchDetail(
         input: .init(
           code: source, reference: quote, snapshot: composition.rates.loadRates(),
-          referencePolicy: .requestedPair, metalUnit: composition.conversion.input().metalUnit))
+          metalUnit: composition.conversion.input().metalUnit))
     case .convert(let source, let quote, let amount, let metalUnit):
       do {
         _ = try composition.edit {

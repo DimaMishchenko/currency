@@ -17,7 +17,8 @@ private final class PendingHistory {
 @Suite @MainActor
 struct CurrencyDetailsTests {
   @Test(arguments: [
-    ("XAU", "USD", 3110.34768, 100.0), ("USD", "XAU", 0.01, 0.311034768)
+    ("XAU", "USD", 3110.34768, 100.0), ("USD", "XAU", 0.01, 0.311034768),
+    ("BTC", "XAU", 20.0, 622.069536), ("XAU", "BTC", 20.0, 0.05 / 31.1034768)
   ])
   func historyDisplaysSavedMetalUnitsWithoutChangingProviderValues(
     code: String, reference: String, canonicalValue: Double, expected: Double
@@ -33,34 +34,89 @@ struct CurrencyDetailsTests {
     #expect(canonical.points.first?.value == canonicalValue)
   }
 
-  @Test func quotePolicyPreservesCryptoHistoryAndDistinctFiatReferences() {
-    for (code, reference, quote) in [
-      ("BTC", "CZK", "USD"), ("EUR", "EUR", "USD"), ("USD", "USD", "EUR"),
-      ("GBP", "BTC", "EUR"), ("GBP", "CZK", "CZK")
-    ] {
+  @Test(arguments: [
+    ("EUR", "EUR", "USD"), ("USD", "USD", "EUR"), ("GBP", "GBP", "EUR"),
+    ("BTC", "BTC", "USD")
+  ])
+  func sameCurrencyReferencesKeepTheirFallback(code: String, reference: String, quote: String) {
+    let model = CurrencyDetailsModel(
+      input: .init(code: code, reference: reference, snapshot: RateSnapshot()),
+      dependencies: .init { _, _, _ in HistoryResult(series: nil, issue: .unavailable) })
+    #expect(model.quote == quote)
+  }
+
+  @Test(arguments: CurrencyCatalog.codes)
+  func distinctReferencesPreserveTheOriginatingPair(code: String) {
+    for reference in ["USD", "EUR", "GBP", "CZK", "CHF", "BTC", "ETH", "XAU", "XAG"]
+    where code != reference {
       let model = CurrencyDetailsModel(
         input: .init(code: code, reference: reference, snapshot: RateSnapshot()),
         dependencies: .init { _, _, _ in HistoryResult(series: nil, issue: .unavailable) })
-      #expect(model.quote == quote)
+      #expect(model.quote == reference)
     }
   }
 
-  @Test(arguments: [("BTC", "EUR"), ("EUR", "BTC"), ("BTC", "ETH")])
-  func explicitlyRequestedPairPreservesChartAndRateQuote(code: String, reference: String) async {
-    var requested: [String] = []
+  @Test(arguments: CurrencyCatalog.crypto.sorted(), ["USD", "EUR", "GBP", "CZK", "CHF", "ETH"])
+  func cryptoPairRetainsQuoteConversionHistoryAndRanges(
+    code: String, reference: String
+  ) async throws {
+    guard code != reference else { return }
+    let date = Date(timeIntervalSince1970: 1_700_000_000)
+    let source = RateSource(provider: .coinMetrics, observation: .minuteReference, timeZone: .gmt)
+    let values: [String: Decimal] = [
+      "USD": 2, "EUR": 1, "GBP": 3, "CZK": 25, "CHF": 4, "ETH": 5
+    ]
+    var quotes = values.mapValues {
+      ExchangeRate($0, published: "2023-11-14", source: source, observedAt: date)
+    }
+    quotes[code] = ExchangeRate(
+      8, published: "2023-11-14", source: source, observedAt: date)
+    let snapshot = RateSnapshot(quotes: quotes, fetchedAt: date.addingTimeInterval(60))
+    let expectedQuote = try #require(values[reference])
+    let received = HistorySeries(
+      points: [
+        HistoryPoint(date: date, value: 7),
+        HistoryPoint(date: date.addingTimeInterval(3600), value: 11)
+      ], source: source, fetchedAt: date.addingTimeInterval(7200))
+    var requests: [(String, String, HistoryRange)] = []
     let model = CurrencyDetailsModel(
-      input: .init(
-        code: code, reference: reference, snapshot: RateSnapshot(), referencePolicy: .requestedPair),
-      dependencies: .init { base, quote, _ in
-        requested = [base, quote]
-        return HistoryResult(series: nil, issue: .unavailable)
+      input: .init(code: code, reference: reference, snapshot: snapshot),
+      dependencies: .init { base, quote, range in
+        requests.append((base, quote, range))
+        return HistoryResult(series: received, issue: .usingCachedSeries)
       })
     #expect(model.quote == reference)
-    await model.load()
-    #expect(requested == (code == "EUR" ? [reference, code] : [code, reference]))
+    #expect(model.input.reference == reference)
+    #expect(model.input.snapshot.quotes[code]?.source == source)
+    #expect(model.input.snapshot.quotes[code]?.observedAt == date)
+    #expect(model.input.snapshot.fetchedAt == snapshot.fetchedAt)
+    #expect(model.input.snapshot.convert(1, from: code, to: model.quote) == expectedQuote / 8)
+    if reference != "USD" {
+      #expect(
+        model.input.snapshot.convert(1, from: code, to: model.quote)
+          != snapshot.convert(1, from: code, to: "USD"))
+    }
+    let ranges = model.availableRanges
+    #expect(ranges == CurrencyDetailsModel.ranges)
+    for range in ranges {
+      model.range = range
+      await model.load()
+      #expect(model.quote == reference)
+      #expect(requests.last?.0 == code)
+      #expect(requests.last?.1 == reference)
+      #expect(requests.last?.2 == range)
+      #expect(model.series?.points == received.points)
+      #expect(model.series?.source == source)
+      #expect(model.series?.fetchedAt == received.fetchedAt)
+      #expect(model.issue == .usingCachedSeries)
+    }
+    #expect(requests.count == ranges.count)
   }
 
-  @Test func requestedFiatCryptoPairInvertsProviderSeriesAndRetainsProvenance() async {
+  @Test(arguments: ["USD", "EUR", "GBP", "CZK", "CHF"], CurrencyCatalog.crypto.sorted())
+  func fiatCryptoPairInvertsProviderSeriesAndRetainsProvenance(
+    code: String, reference: String
+  ) async {
     let date = Date(timeIntervalSince1970: 1_700_000_000)
     let source = RateSource(provider: .coinMetrics, observation: .minuteReference, timeZone: .gmt)
     let received = HistorySeries(
@@ -69,23 +125,58 @@ struct CurrencyDetailsTests {
         HistoryPoint(date: date.addingTimeInterval(3600), value: 50_000)
       ],
       source: source, fetchedAt: date.addingTimeInterval(7200))
+    let snapshot = RateSnapshot(
+      quotes: [
+        code: ExchangeRate(4, published: "2023-11-14", source: source),
+        reference: ExchangeRate(8, published: "2023-11-14", source: source, observedAt: date)
+      ], fetchedAt: date.addingTimeInterval(60))
+    var requestedRanges: [HistoryRange] = []
     let model = CurrencyDetailsModel(
-      input: .init(
-        code: "EUR", reference: "BTC", snapshot: RateSnapshot(), referencePolicy: .requestedPair),
-      dependencies: .init { base, quote, _ in
-        #expect(base == "BTC")
-        #expect(quote == "EUR")
+      input: .init(code: code, reference: reference, snapshot: snapshot),
+      dependencies: .init { base, quote, range in
+        #expect(base == reference)
+        #expect(quote == code)
+        requestedRanges.append(range)
         return HistoryResult(series: received, issue: .usingCachedSeries)
       })
-    #expect(model.availableRanges.contains(.day))
-    model.range = .day
-    await model.load()
-    #expect(model.quote == "BTC")
-    #expect(model.series?.points.map(\.value) == [1.0 / 40_000, 1.0 / 50_000])
-    #expect(model.series?.points.map(\.date) == received.points.map(\.date))
-    #expect(model.series?.source == source)
-    #expect(model.series?.fetchedAt == received.fetchedAt)
-    #expect(model.issue == .usingCachedSeries)
+    #expect(model.availableRanges == CurrencyDetailsModel.ranges)
+    #expect(model.input.snapshot.convert(1, from: code, to: model.quote) == 2)
+    for range in model.availableRanges {
+      model.range = range
+      await model.load()
+      #expect(model.quote == reference)
+      #expect(model.series?.points.map(\.value) == [1.0 / 40_000, 1.0 / 50_000])
+      #expect(model.series?.points.map(\.date) == received.points.map(\.date))
+      #expect(model.series?.source == source)
+      #expect(model.series?.fetchedAt == received.fetchedAt)
+      #expect(model.issue == .usingCachedSeries)
+    }
+    #expect(requestedRanges == model.availableRanges)
+  }
+
+  @Test(arguments: CurrencyCatalog.crypto.sorted(), CurrencyCatalog.metals.sorted())
+  func metalCryptoPairsRetainReferenceWithoutIntraday(crypto: String, metal: String) async {
+    for (code, reference) in [(crypto, metal), (metal, crypto)] {
+      var requests: [(String, String, HistoryRange)] = []
+      let model = CurrencyDetailsModel(
+        input: .init(code: code, reference: reference, snapshot: RateSnapshot()),
+        dependencies: .init { base, quote, range in
+          requests.append((base, quote, range))
+          return HistoryResult(series: nil, issue: .unavailable)
+        })
+      #expect(model.quote == reference)
+      #expect(model.availableRanges == CurrencyDetailsModel.ranges.filter { $0 != .day })
+      for range in model.availableRanges {
+        model.range = range
+        await model.load()
+        #expect(model.quote == reference)
+        #expect(requests.last?.0 == crypto)
+        #expect(requests.last?.1 == metal)
+        #expect(requests.last?.2 == range)
+        #expect(model.issue == .unavailable)
+      }
+      #expect(requests.count == model.availableRanges.count)
+    }
   }
 
   @Test(arguments: CurrencyDetailsModel.ranges)
@@ -125,7 +216,7 @@ struct CurrencyDetailsTests {
     var requestedRange: HistoryRange?
     let model = CurrencyDetailsModel(
       input: .init(
-        code: "EUR", reference: "BTC", snapshot: RateSnapshot(), referencePolicy: .requestedPair),
+        code: "EUR", reference: "BTC", snapshot: RateSnapshot()),
       dependencies: .init(
         supportsIntraday: { base, quote in
           capabilityPair = [base, quote]

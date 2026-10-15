@@ -24,6 +24,28 @@ public enum CurrencyDisplay {
 }
 
 extension CurrencyDisplay {
+  /// Formats a reference rate while preserving meaningful values smaller than the usual precision.
+  public static func referenceRate(
+    _ value: Decimal?, from code: String, to quote: String, locale: Locale = .current,
+    metalUnit: MetalUnit = .troyOunce
+  ) -> String {
+    guard let value, !value.isNaN else { return "—" }
+    let formatter = NumberFormatter()
+    formatter.locale = locale
+    formatter.numberStyle = .decimal
+    let quotePrecision = CurrencyPrecision.fractionDigits(quote, metalUnit: metalUnit)
+    let digits =
+      CurrencyCatalog.crypto.contains(quote) || CurrencyCatalog.metals.contains(quote)
+      ? quotePrecision : CurrencyCatalog.crypto.contains(code) ? max(2, quotePrecision) : 6
+    formatter.maximumFractionDigits = digits
+    if value != 0 && abs(value) < Decimal(1) / pow(Decimal(10), digits) {
+      formatter.usesSignificantDigits = true
+      formatter.minimumSignificantDigits = 1
+      formatter.maximumSignificantDigits = 6
+    }
+    return formatter.string(from: NSDecimalNumber(decimal: value)) ?? "—"
+  }
+
   /// Returns the display precision for a currency code.
   public static func fractionDigits(_ code: String, metalUnit: MetalUnit = .troyOunce) -> Int {
     CurrencyPrecision.fractionDigits(code, metalUnit: metalUnit)

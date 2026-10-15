@@ -140,7 +140,8 @@ public struct CurrencyDetailsWatchScreen: View {
     let values = series.points.map(\.value)
     let minimum = values.min() ?? 0
     let maximum = values.max() ?? 1
-    let padding = max((maximum - minimum) * 0.1, max(abs(maximum) * 0.001, 0.00000001))
+    let padding = max(
+      (maximum - minimum) * 0.1, max(abs(maximum) * 0.001, Double.leastNormalMagnitude))
     return max(0, minimum - padding)...(maximum + padding)
   }
 

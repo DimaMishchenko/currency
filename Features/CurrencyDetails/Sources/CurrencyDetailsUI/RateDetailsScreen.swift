@@ -49,7 +49,7 @@ struct RateDetailsScreen: View {
     let values = series?.points.map(\.value) ?? [0, 1]
     let low = values.min() ?? 0
     let high = values.max() ?? 1
-    let padding = max((high - low) * 0.15, max(high * 0.001, 0.00000001))
+    let padding = max((high - low) * 0.15, max(high * 0.001, Double.leastNormalMagnitude))
     return max(0, low - padding)...(high + padding)
   }
 
@@ -438,7 +438,7 @@ struct RateDetailsScreen: View {
           VStack(alignment: .leading, spacing: AppStyle.Space.small) {
             if range == .all { Text(.Details.maxExplanation) }
             Text(
-              CurrencyCatalog.crypto.contains(code)
+              (CurrencyCatalog.crypto.contains(code) || CurrencyCatalog.crypto.contains(quote))
                 ? .Details.cryptoExplanation : .Details.fiatExplanation)
           }
           .font(AppStyle.font(.caption))
@@ -460,15 +460,8 @@ struct RateDetailsScreen: View {
   }
 
   private func rateLabel(_ value: Decimal?) -> String {
-    guard let value else { return "—" }
-    let formatter = NumberFormatter()
-    formatter.locale = locale
-    formatter.numberStyle = .decimal
-    formatter.maximumFractionDigits =
-      CurrencyCode(rawValue: quote)?.isMetal == true
-      ? CurrencyPrecision.fractionDigits(quote, metalUnit: model.input.metalUnit)
-      : CurrencyCatalog.crypto.contains(code) ? 2 : 6
-    return formatter.string(from: NSDecimalNumber(decimal: value)) ?? "—"
+    CurrencyDisplay.referenceRate(
+      value, from: code, to: quote, locale: locale, metalUnit: model.input.metalUnit)
   }
 
   private func dayLabel(_ date: Date) -> String {

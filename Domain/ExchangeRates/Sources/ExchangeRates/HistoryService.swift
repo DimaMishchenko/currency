@@ -1,6 +1,6 @@
 import Foundation
 
-/// Loads dated daily publications, bundled monthly references, and intraday crypto references.
+/// Loads daily fiat references, dated fallback publications, bundled months, and intraday crypto.
 public actor HistoryService {
   private let client: any HTTPClient
   private let directory: URL
@@ -48,7 +48,10 @@ public actor HistoryService {
           ? .minuteReference : range == .all ? .monthlyReference : .dailyReference
         guard
           (series.source.provider == expected
-            || (range == .all && [.coinMetrics, .frankfurter].contains(series.source.provider))),
+            || (range == .all && [.coinMetrics, .frankfurter].contains(series.source.provider))
+            || (range != .day && range != .all
+              && Self.usesFiatHistory(base: base, quote: quote)
+              && series.source.provider == .frankfurter)),
           series.source.observation == observation,
           series.points.count >= 2,
           series.points.allSatisfy({ $0.value.isFinite && $0.value > 0 && $0.date <= now }),
@@ -102,6 +105,7 @@ public actor HistoryService {
             base: base, quote: quote,
             through: monthStart.addingTimeInterval(-1)) : []
         let recent: [HistoryPoint]
+        var dailyProvider: RateProviderID = .fawaz
         if range == .all {
           let lastBundled = bundledRecent.last?.date ?? start.addingTimeInterval(-86400)
           guard let missingStart = calendar.date(byAdding: .month, value: 1, to: lastBundled)
@@ -131,6 +135,18 @@ public actor HistoryService {
                 fetchedAt: bundledRecent.last?.date ?? older.last?.date ?? now)
             return HistoryResult(series: fallback, issue: .usingCachedSeries)
           }
+        } else if Self.usesFiatHistory(base: base, quote: quote) {
+          do {
+            recent = try await Self.fetchFiatHistory(
+              client: client, base: base, quote: quote, start: start, now: now)
+            dailyProvider = .frankfurter
+          } catch {
+            try Task.checkCancellation()
+            if cached?.source.provider == .frankfurter { throw error }
+            recent = try await Self.fetchDailyHistory(
+              client: client, directory: directory, base: base, quote: quote,
+              start: start, now: now, monthly: false)
+          }
         } else {
           recent = try await Self.fetchDailyHistory(
             client: client, directory: directory, base: base, quote: quote,
@@ -141,7 +157,7 @@ public actor HistoryService {
           range == .all
           ? Self.monthlySource(
             base: base, quote: quote, hasOlder: !older.isEmpty, hasRecent: !recent.isEmpty)
-          : RateSource(provider: .fawaz, observation: .dailyReference, timeZone: .gmt)
+          : RateSource(provider: dailyProvider, observation: .dailyReference, timeZone: .gmt)
 
       }
       try Task.checkCancellation()

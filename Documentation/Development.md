@@ -22,7 +22,7 @@ For command-line Xcode builds, use `set -o pipefail` and pipe combined output th
 
 ## Rate providers
 
-Coin Metrics Community supplies current crypto reference prices and supported 1D charts across the phone app, widgets, independent Watch app and Watch widgets. Fawaz supplies daily rates and automatically provides the crypto fallback when current Coin Metrics data is unavailable. Selected Frankfurter fiat sources and Coin Metrics archives extend bundled monthly history before March 2024 where observations exist. WidgetKit controls timeline delivery; no requested refresh cadence guarantees execution.
+Coin Metrics Community supplies current crypto reference prices and supported 1D charts across the phone app, widgets, independent Watch app and Watch widgets. Fawaz supplies daily rates and automatically provides the crypto fallback when current Coin Metrics data is unavailable. ECB and CBU sources through Frankfurter supply daily fiat charts in at most two batched requests; Fawaz is the daily fallback. Saved Frankfurter charts remain explicit when a refresh fails. Selected Frankfurter fiat sources and Coin Metrics archives extend bundled monthly history before March 2024 where observations exist. WidgetKit controls timeline delivery; no requested refresh cadence guarantees execution.
 
 The standard provider set is Fawaz daily rates plus Coin Metrics crypto reference prices. Provider failures retain daily fallback; there is no provider-mode flag.
 
