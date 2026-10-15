@@ -135,6 +135,14 @@ jobs:
           args=("$BASE_SHA" --graph "$RUNNER_TEMP/ci-graph/graph.json")
           if [[ "$GITHUB_EVENT_NAME" == push ]]; then args+=(--full); fi
           bash Scripts/CI/changes.sh "${args[@]}"
+      - name: Check Swift formatting
+        if: steps.native.outputs.swift_format == 'true'
+        run: bash Scripts/CI/check_swift_format.sh
+      - name: Check source navigator structure
+        if: steps.native.outputs.structure == 'true'
+        run: |
+          tuist generate --no-open --cache-profile none
+          python3 Scripts/CI/check_project_structure.py
       - name: Start test simulator
         if: steps.native.outputs.unit_tests == 'true' || steps.native.outputs.intents == 'true'
         run: |
@@ -144,14 +152,6 @@ jobs:
             com.apple.CoreSimulator.SimRuntime.iOS-27-0)
           echo "CURRENCY_TEST_SIMULATOR=$simulator" >> "$GITHUB_ENV"
           xcrun simctl boot "$simulator"
-      - name: Check Swift formatting
-        if: steps.native.outputs.swift_format == 'true'
-        run: bash Scripts/CI/check_swift_format.sh
-      - name: Check source navigator structure
-        if: steps.native.outputs.structure == 'true'
-        run: |
-          tuist generate --no-open --cache-profile none
-          python3 Scripts/CI/check_project_structure.py
       - name: Test affected native targets
         if: steps.native.outputs.unit_tests == 'true'
         run: bash Scripts/CI/run_native_checks.sh unit

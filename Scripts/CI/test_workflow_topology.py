@@ -59,17 +59,19 @@ class WorkflowTopologyTests(unittest.TestCase):
         self.assertNotIn('id-token:', self.jobs['plan'])
         self.assertNotIn('id-token:', self.jobs['tooling'])
 
-    def test_simulator_starts_without_blocking_build_preparation(self):
+    def test_simulator_starts_after_project_checks_without_blocking_test_build(self):
         native = self.jobs['native']
         start = native.index('      - name: Start test simulator\n')
-        preparation = native.index('      - name: Check Swift formatting\n')
+        formatting = native.index('      - name: Check Swift formatting\n')
+        structure = native.index('      - name: Check source navigator structure\n')
         tests = native.index('      - name: Test affected native targets\n')
-        self.assertLess(start, preparation)
-        self.assertLess(preparation, tests)
-        self.assertIn('xcrun simctl create', native[start:preparation])
-        self.assertIn('xcrun simctl boot "$simulator"', native[start:preparation])
+        self.assertLess(formatting, structure)
+        self.assertLess(structure, start)
+        self.assertLess(start, tests)
+        self.assertIn('xcrun simctl create', native[start:tests])
+        self.assertIn('xcrun simctl boot "$simulator"', native[start:tests])
         self.assertNotIn('bootstatus', native)
-        self.assertIn('if: steps.native.outputs.unit_tests', native[start:preparation])
+        self.assertIn('if: steps.native.outputs.unit_tests', native[start:tests])
         self.assertIn('xcrun simctl delete "$CURRENCY_TEST_SIMULATOR"', native)
 
     def test_gate_rejects_missing_cancelled_failed_or_skipped_required_work(self):
