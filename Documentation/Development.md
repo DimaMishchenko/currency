@@ -73,7 +73,7 @@ Use Xcode-generated string-catalog symbols in the owning UI module. Keep resourc
 
 ## CI skip rules
 
-The Tests workflow always checks CI execution, selection rules and shell syntax. `Scripts/CI/changes.sh` records `CurrencyCIPlan.json`, selection reasons and the separate TestFlight decision for the whole push or PR merged diff. The required `test` check fails when planning or any selected check fails, including when no Xcode work is needed.
+The Tests workflow plans checks first, then runs Linux tooling and native validation in parallel. It always checks CI execution, selection rules and shell syntax. `Scripts/CI/changes.sh` records `CurrencyCIPlan.json`, selection reasons and the separate TestFlight decision for the whole push or PR merged diff. The required `test` check waits for both branches and fails when planning or any selected check fails, including when no Xcode work is needed.
 
 | Changes | PR checks |
 | --- | --- |
@@ -87,6 +87,8 @@ The Tests workflow always checks CI execution, selection rules and shell syntax.
 Tuist owns native test selection through the complete `CurrencyTests` scheme. It hashes test targets, sources, resources and their dependencies, then reuses successful target results on PRs. Python only decides whether the native test job is needed and which app, Watch and harness builds are affected. It does not filter native test targets. The exported Tuist graph includes file membership shared across targets; CI narrows only `CurrencyHarnesses` through `TUIST_CURRENCY_CI_HARNESS_TARGETS`.
 
 PR builds reuse cached modules through `TUIST_CURRENCY_CI_CACHE`; missing entries build from source. Unauthenticated CI omits the Tuist project handle because [4.209.0’s skipped-test reporting](https://github.com/tuist/tuist/blob/4.209.0/cli/Sources/TuistKit/Services/TestService.swift#L2451) otherwise uploads a report even with `--no-upload`. Native changes on `main` disable both module caching and test-result reuse and run full validation during rollout. Source navigator validation generates with `--cache-profile none` so it can check the complete source tree; signed archives also use sources.
+
+The owned simulator starts before build preparation without a blocking boot wait; Xcode waits for readiness before executing tests. Native commands remain serial because they share the generated workspace and build directory. npm downloads and mise-installed tools use their actions' existing caches; Tuist handles module and test-result caches.
 
 Plans and native test results are attached to the workflow run. Native phase summaries report generation/build wall time and, when an `.xcresult` exists, Xcode build duration, post-build test-session duration and pass/fail/skip counts separately from cold preparation. Simulator E2E journeys remain local and are selected using the feature map and E2E coverage table.
 

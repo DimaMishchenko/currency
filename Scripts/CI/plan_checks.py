@@ -16,6 +16,7 @@ POLICY = {'Scripts/CI/changes.sh', 'Scripts/CI/plan_checks.py',
           'Scripts/CI/test_plan_checks.py', 'Scripts/CI/test_skip_rules.py',
           '.github/workflows/tests.yml', '.github/workflows/cache.yml',
           'Scripts/CI/run_native_checks.sh', 'Scripts/CI/test_native_checks.py',
+          'Scripts/CI/test_workflow_topology.py',
           'Scripts/CI/check_swift_format.sh',
           'Scripts/CI/check_project_structure.py', 'Scripts/CI/test_project_structure.py'}
 RELEASE = {'Scripts/CI/signing.sh', 'Scripts/CI/profile_name.sh',
