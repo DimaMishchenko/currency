@@ -16,6 +16,15 @@ let currencyUnitTestTargets: [TargetReference] = [
   "CurrencyApplicationTests", "ForegroundRefreshTests", "AppearancePreferencesTests",
   "WidgetIntegrationTests", "ApplicationIntegrationTests", "CompanionSyncTests"
 ]
+let currencyHarnessNames = [
+  "WidgetsHarness", "HomeHarness", "OnboardingHarness", "CurrencyDetailsHarness",
+  "SettingsHarness", "LocationOnboardingHarness", "WidgetOnboardingHarness"
+]
+let ciHarnessNames = Environment.currencyCiHarnessTargets.getString(default: "")
+  .split(separator: " ").map(String.init)
+precondition(Set(ciHarnessNames).isSubset(of: Set(currencyHarnessNames)))
+let currencyHarnessTargets = (ciHarnessNames.isEmpty ? currencyHarnessNames : ciHarnessNames)
+  .map(TargetReference.target)
 
 func releaseSigning(profile: String) -> Settings? {
   guard !profile.isEmpty else { return nil }
@@ -559,10 +568,7 @@ let project = Project(
       testAction: .targets(["NativeIntentTests"], expandVariableFromTarget: "Currency")),
     .scheme(
       name: "CurrencyHarnesses", shared: true,
-      buildAction: .buildAction(targets: [
-        "WidgetsHarness", "HomeHarness", "OnboardingHarness", "CurrencyDetailsHarness",
-        "SettingsHarness", "LocationOnboardingHarness", "WidgetOnboardingHarness"
-      ])),
+      buildAction: .buildAction(targets: currencyHarnessTargets)),
     .scheme(
       name: "CurrencyTests", shared: true,
       buildAction: .buildAction(targets: ["Currency", "CurrencyWidgets"] + currencyUnitTestTargets),
