@@ -39,38 +39,20 @@ public actor HistoryService {
     let interval = range == .yearToDate ? "\(range.rawValue)-\(year)" : "\(range.rawValue)"
     let file = directory.appendingPathComponent(
       "history-v3-\(base)-\(quote)-\(interval).json")
-    let cached = (try? Data(contentsOf: file))
-      .flatMap { try? JSONDecoder().decode(HistorySeries.self, from: $0) }
-      .flatMap { series -> HistorySeries? in
-        let expected: RateProviderID = range == .day ? .coinMetrics : .fawaz
-        let observation: RateObservation =
-          range == .day
-          ? .minuteReference : range == .all ? .monthlyReference : .dailyReference
-        guard
-          (series.source.provider == expected
-            || (range == .all && [.coinMetrics, .frankfurter].contains(series.source.provider))
-            || (range != .day && range != .all
-              && Self.usesFiatHistory(base: base, quote: quote)
-              && series.source.provider == .frankfurter)),
-          series.source.observation == observation,
-          series.points.count >= 2,
-          series.points.allSatisfy({ $0.value.isFinite && $0.value > 0 && $0.date <= now }),
-          series.fetchedAt <= now,
-          zip(series.points, series.points.dropFirst()).allSatisfy({ $0.date < $1.date })
-        else { return nil }
-        if range == .day
-          && !Self.coversDay(series.points, ending: Self.minuteEndpoint(series.fetchedAt))
-        {
-          return nil
-        }
-        guard range == .yearToDate else { return series }
-        guard calendar.component(.year, from: series.fetchedAt) == year,
-          series.points.allSatisfy({ calendar.component(.year, from: $0.date) == year })
-        else { return nil }
-        return series
-      }
+    let record = (try? Data(contentsOf: file))
+      .flatMap { try? JSONDecoder().decode(HistoryCacheRecord.self, from: $0) }
+    let cached: HistorySeries? = record.flatMap { record in
+      Self.validHistory(record.series, base: base, quote: quote, range: range, now: now)
+        ? record.series : nil
+    }
+    let fiatPolicy =
+      range != .day && range != .all && Self.usesFiatHistory(base: base, quote: quote)
     let lifetime: TimeInterval = range == .day ? 1800 : (range == .all ? 86400 : 21600)
-    if let cached, now.timeIntervalSince(cached.fetchedAt) < (cacheLifetime ?? lifetime) {
+    let fresh =
+      cached.map { now.timeIntervalSince($0.fetchedAt) < (cacheLifetime ?? lifetime) } ?? false
+    if let cached, fresh,
+      !fiatPolicy || cached.source.provider != .fawaz || record?.fiatHistoryPolicyVersion == 1
+    {
       return HistoryResult(series: cached, issue: nil)
     }
     do {
@@ -84,16 +66,10 @@ public actor HistoryService {
           guard let date = calendar.date(from: DateComponents(year: 2024, month: 3, day: 2))
           else { throw RateError.invalidData }
           start = date
-        } else if range == .year {
-          guard let date = calendar.date(byAdding: .year, value: -1, to: now)
-          else { throw RateError.invalidData }
-          start = date
-        } else if range == .yearToDate {
-          guard let date = calendar.date(from: DateComponents(year: year, month: 1, day: 1))
-          else { throw RateError.invalidData }
-          start = date
         } else {
-          start = now.addingTimeInterval(-Double(range.rawValue) * 86400)
+          guard let date = Self.historyStart(range: range, at: now, calendar: calendar)
+          else { throw RateError.invalidData }
+          start = date
         }
         let older =
           range == .all ? try BundledHistory.points(base: base, quote: quote, through: now) : []
@@ -143,6 +119,18 @@ public actor HistoryService {
           } catch {
             try Task.checkCancellation()
             if cached?.source.provider == .frankfurter { throw error }
+            if let cached, fresh, record?.fiatHistoryPolicyVersion != 1 {
+              do {
+                try JSONEncoder()
+                  .encode(
+                    HistoryCacheRecord(series: cached, fiatHistoryPolicyVersion: 1)
+                  )
+                  .write(to: file, options: .atomic)
+              } catch {
+                return HistoryResult(series: cached, issue: .cacheWriteFailed)
+              }
+              return HistoryResult(series: cached, issue: .usingCachedSeries)
+            }
             recent = try await Self.fetchDailyHistory(
               client: client, directory: directory, base: base, quote: quote,
               start: start, now: now, monthly: false)
@@ -161,11 +149,16 @@ public actor HistoryService {
 
       }
       try Task.checkCancellation()
-      guard points.count >= 2 else { throw RateError.unavailable }
       let series = HistorySeries(points: points, source: source, fetchedAt: now)
+      guard Self.validHistory(series, base: base, quote: quote, range: range, now: now)
+      else { throw RateError.invalidData }
       do {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        try JSONEncoder().encode(series).write(to: file, options: .atomic)
+        try JSONEncoder()
+          .encode(
+            HistoryCacheRecord(series: series, fiatHistoryPolicyVersion: fiatPolicy ? 1 : nil)
+          )
+          .write(to: file, options: .atomic)
       } catch {
         return HistoryResult(series: series, issue: .cacheWriteFailed)
       }
