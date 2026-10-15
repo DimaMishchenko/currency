@@ -62,7 +62,11 @@ public actor HistoryService {
           series.fetchedAt <= now,
           zip(series.points, series.points.dropFirst()).allSatisfy({ $0.date < $1.date })
         else { return nil }
-        if range == .day && !Self.coversDay(series.points, ending: series.fetchedAt) { return nil }
+        if range == .day
+          && !Self.coversDay(series.points, ending: Self.minuteEndpoint(series.fetchedAt))
+        {
+          return nil
+        }
         guard range == .yearToDate else { return series }
         guard calendar.component(.year, from: series.fetchedAt) == year,
           series.points.allSatisfy({ calendar.component(.year, from: $0.date) == year })
@@ -185,7 +189,7 @@ public actor HistoryService {
   private func intraday(
     base: String, quote: String, now: Date
   ) async throws -> ([HistoryPoint], RateSource) {
-    let end = Date(timeIntervalSince1970: floor(now.timeIntervalSince1970 / 60) * 60)
+    let end = Self.minuteEndpoint(now)
     let start = end.addingTimeInterval(-86400)
     let assets = [base, quote].filter { CurrencyCatalog.crypto.contains($0) }
     let observations = try await CoinMetricsClient(client: client)
@@ -235,6 +239,10 @@ public actor HistoryService {
         provider: .coinMetrics, observation: .minuteReference,
         timeZone: .gmt, conversion: conversion)
     )
+  }
+
+  private static func minuteEndpoint(_ date: Date) -> Date {
+    Date(timeIntervalSince1970: floor(date.timeIntervalSince1970 / 60) * 60)
   }
 
   static func coversDay(_ points: [HistoryPoint], ending end: Date) -> Bool {

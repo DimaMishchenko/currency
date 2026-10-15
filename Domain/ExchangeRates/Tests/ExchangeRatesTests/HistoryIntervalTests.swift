@@ -44,6 +44,34 @@ import Testing
     #expect(await client.urls.count == 2)
   }
 
+  @Test func fractionalFetchTimeReusesFullWindowAndPreservesItWhenOffline() async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let now = try historyDate("2026-01-05T00:05:17Z")
+    let endpoint = try historyDate("2026-01-05T00:05:00Z")
+    let client = MinuteHistoryHTTP()
+    let service = HistoryService(directory: directory, client: client, policy: .intradayEnhanced)
+    let first = await service.load(base: "BTC", quote: "USD", range: .day, now: now)
+    let series = try #require(first.series)
+    #expect(first.issue == nil)
+    #expect(series.fetchedAt == now)
+    #expect(series.points.first?.date == endpoint.addingTimeInterval(-86400))
+    #expect(series.points.count == 288)
+    await client.fail()
+    let fresh = await service.load(
+      base: "BTC", quote: "USD", range: .day, now: now.addingTimeInterval(1799))
+    #expect(fresh.issue == nil)
+    #expect(fresh.series?.points == series.points)
+    #expect(fresh.series?.fetchedAt == now)
+    #expect(await client.urls.count == 1)
+    let expired = await service.load(
+      base: "BTC", quote: "USD", range: .day, now: now.addingTimeInterval(1800))
+    #expect(expired.issue == .usingCachedSeries)
+    #expect(expired.series?.points == series.points)
+    #expect(expired.series?.fetchedAt == now)
+    #expect(await client.urls.count == 2)
+  }
+
   @Test func coverageRejectsLargeInteriorGapsAndShortenedWindows() {
     let end = Date(timeIntervalSince1970: 86400)
     let full = (0..<288)
