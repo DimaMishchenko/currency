@@ -77,7 +77,7 @@
       let rates = RateStore(directory: directory, policy: policy)
       let daily = FixedRateClient.quotes(now: now)
       var effective = daily
-      effective["BTC"] = FixedRateClient.coinbaseQuote(now: now)
+      effective["BTC"] = FixedRateClient.coinMetricsQuote(now: now)
       try FileCoordination.write(at: directory.appendingPathComponent("rates.json")) {
         try RateCache(directory: directory)
           .save(
@@ -85,7 +85,7 @@
               quotes: effective, fetchedAt: now, dailyQuotes: daily, dailyFetchedAt: now,
               checkedAt: now, supplementalFetchedAt: now, supplementalQuotes: daily))
       }
-      for mode in [RateProviderPolicy.daily, .coinbaseEnhanced] {
+      for mode in [RateProviderPolicy.daily, .intradayEnhanced] {
         try seedHistory(
           base: "EUR", quote: "USD", values: [1.8, 2], mode: mode,
           directory: directory, now: now)
@@ -96,14 +96,27 @@
           base: "BTC", quote: "USD", values: [90_000, 100_000], mode: mode,
           directory: directory, now: now)
       }
-      let hourly = HistorySeries(
-        points: [
-          HistoryPoint(date: now.addingTimeInterval(-2 * 3600), value: 45_000),
-          HistoryPoint(date: now.addingTimeInterval(-3600), value: 50_000)
-        ], source: .init(provider: .coinbase, observation: .hourlyClose, timeZone: .gmt),
+      let end = Date(timeIntervalSince1970: floor(now.timeIntervalSince1970 / 300) * 300)
+      let intraday = HistorySeries(
+        points: (0...288)
+          .map { index in
+            HistoryPoint(
+              date: end.addingTimeInterval(Double(index - 288) * 300),
+              value: 45_000 + Double(index) * 5_000 / 288)
+          }, source: .init(provider: .coinMetrics, observation: .minuteReference, timeZone: .gmt),
         fetchedAt: now)
       try writeHistory(
-        hourly, filename: "history-coinbaseEnhanced-coinbase-BTC-USD-1.json",
+        intraday, filename: "history-v2-intradayEnhanced-BTC-USD-1.json",
+        directory: directory)
+      let legacy = HistorySeries(
+        points: [
+          HistoryPoint(date: now.addingTimeInterval(-3600), value: 1),
+          HistoryPoint(date: now, value: 2)
+        ],
+        source: .init(provider: .custom("Coinbase"), observation: .hourlyClose, timeZone: .gmt),
+        fetchedAt: now)
+      try writeHistory(
+        legacy, filename: "history-coinbaseEnhanced-coinbase-BTC-USD-1.json",
         directory: directory)
       let files = [
         "input.json", "onboarding.json", "widget-location-refresh.json",
@@ -153,9 +166,9 @@
       let seededRates = rates.loadRates()
       guard seededRates.quotes["EUR"]?.value == 1, seededRates.quotes["USD"]?.value == 2,
         seededRates.quotes["CHF"]?.value == 0.5, seededRates.quotes["CZK"]?.value == 25,
-        seededRates.quotes["BTC"]?.value == (policy == .coinbaseEnhanced ? 0.00004 : 0.00002),
+        seededRates.quotes["BTC"]?.value == (policy == .intradayEnhanced ? 0.00004 : 0.00002),
         seededRates.quotes["BTC"]?.source.provider
-          == (policy == .coinbaseEnhanced ? .coinbase : .fawaz),
+          == (policy == .intradayEnhanced ? .coinMetrics : .fawaz),
         discoveryStore.load() == discovery
       else { throw StartupError.seedVerificationFailed }
     }
@@ -182,14 +195,15 @@
           ],
           source: .init(
             provider: .fawaz,
-            observation: range == .all ? .monthlyReference : .dailyReference, timeZone: .gmt),
+            observation: range == .all ? .monthlyReference : .dailyReference, timeZone: .gmt,
+            contributingProviders: range == .all ? [.coinMetrics, .frankfurter] : nil),
           fetchedAt: now)
         let interval =
           range == .yearToDate
           ? "\(range.rawValue)-\(calendar.component(.year, from: now))" : "\(range.rawValue)"
         try writeHistory(
           series,
-          filename: "history-\(mode.rawValue)-fawaz-\(base)-\(quote)-\(interval).json",
+          filename: "history-v2-\(mode.rawValue)-\(base)-\(quote)-\(interval).json",
           directory: directory)
       }
     }
@@ -212,15 +226,17 @@
   private struct FixedRateClient: HTTPClient {
     func get(_ url: URL) async throws -> Data {
       try Task.checkCancellation()
-      if url.host == "api.coinbase.com", url.path == "/v2/exchange-rates",
-        CurrencyRateConfiguration.coinbaseEnabled
+      if url.host == "community-api.coinmetrics.io",
+        url.path == "/v4/timeseries/asset-metrics",
+        CurrencyRateConfiguration.intradayEnabled
       {
-        var values = Dictionary(
-          uniqueKeysWithValues: CurrencyCatalog.crypto.map { ($0, "0.00004") })
-        values["EUR"] = "1"
-        return try JSONSerialization.data(withJSONObject: [
-          "data": ["currency": "EUR", "rates": values]
-        ])
+        let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+        let assets = items.first { $0.name == "assets" }?.value?.split(separator: ",") ?? []
+        let end = Date(timeIntervalSince1970: floor(Date.now.timeIntervalSince1970 / 60) * 60)
+        let rows = assets.map { asset in
+          ["asset": String(asset), "time": end.ISO8601Format(), "ReferenceRateUSD": "50000"]
+        }
+        return try JSONSerialization.data(withJSONObject: ["data": rows])
       }
       guard ["cdn.jsdelivr.net", "latest.currency-api.pages.dev"].contains(url.host ?? ""),
         url.path.hasSuffix("/currencies/eur.min.json")
@@ -250,10 +266,14 @@
       }
     }
 
-    static func coinbaseQuote(now: Date) -> ExchangeRate {
+    static func coinMetricsQuote(now: Date) -> ExchangeRate {
       ExchangeRate(
         0.00004, published: day(now),
-        source: .init(provider: .coinbase, observation: .exchangeRate), retrievedAt: now)
+        source: .init(
+          provider: .coinMetrics, observation: .minuteReference,
+          conversion: RateConversion(
+            provider: .fawaz, published: day(now), value: 2, base: "EUR", quote: "USD")),
+        observedAt: now, retrievedAt: now)
     }
   }
 #endif

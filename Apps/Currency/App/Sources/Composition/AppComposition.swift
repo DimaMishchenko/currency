@@ -47,7 +47,7 @@ final class AppComposition {
         refreshLocalCurrency: { [weak self] in await self?.foregroundLocation.refreshIfNeeded() },
         changed: { [weak self] in self?.changed() },
         sleepRates: { [policy] in
-          try await Task.sleep(for: .seconds(policy == .coinbaseEnhanced ? 60 : 21_600))
+          try await Task.sleep(for: .seconds(policy == .intradayEnhanced ? 60 : 21_600))
         }, sleepLocalCurrency: { try await Task.sleep(for: .seconds(300)) }))
   }
 
@@ -226,7 +226,7 @@ final class AppComposition {
       refresh: { [self] in
         _ = try await refresh(force: true); return settingsState
       },
-      replay: { try scene.restartOnboarding() }, usesCoinbase: policy == .coinbaseEnhanced,
+      replay: { try scene.restartOnboarding() },
       output: { [self] output in
         if case .manageLocation = output {
           routeLocationPermission(

@@ -404,6 +404,9 @@ struct RateDetailsScreen: View {
       DisclosureGroup(isExpanded: $sourceDetailsExpanded) {
         VStack(alignment: .leading, spacing: AppStyle.Space.medium) {
           if let series, !series.points.isEmpty {
+            if let conversion = RateMessages.conversionDescription(series.source, locale: locale) {
+              Text(conversion)
+            }
             VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
               if let first = series.points.first, let last = series.points.last {
                 Text(verbatim: "\(dayLabel(first.date)) – \(dayLabel(last.date))")

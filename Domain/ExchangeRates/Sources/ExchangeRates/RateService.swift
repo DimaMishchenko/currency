@@ -26,7 +26,7 @@ public actor RateService {
     self.policy = policy
     self.fiat = nil
     self.daily = FawazProvider(client: client)
-    self.crypto = policy == .coinbaseEnhanced ? CoinbaseProvider(client: client) : nil
+    self.crypto = policy == .intradayEnhanced ? CoinMetricsProvider(client: client) : nil
     self.sleep = { try await Task.sleep(for: $0) }
   }
 
@@ -110,7 +110,7 @@ public actor RateService {
     where CurrencyCatalog.crypto.contains(code)
       && quote.published >= (dailyQuotes[code]?.published ?? "")
     {
-      quotes[code] = quote
+      if let aligned = quote.alignedToDailyUSD(dailyQuotes["USD"]) { quotes[code] = aligned }
     }
     let success = fiatQuotes != nil || supplementalQuotes != nil || live != nil
     let warning: RefreshWarning? =
@@ -196,7 +196,9 @@ public actor RateService {
             where CurrencyCatalog.crypto.contains(code)
               && quote.published >= (dailyQuotes[code]?.published ?? "")
             {
-              effective[code] = quote
+              if let aligned = quote.alignedToDailyUSD(dailyQuotes["USD"]) {
+                effective[code] = aligned
+              }
             }
             let succeeded = results.values.contains { !($0.quotes ?? [:]).isEmpty }
             let final = results.count == providers.count

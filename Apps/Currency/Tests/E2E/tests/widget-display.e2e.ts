@@ -36,7 +36,7 @@ test('medium Currency board displays default amounts and follows app amount chan
 test('medium Know Your Cash displays the CZK 100 banknote estimate in EUR', { tags: displayTags }, async ({ installedWidget, app, agent }) => {
   const cash = await installedWidget('Know Your Cash', 'Medium');
   await expect(cash).toBeVisible();
-  await agent.waitFor(`${loadedContent} The medium Know Your Cash widget is configured with base CZK and target EUR. Its main banknote amount is exactly 100 CZK and the adjacent converted estimate is exactly approximately 4 EUR, shown with the approximation sign. This is the main estimate, not just a preset button.`, { vision: 'only', timeout: 30_000 });
+  await agent.waitFor(`${loadedContent} Know Your Cash shows a main banknote amount of exactly 100 CZK and an adjacent converted estimate of approximately 4 EUR, including the approximation sign. This is the main estimate, not just a preset button.`, { vision: 'only', timeout: 30_000 });
   await app.screenshot('widget-cash-medium-czk-100-eur-4');
 });
 

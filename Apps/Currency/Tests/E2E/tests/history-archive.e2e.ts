@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { existsSync, readFileSync, unlinkSync } from 'node:fs';
+import { join } from 'node:path';
+import { expect } from 'e2e';
+import { test } from '../fixtures.js';
+import { intradayEnabled } from '../provider-configuration.js';
+
+test('All history renders the actual bundled Bitcoin archive from 2010', { tags: ['core', 'providers'] }, async ({ start, screen, agent, app }) => {
+  await start('ready-crypto');
+  const udid = process.env.CURRENCY_E2E_UDID!;
+  const directory = execFileSync('xcrun', ['simctl', 'get_app_container', udid, 'com.dimasike.currency', 'group.com.dimasike.currency.shared'], { encoding: 'utf8' }).trim();
+  const cache = join(directory, `history-v2-${intradayEnabled ? 'intradayEnhanced' : 'daily'}-BTC-USD-0.json`);
+  if (existsSync(cache)) unlinkSync(cache);
+  await agent.act('Open Details & history for the Bitcoin destination currency.');
+  await expect(screen.getByTestId('currency.details.BTC')).toBeVisible();
+  const all = screen.getByTestId('currency.details.historyRange').getByRole('tab', 'All', { exact: true });
+  await all.tap();
+  await expect(all).toBeSelected();
+  const source = screen.getByTestId('currency.details.sourceDisclosure').filter({ hasText: /Fawaz.*Coin Metrics.*monthly reference/i });
+  await expect(source).toBeVisible();
+  assert.ok(existsSync(cache));
+  const saved = JSON.parse(readFileSync(cache, 'utf8')) as { points: { date: number; value: number }[] };
+  assert.ok(saved.points.length >= 190);
+  assert.equal(new Date((saved.points[0]!.date + 978_307_200) * 1000).getUTCFullYear(), 2010);
+  assert.ok(saved.points.every(point => point.value > 0 && Number.isFinite(point.value)));
+  await app.screenshot('bitcoin-actual-bundled-all-history-from-2010');
+  await source.tap();
+  await expect(source).toHaveValue('Expanded');
+  await agent.waitFor('Bitcoin All history is shown with a visible historical chart and the expanded source information identifies Fawaz and Coin Metrics monthly reference data. The date range starts in 2010.', { vision: 'only', timeout: 30_000 });
+  await app.screenshot('bitcoin-actual-bundled-all-history-source-dates');
+});

@@ -58,8 +58,6 @@ public enum SettingsIssue: Sendable, Equatable {
 /// The host supplies preference persistence and operations; Settings owns their presentation flow.
 @MainActor
 public struct SettingsDependencies {
-  /// Whether the host enables Coinbase conversion and hourly-history capabilities.
-  public var usesCoinbase: Bool
   /// Reads the host current rate information without starting network work.
   public var readState: () -> SettingsRateState
   /// Subscribes to committed host state changes; each flow owns its subscription.
@@ -87,10 +85,9 @@ public struct SettingsDependencies {
     setAccent: @escaping (SettingsAccent) -> Void,
     setMetalUnit: @escaping (MetalUnit) throws -> Void,
     refresh: @escaping () async throws -> SettingsRateState,
-    replay: (() throws -> Void)?, usesCoinbase: Bool = true,
+    replay: (() throws -> Void)?,
     output: @escaping (SettingsOutput) -> Void
   ) {
-    self.usesCoinbase = usesCoinbase
     self.readState = readState; self.changes = changes; self.readPreferences = readPreferences
     self.setTheme = setTheme; self.setAccent = setAccent; self.setMetalUnit = setMetalUnit
     self.refresh = refresh
@@ -119,8 +116,6 @@ public final class SettingsModel {
   }
   /// Whether the host supplies the optional setup replay capability.
   public var allowsReplay: Bool { dependencies.replay != nil }
-  /// Whether the host enables Coinbase conversion and hourly-history capabilities.
-  public var usesCoinbase: Bool { dependencies.usesCoinbase }
   /// Creates the owned value or model with explicit host inputs and operations.
   public init(dependencies: SettingsDependencies) {
     self.dependencies = dependencies

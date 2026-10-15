@@ -56,7 +56,7 @@ private final class ControlledProtocol: URLProtocol, @unchecked Sendable {
   override func stopLoading() { Self.state.stop(self) }
 }
 
-@Suite(.serialized) struct CoinbaseTransportTests {
+@Suite(.serialized) struct IndependentTransportTests {
   private func setup() -> (NetworkClient, URLSession) {
     let config = URLSessionConfiguration.ephemeral
     config.protocolClasses = [ControlledProtocol.self]
@@ -65,27 +65,12 @@ private final class ControlledProtocol: URLProtocol, @unchecked Sendable {
   }
 
   private func url(
-    host: String = "api.exchange.coinbase.com", path: String = "/products/BTC-USD/candles"
+    host: String = "community-api.coinmetrics.io", path: String = "/v4/timeseries/asset-metrics"
   ) throws -> URL {
     try #require(URL(string: "https://\(host)\(path)?request=\(UUID().uuidString)"))
   }
 
-  @Test func concurrentCandleAdmissionsStayAtLeast150MillisecondsApart() async throws {
-    let pacer = CandlePacer()
-    let urls = try [
-      url(), url(path: "/products/ETH-USD/candles"), url(path: "/products/BTC-EUR/candles")
-    ]
-    let tasks = urls.map { url in Task { try await pacer.acquire(for: url) } }
-    defer { for task in tasks { task.cancel() } }
-    var starts: [ContinuousClock.Instant] = []
-    for task in tasks { starts.append(try #require(try await task.value)) }
-    starts.sort()
-    for (earlier, later) in zip(starts, starts.dropFirst()) {
-      #expect(earlier.duration(to: later) >= .milliseconds(150))
-    }
-  }
-
-  @Test func separateTransportsLoadCandlesWhileOtherEndpointsComplete() async throws {
+  @Test func separateTransportsCompleteIndependentEndpoints() async throws {
     let (firstClient, firstSession) = setup()
     let (secondClient, secondSession) = setup()
     defer {
@@ -93,9 +78,9 @@ private final class ControlledProtocol: URLProtocol, @unchecked Sendable {
       secondSession.invalidateAndCancel()
     }
     let firstURL = try url()
-    let secondURL = try url(path: "/products/ETH-USD/candles")
-    let thirdURL = try url(path: "/products/BTC-EUR/candles")
-    let tickerURL = try url(path: "/products/BTC-USD/ticker")
+    let secondURL = try url(path: "/v4/timeseries/other-metrics")
+    let thirdURL = try url(path: "/v4/timeseries/third-metrics")
+    let tickerURL = try url(path: "/v4/catalog/assets")
     let otherHostURL = try url(host: "example.test")
     let first = Task { try await firstClient.get(firstURL) }
     defer { first.cancel() }

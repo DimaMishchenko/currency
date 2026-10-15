@@ -57,7 +57,7 @@ extension HistoryService {
     }
   }
 
-  private static func dailySnapshot(
+  static func dailySnapshot(
     client: any HTTPClient, directory: URL, day: String
   ) async throws -> [String: ExchangeRate] {
     let archive = directory.appendingPathComponent("fawaz-daily-v1", isDirectory: true)

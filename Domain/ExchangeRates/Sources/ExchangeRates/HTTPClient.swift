@@ -47,28 +47,6 @@ public struct NetworkClient: HTTPClient {
   }
 }
 
-actor CandlePacer {
-  static let shared = CandlePacer()
-  private let clock = ContinuousClock()
-  private var lastStart: ContinuousClock.Instant?
-
-  @discardableResult
-  func acquire(for url: URL) async throws -> ContinuousClock.Instant? {
-    let path = url.path.split(separator: "/", omittingEmptySubsequences: false)
-    guard
-      url.host == "api.exchange.coinbase.com", path.count == 4, path[0].isEmpty,
-      path[1] == "products", !path[2].isEmpty, path[3] == "candles"
-    else { return nil }
-    while let lastStart, clock.now < lastStart.advanced(by: .milliseconds(150)) {
-      try await clock.sleep(until: lastStart.advanced(by: .milliseconds(150)))
-    }
-    try Task.checkCancellation()
-    let start = clock.now
-    lastStart = start
-    return start
-  }
-}
-
 private actor HTTPTransport {
   struct Key: Hashable {
     let url: URL
@@ -104,7 +82,6 @@ private actor HTTPTransport {
             request.timeoutInterval = timeout
             request.setValue(
               "application/json, application/xml, text/xml", forHTTPHeaderField: "Accept")
-            try await CandlePacer.shared.acquire(for: url)
             try Task.checkCancellation()
             let (data, response) = try await session.data(for: request)
             try Task.checkCancellation()

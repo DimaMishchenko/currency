@@ -81,7 +81,7 @@ import Testing
     #expect(evaluation.results.first?.amount == "12.5")
   }
 
-  @Test(arguments: [RateProviderPolicy.daily, .coinbaseEnhanced])
+  @Test(arguments: [RateProviderPolicy.daily, .intradayEnhanced])
   func headlessConversionsRespectProviderAttemptCadence(policy: RateProviderPolicy) async throws {
     let now = Date.now
     let attempts = ProviderAttemptCounter()
@@ -101,7 +101,7 @@ import Testing
     let request = try action.request(amount: "10", source: "EUR", destination: "USD")
     let result = try await action.perform(request)
     #expect(result.results.first?.amount == "20")
-    #expect(await attempts.count == (policy == .coinbaseEnhanced ? 1 : 0))
+    #expect(await attempts.count == (policy == .intradayEnhanced ? 1 : 0))
   }
 
   private func make(

@@ -1,8 +1,8 @@
 import { expect } from 'e2e';
 import { test } from '../fixtures.js';
-import { coinbaseEnabled } from '../provider-configuration.js';
+import { intradayEnabled } from '../provider-configuration.js';
 
-const enhanced = coinbaseEnabled;
+const enhanced = intradayEnabled;
 const mode = enhanced ? 'on' : 'off';
 
 test(`provider policy ${mode} preserves crypto fallback, ranges and credits after restart`, { tags: ['core', 'providers'] }, async ({ start, app, agent, screen }) => {
@@ -20,21 +20,31 @@ test(`provider policy ${mode} preserves crypto fallback, ranges and credits afte
     const ranges = screen.getByTestId('currency.details.historyRange');
     const day = ranges.getByRole('tab', 'One day', { exact: true });
     const source = screen.getByTestId('currency.details.sourceDisclosure')
-      .filter({ hasText: /daily reference rates|hourly closes/i });
+      .filter({ hasText: /daily reference rates|monthly reference rates|minute reference prices/i });
     await expect(source.filter({ hasText: /Fawaz.*daily reference rates/i })).toBeVisible();
     if (enhanced) {
       await expect(day).toBeVisible();
       await day.tap();
       await expect(day).toBeSelected();
-      await expect(source.filter({ hasText: /Coinbase.*hourly closes/i })).toBeVisible();
+      await expect(source.filter({ hasText: /Coin Metrics.*minute reference prices/i })).toBeVisible();
     } else {
       await expect(day).toBeHidden();
-      await expect(screen.getByText(/Coinbase/i)).toBeHidden();
+      await expect(screen.getByText(/Coin Metrics/i)).toBeHidden();
+    }
+    const all = ranges.getByRole('tab', 'All available history', { exact: true });
+    await all.tap();
+    await expect(all).toBeSelected();
+    await expect(source.filter({ hasText: /monthly reference rates/i })).toBeVisible();
+    await expect(source.filter({ hasText: /Coin Metrics.*Frankfurter|Frankfurter.*Coin Metrics/i })).toBeVisible();
+    await app.screenshot(`${capture}-all-reference-history`);
+    if (enhanced) {
+      await day.tap();
+      await expect(day).toBeSelected();
     }
     await source.tap();
     await expect(source).toHaveValue('Expanded');
-    await agent.act('Scroll in Details until the exact text "Crypto history uses daily rates and completed hourly candles when available. Historical and current conversion sources may differ." is visible. Use that exact text when scrolling to text. Keep Details open.');
-    await expect(screen.getByText(enhanced ? /Coinbase.*retrieved/i : /Fawaz · daily ·/i)).toBeVisible();
+    await agent.act('Scroll in Details until the exact text "Crypto history combines daily and monthly reference data with intraday prices when available. Converted prices may be approximate. Historical and current sources can differ." is visible. Use that exact text when scrolling to text. Keep Details open.');
+    await expect(screen.getByText(enhanced ? /Coin Metrics.*minute reference prices.*approximate conversion/i : /Fawaz · daily ·/i)).toBeVisible();
     await app.screenshot(capture);
     await agent.act('Close Details & history with the circular X at the top right and return to the converter.');
     await expect(screen.getByTestId('currency.details.close')).toBeHidden();
@@ -51,9 +61,8 @@ test(`provider policy ${mode} preserves crypto fallback, ranges and credits afte
   await screen.getByTestId('converter.settings').tap();
   await screen.getByTestId('settings.sources').tap();
   await expect(screen.getByText('Fawaz Exchange API', { exact: true })).toBeVisible();
-  const coinbase = screen.getByText('Coinbase', { exact: true });
-  if (enhanced) await expect(coinbase).toBeVisible();
-  else await expect(coinbase).toBeHidden();
-  await expect(screen.getByText('Frankfurter', { exact: true })).toBeHidden();
+  const coinMetrics = screen.getByText('Coin Metrics', { exact: true });
+  await expect(coinMetrics).toBeVisible();
+  await expect(screen.getByText('Frankfurter', { exact: true })).toBeVisible();
   await app.screenshot(`provider-${mode}-credits`);
 });

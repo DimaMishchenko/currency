@@ -1,40 +1,23 @@
 import Foundation
 
-/// Loads and caches fiat or cryptocurrency history.
+/// Loads dated daily publications, bundled monthly references, and optional intraday crypto references.
 public actor HistoryService {
   private let client: any HTTPClient
   private let directory: URL
-  private static let euroAssets: Set<String> = [
-    "AAVE", "ADA", "ALGO", "ATOM", "AVAX", "BCH", "BTC", "DOGE", "DOT", "ETC", "ETH",
-    "FIL", "ICP", "LINK", "LTC", "SHIB", "SOL", "UNI", "USDC", "USDT", "XLM", "XRP"
-  ]
-  private static let dollarAssets = euroAssets.subtracting(["USDC"])
-  private static let sterlingAssets = euroAssets.subtracting(["AVAX", "ICP", "XLM", "XRP"])
 
-  /// Whether a distinct, crypto-first pair has direct hourly candles or two supported quote legs.
+  /// Whether a distinct catalog pair contains a cryptocurrency and no precious metal.
   public static func supportsIntraday(base: String, quote: String) -> Bool {
-    intradayCandleQuote(base: base, quote: quote) != nil
+    base != quote && CurrencyCatalog.codes.contains(base) && CurrencyCatalog.codes.contains(quote)
+      && (CurrencyCatalog.crypto.contains(base) || CurrencyCatalog.crypto.contains(quote))
+      && !CurrencyCatalog.metals.contains(base) && !CurrencyCatalog.metals.contains(quote)
   }
 
-  private static func intradayCandleQuote(base: String, quote: String) -> String? {
-    guard base != quote else { return nil }
-    if CurrencyCatalog.crypto.contains(quote) {
-      if dollarAssets.contains(base) && dollarAssets.contains(quote) { return "USD" }
-      return euroAssets.contains(base) && euroAssets.contains(quote) ? "EUR" : nil
-    }
-    return switch quote {
-    case "USD": dollarAssets.contains(base) ? quote : nil
-    case "EUR": euroAssets.contains(base) ? quote : nil
-    case "GBP": sterlingAssets.contains(base) ? quote : nil
-    default: nil
-    }
-  }
   /// The provider capabilities configured by the host.
   public nonisolated let policy: RateProviderPolicy
 
-  /// Whether the configured providers can supply hourly observations for this pair.
+  /// Whether the configured providers can supply intraday references for this pair.
   public nonisolated func supportsIntraday(base: String, quote: String) -> Bool {
-    policy == .coinbaseEnhanced && Self.supportsIntraday(base: base, quote: quote)
+    policy == .intradayEnhanced && Self.supportsIntraday(base: base, quote: quote)
   }
 
   /// Creates a history service, defaulting to Fawaz daily history.
@@ -47,24 +30,13 @@ public actor HistoryService {
     self.policy = policy
   }
 
-  /// Loads Fawaz daily history, or completed Coinbase hourly candles for an enabled day chart.
-  /// All-history requests sample available daily publications at each month end, starting
-  /// with the Fawaz archive in March 2024. Failed requests return only compatible saved series.
+  /// Loads provider observations or returns compatible saved observations with an explicit stale issue.
   public func load(
     base: String, quote: String, range: HistoryRange, now: Date = .now,
     cacheLifetime: TimeInterval? = nil
   ) async -> HistoryResult {
-    await loadSeries(base: base, quote: quote, range: range, now: now, cacheLifetime: cacheLifetime)
-  }
-
-  private func loadSeries(
-    base: String, quote: String, range: HistoryRange, now: Date,
-    cacheLifetime: TimeInterval?
-  ) async -> HistoryResult {
-    guard CurrencyCatalog.codes.contains(base), CurrencyCatalog.codes.contains(quote),
-      base != quote
+    guard CurrencyCatalog.codes.contains(base), CurrencyCatalog.codes.contains(quote), base != quote
     else { return HistoryResult(series: nil, issue: .unsupportedPair) }
-    let intradayQuote = Self.intradayCandleQuote(base: base, quote: quote)
     guard range != .day || supportsIntraday(base: base, quote: quote) else {
       return HistoryResult(series: nil, issue: .intradayUnavailable)
     }
@@ -73,114 +45,203 @@ public actor HistoryService {
     let year = calendar.component(.year, from: now)
     let interval = range == .yearToDate ? "\(range.rawValue)-\(year)" : "\(range.rawValue)"
     let file = directory.appendingPathComponent(
-      "history-\(policy.rawValue)-\(range == .day ? "coinbase" : "fawaz")-\(base)-\(quote)-\(interval).json"
-    )
+      "history-v2-\(policy.rawValue)-\(base)-\(quote)-\(interval).json")
     let cached = (try? Data(contentsOf: file))
       .flatMap { try? JSONDecoder().decode(HistorySeries.self, from: $0) }
       .flatMap { series -> HistorySeries? in
-        let expected = range == .day ? RateProviderID.coinbase : .fawaz
+        let expected: RateProviderID = range == .day ? .coinMetrics : .fawaz
         let observation: RateObservation =
-          range == .day ? .hourlyClose : range == .all ? .monthlyReference : .dailyReference
-        guard series.source.provider == expected, series.source.observation == observation,
+          range == .day
+          ? .minuteReference : range == .all ? .monthlyReference : .dailyReference
+        guard
+          (series.source.provider == expected
+            || (range == .all && [.coinMetrics, .frankfurter].contains(series.source.provider))),
+          series.source.observation == observation,
           series.source.latestObservation == nil, series.points.count >= 2,
           series.points.allSatisfy({ $0.value.isFinite && $0.value > 0 && $0.date <= now }),
-          series.fetchedAt <= now
+          series.fetchedAt <= now,
+          zip(series.points, series.points.dropFirst()).allSatisfy({ $0.date < $1.date })
         else { return nil }
+        if range == .day && !Self.coversDay(series.points, ending: series.fetchedAt) { return nil }
         guard range == .yearToDate else { return series }
         guard calendar.component(.year, from: series.fetchedAt) == year,
           series.points.allSatisfy({ calendar.component(.year, from: $0.date) == year })
         else { return nil }
         return series
       }
-    let defaultCacheLifetime: TimeInterval = range == .day ? 3600 : (range == .all ? 86400 : 21600)
-    if let cached, now >= cached.fetchedAt,
-      now.timeIntervalSince(cached.fetchedAt) < (cacheLifetime ?? defaultCacheLifetime),
-      range != .day || now < Self.nextHour(after: cached.fetchedAt)
-    {
+    let lifetime: TimeInterval = range == .day ? 1800 : (range == .all ? 86400 : 21600)
+    if let cached, now.timeIntervalSince(cached.fetchedAt) < (cacheLifetime ?? lifetime) {
       return HistoryResult(series: cached, issue: nil)
     }
     do {
-      let start: Date
-      if range == .all {
-        guard
-          let beginning = calendar.date(
-            from: DateComponents(year: 2024, month: 3, day: 2))
-        else { throw RateError.invalidData }
-        start = beginning
-      } else if range == .year {
-        guard let beginning = calendar.date(byAdding: .year, value: -1, to: now) else {
-          throw RateError.invalidData
-        }
-        start = beginning
-      } else if range == .yearToDate {
-        guard let beginning = calendar.date(from: DateComponents(year: year, month: 1, day: 1))
-        else { throw RateError.invalidData }
-        start = beginning
-      } else {
-        start = now.addingTimeInterval(-Double(range.rawValue) * 86400)
-      }
       let points: [HistoryPoint]
+      let source: RateSource
       if range == .day {
-        guard let candleQuote = intradayQuote else { throw RateError.invalidData }
-        let candles = try await Self.fetchCryptoHistory(
-          client: client, code: base, quote: candleQuote, start: start, end: now,
-          granularity: .hour)
-        if CurrencyCatalog.crypto.contains(quote) {
-          let quoteCandles = try await Self.fetchCryptoHistory(
-            client: client, code: quote, quote: candleQuote, start: start, end: now,
-            granularity: .hour)
-          points = try Self.divideAlignedCloses(candles, by: quoteCandles)
-        } else {
-          points = candles
-        }
+        (points, source) = try await intraday(base: base, quote: quote, now: now)
       } else {
-        points = try await Self.fetchDailyHistory(
-          client: client, directory: directory, base: base, quote: quote,
-          start: start, now: now, monthly: range == .all)
+        let start: Date
+        if range == .all {
+          start = calendar.date(from: DateComponents(year: 2024, month: 3, day: 2))!
+        } else if range == .year {
+          start = calendar.date(byAdding: .year, value: -1, to: now)!
+        } else if range == .yearToDate {
+          start = calendar.date(from: DateComponents(year: year, month: 1, day: 1))!
+        } else {
+          start = now.addingTimeInterval(-Double(range.rawValue) * 86400)
+        }
+        let older =
+          range == .all ? try BundledHistory.points(base: base, quote: quote, through: now) : []
+        let bundledRecent =
+          range == .all
+          ? BundledHistory.recentPoints(
+            base: base, quote: quote,
+            through: calendar.dateInterval(of: .month, for: now)!.start.addingTimeInterval(-1)) : []
+        let recent: [HistoryPoint]
+        if range == .all {
+          let monthStart = calendar.dateInterval(of: .month, for: now)!.start
+          let lastBundled = bundledRecent.last?.date ?? start.addingTimeInterval(-86400)
+          let missingStart = calendar.date(byAdding: .month, value: 1, to: lastBundled)!
+          let latest: [HistoryPoint]?
+          if missingStart >= monthStart {
+            latest = []
+          } else {
+            latest = try? await Self.fetchDailyHistory(
+              client: client, directory: directory, base: base, quote: quote,
+              start: max(missingStart, start), now: monthStart.addingTimeInterval(-86400),
+              monthly: true)
+          }
+          try Task.checkCancellation()
+          if latest == nil && cached == nil && older.count + bundledRecent.count < 2 {
+            throw RateError.unavailable
+          }
+          recent = bundledRecent + (latest ?? [])
+          if latest == nil {
+            let fallback =
+              cached
+              ?? HistorySeries(
+                points: older + bundledRecent,
+                source: Self.monthlySource(
+                  base: base, quote: quote, hasOlder: !older.isEmpty,
+                  hasRecent: !bundledRecent.isEmpty),
+                fetchedAt: bundledRecent.last?.date ?? older.last?.date ?? now)
+            return HistoryResult(series: fallback, issue: .usingCachedSeries)
+          }
+        } else {
+          recent = try await Self.fetchDailyHistory(
+            client: client, directory: directory, base: base, quote: quote,
+            start: start, now: now, monthly: false)
+        }
+        points = older + recent
+        source =
+          range == .all
+          ? Self.monthlySource(
+            base: base, quote: quote, hasOlder: !older.isEmpty, hasRecent: !recent.isEmpty)
+          : RateSource(provider: .fawaz, observation: .dailyReference, timeZone: .gmt)
+
       }
       try Task.checkCancellation()
       guard points.count >= 2 else { throw RateError.unavailable }
-      let source = RateSource(
-        provider: range == .day ? .coinbase : .fawaz,
-        observation: range == .day
-          ? .hourlyClose : range == .all ? .monthlyReference : .dailyReference,
-        timeZone: .gmt)
       let series = HistorySeries(points: points, source: source, fetchedAt: now)
       do {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         try JSONEncoder().encode(series).write(to: file, options: .atomic)
       } catch {
-        return HistoryResult(
-          series: series, issue: .cacheWriteFailed)
+        return HistoryResult(series: series, issue: .cacheWriteFailed)
       }
       return HistoryResult(series: series, issue: nil)
     } catch {
-      return HistoryResult(
-        series: cached,
-        issue: cached == nil
-          ? .unavailable
-          : .usingCachedSeries)
+      return HistoryResult(series: cached, issue: cached == nil ? .unavailable : .usingCachedSeries)
     }
   }
 
-  /// The next UTC boundary at which a completed hourly observation may become available.
+  private static func monthlySource(
+    base: String, quote: String, hasOlder: Bool, hasRecent: Bool
+  ) -> RateSource {
+    var providers: [RateProviderID] = hasRecent ? [.fawaz] : []
+    if hasOlder {
+      if CurrencyCatalog.crypto.contains(base) || CurrencyCatalog.crypto.contains(quote) {
+        providers.append(.coinMetrics)
+      }
+      if (!CurrencyCatalog.crypto.contains(base) && base != "USD")
+        || (!CurrencyCatalog.crypto.contains(quote) && quote != "USD")
+      {
+        providers.append(.frankfurter)
+      }
+    }
+    return RateSource(
+      provider: providers.first ?? .fawaz, observation: .monthlyReference,
+      timeZone: .gmt,
+      contributingProviders: providers.count > 1 ? Array(providers.dropFirst()) : nil)
+  }
+
+  private func intraday(
+    base: String, quote: String, now: Date
+  ) async throws -> ([HistoryPoint], RateSource) {
+    let end = Date(timeIntervalSince1970: floor(now.timeIntervalSince1970 / 60) * 60)
+    let start = end.addingTimeInterval(-86400)
+    let assets = [base, quote].filter { CurrencyCatalog.crypto.contains($0) }
+    let observations = try await CoinMetricsClient(client: client)
+      .observations(
+        assets: assets, start: start, end: end, frequency: "1m")
+    for asset in assets {
+      guard let values = observations[asset], values.count >= 1380,
+        Self.coversDay(values, ending: end)
+      else {
+        throw RateError.unavailable
+      }
+    }
+    var conversion: RateConversion?
+    let fiat = [base, quote].first { !CurrencyCatalog.crypto.contains($0) && $0 != "USD" }
+    var fiatUSD = 1.0
+    if let fiat {
+      let day = String(end.ISO8601Format().prefix(10))
+      let rates = try await Self.dailySnapshot(client: client, directory: directory, day: day)
+      let canonical = ["GGP", "IMP", "JEP"].contains(fiat) ? "GBP" : fiat
+      guard let usd = rates["USD"], let fx = rates[canonical] else { throw RateError.unavailable }
+      let rate = fx.value / usd.value
+      fiatUSD = NSDecimalNumber(decimal: 1 / rate).doubleValue
+      conversion = RateConversion(
+        provider: .fawaz, published: day, value: rate, base: "USD", quote: fiat)
+    }
+    let dates = observations[assets[0], default: []].map(\.date)
+    let byAsset = observations.mapValues {
+      Dictionary($0.map { ($0.date, $0.value) }, uniquingKeysWith: { _, last in last })
+    }
+    let points =
+      dates.compactMap { date -> HistoryPoint? in
+        guard Int(date.timeIntervalSince1970) % 300 == 0 else { return nil }
+        let a = CurrencyCatalog.crypto.contains(base) ? byAsset[base]?[date] : fiatUSD
+        let b = CurrencyCatalog.crypto.contains(quote) ? byAsset[quote]?[date] : fiatUSD
+        guard let a, let b, a > 0, b > 0 else { return nil }
+        return HistoryPoint(date: date, value: a / b)
+      }
+      .sorted { $0.date < $1.date }
+    guard Self.coversDay(points, ending: end),
+      points.allSatisfy({ $0.value.isFinite && $0.value > 0 })
+    else {
+      throw RateError.unavailable
+    }
+    return (
+      points,
+      RateSource(
+        provider: .coinMetrics, observation: .minuteReference,
+        timeZone: .gmt, conversion: conversion)
+    )
+  }
+
+  static func coversDay(_ points: [HistoryPoint], ending end: Date) -> Bool {
+    guard let first = points.first, let last = points.last, points.count >= 270,
+      first.date <= end.addingTimeInterval(-85500), last.date >= end.addingTimeInterval(-900),
+      first.date >= end.addingTimeInterval(-86400), last.date <= end
+    else { return false }
+    return zip(points, points.dropFirst())
+      .allSatisfy { a, b in
+        b.date > a.date && b.date.timeIntervalSince(a.date) <= 900
+      }
+  }
+
+  /// The next UTC hourly boundary, retained for widget scheduling compatibility.
   public static func nextHour(after date: Date) -> Date {
     Date(timeIntervalSince1970: (floor(date.timeIntervalSince1970 / 3600) + 1) * 3600)
   }
-
-  private static func fetchCryptoHistory(
-    client: any HTTPClient, code: String, quote: String = "USD", start: Date, end: Date,
-    granularity: CandleGranularity
-  ) async throws -> [HistoryPoint] {
-    guard
-      let components = URLComponents(
-        string: "https://api.exchange.coinbase.com/products/\(code)-\(quote)/candles")
-    else { throw RateError.invalidData }
-    let combined = try await fetchCandles(
-      client: client, components: components, start: start, end: end,
-      granularity: granularity)
-    return combined.map { HistoryPoint(date: $0.key, value: $0.value) }
-      .sorted { $0.date < $1.date }
-  }
-
 }

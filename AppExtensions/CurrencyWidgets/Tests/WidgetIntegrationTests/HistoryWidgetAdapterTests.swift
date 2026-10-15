@@ -11,12 +11,12 @@ import Widgets
 @Suite struct HistoryWidgetAdapterTests {
   private let now = Date(timeIntervalSince1970: 1_790_035_200)
   private var cryptoRanges: [HistoryWidgetRange] {
-    CurrencyRateConfiguration.coinbaseEnabled
+    CurrencyRateConfiguration.intradayEnabled
       ? HistoryWidgetRange.allCases
       : HistoryWidgetRange.allCases.filter { $0 != .day }
   }
   private var effectiveDay: HistoryRange {
-    CurrencyRateConfiguration.coinbaseEnabled ? .day : .month
+    CurrencyRateConfiguration.intradayEnabled ? .day : .month
   }
 
   @Test func liveBuildPolicyControlsSavedDayRangeAndTimeline() async {
@@ -34,7 +34,7 @@ import Widgets
     settings.comparison = HistoryCurrency("USD")
     settings.range = .day
     let timeline = await provider.loadTimeline(settings)
-    let enhanced = CurrencyRateConfiguration.coinbaseEnabled
+    let enhanced = CurrencyRateConfiguration.intradayEnabled
     #expect(requests.withLock { $0 } == [enhanced ? .day : .month])
     #expect(settings.range == .day)
     #expect(settings.availableRanges(input: ConverterState()).contains(.day) == enhanced)
@@ -198,7 +198,7 @@ import Widgets
     #expect(
       settings.availableRanges(input: input, localCurrency: "USD")
         == cryptoRanges)
-    #expect(settings.availableRanges(input: input, localCurrency: "CZK") == fiatRanges)
+    #expect(settings.availableRanges(input: input, localCurrency: "CZK") == cryptoRanges)
     #expect(settings.availableRanges(input: input) == fiatRanges)
   }
 
@@ -376,7 +376,7 @@ import Widgets
               points: [
                 HistoryPoint(date: now.addingTimeInterval(-86_400), value: 50_000),
                 HistoryPoint(date: now, value: 100_000)
-              ], source: .init(provider: .coinbase), fetchedAt: now), issue: nil)
+              ], source: .init(provider: .coinMetrics), fetchedAt: now), issue: nil)
         }, now: { now }))
     let settings = HistorySettings()
     settings.base = HistoryCurrency("USD")
@@ -405,7 +405,7 @@ import Widgets
               points: [
                 HistoryPoint(date: now.addingTimeInterval(-86_400), value: 100),
                 HistoryPoint(date: now, value: 120)
-              ], source: .init(provider: .custom("Coinbase + Frankfurter")), fetchedAt: now),
+              ], source: .init(provider: .custom("Coin Metrics + Frankfurter")), fetchedAt: now),
             issue: nil)
         }, now: { now }))
     let settings = HistorySettings()
@@ -446,7 +446,7 @@ import Widgets
     #expect(crypto.entries.first?.snapshot.range == effectiveDay)
     #expect(
       crypto.policy
-        == .after(now.addingTimeInterval(CurrencyRateConfiguration.coinbaseEnabled ? 3600 : 86_400))
+        == .after(now.addingTimeInterval(CurrencyRateConfiguration.intradayEnabled ? 3600 : 86_400))
     )
 
     settings.base = HistoryCurrency("EUR")
@@ -482,7 +482,7 @@ import Widgets
     #expect(
       timeline.policy
         == .after(
-          range == .day && CurrencyRateConfiguration.coinbaseEnabled
+          range == .day && CurrencyRateConfiguration.intradayEnabled
             ? HistoryService.nextHour(after: now) : now.addingTimeInterval(86_400)))
   }
 

@@ -4,8 +4,8 @@ import Foundation
 public enum RateProviderPolicy: String, Sendable {
   /// Fawaz daily rates and daily historical observations for every supported asset.
   case daily
-  /// Fawaz daily data with Coinbase current crypto rates and supported hourly charts.
-  case coinbaseEnhanced
+  /// Fawaz daily data with Coin Metrics current crypto reference rates and minute reference-rate charts.
+  case intradayEnhanced
 
   /// Minimum spacing between background rate refresh attempts.
   public var refreshInterval: TimeInterval { self == .daily ? 21600 : 1800 }
@@ -23,19 +23,19 @@ public enum RateProviderPolicy: String, Sendable {
         })
     }
     var effective = daily
-    if self == .coinbaseEnhanced {
+    if self == .intradayEnhanced {
       for (code, quote) in snapshot.quotes
-      where CurrencyCatalog.crypto.contains(code) && quote.source.provider == .coinbase
+      where CurrencyCatalog.crypto.contains(code) && quote.source.provider == .coinMetrics
         && quote.isLive && quote.published >= (daily[code]?.published ?? "")
       {
-        effective[code] = quote
+        if let aligned = quote.alignedToDailyUSD(daily["USD"]) { effective[code] = aligned }
       }
     }
     let excluded = dictionaries.contains { quotes in
       quotes.contains { code, quote in
         quote.source.provider != .fawaz
-          && !(self == .coinbaseEnhanced && CurrencyCatalog.crypto.contains(code)
-            && quote.source.provider == .coinbase && quote.isLive)
+          && !(self == .intradayEnhanced && CurrencyCatalog.crypto.contains(code)
+            && quote.source.provider == .coinMetrics && quote.isLive)
       }
     }
     let dailyTime = daily.isEmpty ? nil : snapshot.supplementalFetchedAt ?? snapshot.dailyFetchedAt

@@ -590,7 +590,7 @@ private func waitFor(_ predicate: () -> Bool) async throws {
     let daily = onboardingQuotes()
     var live = daily
     live["BTC"] = ExchangeRate(
-      2, published: "2026-09-10", source: .init(provider: .coinbase), observedAt: .now)
+      2, published: "2026-09-10", source: .init(provider: .coinMetrics), observedAt: .now)
     try RateCache(directory: location)
       .save(
         RateSnapshot(quotes: live, fetchedAt: .now, dailyQuotes: daily))

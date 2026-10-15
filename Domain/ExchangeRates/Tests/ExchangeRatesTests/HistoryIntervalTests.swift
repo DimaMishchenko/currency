@@ -3,210 +3,110 @@ import Testing
 
 @testable import ExchangeRates
 
-private actor IntervalHistoryHTTP: HTTPClient {
-  private(set) var urls: [URL] = []
-  private var shouldFail = false
-  let data: Data
-
-  init(data: Data) { self.data = data }
-
-  func failRequests() { shouldFail = true }
-
-  func get(_ url: URL) async throws -> Data {
-    urls.append(url)
-    if shouldFail { throw RateError.http(503) }
-    return data
-  }
-}
-
-private func intervalDate(_ value: String) throws -> Date {
-  try #require(ISO8601DateFormatter().date(from: value))
-}
-
-private func candleData(_ dates: [Date]) throws -> Data {
-  try JSONEncoder()
-    .encode(
-      dates.enumerated()
-        .map { index, date in
-          [date.timeIntervalSince1970, 1, 100, 2, Double(index + 3), 1]
-        })
-}
-
 @Suite struct HistoryIntervalTests {
-  @Test func hourlyCandlesExcludeOlderAndUnfinishedBuckets() throws {
-    let start = try intervalDate("2026-09-26T12:37:00Z")
-    let end = start.addingTimeInterval(86400)
-    let dates = try [
-      "2026-09-26T12:00:00Z", "2026-09-26T13:00:00Z", "2026-09-27T11:00:00Z",
-      "2026-09-27T12:00:00Z", "2026-09-27T13:00:00Z"
-    ]
-    .map(intervalDate)
-    let points = try HistoryService.decodeCandles(
-      candleData(dates), start: start, end: end, granularity: .hour)
-    #expect(points.map(\.date) == [dates[1], dates[2]])
-    #expect(points.map(\.value) == [4, 5])
-    let atBoundary = try HistoryService.decodeCandles(
-      candleData([dates[2]]), start: dates[2], end: dates[3], granularity: .hour)
-    #expect(atBoundary.map(\.date) == [dates[2]])
+  @Test(arguments: Array(CurrencyCatalog.crypto))
+  func allCatalogCryptoSupportFiatAndCryptoIntraday(code: String) {
+    #expect(HistoryService.supportsIntraday(base: code, quote: "USD"))
+    #expect(HistoryService.supportsIntraday(base: code, quote: "CZK"))
+    if code != "BTC" { #expect(HistoryService.supportsIntraday(base: code, quote: "BTC")) }
   }
 
-  @Test func hourlyWindowsKeepTheThreeHundredBucketLimit() {
-    let start = Date(timeIntervalSince1970: 0)
-    let end = start.addingTimeInterval(600 * 3600)
-    let windows = HistoryService.candleWindows(start: start, end: end, granularity: .hour)
-    #expect(windows.count == 3)
-    #expect(windows.first?.start == start)
-    #expect(windows.last?.end == end)
-    #expect(windows[0].end == windows[1].start)
-    #expect(windows[1].end == windows[2].start)
-    #expect(windows.allSatisfy { $0.end.timeIntervalSince($0.start) <= 299 * 3600 })
-  }
-
-  @Test func dayUsesActualTwentyFourHourWindowAndHourlyProvenance() async throws {
+  @Test(arguments: [("USD", "EUR"), ("BTC", "XAU"), ("XAG", "BTC"), ("BTC", "BTC")])
+  func unsupportedPairsDoNotRequest(base: String, quote: String) async throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-    defer { try? FileManager.default.removeItem(at: directory) }
-    let now = try intervalDate("2026-09-27T12:37:00Z")
-    let dates = try [
-      "2026-09-26T12:00:00Z", "2026-09-26T13:00:00Z", "2026-09-27T11:00:00Z",
-      "2026-09-27T12:00:00Z"
-    ]
-    .map(intervalDate)
-    let client = IntervalHistoryHTTP(data: try candleData(dates))
+    let client = MinuteHistoryHTTP()
     let result = await HistoryService(
-      directory: directory, client: client, policy: .coinbaseEnhanced
-    )
-    .load(base: "BTC", quote: "USD", range: .day, now: now)
-    #expect(result.issue == nil)
-    #expect(result.series?.points.map(\.date) == [dates[1], dates[2]])
-    #expect(
-      result.series?.source == .init(provider: .coinbase, observation: .hourlyClose, timeZone: .gmt)
-    )
-    let url = try #require(await client.urls.first)
-    let query = try #require(URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems)
-    #expect(query.contains(URLQueryItem(name: "granularity", value: "3600")))
-    #expect(query.contains(URLQueryItem(name: "start", value: "2026-09-26T12:37:00Z")))
-    #expect(query.contains(URLQueryItem(name: "end", value: "2026-09-27T12:37:00Z")))
-  }
-
-  @Test(arguments: [("BTC", "EUR"), ("ETH", "GBP"), ("USDC", "EUR"), ("USDC", "GBP")])
-  func nonDollarIntradayUsesDirectHourlyMarketAndItsOwnCache(
-    base: String, quote: String
-  ) async throws {
-    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-    defer { try? FileManager.default.removeItem(at: directory) }
-    let now = try intervalDate("2026-09-27T12:37:00Z")
-    let dates = try [
-      "2026-09-26T12:00:00Z", "2026-09-26T13:00:00Z", "2026-09-27T11:00:00Z",
-      "2026-09-27T12:00:00Z"
-    ]
-    .map(intervalDate)
-    let client = IntervalHistoryHTTP(data: try candleData(dates))
-    let service = HistoryService(directory: directory, client: client, policy: .coinbaseEnhanced)
-    let result = await service.load(base: base, quote: quote, range: .day, now: now)
-    #expect(result.issue == nil)
-    #expect(result.series?.points.map(\.date) == [dates[1], dates[2]])
-    #expect(
-      result.series?.source == .init(provider: .coinbase, observation: .hourlyClose, timeZone: .gmt)
-    )
-    let urls = await client.urls
-    #expect(urls.count == 1)
-    let url = try #require(urls.first)
-    #expect(url.host == "api.exchange.coinbase.com")
-    #expect(url.path == "/products/\(base)-\(quote)/candles")
-    let query = try #require(URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems)
-    #expect(query.contains(URLQueryItem(name: "granularity", value: "3600")))
-    #expect(query.contains(URLQueryItem(name: "start", value: "2026-09-26T12:37:00Z")))
-    #expect(query.contains(URLQueryItem(name: "end", value: "2026-09-27T12:37:00Z")))
-    let file = directory.appendingPathComponent(
-      "history-coinbaseEnhanced-coinbase-\(base)-\(quote)-1.json")
-    #expect(
-      try JSONDecoder().decode(HistorySeries.self, from: Data(contentsOf: file)).points
-        == result.series?.points)
-    let expiry = HistoryService.nextHour(after: now)
-    let fresh = await service.load(
-      base: base, quote: quote, range: .day, now: expiry.addingTimeInterval(-1))
-    #expect(await client.urls.count == 1)
-    #expect(fresh.series?.fetchedAt == now)
-    await client.failRequests()
-    let expired = await service.load(
-      base: base, quote: quote, range: .day, now: expiry)
-    #expect(await client.urls.count == 2)
-    #expect(expired.issue == .usingCachedSeries)
-    #expect(expired.series?.points == result.series?.points)
-  }
-
-  @Test(arguments: [
-    ("USD", "EUR"), ("BTC", "CZK"), ("AVAX", "GBP"), ("USDC", "USD"),
-    ("BTC", "BTC")
-  ])
-  func unsupportedIntradayRoutesNeverRequestOrSave(base: String, quote: String) async throws {
-    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-    defer { try? FileManager.default.removeItem(at: directory) }
-    let client = IntervalHistoryHTTP(data: Data())
-    #expect(!HistoryService.supportsIntraday(base: base, quote: quote))
-    let result = await HistoryService(
-      directory: directory, client: client, policy: .coinbaseEnhanced
+      directory: directory, client: client, policy: .intradayEnhanced
     )
     .load(base: base, quote: quote, range: .day)
     #expect(result.series == nil)
     #expect(result.issue == (base == quote ? .unsupportedPair : .intradayUnavailable))
     #expect(await client.urls.isEmpty)
-    #expect(!FileManager.default.fileExists(atPath: directory.path))
   }
 
-  @Test func directIntradayQuoteCachesRemainIndependent() async throws {
+  @Test func halfHourCacheExpiryPreservesOfflineSeries() async throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }
-    let now = try intervalDate("2026-09-27T12:00:00Z")
-    let client = IntervalHistoryHTTP(
-      data: try candleData([now.addingTimeInterval(-7200), now.addingTimeInterval(-3600)]))
-    let service = HistoryService(directory: directory, client: client, policy: .coinbaseEnhanced)
-    for quote in ["EUR", "GBP", "EUR", "GBP"] {
-      #expect(await service.load(base: "BTC", quote: quote, range: .day, now: now).issue == nil)
+    let now = try historyDate("2026-01-05T00:00:00Z")
+    let client = MinuteHistoryHTTP()
+    let service = HistoryService(directory: directory, client: client, policy: .intradayEnhanced)
+    let first = await service.load(base: "BTC", quote: "USD", range: .day, now: now)
+    #expect(first.issue == nil)
+    await client.fail()
+    let fresh = await service.load(
+      base: "BTC", quote: "USD", range: .day, now: now.addingTimeInterval(1799))
+    #expect(fresh.issue == nil)
+    #expect(await client.urls.count == 1)
+    let stale = await service.load(
+      base: "BTC", quote: "USD", range: .day, now: now.addingTimeInterval(1800))
+    #expect(stale.issue == .usingCachedSeries)
+    #expect(stale.series?.points == first.series?.points)
+    #expect(await client.urls.count == 2)
+  }
+
+  @Test func coverageRejectsLargeInteriorGapsAndShortenedWindows() {
+    let end = Date(timeIntervalSince1970: 86400)
+    let full = (0..<288)
+      .map { HistoryPoint(date: Date(timeIntervalSince1970: Double($0) * 300), value: 1) }
+    #expect(HistoryService.coversDay(full, ending: end))
+    #expect(!HistoryService.coversDay(Array(full.suffix(7)), ending: end))
+    #expect(
+      !HistoryService.coversDay(
+        full.filter {
+          $0.date.timeIntervalSince1970 < 3600 || $0.date.timeIntervalSince1970 > 7200
+        }, ending: end))
+  }
+}
+
+@Suite struct BundledHistoryTests {
+  @Test func historicalCryptoNeverPredatesObservedCoverage() throws {
+    let now = try historyDate("2026-01-05T00:00:00Z")
+    let btc = try BundledHistory.points(base: "BTC", quote: "USD", through: now)
+    #expect(!btc.isEmpty)
+    #expect(btc.first!.date >= (try historyDate("2010-07-18T00:00:00Z")))
+    #expect(btc.last!.date < (try historyDate("2024-03-01T00:00:00Z")))
+    #expect(try BundledHistory.points(base: "SOL", quote: "USD", through: now).isEmpty)
+    let inverse = try BundledHistory.points(base: "USD", quote: "BTC", through: now)
+    #expect(btc.map(\.date) == inverse.map(\.date))
+    #expect(zip(btc, inverse).allSatisfy { abs($0.value * $1.value - 1) < 0.00000001 })
+  }
+
+  @Test func sterlingParityUsesOnlyObservedMonthlyDates() throws {
+    let now = try historyDate("2026-01-05T00:00:00Z")
+    let gbp = try BundledHistory.points(base: "BTC", quote: "GBP", through: now)
+    for code in ["GGP", "IMP", "JEP"] {
+      #expect(try BundledHistory.points(base: "BTC", quote: code, through: now) == gbp)
     }
     #expect(
-      await client.urls.map(\.path) == ["/products/BTC-EUR/candles", "/products/BTC-GBP/candles"])
+      try BundledHistory.points(base: "XAU", quote: "USD", through: now)
+        .allSatisfy { $0.value.isFinite && $0.value > 0 })
   }
+}
 
-  @Test func dayDefaultCacheExpiresAtOneHourAndPreservesOfflineHistory() async throws {
+@Suite struct BundledAllHistoryTests {
+  @Test func completedAllHistoryLoadsOfflineWithoutRequests() async throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }
-    let now = try intervalDate("2026-09-27T12:00:00Z")
-    let client = IntervalHistoryHTTP(
-      data: try candleData([now.addingTimeInterval(-7200), now.addingTimeInterval(-3600)]))
-    let service = HistoryService(directory: directory, client: client, policy: .coinbaseEnhanced)
-    let first = await service.load(base: "BTC", quote: "USD", range: .day, now: now)
+    let client = DailyHistoryHTTP()
     await client.failRequests()
-    let fresh = await service.load(
-      base: "BTC", quote: "USD", range: .day, now: now.addingTimeInterval(3599))
-    #expect(await client.urls.count == 1)
-    #expect(fresh.issue == nil)
-    let expired = await service.load(
-      base: "BTC", quote: "USD", range: .day, now: now.addingTimeInterval(3600))
-    #expect(await client.urls.count == 2)
-    #expect(expired.series?.points == first.series?.points)
-    #expect(expired.series?.fetchedAt == first.series?.fetchedAt)
-    #expect(expired.issue == .usingCachedSeries)
-  }
-
-  @Test func fiatIntradayIgnoresCacheAndNeverRequestsDailyRates() async throws {
-    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-    defer { try? FileManager.default.removeItem(at: directory) }
-    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-    let now = try intervalDate("2026-09-27T12:00:00Z")
-    let saved = HistorySeries(
-      points: [HistoryPoint(date: now, value: 0.9)],
-      source: .init(provider: .frankfurter, observation: .dailyReference), fetchedAt: now)
-    try JSONEncoder().encode(saved)
-      .write(to: directory.appendingPathComponent("history-USD-EUR-1.json"))
-    let client = IntervalHistoryHTTP(data: Data())
-    let result = await HistoryService(
-      directory: directory, client: client, policy: .coinbaseEnhanced
-    )
-    .load(base: "USD", quote: "EUR", range: .day, now: now)
-    #expect(result.series == nil)
-    #expect(result.issue == .intradayUnavailable)
+    let service = HistoryService(directory: directory, client: client)
+    let now = try historyDate("2026-10-15T00:00:00Z")
+    let result = await service.load(base: "BTC", quote: "USD", range: .all, now: now)
+    #expect(result.issue == nil)
+    let series = try #require(result.series)
+    #expect(series.points.count > 150)
+    let months = series.points.map { String($0.date.ISO8601Format().prefix(7)) }
+    #expect(Set(months).count == months.count)
+    #expect(
+      series.points.filter { String($0.date.ISO8601Format().prefix(7)) == "2024-03" }.map(\.date)
+        == [try historyDate("2024-03-02T00:00:00Z")])
+    #expect(series.points.last?.date == (try historyDate("2026-09-01T00:00:00Z")))
+    #expect(series.source.provider == .fawaz)
+    #expect(series.source.contributingProviders == [.coinMetrics])
+    #expect(await client.urls.isEmpty)
+    let sol = await service.load(base: "SOL", quote: "USD", range: .all, now: now)
+    #expect(sol.series?.points.first?.date == (try historyDate("2024-03-02T00:00:00Z")))
+    #expect(sol.series?.source.contributingProviders == nil)
     #expect(await client.urls.isEmpty)
   }
-
 }

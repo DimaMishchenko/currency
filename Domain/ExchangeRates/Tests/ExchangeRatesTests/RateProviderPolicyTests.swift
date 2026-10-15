@@ -10,9 +10,19 @@ private actor PolicyHTTP: HTTPClient {
   func get(_ url: URL) async throws -> Data {
     urls.append(url)
     if failing { throw RateError.http(503) }
-    if url.host == "api.coinbase.com" {
-      return Data(
-        #"{"data":{"currency":"EUR","rates":{"EUR":"1","BTC":"0.00003","ETH":"0.0006"}}}"#.utf8)
+    if url.host == "community-api.coinmetrics.io" {
+      return try JSONSerialization.data(withJSONObject: [
+        "data": [
+          [
+            "asset": "btc", "time": Date().addingTimeInterval(-60).ISO8601Format(),
+            "ReferenceRateUSD": "50000"
+          ],
+          [
+            "asset": "eth", "time": Date().addingTimeInterval(-60).ISO8601Format(),
+            "ReferenceRateUSD": "2500"
+          ]
+        ]
+      ])
     }
     guard url.host == "cdn.jsdelivr.net" || url.host == "latest.currency-api.pages.dev" else {
       throw RateError.invalidData
@@ -23,7 +33,7 @@ private actor PolicyHTTP: HTTPClient {
 }
 
 @Suite struct RateProviderPolicyTests {
-  @Test func dailyRefreshAndBootstrapNeverContactCoinbaseOrFrankfurter() async throws {
+  @Test func dailyRefreshAndBootstrapNeverContactIntradayOrFrankfurter() async throws {
     let client = PolicyHTTP()
     let service = RateService(client: client)
     let first = await service.refresh(previous: RateSnapshot(), force: true)
@@ -43,11 +53,11 @@ private actor PolicyHTTP: HTTPClient {
 
   @Test func enabledRefreshOverlaysCryptoAndFallsBackToUnmodifiedDailyOnFailure() async throws {
     let client = PolicyHTTP()
-    let service = RateService(policy: .coinbaseEnhanced, client: client)
+    let service = RateService(policy: .intradayEnhanced, client: client)
     let now = Date()
     let first = await service.refresh(previous: RateSnapshot(), force: true, now: now)
-    #expect(first.snapshot.quotes["BTC"]?.value == Decimal(string: "0.00003"))
-    #expect(first.snapshot.quotes["BTC"]?.source.provider == .coinbase)
+    #expect(first.snapshot.quotes["BTC"]?.value == Decimal(string: "0.00004"))
+    #expect(first.snapshot.quotes["BTC"]?.source.provider == .coinMetrics)
     #expect(first.snapshot.dailyQuotes?["BTC"]?.value == Decimal(string: "0.00002"))
     #expect(first.snapshot.quotes["USD"]?.source.provider == .fawaz)
     await client.failRequests()
@@ -56,8 +66,8 @@ private actor PolicyHTTP: HTTPClient {
     #expect(fallback.snapshot.quotes["BTC"]?.value == Decimal(string: "0.00002"))
     #expect(fallback.snapshot.quotes["BTC"]?.source.provider == .fawaz)
     #expect(fallback.warning == .partialCryptoFallback)
-    #expect(await client.urls.filter { $0.host == "api.coinbase.com" }.count == 2)
-    #expect(await client.urls.filter { $0.host == "cdn.jsdelivr.net" }.count == 1)
+    #expect(await client.urls.filter { $0.host == "community-api.coinmetrics.io" }.count == 2)
+    #expect(await client.urls.filter { $0.host == "cdn.jsdelivr.net" }.count == 3)
   }
 
   @Test(arguments: [false, true])
@@ -69,7 +79,7 @@ private actor PolicyHTTP: HTTPClient {
     let live = ExchangeRate(
       3, published: "2026-01-02",
       source: .init(
-        provider: .coinbase,
+        provider: .coinMetrics,
         observation: .exchangeRate), retrievedAt: now)
     let foreign = ExchangeRate(4, published: "2026-01-02", source: .init(provider: .frankfurter))
     let old = RateSnapshot(
@@ -99,7 +109,7 @@ private actor PolicyHTTP: HTTPClient {
     let live = ExchangeRate(
       3, published: "2026-01-02",
       source: .init(
-        provider: .coinbase,
+        provider: .coinMetrics,
         observation: .exchangeRate), retrievedAt: now)
     let old = RateSnapshot(
       quotes: ["BTC": live], fetchedAt: now, dailyQuotes: ["BTC": daily],
@@ -115,7 +125,7 @@ private actor PolicyHTTP: HTTPClient {
     #expect(store.loadRates().quotes["BTC"]?.source.provider == .fawaz)
   }
 
-  @Test func disablingDoesNotAssignCoinbaseRetrievalTimeToDailyFallback() throws {
+  @Test func disablingDoesNotAssignIntradayRetrievalTimeToDailyFallback() throws {
     let now = Date()
     let dailyTime = now.addingTimeInterval(-12 * 3600)
     let daily = ExchangeRate(
@@ -124,7 +134,7 @@ private actor PolicyHTTP: HTTPClient {
     let live = ExchangeRate(
       3, published: "2026-01-02",
       source: .init(
-        provider: .coinbase,
+        provider: .coinMetrics,
         observation: .exchangeRate), retrievedAt: now)
     let saved = RateSnapshot(
       quotes: ["BTC": live], fetchedAt: now, dailyQuotes: ["BTC": daily],
@@ -134,7 +144,7 @@ private actor PolicyHTTP: HTTPClient {
     #expect(filtered.fetchedAt == dailyTime)
     #expect(filtered.dailyFetchedAt == dailyTime)
     #expect(filtered.checkedAt == nil)
-    #expect(RateProviderPolicy.coinbaseEnhanced.filter(saved).fetchedAt == now)
+    #expect(RateProviderPolicy.intradayEnhanced.filter(saved).fetchedAt == now)
     let unknown = ExchangeRate(2, published: "2026-01-01", source: .init(provider: .fawaz))
     let legacy = RateSnapshot(quotes: ["BTC": live, "USD": unknown], fetchedAt: now)
     #expect(RateProviderPolicy.daily.filter(legacy).fetchedAt == .distantPast)
@@ -152,6 +162,6 @@ private actor PolicyHTTP: HTTPClient {
     #expect(await client.urls.count == 1)
     _ = try await store.refreshRates(using: service, now: now.addingTimeInterval(21600))
     #expect(await client.urls.count == 2)
-    #expect(RateProviderPolicy.coinbaseEnhanced.refreshInterval == 1800)
+    #expect(RateProviderPolicy.intradayEnhanced.refreshInterval == 1800)
   }
 }

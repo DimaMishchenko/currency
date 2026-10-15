@@ -77,8 +77,8 @@ import Testing
     #expect(HistoryWidgetPair(app: app, base: "BTC", quote: "EUR").supportsIntradayHistory)
     #expect(HistoryWidgetPair(app: app, base: "EUR", quote: "BTC").supportsIntradayHistory)
     #expect(HistoryWidgetPair(app: app, base: "ETH", quote: "GBP").supportsIntradayHistory)
-    #expect(!HistoryWidgetPair(app: app, base: "AVAX", quote: "GBP").supportsIntradayHistory)
-    #expect(!HistoryWidgetPair(app: app, base: "USDC", quote: "USD").supportsIntradayHistory)
+    #expect(HistoryWidgetPair(app: app, base: "AVAX", quote: "GBP").supportsIntradayHistory)
+    #expect(HistoryWidgetPair(app: app, base: "USDC", quote: "USD").supportsIntradayHistory)
     #expect(HistoryWidgetPair(app: app, base: "BTC", quote: "USDC").supportsIntradayHistory)
     #expect(HistoryWidgetPair(app: app, base: "BTC", quote: "ETH").supportsIntradayHistory)
     #expect(HistoryWidgetPair(app: app, base: "ETH", quote: "BTC").supportsIntradayHistory)
@@ -93,7 +93,7 @@ import Testing
       points: [
         HistoryPoint(date: now.addingTimeInterval(-86_400), value: 80_000),
         HistoryPoint(date: now, value: 100_000)
-      ], source: .init(provider: .custom("Coinbase + Frankfurter")), fetchedAt: now)
+      ], source: .init(provider: .custom("Coin Metrics + Frankfurter")), fetchedAt: now)
     let shown = HistoryWidgetSnapshot(
       pair: pair, range: .month,
       result: HistoryResult(series: provider, issue: nil))
@@ -217,7 +217,7 @@ import Testing
         HistoryPoint(date: now, value: 25)
       ],
       source: .init(
-        provider: intraday ? .coinbase : .fawaz,
+        provider: intraday ? .coinMetrics : .fawaz,
         observation: intraday ? .hourlyClose : .dailyReference, timeZone: .gmt),
       fetchedAt: now)
     let pair = HistoryWidgetPair(app: ConverterState(), base: "BTC", quote: "USD")

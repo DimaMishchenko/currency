@@ -6,14 +6,14 @@ import Testing
 private let day = "2026-01-02"
 
 @Suite struct RateServiceTests {
-  @Test func coinbaseFailureRestoresDailyAndDailyCacheIsRetained() async {
+  @Test func intradayFailureRestoresDailyAndDailyCacheIsRetained() async {
     let daily = [
       "EUR": ExchangeRate(1, published: day, source: .init(provider: .custom("daily"))),
       "BTC": ExchangeRate(2, published: day, source: .init(provider: .custom("Fawaz · daily")))
     ]
     let live = [
       "BTC": ExchangeRate(
-        3, published: day, source: .init(provider: .custom("Coinbase")), observedAt: .now)
+        3, published: day, source: .init(provider: .custom("Test intraday")), observedAt: .now)
     ]
     let fresh = await RateService(
       fiat: StubRateProvider(quotes: daily), daily: StubRateProvider(quotes: daily),

@@ -41,7 +41,7 @@ The package does not know about UI, App Groups, widgets, or polling schedules. H
 - ``FrankfurterProvider``
 - ``ECBProvider``
 - ``FawazProvider``
-- ``CoinbaseProvider``
+- ``CoinMetricsProvider``
 - ``FallbackRateProvider``
 
 ### Historical series

@@ -22,11 +22,11 @@ For command-line Xcode builds, use `set -o pipefail` and pipe combined output th
 
 ## Rate provider configuration
 
-`CurrencyRateConfiguration.coinbaseEnabled` is the shared code-level feature flag for the phone app, widgets, independent Watch app and Watch widgets. It is `true` by default; set it to `false` and rebuild normally to use only Fawaz. There are no compiler options or separate build configurations.
+`CurrencyRateConfiguration.intradayEnabled` is the shared code-level feature flag for the phone app, widgets, independent Watch app and Watch widgets. It is `true` by default; set it to `false` and rebuild to use daily rates without intraday crypto overlays. There are no compiler options or separate build configurations.
 
-Both modes use Fawaz for daily rates and daily history. Enabled Coinbase adds current crypto rates and supported 24-hour hourly charts. When disabled, the app hides 1D, normalizes saved 1D widgets to 1M, excludes incompatible cached data, and reduces automatic rate attempts from 30 minutes to six hours. Foreground polling is one minute when enabled and six hours when disabled; WidgetKit controls actual timeline delivery. Explicit refresh remains available.
+Enabled mode uses Coin Metrics Community for current crypto reference prices and supported 1D charts. Fawaz supplies daily fallback and daily history; selected Frankfurter fiat sources and Coin Metrics archives extend bundled monthly history before March 2024 where observations exist. Disabled mode hides 1D, normalizes saved 1D widgets to 1M and excludes incompatible cached data. WidgetKit controls timeline delivery; no requested refresh cadence guarantees execution.
 
-Fawaz history starts on 2 March 2024. All uses month-end/current-month reference samples; the other daily ranges use available dated publications. Neither mode fabricates missing history or labels daily reference samples as exchange closes.
+Crypto prices converted from USD using a dated daily fiat reference are approximate estimates, not intraday FX. All uses bundled completed-month samples where available and omits the incomplete current month. Bundled Fawaz observations use March 2, 2024 and then each completed month’s first day; missing completed months may be fetched. These are reference observations, not exchange closes. Preserve source metadata, gaps and [data licence notices](DataSources.md) when refreshing bundled data with `Scripts/History/generate_archive.py`.
 
 ## Dependency cache
 

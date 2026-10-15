@@ -18,7 +18,7 @@ public struct HistorySeries: Codable, Sendable {
   public let points: [HistoryPoint]
   /// The provider and aggregation description.
   public let source: RateSource
-  /// The fetch time of the endpoint, including a joined hourly observation.
+  /// The series fetch time, or the final bundled observation date when refresh fails.
   public let fetchedAt: Date
   /// Creates an owned history value from validated provider or fixture data.
   public init(points: [HistoryPoint], source: RateSource, fetchedAt: Date) {

@@ -9,12 +9,17 @@ struct FrankfurterRow: Decodable {
 
 /// A provider backed by the Frankfurter reference-rate API.
 public struct FrankfurterProvider: RateProvider {
+  static let allowedProviders =
+    "AMCM,BAM,BANREP,BCB,BCBO,BCC,BCCH,BCP,BCRA,BCT,BDI,BDP,BI,BIS,BNA,BNM,BNR,BOA,BOC,BOJA,BOM,BOT,BOTA,BOZ,BRB,CBA,CBAR,CBC,CBG,CBI,CBK,CBLLR,CBM,CBS,CBSL,CBU,DAB,DNB,ECB,HMRC,HNB,INFOREURO,JPC,LB,MAS,MMA,MNB,NBC,NBE,NBG,NBK,NBKR,NBM,NBP,NBRB,NBRM,NBT,NRB,NRBT,RB,RBF,RBM,RBV,SARB,SBI,UST"
   let client: any HTTPClient
   /// Creates a Frankfurter provider.
   public init(client: any HTTPClient = NetworkClient()) { self.client = client }
   /// Fetches current Frankfurter reference rates.
   public func fetch() async throws -> [String: ExchangeRate] {
-    guard let url = URL(string: "https://api.frankfurter.dev/v2/rates?base=EUR") else {
+    guard
+      let url = URL(
+        string: "https://api.frankfurter.dev/v2/rates?base=EUR&providers=\(Self.allowedProviders)")
+    else {
       throw RateError.invalidData
     }
     return try Self.decode(await client.get(url))
@@ -42,6 +47,17 @@ public struct FrankfurterProvider: RateProvider {
     guard let day = result["USD"]?.published else { throw RateError.invalidData }
     result["EUR"] = ExchangeRate(
       1, published: day, source: .init(provider: .frankfurter, observation: .dailyRate))
+    if let sterling = result["GBP"] {
+      for code in ["GGP", "IMP", "JEP"] {
+        result[code] = ExchangeRate(
+          sterling.value, published: sterling.published,
+          source: RateSource(
+            provider: .frankfurter, observation: .dailyRate,
+            conversion: RateConversion(
+              provider: .frankfurter, published: sterling.published,
+              value: 1, base: "GBP", quote: code)))
+      }
+    }
     return result
   }
 }

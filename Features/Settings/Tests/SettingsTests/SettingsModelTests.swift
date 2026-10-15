@@ -11,7 +11,6 @@ import Testing
       SettingsRateState(snapshot: RateSnapshot(), codes: [])
     },
     replay: (() throws -> Void)? = nil,
-    usesCoinbase: Bool = true,
     output: @escaping (SettingsOutput) -> Void = { _ in }
   ) -> SettingsDependencies {
     SettingsDependencies(
@@ -19,14 +18,8 @@ import Testing
       changes: { AsyncStream<Void>(bufferingPolicy: .unbounded) { _ in } },
       readPreferences: { SettingsPreferences(theme: .system, accent: .primary) },
       setTheme: { _ in }, setAccent: { _ in }, setMetalUnit: { _ in }, refresh: refresh,
-      replay: replay, usesCoinbase: usesCoinbase, output: output)
+      replay: replay, output: output)
   }
-  @Test(arguments: [false, true])
-  func sourceCreditsFollowInjectedProviderCapability(usesCoinbase: Bool) {
-    let model = SettingsModel(dependencies: dependencies(usesCoinbase: usesCoinbase))
-    #expect(model.usesCoinbase == usesCoinbase)
-  }
-
   @Test func failedReplayDoesNotEmitNavigationAndSuccessfulRetryCommitsFirst() {
     var failing = true
     var saved = false

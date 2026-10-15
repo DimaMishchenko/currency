@@ -9,16 +9,16 @@ import UniformTypeIdentifiers
   @Test func provenanceInterpolationUsesTheOwningCatalog() {
     #expect(
       RateMessages.providerDescription(
-        RateSource(provider: .coinbase, observation: .dailyClose, timeZone: .gmt),
-        locale: Locale(identifier: "en_US")) == "Coinbase · daily closes · GMT")
+        RateSource(provider: .coinMetrics, observation: .dailyClose, timeZone: .gmt),
+        locale: Locale(identifier: "en_US")) == "Coin Metrics · daily closes · GMT")
     #expect(
       RateMessages.providerDescription(
         RateSource(provider: .custom("Example"), observation: .exchangeRate),
         locale: Locale(identifier: "en_US")) == "Example · retrieved")
   }
   @Test(arguments: [
-    (RateObservation.dailyClose, "Coinbase · daily closes · latest hourly close · GMT"),
-    (.monthlyLastClose, "Coinbase · monthly last available close · latest hourly close · GMT")
+    (RateObservation.dailyClose, "Coin Metrics · daily closes · latest hourly close · GMT"),
+    (.monthlyLastClose, "Coin Metrics · monthly last available close · latest hourly close · GMT")
   ])
   func mixedHistoryDescribesBothAggregationAndHourlyEndpoint(
     observation: RateObservation, expected: String
@@ -26,7 +26,7 @@ import UniformTypeIdentifiers
     #expect(
       RateMessages.providerDescription(
         RateSource(
-          provider: .coinbase, observation: observation, timeZone: .gmt,
+          provider: .coinMetrics, observation: observation, timeZone: .gmt,
           latestObservation: .hourlyClose), locale: Locale(identifier: "en_US")) == expected)
   }
 
@@ -34,9 +34,26 @@ import UniformTypeIdentifiers
     #expect(
       RateMessages.providerDescription(
         RateSource(
-          provider: .custom("Coinbase + Frankfurter"), timeZone: .gmt,
+          provider: .custom("Coin Metrics + Frankfurter"), timeZone: .gmt,
           latestObservation: .hourlyClose), locale: Locale(identifier: "en_US"))
-        == "Coinbase + Frankfurter · latest hourly close · GMT")
+        == "Coin Metrics + Frankfurter · latest hourly close · GMT")
+  }
+
+  @Test func convertedReferenceNamesTheActualFXInputAndEverySource() throws {
+    let source = RateSource(
+      provider: .coinMetrics, observation: .minuteReference, timeZone: .gmt,
+      conversion: RateConversion(
+        provider: .fawaz, published: "2026-10-14", value: 1.25,
+        base: "EUR", quote: "USD"), contributingProviders: [.fawaz, .coinMetrics])
+    let locale = Locale(identifier: "en_US")
+    let title = RateMessages.providerDescription(source, locale: locale)
+    #expect(
+      title == "Coin Metrics + Fawaz · minute reference prices · approximate conversion · GMT")
+    let note = try #require(RateMessages.conversionDescription(source, locale: locale))
+    #expect(note.contains("1 EUR = 1.25 USD"))
+    #expect(note.contains("Fawaz"))
+    #expect(note.contains("2026"))
+    #expect(RateMessages.conversionDescription(.init(provider: .fawaz)) == nil)
   }
 
   @Test(arguments: CurrencyCatalog.codes)

@@ -16,7 +16,7 @@ public struct HistoryWidgetPair: Sendable, Equatable {
   /// Nil overrides follow the app base and first displayed destination independently.
   public init(
     app: ConverterState, base: String? = nil, quote: String? = nil,
-    policy: RateProviderPolicy = .coinbaseEnhanced
+    policy: RateProviderPolicy = .intradayEnhanced
   ) {
     self.policy = policy
     metalUnit = app.metalUnit
@@ -46,9 +46,9 @@ public struct HistoryWidgetPair: Sendable, Equatable {
   /// Whether a historical series can be loaded for the displayed pair.
   public var isSupported: Bool { historyRequest != nil }
 
-  /// Whether the supported pair can load completed hourly observations.
+  /// Whether the supported pair can load intraday reference observations.
   public var supportsIntradayHistory: Bool {
-    guard policy == .coinbaseEnhanced, let request = historyRequest else { return false }
+    guard policy == .intradayEnhanced, let request = historyRequest else { return false }
     return HistoryService.supportsIntraday(base: request.base, quote: request.quote)
   }
   /// Replaces an unavailable saved intraday range with daily one-month history.

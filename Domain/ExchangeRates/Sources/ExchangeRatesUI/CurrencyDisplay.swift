@@ -136,8 +136,11 @@ extension CurrencyDisplay {
   ) -> String {
     let descriptions = [snapshot.quotes[from], snapshot.quotes[to]].compactMap { $0 }
       .map {
-        RateMessages.providerDescription($0.source, locale: locale) + " · "
+        let detail =
+          RateMessages.providerDescription($0.source, locale: locale) + " · "
           + publicationDate($0.published, locale: locale)
+        return [detail, RateMessages.conversionDescription($0.source, locale: locale)]
+          .compactMap { $0 }.joined(separator: "\n")
       }
     return Set(descriptions).sorted().joined(separator: " / ")
   }

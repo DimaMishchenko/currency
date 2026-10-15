@@ -62,7 +62,7 @@ struct CurrencyDetailsTests {
 
   @Test func requestedFiatCryptoPairInvertsProviderSeriesAndRetainsProvenance() async {
     let date = Date(timeIntervalSince1970: 1_700_000_000)
-    let source = RateSource(provider: .coinbase, observation: .hourlyClose, timeZone: .gmt)
+    let source = RateSource(provider: .coinMetrics, observation: .hourlyClose, timeZone: .gmt)
     let received = HistorySeries(
       points: [
         HistoryPoint(date: date, value: 40_000),
@@ -108,7 +108,7 @@ struct CurrencyDetailsTests {
     #expect(requestedRange == range)
   }
 
-  @Test(arguments: [("BTC", true), ("ETH", true), ("USDC", false), ("EUR", false), ("USD", false)])
+  @Test(arguments: [("BTC", true), ("ETH", true), ("USDC", true), ("EUR", false), ("USD", false)])
   func chartOffersIntradayOnlyForSupportedHistory(code: String, supportsIntraday: Bool) {
     let model = CurrencyDetailsModel(
       input: .init(code: code, reference: "USD", snapshot: RateSnapshot()),

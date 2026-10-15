@@ -100,9 +100,9 @@ private func bootstrapQuotes(_ usd: Decimal = 2) -> [String: ExchangeRate] {
 
   @Test func pendingCryptoKeepsUsableCachedPairUntilSuccess() async {
     let cachedQuote = ExchangeRate(
-      5, published: "2026-09-10", source: .init(provider: .coinbase), observedAt: .now)
+      5, published: "2026-09-10", source: .init(provider: .coinMetrics), observedAt: .now)
     let freshQuote = ExchangeRate(
-      6, published: "2026-09-10", source: .init(provider: .coinbase), observedAt: .now)
+      6, published: "2026-09-10", source: .init(provider: .coinMetrics), observedAt: .now)
     var live = bootstrapQuotes()
     live["BTC"] = cachedQuote
     let saved = RateSnapshot(quotes: live, fetchedAt: .now, dailyQuotes: bootstrapQuotes())
@@ -127,7 +127,7 @@ private func bootstrapQuotes(_ usd: Decimal = 2) -> [String: ExchangeRate] {
   func pendingCryptoFallsBackOnlyAfterFailure(hasDailyFallback: Bool) async {
     var live = bootstrapQuotes()
     live["BTC"] = ExchangeRate(
-      5, published: "2026-09-10", source: .init(provider: .coinbase), observedAt: .now)
+      5, published: "2026-09-10", source: .init(provider: .coinMetrics), observedAt: .now)
     var daily = bootstrapQuotes()
     if hasDailyFallback {
       daily["BTC"] = ExchangeRate(4, published: "2026-09-10", source: .init(provider: .fawaz))

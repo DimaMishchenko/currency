@@ -367,85 +367,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Crypto history uses daily rates and completed hourly candles when available. Historical and current conversion sources may differ."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "加密货币历史使用每日汇率，以及可用时已收盘的小时K线。历史和当前换算的数据来源可能不同。"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "暗号資産の履歴には日次レートと、利用可能な場合は確定済みの時間足を使用します。過去と現在の換算データは異なる提供元を使う場合があります。"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "El historial de criptomonedas usa tipos diarios y velas horarias cerradas cuando están disponibles. Las fuentes históricas y actuales pueden diferir."
+            "value": "Crypto history combines daily and monthly reference data with intraday prices when available. Converted prices may be approximate. Historical and current sources can differ."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Der Kryptoverlauf verwendet Tageskurse und, wenn verfügbar, abgeschlossene Stundenkerzen. Historische und aktuelle Umrechnungskurse können aus unterschiedlichen Quellen stammen."
+            "value": "Der Krypto-Verlauf kombiniert tägliche und monatliche Referenzdaten mit verfügbaren Preisen im Tagesverlauf. Umgerechnete Preise können Näherungswerte sein. Historische und aktuelle Quellen können abweichen."
           }
         },
-        "fr": {
+        "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "L’historique des cryptomonnaies utilise des taux quotidiens et, si disponibles, des bougies horaires clôturées. Les sources historiques et actuelles peuvent différer."
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "O histórico de criptomoedas usa taxas diárias e candles horários fechados, quando disponíveis. As fontes históricas e atuais podem diferir."
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "암호화폐의 과거 데이터는 일별 환율과 사용 가능한 경우 마감된 시간별 캔들을 사용합니다. 과거 환율과 현재 환율의 데이터 출처가 다를 수 있습니다."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "加密貨幣歷史使用每日匯率，以及可用時已收盤的小時K線。歷史和目前換算的資料來源可能不同。"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La cronologia delle criptovalute usa tassi giornalieri e, se disponibili, candele orarie completate. Le fonti storiche e attuali possono differire."
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kripto para geçmişi günlük kurları ve varsa tamamlanmış saatlik mumları kullanır. Geçmiş ve güncel kurların kaynakları farklı olabilir."
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "История криптовалют использует ежедневные курсы и, если доступны, завершённые часовые свечи. Источники исторических и текущих курсов могут отличаться."
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Історія криптовалют використовує щоденні курси та, за наявності, завершені годинні свічки. Джерела історичних і поточних курсів можуть відрізнятися."
+            "value": "El historial de criptomonedas combina datos de referencia diarios y mensuales con precios intradía cuando están disponibles. Los precios convertidos pueden ser aproximados. Las fuentes históricas y actuales pueden diferir."
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Krüptovaluutade ajalugu kasutab päevakursse ja võimaluse korral suletud tunniküünlaid. Ajalooliste ja praeguste vahetuskursside allikad võivad erineda."
+            "value": "Krüptovaluutade ajalugu ühendab päeva- ja kuupõhised võrdlusandmed võimaluse korral päevasiseste hindadega. Teisendatud hinnad võivad olla ligikaudsed. Ajaloolised ja praegused allikad võivad erineda."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’historique des cryptomonnaies combine des données de référence quotidiennes et mensuelles avec les prix intrajournaliers disponibles. Les prix convertis peuvent être approximatifs. Les sources historiques et actuelles peuvent différer."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La cronologia delle criptovalute combina dati di riferimento giornalieri e mensili con prezzi infragiornalieri, quando disponibili. I prezzi convertiti possono essere approssimativi. Le fonti storiche e attuali possono differire."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暗号資産の履歴は、日次・月次の参考データと、利用可能な日中価格を組み合わせます。換算価格は概算の場合があります。過去と現在のデータ提供元は異なる場合があります。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "암호화폐 기록은 일별 및 월별 참고 데이터와 제공 가능한 일중 가격을 결합합니다. 환산 가격은 근삿값일 수 있습니다. 과거 및 현재 데이터 제공처는 다를 수 있습니다."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O histórico de criptomoedas combina dados de referência diários e mensais com preços intradiários quando disponíveis. Os preços convertidos podem ser aproximados. As fontes históricas e atuais podem ser diferentes."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "История криптовалют сочетает дневные и месячные справочные данные с доступными внутридневными ценами. Пересчитанные цены могут быть приблизительными. Источники исторических и текущих данных могут различаться."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Історія криптовалют поєднує денні й місячні довідкові дані з доступними внутрішньоденними цінами. Перераховані ціни можуть бути приблизними. Джерела історичних і поточних даних можуть відрізнятися."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kripto geçmişi, günlük ve aylık referans verilerini mevcut olduğunda gün içi fiyatlarla birleştirir. Dönüştürülen fiyatlar yaklaşık olabilir. Geçmiş ve güncel kaynaklar farklı olabilir."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "加密货币历史记录结合每日、每月参考数据及可用的日内价格。换算后的价格可能为近似值。历史数据和当前数据的来源可能不同。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "加密貨幣歷史記錄結合每日、每月參考資料及可用的日內價格。換算後的價格可能為近似值。歷史資料和目前資料的來源可能不同。"
           }
         }
       }
@@ -816,85 +816,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Last trade %@"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "最后交易 %@"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "最終取引 %@"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Última operación %@"
+            "value": "Observed %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Letzter Handel %@"
+            "value": "Beobachtet %@"
           }
         },
-        "fr": {
+        "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dernière transaction %@"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Última negociação %@"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "마지막 거래 %@"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "最後交易 %@"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ultimo scambio %@"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Son işlem %@"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Последняя сделка %@"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Остання угода %@"
+            "value": "Observado %@"
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Viimane tehing %@"
+            "value": "Vaadeldud %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Observé %@"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Osservato %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "観測 %@"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "관측 시각 %@"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Observado %@"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Наблюдение %@"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Спостереження %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gözlem zamanı %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "观测时间 %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "觀測時間 %@"
           }
         }
       }
@@ -1986,85 +1986,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Retrieved %@ · market timestamp unavailable"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "获取于 %@ · 无市场时间戳"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "取得日時 %@ · 市場のタイムスタンプなし"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Obtenido %@ · hora del mercado no disponible"
+            "value": "Retrieved %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Abgerufen %@ · Marktzeitstempel nicht verfügbar"
+            "value": "Abgerufen %@"
           }
         },
-        "fr": {
+        "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Récupéré %@ · horodatage du marché indisponible"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Obtido %@ · horário do mercado indisponível"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "가져옴 %@ · 시장 타임스탬프 없음"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "取得於 %@ · 無市場時間戳記"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Recuperati %@ · data e ora di mercato non disponibili"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Alındı %@ · piyasa zaman damgası kullanılamıyor"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Получено %@ · время рыночных данных недоступно"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Отримано %@ · час ринкових даних недоступний"
+            "value": "Obtenido %@"
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Hangitud %@ · turu ajatempel pole saadaval"
+            "value": "Hangitud %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Récupéré %@"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recuperato %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取得 %@"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "가져온 시각 %@"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Obtido %@"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Получено %@"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отримано %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alınma zamanı %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "获取时间 %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "擷取時間 %@"
           }
         }
       }

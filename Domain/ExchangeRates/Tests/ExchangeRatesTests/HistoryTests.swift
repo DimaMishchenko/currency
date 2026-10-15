@@ -62,7 +62,7 @@ func historyDate(_ string: String) throws -> Date {
     defer { try? FileManager.default.removeItem(at: directory) }
     let client = DailyHistoryHTTP()
     let now = try historyDate("2026-01-08T12:00:00Z")
-    let service = HistoryService(directory: directory, client: client, policy: .coinbaseEnhanced)
+    let service = HistoryService(directory: directory, client: client, policy: .intradayEnhanced)
     let first = await service.load(base: "BTC", quote: "EUR", range: .week, now: now)
     #expect(first.series?.source.latestObservation == nil)
     _ = await service.load(base: "USD", quote: "XAU", range: .week, now: now)
@@ -80,10 +80,10 @@ func historyDate(_ string: String) throws -> Date {
     let result = await HistoryService(directory: directory, client: client)
       .load(base: "EUR", quote: "USD", range: .all, now: now)
     #expect(result.series?.source.observation == .monthlyReference)
-    #expect(result.series?.points.count == 32)
-    #expect(result.series?.points.first?.date == (try historyDate("2024-03-31T00:00:00Z")))
-    #expect(result.series?.points.last?.date == (try historyDate("2026-10-09T00:00:00Z")))
-    #expect(await client.urls.count == 32)
+    #expect((result.series?.points.count ?? 0) > 32)
+    #expect(result.series?.points.first?.date == (try historyDate("2010-07-01T00:00:00Z")))
+    #expect(result.series?.points.last?.date == (try historyDate("2026-09-01T00:00:00Z")))
+    #expect(await client.urls.isEmpty)
   }
 
   @Test func yearToDateUsesJanuaryFirstAndArchiveBoundary() async throws {
@@ -143,13 +143,4 @@ func historyDate(_ string: String) throws -> Date {
     #expect(await client.urls.count == 4)
   }
 
-  @Test func historySortsAndUsesCompletedClose() throws {
-    let rows = Data("[[172800,1,9,3,5,20],[86400,1,9,3,4,20],[259200,1,9,3,8,20]]".utf8)
-    let points = try HistoryService.decodeCandles(
-      rows, start: Date(timeIntervalSince1970: 86400), end: Date(timeIntervalSince1970: 300000))
-    #expect(points.map(\.value) == [4, 5])
-    #expect(throws: (any Error).self) {
-      try HistoryService.decodeCandles(Data("[[1,2]]".utf8), start: .distantPast, end: .now)
-    }
-  }
 }
