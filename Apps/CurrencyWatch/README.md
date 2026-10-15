@@ -29,14 +29,14 @@ xcrun simctl install "$WATCH_SIMULATOR_UDID" "$WATCH_APP"
 
 Confirm `TeamIdentifier` matches the project team. Verify a custom pair such as GBP/CZK through the native widget editor, installed Smart Stack and corner complication, rather than accepting a default EUR/USD rendering as configuration proof. Board/Favorite Pairs must also retain configured amount/targets; Cash must use its configured currencies; History must retain its pair/range. Snapshots use configured cached data, while timeline refreshes fetch live data.
 
-## Provider mode acceptance
+## Rate provider acceptance
 
-Use one explicitly owned Watch simulator and device-targeted controls. Set `CurrencyRateConfiguration.intradayEnabled` in code, then rebuild normally; the same value reaches both Watch executables. Keep the independent Watch networking path active.
+Use one explicitly owned Watch simulator and device-targeted controls. Keep the independent Watch networking path active. Coin Metrics is the standard current crypto and intraday source; Fawaz provides the automatic daily-rate fallback.
 
-1. With the flag set to `true`, install CurrencyWatch. Launch from a fresh container, add BTC to My Currencies and open Bitcoin details. The History range picker must offer One day alongside the daily ranges. Select it and verify a rendered BTC/USD chart or an explicit network issue; availability alone does not prove downloaded reference observations.
+1. Install CurrencyWatch. Launch from a fresh container, add BTC to My Currencies and open Bitcoin details. The History range picker must offer One day alongside the daily ranges. Select it and verify a rendered BTC/USD chart or an explicit network issue; availability alone does not prove downloaded reference observations.
 2. Return, terminate and relaunch the app. Verify the selected pair and available One day range persist. Capture native accessibility state and screenshots with the owned UDID.
-3. Set the flag to `false`, rebuild normally, then terminate and replace the app while retaining its container. Open the same Bitcoin details. One day must be absent; daily ranges remain available. A saved Coin Metrics overlay must be excluded in favor of its Fawaz daily fallback, and an old intraday cache must not appear as a daily chart.
-4. Repeat a warm launch and verify the disabled capability and saved pair. If checking deterministic amounts, seed a coherent real `rates.json` with distinct Coin Metrics/Fawaz values and both daily fallbacks before launch; record whether direct network refresh replaced it. Seed chart data only in the matching `history-v2-<policy>-BTC-USD-<range>.json` namespace.
+3. Verify a failed current Coin Metrics refresh retains a valid cached quote or uses the available Fawaz daily fallback with its original provenance. An incomplete 1D response must remain explicitly cached or unavailable; it must not become a daily fallback chart. An old provider cache must not appear as a Coin Metrics chart.
+4. If checking deterministic amounts, seed a coherent real `rates.json` with distinct Coin Metrics/Fawaz values and daily fallbacks before launch; record whether direct network refresh replaced it. Seed chart data only in the matching `history-v2-intradayEnhanced-BTC-USD-<range>.json` namespace.
 
 Use `serve-sim` with the Watch UDID for native controls and screenshots; the iPhone E2E runner does not support this surface. If the Watch accessibility tree contains only an application root, stop automated picker navigation and record that gap; `simctl openurl` may also be unsupported. Save local evidence outside tracked documentation. A compiled Watch target, fixture inspection or failed driver connection does not count as a completed native journey. Spoken Siri, physical companion transport and installed complication configuration remain separate acceptance checks.
 

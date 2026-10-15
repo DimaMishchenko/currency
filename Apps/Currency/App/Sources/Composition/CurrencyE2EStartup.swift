@@ -227,8 +227,7 @@
     func get(_ url: URL) async throws -> Data {
       try Task.checkCancellation()
       if url.host == "community-api.coinmetrics.io",
-        url.path == "/v4/timeseries/asset-metrics",
-        CurrencyRateConfiguration.intradayEnabled
+        url.path == "/v4/timeseries/asset-metrics"
       {
         let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
         let assets = items.first { $0.name == "assets" }?.value?.split(separator: ",") ?? []

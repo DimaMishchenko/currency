@@ -4,13 +4,12 @@ import { existsSync, readFileSync, unlinkSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect } from 'e2e';
 import { test } from '../fixtures.js';
-import { intradayEnabled } from '../provider-configuration.js';
 
 test('All history renders the actual bundled Bitcoin archive from 2010', { tags: ['core', 'providers'] }, async ({ start, screen, agent, app }) => {
   await start('ready-crypto');
   const udid = process.env.CURRENCY_E2E_UDID!;
   const directory = execFileSync('xcrun', ['simctl', 'get_app_container', udid, 'com.dimasike.currency', 'group.com.dimasike.currency.shared'], { encoding: 'utf8' }).trim();
-  const cache = join(directory, `history-v2-${intradayEnabled ? 'intradayEnhanced' : 'daily'}-BTC-USD-0.json`);
+  const cache = join(directory, 'history-v2-intradayEnhanced-BTC-USD-0.json');
   if (existsSync(cache)) unlinkSync(cache);
   await agent.act('Open Details & history for the Bitcoin destination currency.');
   await expect(screen.getByTestId('currency.details.BTC')).toBeVisible();

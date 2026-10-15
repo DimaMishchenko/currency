@@ -4,12 +4,11 @@ import { existsSync, readFileSync, unlinkSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect } from 'e2e';
 import { test } from '../fixtures.js';
-import { intradayEnabled } from '../provider-configuration.js';
 import { configureWidget, placeWidget, prepareWidgetHelper, unloadWidgetHelper, widgetSetupMethod } from '../simulator-widgets.js';
 
 test('History widget fetches a complete live Coin Metrics day with the app terminated', { tags: ['extended', 'live-providers'] }, async ({ start, app, device, screen, agent }) => {
-  if (!intradayEnabled || widgetSetupMethod() !== 'private') {
-    test.skip('Requires the intraday code flag and device-targeted widget configuration.');
+  if (widgetSetupMethod() !== 'private') {
+    test.skip('Requires device-targeted widget configuration.');
     return;
   }
   await prepareWidgetHelper();
