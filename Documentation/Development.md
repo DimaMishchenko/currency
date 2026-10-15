@@ -20,6 +20,14 @@ handshake. The native suite starts from a stopped app and runs serially on the o
 
 For command-line Xcode builds, use `set -o pipefail` and pipe combined output through `xcbeautify`. Use a separate simulator and derived-data directory for parallel work.
 
+## Rate providers
+
+Coin Metrics Community supplies current crypto reference prices and supported 1D charts across the phone app, widgets, independent Watch app and Watch widgets. Fawaz supplies daily rates and automatically provides the crypto fallback when current Coin Metrics data is unavailable. Selected Frankfurter fiat sources and Coin Metrics archives extend bundled monthly history before March 2024 where observations exist. WidgetKit controls timeline delivery; no requested refresh cadence guarantees execution.
+
+The standard provider set is Fawaz daily rates plus Coin Metrics crypto reference prices. Provider failures retain daily fallback; there is no provider-mode flag.
+
+Crypto prices converted from USD using a dated daily fiat reference are approximate estimates, not intraday FX. All uses bundled completed-month samples where available and omits the incomplete current month. Bundled Fawaz observations use March 2, 2024 and then each completed month’s first day; missing completed months may be fetched. These are reference observations, not exchange closes. Preserve source metadata, gaps and [data licence notices](DataSources.md) when refreshing bundled data with `Scripts/History/generate_archive.py`. The [monthly refresh workflow](../Scripts/History/README.md) proposes meaningful archive changes through a review PR; unchanged data is skipped.
+
 ## Dependency cache
 
 Tuist defines repository modules as native targets in a single Currency project. Default generation keeps their source visible and substitutes only external dependencies with cached binaries. `Tuist/Package.swift` is reserved for external dependencies. Normal development does not require authentication or custom build scripts.

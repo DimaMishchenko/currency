@@ -102,7 +102,9 @@ final class WatchComposition {
   }
 
   var details: CurrencyDetailsDependencies {
-    .init(loadHistory: { [history] in await history.load(base: $0, quote: $1, range: $2) })
+    .init(
+      supportsIntraday: { [history] in history.supportsIntraday(base: $0, quote: $1) },
+      loadHistory: { [history] in await history.load(base: $0, quote: $1, range: $2) })
   }
 }
 
@@ -128,6 +130,6 @@ struct SystemActionComposition: Sendable {
           try Task.checkCancellation()
           WidgetCenter.shared.reloadAllTimelines()
           return result
-        }))
+        }, refreshInterval: CurrencyRateConfiguration.widgetRefreshInterval))
   }
 }

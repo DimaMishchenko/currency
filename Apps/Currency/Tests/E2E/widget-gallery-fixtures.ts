@@ -1,6 +1,6 @@
 import { expect, type Locator } from 'e2e';
 import { test as base } from './fixtures.js';
-import { placeWidget, prepareWidgetHelper, widgetSetupMethod } from './simulator-widgets.js';
+import { configureWidget, placeWidget, prepareWidgetHelper, widgetSetupMethod } from './simulator-widgets.js';
 
 export const test = base.extend<{
   installedWidget: (title: string, family: 'Small' | 'Medium' | 'Large') => Promise<Locator>;
@@ -16,6 +16,13 @@ export const test = base.extend<{
       const widget = device.locator('id=Currency value=Widget');
       if (widgetSetupMethod() === 'private') {
         await placeWidget(title, family);
+        if (title === 'History') {
+          await configureWidget(title, family, parameters => {
+            parameters.base = { identifier: 'EUR', title: { key: 'EUR' }, subtitle: { key: 'EUR' } };
+            parameters.comparison = { identifier: 'USD', title: { key: 'USD' }, subtitle: { key: 'USD' } };
+            parameters.range = { identifier: 'month', value: 'month', title: { key: '1 month' } };
+          });
+        }
       } else {
         while (await widget.count() > 0) {
           if (await widget.count() !== 1) throw new Error('Use one Currency widget at a time on the owned Home Screen.');

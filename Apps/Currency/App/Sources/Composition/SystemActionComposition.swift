@@ -12,7 +12,11 @@ struct SystemActionComposition: Sendable {
   let readSelected: @Sendable () -> [String]
   let readLocal: @Sendable () -> (LocalCurrency.WidgetLocation?, WidgetLocationStatus)
 
-  init(directory: URL, service: RateService = RateService()) {
+  init(
+    directory: URL,
+    service: RateService? = nil
+  ) {
+    let service = service ?? RateService()
     let conversion = ConversionStore(directory: directory)
     let local = LocalCurrencyStore(directory: directory)
     let rates = RateStore(directory: directory)
@@ -36,6 +40,6 @@ struct SystemActionComposition: Sendable {
           try Task.checkCancellation()
           WidgetCenter.shared.reloadAllTimelines()
           return result
-        }))
+        }, refreshInterval: CurrencyRateConfiguration.widgetRefreshInterval))
   }
 }

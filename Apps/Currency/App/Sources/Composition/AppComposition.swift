@@ -37,11 +37,18 @@ final class AppComposition {
   private var rateIssue: HomeIssue?
   private var widgetReload: Task<Void, Never>?
   lazy var foregroundLocation = makeLocationController()
-  lazy var foreground = ForegroundRefresh(
-    dependencies: .init(
-      refreshRates: { [weak self] in _ = try? await self?.refresh(force: false) },
-      refreshLocalCurrency: { [weak self] in await self?.foregroundLocation.refreshIfNeeded() },
-      changed: { [weak self] in self?.changed() }))
+  lazy var foreground = makeForegroundRefresh()
+
+  private func makeForegroundRefresh() -> ForegroundRefresh {
+    ForegroundRefresh(
+      dependencies: .init(
+        refreshRates: { [weak self] in _ = try? await self?.refresh(force: false) },
+        refreshLocalCurrency: { [weak self] in await self?.foregroundLocation.refreshIfNeeded() },
+        changed: { [weak self] in self?.changed() },
+        sleepRates: {
+          try await Task.sleep(for: .seconds(CurrencyRateConfiguration.foregroundRefreshInterval))
+        }, sleepLocalCurrency: { try await Task.sleep(for: .seconds(300)) }))
+  }
 
   static func launch() -> AppComposition {
     #if DEBUG && targetEnvironment(simulator)
@@ -58,10 +65,11 @@ final class AppComposition {
 
   init(
     directory: URL = AppGroup.directory, appearance: AppearancePreferences? = nil,
-    discoveryDefaults: UserDefaults = .standard, service: RateService = RateService()
+    discoveryDefaults: UserDefaults = .standard,
+    service: RateService? = nil
   ) {
     syncDirectory = directory
-    self.service = service
+    self.service = service ?? RateService()
     self.appearance = appearance ?? AppearancePreferences(defaults: .standard)
     rates = RateStore(directory: directory)
     conversion = ConversionStore(directory: directory)
@@ -69,7 +77,8 @@ final class AppComposition {
     progress = OnboardingProgressStore(directory: directory)
     discovery = HomeDiscoveryStore(defaults: discoveryDefaults)
     history = HistoryService(directory: directory)
-    systemActions = SystemActionComposition(directory: directory, service: self.service)
+    systemActions = SystemActionComposition(
+      directory: directory, service: self.service)
     let actions = systemActions
     AppDependencyManager.shared.add(dependency: actions)
     let index = searchIndex
@@ -189,14 +198,17 @@ final class AppComposition {
       now: { .now })
   }
   var details: CurrencyDetailsDependencies {
-    CurrencyDetailsDependencies(loadHistory: { [history] code, quote, range in
-      await history.load(base: code, quote: quote, range: range)
-    })
+    CurrencyDetailsDependencies(
+      supportsIntraday: { [history] in history.supportsIntraday(base: $0, quote: $1) },
+      loadHistory: { [history] code, quote, range in
+        await history.load(base: code, quote: quote, range: range)
+      })
   }
   private var settingsState: SettingsRateState {
     let input = conversion.input()
     return SettingsRateState(
-      snapshot: rates.loadRates(), codes: [input.source] + input.destinations, warning: warning)
+      snapshot: rates.loadRates(), base: input.source,
+      codes: [input.source] + input.destinations, warning: warning)
   }
   func settings(scene: CurrencyScene) -> SettingsDependencies {
     SettingsDependencies(

@@ -15,7 +15,8 @@ let package = Package(
     .target(
       name: "ExchangeRates",
       dependencies: [.product(name: "CoordinatedFiles", package: "CoordinatedFiles")],
-      exclude: ["README.md"]),
+      exclude: ["README.md"],
+      resources: [.process("Resources")]),
     .target(
       name: "ExchangeRatesUI",
       dependencies: ["ExchangeRates"],

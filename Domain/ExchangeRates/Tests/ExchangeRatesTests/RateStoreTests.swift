@@ -120,6 +120,24 @@ private actor SlowWidgetProvider: RateProvider {
 }
 
 @Suite struct RateStoreTests {
+  @Test func unrestrictedStorePreservesCustomInjectedProviders() async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = RateStore(directory: directory)
+    let quote = ExchangeRate(
+      2, published: "2026-01-02", source: .init(provider: .custom("Example")))
+    let result = try await store.refreshRates(
+      using: RateService(
+        fiat: StubRateProvider(quotes: ["USD": quote]), daily: StubRateProvider(quotes: [:]),
+        crypto: nil), now: Date(timeIntervalSince1970: 100))
+    #expect(result.snapshot.quotes["USD"]?.source == quote.source)
+    #expect(store.loadRates().quotes["USD"]?.value == quote.value)
+    #expect(store.loadRates().quotes["USD"]?.source == quote.source)
+    let bootstrap = try store.saveBootstrapRates(
+      result.snapshot, now: Date(timeIntervalSince1970: 100))
+    #expect(bootstrap.quotes["USD"]?.source == quote.source)
+  }
+
   @Test func staleFailedRefreshCannotOverwriteNewerHostCommit() async throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }

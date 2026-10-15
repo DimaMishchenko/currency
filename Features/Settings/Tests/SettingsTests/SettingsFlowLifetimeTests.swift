@@ -5,7 +5,7 @@ import Testing
 
 @MainActor
 private final class SettingsLifetimeFixture {
-  var rates = SettingsRateState(snapshot: RateSnapshot(), codes: ["EUR", "USD"])
+  var rates = SettingsRateState(snapshot: RateSnapshot(), base: "EUR", codes: ["EUR", "USD"])
   var subscriptions = 0
   var locationRequests = 0
   var refreshRequests = 0
@@ -30,7 +30,8 @@ private final class SettingsLifetimeFixture {
   }
 
   func finishRefresh() {
-    pendingRefresh?.resume(returning: SettingsRateState(snapshot: RateSnapshot(), codes: ["JPY"]))
+    pendingRefresh?
+      .resume(returning: SettingsRateState(snapshot: RateSnapshot(), base: "JPY", codes: ["JPY"]))
     pendingRefresh = nil
   }
 }

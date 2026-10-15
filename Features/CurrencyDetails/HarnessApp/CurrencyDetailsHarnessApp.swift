@@ -31,7 +31,8 @@ struct CurrencyDetailsHarnessApp: App {
         "BAM": ExchangeRate(1, published: "2026-09-19", source: .init(provider: .ecb)),
         "EUR": ExchangeRate(1, published: "2026-09-19", source: .init(provider: .ecb)),
         "USD": ExchangeRate(1.08, published: "2026-09-19", source: .init(provider: .ecb)),
-        "BTC": ExchangeRate(0.000018, published: "2026-09-19", source: .init(provider: .coinbase))
+        "BTC": ExchangeRate(
+          0.000018, published: "2026-09-19", source: .init(provider: .coinMetrics))
       ], fetchedAt: .now)
   }
 
@@ -75,9 +76,8 @@ struct CurrencyDetailsHarnessApp: App {
         series: HistorySeries(
           points: points,
           source: .init(
-            provider: isCrypto ? .coinbase : .frankfurter,
-            observation: isCrypto
-              ? (range == .day ? .hourlyClose : .dailyClose) : .dailyReference,
+            provider: isCrypto ? .coinMetrics : .frankfurter,
+            observation: isCrypto && range == .day ? .minuteReference : .dailyReference,
             timeZone: .gmt), fetchedAt: .now),
         issue: name == "cached" ? .usingCachedSeries : nil)
     }

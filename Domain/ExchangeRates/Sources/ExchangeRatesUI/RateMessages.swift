@@ -32,14 +32,20 @@ public enum RateMessages {
     case .ecb: provider = "ECB"
     case .frankfurter: provider = "Frankfurter"
     case .fawaz: provider = "Fawaz"
-    case .coinbase: provider = "Coinbase"
+    case .coinMetrics: provider = "Coin Metrics"
     case .custom(let name): provider = name
     }
-    var description = observationDescription(source.observation, provider: provider, locale: locale)
-    if source.latestObservation == .hourlyClose {
-      var endpoint = LocalizedStringResource.Support.sourceWithLatestHourlyClose(description)
-      endpoint.locale = locale
-      description = String(localized: endpoint)
+    let contributors = (source.contributingProviders ?? []).map(providerName)
+    let names = ([provider] + contributors)
+      .reduce(into: [String]()) {
+        if !$0.contains($1) { $0.append($1) }
+      }
+      .joined(separator: " + ")
+    var description = observationDescription(source.observation, provider: names, locale: locale)
+    if source.conversion != nil {
+      var approximate = LocalizedStringResource.Support.approximateSource(description)
+      approximate.locale = locale
+      description = String(localized: approximate)
     }
     guard let timeZone = source.timeZone else { return description }
     var withZone = LocalizedStringResource.Support.sourceWithTimeZone(
@@ -48,19 +54,39 @@ public enum RateMessages {
     return String(localized: withZone)
   }
 
+  /// Describes the reference FX rate used to calculate a converted quote.
+  public static func conversionDescription(
+    _ source: RateSource, locale: Locale = .current
+  ) -> String? {
+    guard let conversion = source.conversion else { return nil }
+    let value = NSDecimalNumber(decimal: conversion.value).description(withLocale: locale)
+    var resource = LocalizedStringResource.Support.conversionReference(
+      conversion.base, value, conversion.quote, providerName(conversion.provider),
+      CurrencyDisplay.publicationDate(conversion.published, locale: locale))
+    resource.locale = locale
+    return String(localized: resource)
+  }
+
+  private static func providerName(_ provider: RateProviderID) -> String {
+    switch provider {
+    case .ecb: "ECB"
+    case .frankfurter: "Frankfurter"
+    case .fawaz: "Fawaz"
+    case .coinMetrics: "Coin Metrics"
+    case .custom(let name): name
+    }
+  }
+
   private static func observationDescription(
     _ observation: RateObservation, provider: String, locale: Locale
   ) -> String {
     var resource: LocalizedStringResource
     switch observation {
-    case .unspecified, .trade: return provider
-    case .exchangeRate: resource = .Support.retrievedRates(provider)
+    case .unspecified: return provider
     case .dailyRate: resource = .Support.dailyRates(provider)
+    case .minuteReference: resource = .Support.minuteReference(provider)
     case .dailyReference: resource = .Support.dailyReference(provider)
     case .monthlyReference: resource = .Support.monthlyReference(provider)
-    case .dailyClose: resource = .Support.dailyCloses(provider)
-    case .hourlyClose: resource = .Support.hourlyCloses(provider)
-    case .monthlyLastClose: resource = .Support.monthlyLastClose(provider)
     }
     resource.locale = locale
     return String(localized: resource)

@@ -1,4 +1,5 @@
 import Conversion
+import CurrencyApplication
 import ExchangeRates
 import Foundation
 import LocalCurrency
@@ -45,21 +46,23 @@ enum WidgetComposition {
       },
       refreshRates: { force in
         try await rates.refreshRates(
-          using: RateService(), force: force, providerTimeout: .seconds(2))
+          using: RateService(), force: force,
+          providerTimeout: .seconds(2))
       },
       refreshLocalCurrency: {
         let controller = await LocalCurrencyController(
           store: local, timeoutDuration: .seconds(5), reloadWidgets: {})
         await controller.refreshForWidget()
       },
-      now: { .now })
+      now: { .now }, refreshInterval: CurrencyRateConfiguration.widgetRefreshInterval)
   }
 
   static func history() -> HistoryTimelineDependencies {
     let directory = directory()
     let conversion = ConversionStore(directory: directory)
     let local = LocalCurrencyStore(directory: directory)
-    let history = HistoryService(directory: directory, client: NetworkClient(timeout: 10))
+    let history = HistoryService(
+      directory: directory, client: NetworkClient(timeout: 10))
     return HistoryTimelineDependencies(
       input: { conversion.input() },
       load: { base, quote, range, now in

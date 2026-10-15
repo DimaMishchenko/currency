@@ -77,8 +77,8 @@ import Testing
         == "24-hour history is unavailable for fiat currencies. Choose 1W or a longer range.")
     #expect(
       RateMessages.providerDescription(
-        .init(provider: .coinbase, observation: .hourlyClose, timeZone: .gmt),
-        locale: Locale(identifier: "en_US")) == "Coinbase · hourly closes · GMT")
+        .init(provider: .coinMetrics, observation: .minuteReference, timeZone: .gmt),
+        locale: Locale(identifier: "en_US")) == "Coin Metrics · minute reference prices · GMT")
   }
 
   @Test func customProviderUsesLocalizedObservationTemplate() {
@@ -88,13 +88,14 @@ import Testing
       RateMessages.providerDescription(source, locale: Locale(identifier: "en"))
         == "Example feed · monthly reference rates")
     #expect(
-      RateMessages.providerDescription(.init(provider: .coinbase, observation: .exchangeRate))
-        == "Coinbase · retrieved")
+      RateMessages.providerDescription(.init(provider: .coinMetrics, observation: .minuteReference))
+        == "Coin Metrics · minute reference prices")
     #expect(
       String(localized: .Details.rateRetrieved("today"))
-        == "Retrieved today · market timestamp unavailable")
-    let daily = RateSource(provider: .coinbase, observation: .dailyClose, timeZone: .gmt)
-    #expect(RateMessages.providerDescription(daily).hasPrefix("Coinbase · daily closes · "))
+        == "Retrieved today")
+    let daily = RateSource(provider: .coinMetrics, observation: .dailyReference, timeZone: .gmt)
+    #expect(
+      RateMessages.providerDescription(daily).hasPrefix("Coin Metrics · daily reference rates · "))
   }
 
   @Test(arguments: [

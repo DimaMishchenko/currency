@@ -7,7 +7,7 @@ import Testing
     _ value: Decimal, day: String = "2026-01-02", time: Double? = nil
   ) -> ExchangeRate {
     ExchangeRate(
-      value, published: day, source: .init(provider: .coinbase),
+      value, published: day, source: .init(provider: .coinMetrics),
       observedAt: time.map { Date(timeIntervalSince1970: $0) })
   }
 

@@ -8,10 +8,11 @@ public enum RateProviderID: Codable, Sendable, Equatable {
   case frankfurter
   /// Fawaz daily exchange-rate feed.
   case fawaz
-  /// Coinbase market data.
-  case coinbase
+  /// Coin Metrics reference rates.
+  case coinMetrics
   /// A consumer-supplied provider identity or display name.
   case custom(String)
+
 }
 
 /// How a provider's observation was sampled or aggregated.
@@ -20,20 +21,37 @@ public enum RateObservation: String, Codable, Sendable {
   case unspecified
   /// A daily current-rate publication.
   case dailyRate
-  /// A current exchange rate without a provider observation timestamp.
-  case exchangeRate
-  /// An individual market trade.
-  case trade
   /// A historical daily reference rate.
   case dailyReference
+  /// A minute reference-rate observation.
+  case minuteReference
   /// A historical monthly reference rate.
   case monthlyReference
-  /// A completed hourly closing price.
-  case hourlyClose
-  /// A completed daily closing price.
-  case dailyClose
-  /// The last available daily close in each month.
-  case monthlyLastClose
+}
+
+/// Daily FX input used to normalize reference rates.
+public struct RateConversion: Codable, Sendable, Equatable {
+  /// The daily FX provider.
+  public let provider: RateProviderID
+  /// Publication date of the FX observation.
+  public let published: String
+  /// Quote currency units per one base currency unit.
+  public let value: Decimal
+  /// Currency being converted from.
+  public let base: String
+  /// Currency being converted to.
+  public let quote: String
+
+  /// Records the exact daily input used for an approximate conversion.
+  public init(
+    provider: RateProviderID, published: String, value: Decimal, base: String, quote: String
+  ) {
+    self.provider = provider
+    self.published = published
+    self.value = value
+    self.base = base
+    self.quote = quote
+  }
 }
 
 /// Structured provenance that consumers can format or localize without parsing text.
@@ -42,53 +60,48 @@ public struct RateSource: Codable, Sendable, Equatable {
   public let provider: RateProviderID
   /// The observation's sampling or aggregation semantics.
   public let observation: RateObservation
-  /// A distinct sampling interval used for a newer endpoint in a historical series.
-  public let latestObservation: RateObservation?
   /// The time zone used for date buckets, when specified by the provider.
   public let timeZone: TimeZone?
+
+  /// The daily FX approximation used to convert market observations, when applicable.
+  public let conversion: RateConversion?
+  /// Additional providers represented in a stitched historical series.
+  public let contributingProviders: [RateProviderID]?
 
   /// Creates provider context without prescribing its display wording.
   public init(
     provider: RateProviderID, observation: RateObservation = .unspecified,
     timeZone: TimeZone? = nil,
-    latestObservation: RateObservation? = nil
+    conversion: RateConversion? = nil, contributingProviders: [RateProviderID]? = nil
   ) {
     self.provider = provider
     self.observation = observation
-    self.latestObservation = latestObservation
     self.timeZone = timeZone
+    self.conversion = conversion
+    self.contributingProviders = contributingProviders
   }
 
-  private enum CodingKeys: String, CodingKey {
-    case provider, observation, timeZone, latestObservation
-  }
+}
 
-  /// Decodes structured provenance or migrates the former source-string cache format.
-  public init(from decoder: any Decoder) throws {
-    if let legacy = try? decoder.singleValueContainer().decode(String.self) {
-      switch legacy {
-      case "ECB": self.init(provider: .ecb, observation: .dailyRate)
-      case "Frankfurter": self.init(provider: .frankfurter, observation: .dailyRate)
-      case "Fawaz · daily": self.init(provider: .fawaz, observation: .dailyRate)
-      case "Coinbase": self.init(provider: .coinbase, observation: .trade)
-      case "Coinbase · daily closes · UTC":
-        self.init(provider: .coinbase, observation: .dailyClose, timeZone: .gmt)
-      case "Coinbase · monthly last available close · UTC":
-        self.init(provider: .coinbase, observation: .monthlyLastClose, timeZone: .gmt)
-      case "Frankfurter · daily reference rates":
-        self.init(provider: .frankfurter, observation: .dailyReference)
-      case "Frankfurter · monthly reference rates":
-        self.init(provider: .frankfurter, observation: .monthlyReference)
-      default: self.init(provider: .custom(legacy))
-      }
-      return
-    }
-    let values = try decoder.container(keyedBy: CodingKeys.self)
-    self.init(
-      provider: try values.decode(RateProviderID.self, forKey: .provider),
-      observation: try values.decode(RateObservation.self, forKey: .observation),
-      timeZone: try values.decodeIfPresent(TimeZone.self, forKey: .timeZone),
-      latestObservation: try values.decodeIfPresent(
-        RateObservation.self, forKey: .latestObservation))
+extension ExchangeRate {
+  func alignedToDailyUSD(_ usd: ExchangeRate?) -> ExchangeRate? {
+    guard source.provider == .coinMetrics, let conversion = source.conversion else { return self }
+    guard conversion.base == "EUR", conversion.quote == "USD",
+      conversion.value > 0, !conversion.value.isNaN,
+      let usd, usd.value > 0, !usd.value.isNaN, !usd.isLive
+    else { return nil }
+    let selected = RateConversion(
+      provider: usd.source.provider, published: usd.published, value: usd.value,
+      base: "EUR", quote: "USD")
+    if selected == conversion { return self }
+    let aligned = value * usd.value / conversion.value
+    guard aligned > 0, !aligned.isNaN else { return nil }
+    return ExchangeRate(
+      aligned, published: published,
+      source: RateSource(
+        provider: source.provider, observation: source.observation, timeZone: source.timeZone,
+        conversion: selected,
+        contributingProviders: source.contributingProviders),
+      observedAt: observedAt, retrievedAt: retrievedAt, cachedAt: cachedAt)
   }
 }

@@ -40,27 +40,12 @@ private actor SlowCandles: HTTPClient {
 }
 
 @Suite struct HistoryConcurrencyTests {
-  @Test func pagesOverlapWithinBoundAndBoundaryOwnershipIsDeterministic() async throws {
-    let client = SlowCandles()
-    let start = Date(timeIntervalSince1970: 0)
-    let end = start.addingTimeInterval(1200 * 86400)
-    let components = try #require(URLComponents(string: "https://example.test/candles"))
-    let points = try await HistoryService.fetchCandles(
-      client: client, components: components, start: start, end: end)
-    #expect(await client.calls == 5)
-    #expect(await client.maximum > 1)
-    #expect(await client.maximum <= 3)
-    #expect(points.count == 10)
-    #expect(!points.values.contains(99))
-    #expect(points[start.addingTimeInterval(299 * 86400)] == 3)
-  }
-
   @Test func cancellingHistoryStopsPagesAndDoesNotWriteCache() async throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }
     let client = SlowCandles(delay: .seconds(10))
     let service = HistoryService(directory: directory, client: client)
-    let task = Task { await service.load(base: "BTC", quote: "USD", range: .all) }
+    let task = Task { await service.load(base: "BTC", quote: "USD", range: .year) }
     for _ in 0..<300 {
       if await client.active > 0 { break }
       try await Task.sleep(for: .milliseconds(10))

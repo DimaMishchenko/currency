@@ -61,7 +61,7 @@ import Testing
       quotes: [
         "EUR": quote(1), "CZK": quote(25),
         "BTC": .init(
-          0.00001, published: "2027-01-15", source: .init(provider: .coinbase),
+          0.00001, published: "2027-01-15", source: .init(provider: .coinMetrics),
           retrievedAt: now)
       ], fetchedAt: now, dailyFetchedAt: oldDaily, checkedAt: now)
     let evaluation = try ConversionEvaluation(request: request, snapshot: rates, now: now)
@@ -107,7 +107,7 @@ import Testing
   @Test func customLiveProviderDoesNotProduceDailyFallbackWarning() throws {
     let request = try ConversionRequest(
       amount: "1", source: "BTC", destinations: [.init(code: "ETH")])
-    let source = RateSource(provider: .custom("market"), observation: .exchangeRate)
+    let source = RateSource(provider: .custom("market"), observation: .minuteReference)
     let rates = RateSnapshot(
       quotes: [
         "BTC": .init(2, published: "2027-01-15", source: source, retrievedAt: now),

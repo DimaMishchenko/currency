@@ -1,5 +1,6 @@
 import AppIntents
 import Conversion
+import CurrencyApplication
 import ExchangeRates
 import Foundation
 import Widgets

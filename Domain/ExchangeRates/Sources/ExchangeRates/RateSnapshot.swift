@@ -30,8 +30,7 @@ public struct ExchangeRate: Codable, Sendable, Equatable {
 
   /// Whether the quote represents a current intraday observation.
   public var isLive: Bool {
-    observedAt != nil || retrievedAt != nil || source.observation == .trade
-      || source.observation == .exchangeRate
+    observedAt != nil || retrievedAt != nil
   }
 
   var overlayTimestamp: Date? { observedAt ?? retrievedAt }
@@ -133,6 +132,21 @@ extension RateSnapshot {
       checkedAt: [checkedAt, other.checkedAt].compactMap { $0 }.max(),
       fiatFetchedAt: primaryTime, supplementalFetchedAt: supplementalTime,
       fiatQuotes: primary, supplementalQuotes: supplement)
+  }
+
+  func aligningCoinMetricsQuotes() -> RateSnapshot {
+    let daily = Self.selectDaily(
+      primary: primaryDailyQuotes, supplemental: supplementalDailyQuotes,
+      primaryFetchedAt: fiatFetchedAt ?? dailyFetchedAt, now: checkedAt ?? fetchedAt)
+    var aligned = quotes
+    for (code, quote) in quotes where quote.source.provider == .coinMetrics && quote.isLive {
+      aligned[code] = quote.alignedToDailyUSD(daily["USD"]) ?? daily[code]
+    }
+    return RateSnapshot(
+      quotes: aligned, fetchedAt: fetchedAt, dailyQuotes: dailyQuotes,
+      dailyFetchedAt: dailyFetchedAt, checkedAt: checkedAt,
+      fiatFetchedAt: fiatFetchedAt, supplementalFetchedAt: supplementalFetchedAt,
+      fiatQuotes: fiatQuotes, supplementalQuotes: supplementalQuotes)
   }
 
   func recordingRetrieval(

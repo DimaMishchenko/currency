@@ -12,7 +12,9 @@ public struct HistoryWidgetPair: Sendable, Equatable {
   public let metalUnit: MetalUnit
 
   /// Nil overrides follow the app base and first displayed destination independently.
-  public init(app: ConverterState, base: String? = nil, quote: String? = nil) {
+  public init(
+    app: ConverterState, base: String? = nil, quote: String? = nil
+  ) {
     metalUnit = app.metalUnit
     self.base = base ?? app.source
     self.quote = quote ?? app.destinationRows.first?.code
@@ -40,10 +42,14 @@ public struct HistoryWidgetPair: Sendable, Equatable {
   /// Whether a historical series can be loaded for the displayed pair.
   public var isSupported: Bool { historyRequest != nil }
 
-  /// Whether the supported pair can load completed hourly observations.
+  /// Whether the supported pair can load intraday reference observations.
   public var supportsIntradayHistory: Bool {
     guard let request = historyRequest else { return false }
     return HistoryService.supportsIntraday(base: request.base, quote: request.quote)
+  }
+  /// Replaces an unavailable saved intraday range with daily one-month history.
+  public func normalizedRange(_ range: HistoryRange) -> HistoryRange {
+    range == .day && !supportsIntradayHistory ? .month : range
   }
 }
 
@@ -97,9 +103,9 @@ public struct HistoryWidgetSnapshot: Sendable {
     return value.rounded() / 10_000
   }
 
-  /// Supported crypto refreshes follow UTC hours; other pairs follow daily cache expiry.
+  /// Intraday series refresh at UTC hour boundaries; longer ranges follow daily cache expiry.
   public func nextRefresh(after now: Date) -> Date {
-    let hourly = pair.supportsIntradayHistory
+    let hourly = range == .day && pair.supportsIntradayHistory
     let interval: TimeInterval = hourly ? 3600 : 86_400
     if let fetchedAt = series?.fetchedAt, fetchedAt <= now, issue != .usingCachedSeries {
       let expiry =

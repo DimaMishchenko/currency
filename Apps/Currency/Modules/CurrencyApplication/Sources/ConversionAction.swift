@@ -17,16 +17,18 @@ public struct ConversionAction: Sendable {
     public let refresh: @Sendable (Date) async throws -> RefreshResult
     /// Supplies evaluation and refresh-attempt time.
     public let now: @Sendable () -> Date
+    /// Minimum time between automatic provider attempts.
+    public let refreshInterval: TimeInterval
     /// Assembles explicit operations for an executable or isolated test.
     public init(
       readInput: @escaping @Sendable () -> ConverterState,
       readLocal: @escaping @Sendable () -> (WidgetLocation?, WidgetLocationStatus),
       readRates: @escaping @Sendable () -> RateSnapshot,
       refresh: @escaping @Sendable (Date) async throws -> RefreshResult,
-      now: @escaping @Sendable () -> Date = { .now }
+      now: @escaping @Sendable () -> Date = { .now }, refreshInterval: TimeInterval = 1_800
     ) {
       self.readInput = readInput; self.readLocal = readLocal; self.readRates = readRates
-      self.refresh = refresh; self.now = now
+      self.refresh = refresh; self.now = now; self.refreshInterval = refreshInterval
     }
   }
   /// The explicitly supplied operations used by this action.
@@ -68,7 +70,7 @@ public struct ConversionAction: Sendable {
     let needsRates = request.destinations.contains { $0.code != nil && $0.code != request.source }
     if needsRates,
       now < (snapshot.checkedAt ?? .distantPast)
-        || now.timeIntervalSince(snapshot.checkedAt ?? .distantPast) >= 1800
+        || now.timeIntervalSince(snapshot.checkedAt ?? .distantPast) >= dependencies.refreshInterval
     {
       do {
         let result = try await dependencies.refresh(now)

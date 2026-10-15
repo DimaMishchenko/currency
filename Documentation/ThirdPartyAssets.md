@@ -10,3 +10,7 @@ Assets are bundled locally for offline use. Preserve their notices when replacin
 ## Original artwork
 
 The Au, Ag, Pt, and Pd metal badges are original project artwork, not third-party assets. Their colors are illustrative.
+
+## Reference data
+
+Rates, history and bundled reference datasets have separate source and licence notices in [Data sources](DataSources.md). These data are not covered by the repository MIT licence. Full redistributable licence texts are in [LICENSES](../LICENSES).

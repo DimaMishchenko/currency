@@ -62,7 +62,7 @@ struct CurrencyDetailsTests {
 
   @Test func requestedFiatCryptoPairInvertsProviderSeriesAndRetainsProvenance() async {
     let date = Date(timeIntervalSince1970: 1_700_000_000)
-    let source = RateSource(provider: .coinbase, observation: .hourlyClose, timeZone: .gmt)
+    let source = RateSource(provider: .coinMetrics, observation: .minuteReference, timeZone: .gmt)
     let received = HistorySeries(
       points: [
         HistoryPoint(date: date, value: 40_000),
@@ -108,7 +108,7 @@ struct CurrencyDetailsTests {
     #expect(requestedRange == range)
   }
 
-  @Test(arguments: [("BTC", true), ("ETH", true), ("USDC", false), ("EUR", false), ("USD", false)])
+  @Test(arguments: [("BTC", true), ("ETH", true), ("USDC", true), ("EUR", false), ("USD", false)])
   func chartOffersIntradayOnlyForSupportedHistory(code: String, supportsIntraday: Bool) {
     let model = CurrencyDetailsModel(
       input: .init(code: code, reference: "USD", snapshot: RateSnapshot()),
@@ -118,6 +118,28 @@ struct CurrencyDetailsTests {
     #expect(model.availableRanges.contains(.yearToDate))
     #expect(
       CurrencyDetailsModel.ranges == [.day, .week, .month, .quarter, .yearToDate, .year, .all])
+  }
+
+  @Test func injectedDailyCapabilityKeepsCryptoHistoryWithoutIntradayControls() async {
+    var capabilityPair: [String] = []
+    var requestedRange: HistoryRange?
+    let model = CurrencyDetailsModel(
+      input: .init(
+        code: "EUR", reference: "BTC", snapshot: RateSnapshot(), referencePolicy: .requestedPair),
+      dependencies: .init(
+        supportsIntraday: { base, quote in
+          capabilityPair = [base, quote]
+          return false
+        },
+        loadHistory: { _, _, range in
+          requestedRange = range
+          return HistoryResult(series: nil, issue: .unavailable)
+        }))
+    #expect(!model.availableRanges.contains(.day))
+    #expect(capabilityPair == ["BTC", "EUR"])
+    #expect(model.availableRanges.contains(.month))
+    await model.load()
+    #expect(requestedRange == .month)
   }
 
   @Test func supersededNoncooperatingRequestCannotReplaceNewerRange() async {

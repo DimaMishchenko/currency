@@ -2595,85 +2595,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Last trade %@"
+            "value": "Observed %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "最后交易 %@"
+            "value": "观测时间 %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "最終取引 %@"
+            "value": "観測 %@"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Última operación %@"
+            "value": "Observado %@"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Letzter Handel %@"
+            "value": "Beobachtet %@"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dernière transaction %@"
+            "value": "Observé %@"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Última negociação %@"
+            "value": "Observado %@"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "마지막 거래 %@"
+            "value": "관측 시각 %@"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "最後交易 %@"
+            "value": "觀測時間 %@"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ultimo scambio %@"
+            "value": "Osservato %@"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Son işlem %@"
+            "value": "Gözlem zamanı %@"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Последняя сделка %@"
+            "value": "Наблюдение %@"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Остання угода %@"
+            "value": "Спостереження %@"
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Viimane tehing %@"
+            "value": "Vaadeldud %@"
           }
         }
       }
@@ -3129,85 +3129,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Daily reference and historical rates from central banks and official institutions."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "来自中央银行和官方机构的每日参考汇率及历史汇率。"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "中央銀行や公的機関の日次参照レートと過去のレート。"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tipos de referencia diarios e históricos de bancos centrales e instituciones oficiales."
+            "value": "Historical fiat reference rates from selected official providers. Some currencies use a labelled GBP parity calculation."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tägliche Referenzkurse und historische Kurse von Zentralbanken und offiziellen Institutionen."
+            "value": "Historische Fiat-Referenzkurse ausgewählter offizieller Anbieter. Einige Währungen verwenden eine gekennzeichnete GBP-Paritätsberechnung."
           }
         },
-        "fr": {
+        "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Taux de référence quotidiens et historiques des banques centrales et institutions officielles."
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Taxas de referência diárias e históricas de bancos centrais e instituições oficiais."
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "중앙은행 및 공식 기관의 일일 기준 환율과 과거 환율."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "來自中央銀行和官方機構的每日參考匯率及歷史匯率。"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tassi di riferimento giornalieri e storici di banche centrali e istituzioni ufficiali."
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Merkez bankaları ve resmî kurumların günlük referans ve geçmiş kurları."
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ежедневные справочные и исторические курсы центральных банков и официальных учреждений."
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Щоденні довідкові та історичні курси центральних банків і офіційних установ."
+            "value": "Tipos de referencia históricos de divisas de proveedores oficiales seleccionados. Algunas monedas usan un cálculo de paridad con GBP identificado como tal."
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Keskpankade ja ametlike asutuste päevased võrdluskursid ning ajaloolised kursid."
+            "value": "Valitud ametlike pakkujate ajaloolised tavavaluutade võrdluskursid. Mõne valuuta puhul kasutatakse märgistatud GBP-pariteedi arvutust."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Taux de référence historiques des devises issus de fournisseurs officiels sélectionnés. Certaines devises utilisent un calcul de parité avec la GBP, indiqué comme tel."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tassi di riferimento storici delle valute da fornitori ufficiali selezionati. Alcune valute usano un calcolo di parità con GBP indicato come tale."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選定された公的機関による過去の法定通貨参考レート。一部の通貨には、明示されたGBPとの等価換算を使用します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "선정된 공식 제공업체의 과거 법정화폐 참고 환율입니다. 일부 통화에는 GBP 등가 환산을 사용하며 이를 표시합니다."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Taxas de referência históricas de moedas de provedores oficiais selecionados. Algumas moedas usam um cálculo de paridade com GBP, identificado como tal."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Исторические справочные курсы фиатных валют от выбранных официальных поставщиков. Для некоторых валют используется явно обозначенный расчёт по паритету с GBP."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Історичні довідкові курси фіатних валют від вибраних офіційних постачальників. Для деяких валют використовується явно позначений розрахунок за паритетом із GBP."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seçilen resmî sağlayıcılardan geçmiş itibari para referans kurları. Bazı para birimlerinde açıkça belirtilen GBP paritesi hesabı kullanılır."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "来自选定官方提供方的历史法币参考汇率。部分货币使用已标明的英镑等值换算。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "來自選定官方提供者的歷史法幣參考匯率。部分貨幣使用已標明的英鎊等值換算。"
           }
         }
       }
@@ -3307,174 +3307,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Daily cryptocurrency rates and backup exchange rates."
+            "value": "Daily exchange rates and history."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "加密货币每日汇率和备用汇率。"
+            "value": "每日汇率和历史数据。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "暗号資産の日次レートと代替為替レート。"
+            "value": "日次の為替レートと履歴。"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tipos de cambio diarios de criptomonedas y tipos de cambio de respaldo."
+            "value": "Tipos de cambio e historial diarios."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tägliche Kryptowährungskurse und Ersatzwechselkurse."
+            "value": "Tägliche Wechselkurse und Kursverläufe."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Taux crypto quotidiens et taux de change de secours."
+            "value": "Taux de change et historique quotidiens."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Taxas de câmbio diárias de criptomoedas e taxas de câmbio de reserva."
+            "value": "Taxas de câmbio e histórico diários."
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "암호화폐 일일 환율 및 대체 환율입니다."
+            "value": "일별 환율과 과거 데이터."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "加密貨幣每日匯率和備用匯率。"
+            "value": "每日匯率和歷史資料。"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tassi giornalieri delle criptovalute e tassi di cambio di riserva."
+            "value": "Tassi di cambio e cronologia giornalieri."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Günlük kripto para kurları ve yedek döviz kurları."
+            "value": "Günlük döviz kurları ve geçmiş veriler."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ежедневные курсы криптовалют и резервные курсы обмена."
+            "value": "Ежедневные курсы валют и история."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Щоденні курси криптовалют і резервні курси обміну."
+            "value": "Щоденні курси валют та історія."
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Krüptovaluutade igapäevased kursid ja varuvahetuskursid."
-          }
-        }
-      }
-    },
-    "coinbaseCredit": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cryptocurrency exchange rates and completed historical candles."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "加密货币汇率和已收盘的历史 K 线。"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "暗号資産の為替レートと確定済みの過去ローソク足。"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tipos de cambio de criptomonedas y velas históricas cerradas."
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kryptowährungskurse und abgeschlossene historische Kerzen."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Taux de change des cryptomonnaies et bougies historiques clôturées."
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Taxas de câmbio de criptomoedas e candles históricos fechados."
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "암호화폐 환율 및 마감된 과거 캔들입니다."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "加密貨幣匯率和已收盤的歷史 K 線。"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tassi di cambio delle criptovalute e candele storiche completate."
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kripto para kurları ve tamamlanmış geçmiş mumlar."
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Курсы криптовалют и завершённые исторические свечи."
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Курси криптовалют і завершені історичні свічки."
-          }
-        },
-        "et": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Krüptovaluutade vahetuskursid ja suletud ajaloolised hinnaküünlad."
+            "value": "Igapäevased vahetuskursid ja kursiajalugu."
           }
         }
       }
@@ -6590,6 +6501,95 @@
           "stringUnit": {
             "state": "translated",
             "value": "開放原始碼"
+          }
+        }
+      }
+    },
+    "coinMetricsCredit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intraday crypto reference prices and historical data. CC BY-NC 4.0."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Krypto-Referenzpreise im Tagesverlauf und historische Daten. CC BY-NC 4.0."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Precios de referencia intradía de criptomonedas y datos históricos. CC BY-NC 4.0."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Krüptovaluutade päevasisesed võrdlushinnad ja ajaloolised andmed. CC BY-NC 4.0."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prix de référence intrajournaliers des cryptomonnaies et données historiques. CC BY-NC 4.0."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prezzi di riferimento infragiornalieri delle criptovalute e dati storici. CC BY-NC 4.0."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暗号資産の日中参考価格と過去データ。CC BY-NC 4.0。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "암호화폐의 일중 참고 가격 및 과거 데이터. CC BY-NC 4.0."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preços de referência intradiários de criptomoedas e dados históricos. CC BY-NC 4.0."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Внутридневные справочные цены криптовалют и исторические данные. CC BY-NC 4.0."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Внутрішньоденні довідкові ціни криптовалют та історичні дані. CC BY-NC 4.0."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gün içi kripto referans fiyatları ve geçmiş veriler. CC BY-NC 4.0."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "加密货币日内参考价格及历史数据。CC BY-NC 4.0。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "加密貨幣日內參考價格及歷史資料。CC BY-NC 4.0。"
           }
         }
       }

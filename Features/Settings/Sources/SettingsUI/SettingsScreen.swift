@@ -696,7 +696,13 @@ struct SettingsScreen: View {
       VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
         Text(verbatim: code).font(AppStyle.font(.body, weight: .medium))
         if let rate = snapshot.quotes[code] {
-          Text(RateMessages.providerDescription(rate.source, locale: locale))
+          let source =
+            CurrencyDisplay.quoteSource(
+              snapshot, code: code, base: model.rates.base, destinations: codes) ?? rate.source
+          if let conversion = RateMessages.conversionDescription(source, locale: locale) {
+            Text(conversion).font(AppStyle.font(.caption)).foregroundStyle(.secondary)
+          }
+          Text(RateMessages.providerDescription(source, locale: locale))
             .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
           Group {
             if let observed = rate.observedAt {
@@ -724,18 +730,19 @@ struct SettingsScreen: View {
     Section(.Settings.sources) {
       sourceCredit(
         "Frankfurter", description: .Settings.frankfurterCredit,
-        website: "https://frankfurter.dev/")
-      sourceCredit(
-        "European Central Bank", description: .Settings.ecbCredit,
-        website:
-          "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html"
-      )
+        website: "https://frankfurter.dev/", license: "Attribution",
+        licenseURL:
+          "https://github.com/DimaMishchenko/currency/blob/main/Documentation/DataSources.md")
       sourceCredit(
         "Fawaz Exchange API", description: .Settings.fawazCredit,
-        website: "https://github.com/fawazahmed0/exchange-api")
+        website: "https://github.com/fawazahmed0/exchange-api",
+        license: "CC0 1.0",
+        licenseURL: "https://github.com/fawazahmed0/exchange-api/blob/main/LICENSE")
       sourceCredit(
-        "Coinbase", description: .Settings.coinbaseCredit,
-        website: "https://docs.cdp.coinbase.com/coinbase-app/track-apis/exchange-rates")
+        "Coin Metrics", description: .Settings.coinMetricsCredit,
+        website: "https://docs.coinmetrics.io/api-reference",
+        license: "CC BY-NC 4.0",
+        licenseURL: "https://creativecommons.org/licenses/by-nc/4.0/")
     }
   }
 

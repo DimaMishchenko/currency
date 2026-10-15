@@ -42,7 +42,8 @@ struct CryptoHistoryWidgetHarness: View {
   private func load() async {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }
-    let history = HistoryService(directory: directory, client: CryptoHistoryFixture())
+    let history = HistoryService(
+      directory: directory, client: CryptoHistoryFixture())
     let pair = HistoryWidgetPair(app: ConverterState(), base: "BTC", quote: "USD")
     for range: HistoryRange in [.day, .week, .month] {
       let result = await history.load(base: "BTC", quote: "USD", range: range, now: date)
@@ -55,25 +56,29 @@ struct CryptoHistoryWidgetHarness: View {
 
 private struct CryptoHistoryFixture: HTTPClient {
   func get(_ url: URL) async throws -> Data {
-    let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
-    let hourly = query.first { $0.name == "granularity" }?.value == "3600"
-    let rows: [(String, Double)] =
-      hourly
-      ? [("2026-09-29T18:00:00Z", 83_055), ("2026-09-30T14:00:00Z", 84_608.1)]
-      : [
-        ("2026-09-05T00:00:00Z", 81_000), ("2026-09-23T00:00:00Z", 84_381),
-        ("2026-09-26T00:00:00Z", 84_100), ("2026-09-29T00:00:00Z", 83_638.4)
-      ]
-    return try JSONEncoder()
-      .encode(
-        rows.map { date, value in
-          guard let observation = ISO8601DateFormatter().date(from: date) else {
-            throw RateError.invalidData
-          }
+    if url.host == "community-api.coinmetrics.io" {
+      let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+      guard let rawEnd = query.first(where: { $0.name == "end_time" })?.value,
+        let end = ISO8601DateFormatter().date(from: rawEnd)
+      else { throw RateError.invalidData }
+      let rows: [[String: String]] = (0...1440)
+        .map { index -> [String: String] in
+          let offset: TimeInterval = Double(index - 1440) * 60
+          let time: String = end.addingTimeInterval(offset).ISO8601Format()
+          let price: Double = 83_055 + Double(index) * 1553.1 / 1440
           return [
-            observation.timeIntervalSince1970,
-            value, value, value, value, 1
+            "asset": "btc", "time": time, "ReferenceRateUSD": String(price)
           ]
-        })
+        }
+      return try JSONSerialization.data(withJSONObject: ["data": rows])
+    }
+    guard url.host == "cdn.jsdelivr.net" || url.host?.hasSuffix("currency-api.pages.dev") == true
+    else { throw RateError.unavailable }
+    let date =
+      url.path.components(separatedBy: "@").last?.components(separatedBy: "/").first
+      ?? "2026-09-30"
+    return try JSONSerialization.data(withJSONObject: [
+      "date": date, "eur": ["usd": 1, "btc": 1 / 84_000.0]
+    ])
   }
 }

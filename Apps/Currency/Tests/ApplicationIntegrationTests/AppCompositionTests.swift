@@ -93,8 +93,8 @@ struct AppCompositionTests {
     #expect(composition.appearance.theme == .dark)
     let snapshot = RateSnapshot(
       quotes: [
-        "EUR": ExchangeRate(1, published: "2026-09-26", source: .init(provider: .ecb)),
-        "USD": ExchangeRate(2, published: "2026-09-26", source: .init(provider: .ecb))
+        "EUR": ExchangeRate(1, published: "2026-09-26", source: .init(provider: .fawaz)),
+        "USD": ExchangeRate(2, published: "2026-09-26", source: .init(provider: .fawaz))
       ], fetchedAt: .now)
     _ = try composition.onboarding.saveRates(snapshot, .now)
     #expect(home.readRates().quotes["USD"]?.value == 2)

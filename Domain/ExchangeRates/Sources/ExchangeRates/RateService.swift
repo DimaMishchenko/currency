@@ -15,15 +15,23 @@ public struct RefreshResult: Sendable {
 
 /// Coordinates rate providers and preserves usable cached quotes.
 public actor RateService {
-  private let fiat: any RateProvider
+  private let fiat: (any RateProvider)?
   private let daily: any RateProvider
 
   private let crypto: (any RateProvider)?
   private let sleep: @Sendable (Duration) async throws -> Void
-  /// Creates a rate service from its providers.
+  /// Creates a service using Fawaz daily rates and Coin Metrics crypto reference rates.
+  public init(client: any HTTPClient = NetworkClient()) {
+    self.fiat = nil
+    self.daily = FawazProvider(client: client)
+    self.crypto = CoinMetricsProvider(client: client)
+    self.sleep = { try await Task.sleep(for: $0) }
+  }
+
+  /// Creates a rate service from explicitly supplied providers.
   public init(
-    fiat: any RateProvider = FallbackRateProvider(), daily: any RateProvider = FawazProvider(),
-    crypto: (any RateProvider)? = CoinbaseProvider()
+    fiat: any RateProvider, daily: any RateProvider = FawazProvider(),
+    crypto: (any RateProvider)? = nil
   ) {
     self.fiat = fiat
     self.daily = daily
@@ -57,12 +65,14 @@ public actor RateService {
     previous: RateSnapshot, force: Bool = false, now: Date = .now,
     providerTimeout: Duration? = nil
   ) async -> RefreshResult {
+    let previous = previous.aligningCoinMetricsQuotes()
     guard !Task.isCancelled else { return RefreshResult(snapshot: previous, warning: nil) }
     let refreshFiat =
-      force
-      || !RateSnapshot.isFresh(
-        previous.fiatFetchedAt ?? (previous.fiatQuotes == nil ? previous.dailyFetchedAt : nil),
-        now: now)
+      fiat != nil
+      && (force
+        || !RateSnapshot.isFresh(
+          previous.fiatFetchedAt ?? (previous.fiatQuotes == nil ? previous.dailyFetchedAt : nil),
+          now: now))
     let refreshSupplemental =
       force
       || !RateSnapshot.isFresh(
@@ -96,18 +106,19 @@ public actor RateService {
     where CurrencyCatalog.crypto.contains(code)
       && quote.published >= (dailyQuotes[code]?.published ?? "")
     {
-      quotes[code] = quote
+      if let aligned = quote.alignedToDailyUSD(dailyQuotes["USD"]) { quotes[code] = aligned }
     }
     let success = fiatQuotes != nil || supplementalQuotes != nil || live != nil
     let warning: RefreshWarning? =
-      refreshFiat && fiatQuotes == nil && refreshSupplemental && supplementalQuotes == nil
+      (fiat == nil || refreshFiat && fiatQuotes == nil) && refreshSupplemental
+        && supplementalQuotes == nil
       ? .dailyRatesUnavailable
       : crypto != nil && !CurrencyCatalog.crypto.isSubset(of: Set(live?.keys.map { $0 } ?? []))
         ? .partialCryptoFallback : nil
     return RefreshResult(
       snapshot: RateSnapshot(
         quotes: quotes, fetchedAt: success ? now : previous.fetchedAt, dailyQuotes: dailyQuotes,
-        dailyFetchedAt: fiatQuotes != nil && supplementalQuotes != nil
+        dailyFetchedAt: (fiat == nil || fiatQuotes != nil) && supplementalQuotes != nil
           ? now : previous.dailyFetchedAt,
         checkedAt: now, fiatFetchedAt: fiatTime, supplementalFetchedAt: supplementalTime,
         fiatQuotes: primary, supplementalQuotes: supplemental), warning: warning)
@@ -117,8 +128,9 @@ public actor RateService {
   /// own the foreground deadline, so an uncooperative provider cannot keep recovery pending.
   /// The stream preserves daily fallbacks and the primary provider's freshness precedence.
   public func bootstrap(previous: RateSnapshot, now: Date = .now) -> AsyncStream<BootstrapUpdate> {
+    let previous = previous.aligningCoinMetricsQuotes()
     let providers: [(Int, any RateProvider)] =
-      [(0, daily), (1, fiat)]
+      [(0, daily)] + (fiat.map { [(1, $0)] } ?? [])
       + (crypto.map { [(2, $0)] } ?? [])
     return AsyncStream { continuation in
       let worker = Task {
@@ -180,7 +192,9 @@ public actor RateService {
             where CurrencyCatalog.crypto.contains(code)
               && quote.published >= (dailyQuotes[code]?.published ?? "")
             {
-              effective[code] = quote
+              if let aligned = quote.alignedToDailyUSD(dailyQuotes["USD"]) {
+                effective[code] = aligned
+              }
             }
             let succeeded = results.values.contains { !($0.quotes ?? [:]).isEmpty }
             let final = results.count == providers.count
@@ -193,7 +207,8 @@ public actor RateService {
                 snapshot: RateSnapshot(
                   quotes: effective, fetchedAt: succeeded ? now : previous.fetchedAt,
                   dailyQuotes: dailyQuotes,
-                  dailyFetchedAt: results[0]?.quotes != nil && results[1]?.quotes != nil
+                  dailyFetchedAt: results[0]?.quotes != nil
+                    && (fiat == nil || results[1]?.quotes != nil)
                     ? now : previous.dailyFetchedAt,
                   checkedAt: now, fiatFetchedAt: fiatTime, supplementalFetchedAt: supplementalTime,
                   fiatQuotes: primary, supplementalQuotes: supplemental),

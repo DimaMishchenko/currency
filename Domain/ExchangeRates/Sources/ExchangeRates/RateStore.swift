@@ -6,14 +6,16 @@ public struct RateStore: Sendable {
   /// Directory shared by the hosts that exchange rate snapshots.
   public let directory: URL
   /// Creates a coordinated rate store in a host-supplied directory.
-  public init(directory: URL) { self.directory = directory }
+  public init(directory: URL) {
+    self.directory = directory
+  }
   private var rates: RateCache { RateCache(directory: directory) }
   /// Loads the latest valid snapshot from coordinated shared storage.
-  public func loadRates() -> RateSnapshot { rates.load() }
+  public func loadRates() -> RateSnapshot { rates.load().aligningCoinMetricsQuotes() }
   /// Refreshes shared rates, preserving newer results committed by another host.
   ///
   /// Network requests run outside file coordination. Unless forced, attempts are spaced
-  /// thirty minutes apart. The final commit merges publication and observation metadata.
+  /// by thirty minutes. The final commit merges publication and observation metadata.
   public func refreshRates(
     using service: RateService, force: Bool = false, now: Date = .now,
     providerTimeout: Duration? = nil
@@ -21,7 +23,8 @@ public struct RateStore: Sendable {
     let previous = loadRates()
     guard
       force || now < (previous.checkedAt ?? .distantPast)
-        || now.timeIntervalSince(previous.checkedAt ?? .distantPast) >= 1800
+        || now.timeIntervalSince(previous.checkedAt ?? .distantPast)
+          >= 1800
     else {
       return RefreshResult(snapshot: previous, warning: nil)
     }
@@ -30,7 +33,7 @@ public struct RateStore: Sendable {
     try Task.checkCancellation()
     return try coordinate("rates.json") {
       let current = loadRates()
-      let merged = current.merging(result.snapshot)
+      let merged = current.merging(result.snapshot).aligningCoinMetricsQuotes()
       try rates.save(merged)
       return RefreshResult(
         snapshot: merged,
@@ -45,10 +48,9 @@ public struct RateStore: Sendable {
   public func saveBootstrapRates(_ snapshot: RateSnapshot, now: Date = .now) throws -> RateSnapshot
   {
     try coordinate("rates.json") {
-      // The incoming snapshot wins equal-attempt ties: it includes later provider deliveries.
       let saved = loadRates()
       let current = saved.hasValidFetchTimestamp(now: now) ? saved : RateSnapshot()
-      let merged = snapshot.merging(current)
+      let merged = snapshot.merging(current).aligningCoinMetricsQuotes()
       try RateCache(directory: directory).save(merged)
       return merged
     }
