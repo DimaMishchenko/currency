@@ -61,12 +61,13 @@ private struct CryptoHistoryFixture: HTTPClient {
       guard let rawEnd = query.first(where: { $0.name == "end_time" })?.value,
         let end = ISO8601DateFormatter().date(from: rawEnd)
       else { throw RateError.invalidData }
-      let rows = (0...1440)
-        .map { index in
-          [
-            "asset": "btc",
-            "time": end.addingTimeInterval(Double(index - 1440) * 60).ISO8601Format(),
-            "ReferenceRateUSD": String(83_055 + Double(index) * 1553.1 / 1440)
+      let rows: [[String: String]] = (0...1440)
+        .map { index -> [String: String] in
+          let offset: TimeInterval = Double(index - 1440) * 60
+          let time: String = end.addingTimeInterval(offset).ISO8601Format()
+          let price: Double = 83_055 + Double(index) * 1553.1 / 1440
+          return [
+            "asset": "btc", "time": time, "ReferenceRateUSD": String(price)
           ]
         }
       return try JSONSerialization.data(withJSONObject: ["data": rows])
