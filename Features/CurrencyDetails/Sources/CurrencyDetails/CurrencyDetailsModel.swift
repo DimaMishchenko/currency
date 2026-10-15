@@ -8,15 +8,6 @@ public struct CurrencyDetailsInput: Sendable {
   public let code: String
   /// The originating workspace's base currency.
   public let reference: String
-  /// Whether a caller requests its exact pair or the standard details reference policy.
-  public enum ReferencePolicy: Sendable {
-    /// Uses the usual fiat reference for crypto and self references.
-    case automatic
-    /// Preserves the distinct supported pair validated by the caller.
-    case requestedPair
-  }
-  /// The reference policy selected for this flow.
-  public let referencePolicy: ReferencePolicy
   /// The current rate snapshot supplied by the caller.
   public let snapshot: RateSnapshot
   /// Measurement used to present metal rates and history for this flow.
@@ -25,12 +16,11 @@ public struct CurrencyDetailsInput: Sendable {
   /// Creates the immutable context of a details flow.
   public init(
     code: String, reference: String, snapshot: RateSnapshot,
-    referencePolicy: ReferencePolicy = .automatic, metalUnit: MetalUnit = .troyOunce
+    metalUnit: MetalUnit = .troyOunce
   ) {
     self.code = code
     self.reference = reference
     self.snapshot = snapshot
-    self.referencePolicy = referencePolicy
     self.metalUnit = metalUnit
   }
 }
@@ -96,16 +86,11 @@ public final class CurrencyDetailsModel {
     self.dependencies = dependencies
   }
 
-  /// Explicit pairs retain their quote; automatic references use the standard fiat policy.
+  /// Keeps the caller's comparison currency, with a distinct fallback for a self reference.
   public var quote: String {
-    if input.referencePolicy == .requestedPair { return input.reference }
-    let currency = CurrencyCode(rawValue: input.code)
-    let referenceCurrency = CurrencyCode(rawValue: input.reference)
-    if currency?.isCryptocurrency == true { return CurrencyCode.usd.rawValue }
-    if input.reference == input.code || referenceCurrency?.isCryptocurrency == true {
-      return currency == .eur ? CurrencyCode.usd.rawValue : CurrencyCode.eur.rawValue
-    }
-    return input.reference
+    guard input.code == input.reference else { return input.reference }
+    return input.code == CurrencyCode.eur.rawValue || CurrencyCatalog.crypto.contains(input.code)
+      ? CurrencyCode.usd.rawValue : CurrencyCode.eur.rawValue
   }
 
   private var historyRequest: (base: String, quote: String, inverted: Bool) {

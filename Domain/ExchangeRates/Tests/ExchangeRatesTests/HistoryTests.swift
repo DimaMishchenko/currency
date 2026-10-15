@@ -15,6 +15,7 @@ actor DailyHistoryHTTP: HTTPClient {
   func failPrimaryRequests() { failPrimary = true }
 
   func get(_ url: URL) async throws -> Data {
+    if url.host == "api.frankfurter.dev" { throw RateError.http(404) }
     urls.append(url)
     if failing || (failPrimary && url.host == "cdn.jsdelivr.net") { throw RateError.http(503) }
     let day: String

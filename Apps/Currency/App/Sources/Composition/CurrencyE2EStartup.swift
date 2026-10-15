@@ -77,6 +77,7 @@
       let daily = FixedRateClient.quotes(now: now)
       var effective = daily
       effective["BTC"] = FixedRateClient.coinMetricsQuote(now: now)
+      effective["ETH"] = FixedRateClient.coinMetricsQuote(now: now, priceUSD: 100)
       try FileCoordination.write(at: directory.appendingPathComponent("rates.json")) {
         try RateCache(directory: directory)
           .save(
@@ -91,21 +92,45 @@
       try seedHistory(
         base: "EUR", quote: "XAU", values: [0.009, 0.01],
         directory: directory, now: now)
-      try seedHistory(
-        base: "BTC", quote: "USD", values: [90_000, 100_000],
-        directory: directory, now: now)
       let end = Date(timeIntervalSince1970: floor(now.timeIntervalSince1970 / 300) * 300)
-      let intraday = HistorySeries(
+      for reference in ["USD", "EUR", "CZK", "CHF", "VND"] {
+        guard let referenceRate = daily[reference], let usd = daily["USD"] else {
+          throw StartupError.seedVerificationFailed
+        }
+        let factor = NSDecimalNumber(decimal: referenceRate.value / usd.value).doubleValue
+        try seedHistory(
+          base: "BTC", quote: reference, values: [45_000 * factor, 50_000 * factor],
+          directory: directory, now: now)
+        let conversion: RateConversion? =
+          reference == "USD"
+          ? nil
+          : .init(
+            provider: .fawaz, published: FixedRateClient.day(now),
+            value: referenceRate.value / usd.value, base: "USD", quote: reference)
+        let intraday = HistorySeries(
+          points: (0...288)
+            .map { index in
+              HistoryPoint(
+                date: end.addingTimeInterval(Double(index - 288) * 300),
+                value: (45_000 + Double(index) * 5_000 / 288) * factor)
+            },
+          source: .init(
+            provider: .coinMetrics, observation: .minuteReference, timeZone: .gmt,
+            conversion: conversion), fetchedAt: end)
+        try writeHistory(
+          intraday, filename: "history-v3-BTC-\(reference)-1.json", directory: directory)
+      }
+      try seedHistory(
+        base: "ETH", quote: "BTC", values: [0.0018, 0.002], directory: directory, now: now)
+      let cryptoPair = HistorySeries(
         points: (0...288)
           .map { index in
             HistoryPoint(
               date: end.addingTimeInterval(Double(index - 288) * 300),
-              value: 45_000 + Double(index) * 5_000 / 288)
+              value: 0.0018 + Double(index) * 0.0002 / 288)
           }, source: .init(provider: .coinMetrics, observation: .minuteReference, timeZone: .gmt),
         fetchedAt: end)
-      try writeHistory(
-        intraday, filename: "history-v3-BTC-USD-1.json",
-        directory: directory)
+      try writeHistory(cryptoPair, filename: "history-v3-ETH-BTC-1.json", directory: directory)
       let files = [
         "input.json", "onboarding.json", "widget-location-refresh.json",
         "widget-location.json", "widget-location-status.json"
@@ -221,7 +246,10 @@
         let assets = items.first { $0.name == "assets" }?.value?.split(separator: ",") ?? []
         let end = Date(timeIntervalSince1970: floor(Date.now.timeIntervalSince1970 / 60) * 60)
         let rows = assets.map { asset in
-          ["asset": String(asset), "time": end.ISO8601Format(), "ReferenceRateUSD": "50000"]
+          [
+            "asset": String(asset), "time": end.ISO8601Format(),
+            "ReferenceRateUSD": asset == "eth" ? "100" : "50000"
+          ]
         }
         return try JSONSerialization.data(withJSONObject: ["data": rows])
       }
@@ -244,7 +272,8 @@
 
     static func quotes(now: Date) -> [String: ExchangeRate] {
       let values: [String: Decimal] = [
-        "EUR": 1, "USD": 2, "CHF": 0.5, "CZK": 25, "XAU": 0.01, "BTC": 0.00002
+        "EUR": 1, "USD": 2, "CHF": 0.5, "CZK": 25, "XAU": 0.01, "BTC": 0.00002,
+        "ETH": 0.01, "VND": 50_000
       ]
       return values.mapValues {
         ExchangeRate(
@@ -253,9 +282,9 @@
       }
     }
 
-    static func coinMetricsQuote(now: Date) -> ExchangeRate {
+    static func coinMetricsQuote(now: Date, priceUSD: Decimal = 50_000) -> ExchangeRate {
       ExchangeRate(
-        0.00004, published: day(now),
+        2 / priceUSD, published: day(now),
         source: .init(
           provider: .coinMetrics, observation: .minuteReference,
           conversion: RateConversion(
