@@ -10,7 +10,10 @@ final class NativeIntentTests: XCTestCase {
   override func setUp() async throws {
     continueAfterFailure = false
     if !Self.didInitializeApp {
-      _ = launchReadyApp()
+      let app = configuredApp()
+      app.launchArguments += ["-CurrencyE2EState", "ready-converter"]
+      app.launch()
+      XCTAssertTrue(app.buttons["converter.widgets"].waitForExistence(timeout: 5))
       let deadline = Date().addingTimeInterval(15)
       while true {
         do {
@@ -193,7 +196,6 @@ final class NativeIntentTests: XCTestCase {
   }
 
   func testLocalIsQueryableAndLabelsItsResult() async throws {
-    _ = launchReadyApp()
     let localChoices = try await definitions.entities["CurrencyEntity"]
       .entities(
         matching: "Local currency")
@@ -226,7 +228,6 @@ final class NativeIntentTests: XCTestCase {
   }
 
   func testCatalogChoicesAndSearchIncludeUnsavedFiatCryptoAndMetals() async throws {
-    _ = launchReadyApp()
     let definition = definitions.entities["CurrencyEntity"]
     let suggestions = try await definition.suggestedEntities()
     XCTAssertGreaterThan(suggestions.count, 150)
@@ -284,7 +285,7 @@ final class NativeIntentTests: XCTestCase {
 
   private func configuredApp() -> XCUIApplication {
     let app = XCUIApplication(bundleIdentifier: "com.dimasike.currency")
-    app.launchArguments = ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+    app.launchArguments = ["-AppleLanguages", "(en)", "-AppleLocale", "en_US", "-CurrencyE2E"]
     return app
   }
 
@@ -307,17 +308,11 @@ final class NativeIntentTests: XCTestCase {
 
   private func launchReadyApp() -> XCUIApplication {
     let app = configuredApp()
-    app.launch()
-    let primary = app.buttons["onboarding.primary"]
     let home = app.buttons["converter.widgets"]
-    if !primary.exists && home.exists { return app }
-    for _ in 0..<6 {
-      guard primary.waitForExistence(timeout: 5) else { break }
-      let later = app.buttons["onboarding.later"]
-      if later.exists { later.tap() } else { primary.tap() }
+    if app.state != .runningForeground || !home.isHittable {
+      app.launch()
     }
-    XCTAssertTrue(primary.waitForNonExistence(timeout: 5))
-    XCTAssertTrue(home.exists || home.waitForExistence(timeout: 5))
+    XCTAssertTrue(home.waitForExistence(timeout: 5))
     return app
   }
 

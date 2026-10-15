@@ -8,48 +8,32 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: currency-tests-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
-  changes:
+  plan:
     runs-on: ubuntu-latest
     outputs:
       xcode: ${{ steps.changes.outputs.xcode }}
+      release: ${{ steps.changes.outputs.release }}
+      localizations: ${{ steps.changes.outputs.localizations }}
+      history: ${{ steps.changes.outputs.history }}
+      e2e: ${{ steps.changes.outputs.e2e }}
+      notes: ${{ steps.changes.outputs.notes }}
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - name: Classify changes
+      - name: Plan validation
         id: changes
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
-        run: bash Scripts/CI/changes.sh "$BASE_SHA"
-      - name: Check release automation
         run: |
-          for script in Scripts/CI/*.sh; do bash -n "$script"; done
-          python3 Scripts/CI/test_release_configuration.py
-      - name: Check localization coverage and placeholders
-        timeout-minutes: 1
-        run: |
-          python3 - <<'PYTHON'
-          import subprocess
-          subprocess.run(["python3", "Scripts/CI/test_check_localizations.py"], check=True, timeout=25)
-          subprocess.run(["python3", "Scripts/CI/check_localizations.py"], check=True, timeout=25)
-          PYTHON
-      - name: Test CI skip rules
-        run: |
-          python3 Scripts/CI/test_skip_rules.py
-          python3 Scripts/CI/test_project_structure.py
-      - name: Test bundled-history generation
-        run: python3 -m unittest discover -s Scripts/History -p 'test_*.py'
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-      - name: Check E2E integration types
-        working-directory: Apps/Currency/Tests/E2E
-        run: |
-          npm ci
-          npm run typecheck
-      - name: Test TestFlight notes
-        run: python3 Scripts/CI/test_testflight_notes.py
+          args=("$BASE_SHA")
+          if [[ "$GITHUB_EVENT_NAME" == push ]]; then args+=(--full); fi
+          bash Scripts/CI/changes.sh "${args[@]}"
       - name: Record release decision
         if: github.event_name == 'push'
         uses: actions/upload-artifact@v7
@@ -57,62 +41,110 @@ jobs:
           name: currency-release-request
           path: ${{ runner.temp }}/ShouldPublish.txt
           if-no-files-found: error
-  test:
-    needs: changes
-    if: always()
-    runs-on: ${{ needs.changes.outputs.xcode == 'true' && 'xcode-27' || 'ubuntu-latest' }}
+      - name: Record validation plan
+        uses: actions/upload-artifact@v7
+        with:
+          name: currency-ci-plan
+          path: ${{ runner.temp }}/CurrencyCIPlan.json
+          if-no-files-found: error
+  tooling:
+    needs: plan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check CI execution and selection
+        run: |
+          for script in Scripts/CI/*.sh; do bash -n "$script"; done
+          python3 Scripts/CI/test_skip_rules.py
+          python3 Scripts/CI/test_plan_checks.py
+          python3 Scripts/CI/test_native_checks.py
+          python3 Scripts/CI/test_project_structure.py
+          python3 Scripts/CI/test_workflow_topology.py
+      - name: Check release automation
+        if: needs.plan.outputs.release == 'true'
+        run: python3 Scripts/CI/test_release_configuration.py
+      - name: Check localization coverage and placeholders
+        if: needs.plan.outputs.localizations == 'true'
+        timeout-minutes: 1
+        run: |
+          python3 - <<'PYTHON'
+          import subprocess
+          subprocess.run(["python3", "Scripts/CI/test_check_localizations.py"], check=True, timeout=25)
+          subprocess.run(["python3", "Scripts/CI/check_localizations.py"], check=True, timeout=25)
+          PYTHON
+      - name: Test bundled-history generation
+        if: needs.plan.outputs.history == 'true'
+        run: python3 -m unittest discover -s Scripts/History -p 'test_*.py'
+      - uses: actions/setup-node@v7
+        if: needs.plan.outputs.e2e == 'true'
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: Apps/Currency/Tests/E2E/package-lock.json
+      - name: Check E2E integration types
+        if: needs.plan.outputs.e2e == 'true'
+        working-directory: Apps/Currency/Tests/E2E
+        run: |
+          npm ci
+          npm run typecheck
+      - name: Test TestFlight notes
+        if: needs.plan.outputs.notes == 'true'
+        run: python3 Scripts/CI/test_testflight_notes.py
+  native:
+    needs: plan
+    if: needs.plan.outputs.xcode == 'true'
+    runs-on: xcode-27
     timeout-minutes: 60
     env:
       DEVELOPER_DIR: /Applications/Xcode_27.1.app/Contents/Developer
     permissions:
       contents: read
       id-token: write
-    concurrency:
-      group: currency-test-${{ github.event.pull_request.number || github.run_id }}
-      cancel-in-progress: true
     steps:
-      - name: Require successful change checks
-        if: needs.changes.result != 'success'
-        run: exit 1
       - uses: actions/checkout@v7
-        if: needs.changes.outputs.xcode == 'true'
+        with:
+          fetch-depth: 0
       - name: Isolate Tuist credentials
-        if: needs.changes.outputs.xcode == 'true'
         run: |
           config=$(mktemp -d "$RUNNER_TEMP/currency-tuist.XXXXXX")
           echo "TUIST_XDG_CONFIG_HOME=$config" >> "$GITHUB_ENV"
       - uses: jdx/mise-action@v5
-        if: needs.changes.outputs.xcode == 'true'
       - name: Install build formatter
-        if: needs.changes.outputs.xcode == 'true'
         run: brew install xcbeautify
-      - name: Check Swift formatting
-        if: needs.changes.outputs.xcode == 'true'
-        run: swift format lint --recursive --strict Apps AppExtensions Domain Features Foundation
       - name: Install Tuist dependencies
-        if: needs.changes.outputs.xcode == 'true'
         run: tuist install
-      - name: Warm dependency cache
+      - name: Authenticate Tuist cache and test selection
         if: >-
-          needs.changes.outputs.xcode == 'true' &&
-          ((github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-          (github.event_name == 'pull_request' &&
-           github.event.pull_request.head.repo.full_name == github.repository &&
-           github.event.pull_request.user.login != 'dependabot[bot]'))
+          (github.event_name == 'push' ||
+           (github.event.pull_request.head.repo.full_name == github.repository &&
+            github.event.pull_request.user.login != 'dependabot[bot]'))
         continue-on-error: true
         run: |
           tuist auth login
-          tuist cache --cache-profile all-possible --configuration Debug
-      # Warming creates a cache-build workspace; always regenerate before validation.
-      - name: Generate project
-        if: needs.changes.outputs.xcode == 'true'
+          echo 'CURRENCY_TUIST_UPLOAD=true' >> "$GITHUB_ENV"
+      - name: Export target graph
+        run: |
+          mkdir -p "$RUNNER_TEMP/ci-graph"
+          tuist graph --format json --no-open --output-path "$RUNNER_TEMP/ci-graph"
+          CURRENCY_CI_GRAPH="$RUNNER_TEMP/ci-graph/graph.json" python3 Scripts/CI/test_plan_checks.py
+      - name: Select native checks
+        id: native
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          args=("$BASE_SHA" --graph "$RUNNER_TEMP/ci-graph/graph.json")
+          if [[ "$GITHUB_EVENT_NAME" == push ]]; then args+=(--full); fi
+          bash Scripts/CI/changes.sh "${args[@]}"
+      - name: Check Swift formatting
+        if: steps.native.outputs.swift_format == 'true'
+        run: bash Scripts/CI/check_swift_format.sh
+      - name: Check source navigator structure
+        if: steps.native.outputs.structure == 'true'
         run: |
           tuist generate --no-open --cache-profile none
-      - name: Check generated navigator structure
-        if: needs.changes.outputs.xcode == 'true'
-        run: python3 Scripts/CI/check_project_structure.py
-      - name: Create test simulator
-        if: needs.changes.outputs.xcode == 'true'
+          python3 Scripts/CI/check_project_structure.py
+      - name: Start test simulator
+        if: steps.native.outputs.unit_tests == 'true' || steps.native.outputs.intents == 'true'
         run: |
           simulator=$(xcrun simctl create \
             "Currency CI $GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" \
@@ -120,34 +152,23 @@ jobs:
             com.apple.CoreSimulator.SimRuntime.iOS-27-0)
           echo "CURRENCY_TEST_SIMULATOR=$simulator" >> "$GITHUB_ENV"
           xcrun simctl boot "$simulator"
-          xcrun simctl bootstatus "$simulator" -b
-      - name: Test on iOS Simulator
-        if: needs.changes.outputs.xcode == 'true'
-        run: |
-          set -o pipefail
-          xcodebuild test \
-            -workspace Currency.xcworkspace \
-            -scheme CurrencyTests \
-            -configuration Debug \
-            -destination "platform=iOS Simulator,id=$CURRENCY_TEST_SIMULATOR" \
-            -derivedDataPath "$RUNNER_TEMP/CurrencyTestsDerivedData" \
-            -collect-test-diagnostics never \
-            CODE_SIGN_IDENTITY=- \
-            2>&1 | xcbeautify
-      - name: Build watchOS 26 app and complications
-        if: needs.changes.outputs.xcode == 'true'
-        run: |
-          set -o pipefail
-          xcodebuild build \
-            -workspace Currency.xcworkspace \
-            -scheme CurrencyWatch \
-            -configuration Debug \
-            -destination 'generic/platform=watchOS Simulator' \
-            -derivedDataPath "$RUNNER_TEMP/CurrencyTestsDerivedData" \
-            CODE_SIGN_IDENTITY=- \
-            2>&1 | xcbeautify
+      - name: Test affected native targets
+        if: steps.native.outputs.unit_tests == 'true'
+        run: bash Scripts/CI/run_native_checks.sh unit
+      - name: Build affected app
+        if: steps.native.outputs.app == 'true'
+        run: bash Scripts/CI/run_native_checks.sh app
+      - name: Build affected Watch products
+        if: steps.native.outputs.watch == 'true'
+        run: bash Scripts/CI/run_native_checks.sh watch
+      - name: Test affected App Intents
+        if: steps.native.outputs.intents == 'true'
+        run: bash Scripts/CI/run_native_checks.sh intents
+      - name: Build affected feature harnesses
+        if: steps.native.outputs.harnesses == 'true'
+        run: bash Scripts/CI/run_native_checks.sh harnesses
       - name: Check compiler-extracted localization coverage
-        if: needs.changes.outputs.xcode == 'true'
+        if: steps.native.outputs.localizations == 'true' && steps.native.outputs.app == 'true'
         timeout-minutes: 1
         run: |
           python3 - <<'PYTHON'
@@ -158,47 +179,6 @@ jobs:
                os.path.join(os.environ["RUNNER_TEMP"], "CurrencyTestsDerivedData")],
               check=True, timeout=25)
           PYTHON
-      - name: Prepare app launch before native tests
-        if: needs.changes.outputs.xcode == 'true'
-        run: |
-          if xcrun simctl get_app_container "$CURRENCY_TEST_SIMULATOR" com.dimasike.currency app >/dev/null 2>&1; then
-            xcrun simctl uninstall "$CURRENCY_TEST_SIMULATOR" com.dimasike.currency
-          fi
-          xcrun simctl install "$CURRENCY_TEST_SIMULATOR" \
-            "$RUNNER_TEMP/CurrencyTestsDerivedData/Build/Products/Debug-iphonesimulator/Currency.app"
-          xcrun simctl launch "$CURRENCY_TEST_SIMULATOR" com.dimasike.currency \
-            -AppleLanguages '(en)' -AppleLocale en_US
-          xcrun simctl terminate "$CURRENCY_TEST_SIMULATOR" com.dimasike.currency
-      - name: Test extracted App Intents
-        if: needs.changes.outputs.xcode == 'true'
-        run: |
-          set -o pipefail
-          xcodebuild test \
-            -workspace Currency.xcworkspace \
-            -scheme NativeIntentTests \
-            -configuration Debug \
-            -destination "platform=iOS Simulator,id=$CURRENCY_TEST_SIMULATOR" \
-            -derivedDataPath "$RUNNER_TEMP/CurrencyTestsDerivedData" \
-            -resultBundlePath "$RUNNER_TEMP/CurrencyNativeIntents.xcresult" \
-            -collect-test-diagnostics never \
-            -parallel-testing-enabled NO \
-            -test-timeouts-enabled YES \
-            -default-test-execution-time-allowance 120 \
-            -maximum-test-execution-time-allowance 120 \
-            CODE_SIGN_IDENTITY=- \
-            2>&1 | tee "$RUNNER_TEMP/CurrencyNativeIntents.log" | xcbeautify
-      - name: Build feature harnesses
-        if: needs.changes.outputs.xcode == 'true'
-        run: |
-          set -o pipefail
-          xcodebuild build \
-            -workspace Currency.xcworkspace \
-            -scheme CurrencyHarnesses \
-            -configuration Debug \
-            -destination 'generic/platform=iOS Simulator' \
-            -derivedDataPath "$RUNNER_TEMP/CurrencyTestsDerivedData" \
-            CODE_SIGN_IDENTITY=- \
-            2>&1 | xcbeautify
       - name: Capture indexing diagnostics
         if: failure() && env.CURRENCY_TEST_SIMULATOR != ''
         run: |
@@ -206,14 +186,21 @@ jobs:
             --last 30m --style compact --info --debug \
             --predicate 'subsystem CONTAINS[c] "spotlight" OR (subsystem == "com.dimasike.currency" AND category == "Spotlight")' \
             > "$RUNNER_TEMP/CurrencySpotlight.log" 2>&1 || true
-      - name: Upload native test diagnostics
-        if: failure() && needs.changes.outputs.xcode == 'true'
+      - name: Upload native test evidence
+        if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: native-intent-diagnostics
+          name: native-test-evidence
           path: |
+            ${{ runner.temp }}/CurrencyCIPlan.json
+            ${{ runner.temp }}/CurrencyUnitTests.xcresult
+            ${{ runner.temp }}/CurrencyUnitTests.log
+            ${{ runner.temp }}/CurrencyUnitTests.xcresult.summary.json
+            ${{ runner.temp }}/CurrencyUnitTests.xcresult.build.json
             ${{ runner.temp }}/CurrencyNativeIntents.log
             ${{ runner.temp }}/CurrencyNativeIntents.xcresult
+            ${{ runner.temp }}/CurrencyNativeIntents.xcresult.summary.json
+            ${{ runner.temp }}/CurrencyNativeIntents.xcresult.build.json
             ${{ runner.temp }}/CurrencySpotlight.log
           retention-days: 7
           if-no-files-found: warn
@@ -223,8 +210,26 @@ jobs:
           xcrun simctl shutdown "$CURRENCY_TEST_SIMULATOR" || true
           xcrun simctl delete "$CURRENCY_TEST_SIMULATOR"
       - name: Remove Tuist CI credentials
-        if: always() && needs.changes.outputs.xcode == 'true'
+        if: always()
         run: |
           if [[ -n "${TUIST_XDG_CONFIG_HOME:-}" ]] && command -v tuist >/dev/null 2>&1; then
             tuist auth logout || true
+          fi
+  test:
+    needs: [plan, tooling, native]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require successful validation
+        env:
+          PLAN_RESULT: ${{ needs.plan.result }}
+          TOOLING_RESULT: ${{ needs.tooling.result }}
+          NATIVE_RESULT: ${{ needs.native.result }}
+          XCODE_REQUIRED: ${{ needs.plan.outputs.xcode }}
+        run: |
+          [[ "$PLAN_RESULT" == success && "$TOOLING_RESULT" == success ]] || exit 1
+          if [[ "$XCODE_REQUIRED" == true ]]; then
+            [[ "$NATIVE_RESULT" == success ]]
+          else
+            [[ "$XCODE_REQUIRED" == false && "$NATIVE_RESULT" == skipped ]]
           fi

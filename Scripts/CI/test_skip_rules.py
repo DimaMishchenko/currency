@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -38,7 +39,34 @@ class SkipRulesTests(unittest.TestCase):
         self.output.write_text("")
         subprocess.run(["bash", str(SCRIPTS / "changes.sh"), base],
                        cwd=self.repo, env=self.env, check=True)
-        return self.output.read_text()
+        values = dict(line.split("=", 1) for line in self.output.read_text().splitlines())
+        return "".join(f"{key}={values[key]}\n" for key in ("xcode", "publish"))
+
+    def test_plan_artifact_and_deleted_file(self):
+        self.commit_file("Apps/Currency/Tests/E2E/tests/home.e2e.ts")
+        base = self.git("rev-parse", "HEAD")
+        self.git("rm", "Apps/Currency/Tests/E2E/tests/home.e2e.ts")
+        self.git("commit", "-qm", "delete")
+        self.classify(base)
+        plan = json.loads((self.root / "CurrencyCIPlan.json").read_text())
+        self.assertTrue(plan["e2e"])
+        self.assertFalse(plan["xcode"])
+        self.assertFalse(plan["publish"])
+        self.assertEqual(plan["changed_files"], ["Apps/Currency/Tests/E2E/tests/home.e2e.ts"])
+        self.assertIn("No native changes", self.summary.read_text())
+
+    def test_missing_graph_is_coarse_and_malformed_graph_fails(self):
+        base = self.git("rev-parse", "HEAD")
+        self.commit_file("Domain/Core/Sources/Core/New.swift")
+        self.classify(base)
+        plan = json.loads((self.root / "CurrencyCIPlan.json").read_text())
+        self.assertTrue(all(plan[key] for key in ("unit_tests", "app", "watch", "intents", "harnesses")))
+        malformed = self.root / "graph.json"
+        malformed.write_text("{}")
+        result = subprocess.run(["bash", str(SCRIPTS / "changes.sh"), base, "--graph", str(malformed)],
+                                cwd=self.repo, env=self.env, capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Cannot safely select", result.stderr)
 
     def test_path_categories(self):
         cases = {

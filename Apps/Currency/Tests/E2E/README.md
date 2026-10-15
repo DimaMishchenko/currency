@@ -77,7 +77,7 @@ These are representative outcomes, not exhaustive coverage of each feature ID.
 | WID-04, WID-06–07 | [widget-configuration](tests/widget-configuration.e2e.ts) | Reversed pairs and Custom Board amount/list independent of app input |
 | WID-09–10 | [widget-lock-screen](tests/widget-lock-screen.e2e.ts) | Default Dollar icon installation/reuse and saved display |
 
-For widget/shared-data changes, run the affected widget and both Calculator sharing directions when relevant. Keep numerical/configuration combinations in native tests. App Intents contracts belong in `NativeIntentTests`; a Shortcuts system-UI journey is still missing. Update this table when coverage changes and preserve IDs in the feature map.
+For widget/shared-data changes, run the affected widget and both Calculator sharing directions when relevant. Keep numerical/configuration combinations in native tests. App Intents contracts belong in `NativeIntentTests`; that suite seeds `ready-converter` once, keeps fixed rates on later launches and verifies saved Settings preferences across app termination. It does not prove live provider coverage; a Shortcuts system-UI journey is still missing. Update this table when coverage changes and preserve IDs in the feature map.
 
 ## Fixtures, widgets and cache
 
