@@ -10,3 +10,5 @@ xcuserdata/
 Tuist/Dependencies/
 
 .validation/
+
+__pycache__/

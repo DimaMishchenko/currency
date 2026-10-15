@@ -576,7 +576,7 @@ let project = Project(
     .folderReference(path: "LICENSES"),
     "README.md", "LICENSE", "Project.swift", "Tuist.swift", ".gitignore", ".mise.toml",
     ".swift-format", ".github/**/*.yml", ".github/**/*.md", "Documentation/**/*.md",
-    "Documentation/**/*.png", "Scripts/**/*.sh", "Scripts/**/*.py",
+    "Documentation/**/*.png", "Scripts/**/*.sh", "Scripts/**/*.py", "Scripts/**/*.md",
     "Tuist/Package.swift", "Apps/Currency/README.md", "Apps/Currency/App/Configuration/**",
     "Apps/Currency/Modules/*/README.md", "AppExtensions/CurrencyWidgets/README.md",
     "AppExtensions/CurrencyWidgets/Configuration/**", "Foundation/*/Package.swift",

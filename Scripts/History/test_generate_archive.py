@@ -3,6 +3,7 @@ import datetime
 import json
 from pathlib import Path
 import tempfile
+import subprocess
 import unittest
 from unittest.mock import patch
 
@@ -27,6 +28,41 @@ class ArchiveGenerationTests(unittest.TestCase):
 
     def build(self, today=None):
         return generator.build_archive(self.crypto, self.fiat, self.tables, self.allowed, today or self.today)
+
+    def test_documented_curl_client_preserves_exact_provider_scope(self):
+        response = subprocess.CompletedProcess([], 0, stdout=json.dumps(self.fiat))
+        with patch.object(generator.subprocess, 'run', return_value=response) as execute:
+            self.assertEqual(generator.fetch_frankfurter(), self.fiat)
+        arguments = execute.call_args.args[0]
+        self.assertEqual(arguments[:-1], ['curl', '--fail', '--silent', '--show-error', '--max-time', '120'])
+        self.assertIn('base=USD&from=2010-07-01&to=2024-02-29&group=month', arguments[-1])
+        self.assertTrue(arguments[-1].endswith('providers=' + generator.PROVIDERS))
+        self.assertEqual(execute.call_args.kwargs['timeout'], 125)
+        self.assertTrue(execute.call_args.kwargs['check'])
+
+    def test_curl_failure_and_invalid_json_leave_archive_untouched(self):
+        generator.write_archive(self.output, self.build())
+        original = self.output.read_bytes()
+        crypto_file = self.output.parent / 'crypto.json'
+        crypto_file.write_text(json.dumps(self.crypto))
+        failures = [
+            subprocess.CalledProcessError(22, ['curl']),
+            subprocess.TimeoutExpired(['curl'], 125),
+            subprocess.CompletedProcess([], 0, stdout='<html>upstream error</html>'),
+            subprocess.CompletedProcess([], 0, stdout='{"error":"unavailable"}'),
+            subprocess.CompletedProcess([], 0, stdout='[]'),
+            subprocess.CompletedProcess([], 0, stdout='[null]'),
+        ]
+        for failure in failures:
+            with self.subTest(failure=str(failure)):
+                context = (patch.object(generator.subprocess, 'run', side_effect=failure)
+                           if isinstance(failure, Exception)
+                           else patch.object(generator.subprocess, 'run', return_value=failure))
+                with context, self.assertRaises((subprocess.SubprocessError, ValueError)):
+                    generator.main(['--output', str(self.output), '--today', '2024-05-15',
+                                    '--crypto-input', str(crypto_file)])
+                self.assertEqual(self.output.read_bytes(), original)
+                self.assertEqual(set(self.output.parent.iterdir()), {self.output, crypto_file})
 
     def test_completed_month_boundary_including_year_rollover(self):
         self.assertEqual(generator.publication_days(datetime.date(2024, 3, 31)), [])

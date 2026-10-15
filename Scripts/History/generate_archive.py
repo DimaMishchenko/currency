@@ -8,6 +8,7 @@ import math
 import os
 from pathlib import Path
 import re
+import subprocess
 import tempfile
 import urllib.request
 
@@ -161,6 +162,17 @@ def fetch_json(url):
         return json.load(response)
 
 
+def fetch_frankfurter():
+    url = f'https://api.frankfurter.dev/v2/rates?base=USD&from=2010-07-01&to=2024-02-29&group=month&providers={PROVIDERS}'
+    response = subprocess.run(
+        ['curl', '--fail', '--silent', '--show-error', '--max-time', '120', url],
+        check=True, capture_output=True, text=True, timeout=125)
+    rows = json.loads(response.stdout)
+    if not isinstance(rows, list) or not rows or not all(isinstance(row, dict) for row in rows):
+        raise ValueError('Frankfurter must return a nonempty array of rate rows')
+    return rows
+
+
 def load_sources(args, today):
     if args.crypto_input:
         crypto = json.loads(args.crypto_input.read_text())
@@ -171,8 +183,7 @@ def load_sources(args, today):
             with urllib.request.urlopen(url, timeout=120) as response:
                 rows = csv.DictReader(io.TextIOWrapper(response, encoding='utf-8'))
                 crypto[code] = [[row['time'], row['PriceUSD']] for row in rows if row.get('PriceUSD') and STATIC_START <= row['time'] <= STATIC_END and positive(row['PriceUSD'])]
-    fiat = json.loads(args.fiat_input.read_text()) if args.fiat_input else fetch_json(
-        f'https://api.frankfurter.dev/v2/rates?base=USD&from=2010-07-01&to=2024-02-29&group=month&providers={PROVIDERS}')
+    fiat = json.loads(args.fiat_input.read_text()) if args.fiat_input else fetch_frankfurter()
     tables = {}
     for day in publication_days(today):
         if args.fawaz_input:
