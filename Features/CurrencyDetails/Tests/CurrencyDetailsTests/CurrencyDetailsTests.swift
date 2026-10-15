@@ -62,7 +62,7 @@ struct CurrencyDetailsTests {
 
   @Test func requestedFiatCryptoPairInvertsProviderSeriesAndRetainsProvenance() async {
     let date = Date(timeIntervalSince1970: 1_700_000_000)
-    let source = RateSource(provider: .coinMetrics, observation: .hourlyClose, timeZone: .gmt)
+    let source = RateSource(provider: .coinMetrics, observation: .minuteReference, timeZone: .gmt)
     let received = HistorySeries(
       points: [
         HistoryPoint(date: date, value: 40_000),

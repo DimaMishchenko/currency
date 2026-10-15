@@ -100,14 +100,21 @@ private actor NormalizationGate: RateProvider {
     #expect(sawUpdatedBeforeCompletion)
   }
 
-  @Test func cachedPolicyReadRealignsLaterDailyPublicationWithoutChangingMarketTime() {
+  @Test func cachedStoreReadAndBootstrapSaveRealignWithoutChangingMarketTime() throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
     let newUSD = normalizationUSD(4, day: "2026-01-02")
     let staleAnchor = normalizationCrypto(anchor: 2, day: "2026-01-01")
     let snapshot = RateSnapshot(
       quotes: ["USD": newUSD, "BTC": staleAnchor], fetchedAt: normalizationNow,
       dailyQuotes: ["USD": newUSD], dailyFetchedAt: normalizationNow)
-    let aligned = RateProviderPolicy.intradayEnhanced.filter(snapshot)
+    try RateCache(directory: directory).save(snapshot)
+    let store = RateStore(directory: directory)
+    let aligned = store.loadRates()
     expectUSD100(aligned, anchor: 4, day: "2026-01-02")
-    #expect(RateProviderPolicy.intradayEnhanced.filter(aligned).quotes == aligned.quotes)
+    #expect(store.loadRates().quotes == aligned.quotes)
+    let saved = try store.saveBootstrapRates(snapshot, now: normalizationNow)
+    expectUSD100(saved, anchor: 4, day: "2026-01-02")
+    #expect(RateCache(directory: directory).load().quotes == saved.quotes)
   }
 }

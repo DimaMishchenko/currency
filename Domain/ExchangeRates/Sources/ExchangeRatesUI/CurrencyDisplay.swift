@@ -154,7 +154,6 @@ extension CurrencyDisplay {
     guard from == to || normalizationCancels(snapshot, from: from, to: to) else { return source }
     return RateSource(
       provider: source.provider, observation: source.observation, timeZone: source.timeZone,
-      latestObservation: source.latestObservation,
       contributingProviders: source.contributingProviders)
   }
 

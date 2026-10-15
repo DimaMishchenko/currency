@@ -107,7 +107,7 @@ import Testing
   @Test func customLiveProviderDoesNotProduceDailyFallbackWarning() throws {
     let request = try ConversionRequest(
       amount: "1", source: "BTC", destinations: [.init(code: "ETH")])
-    let source = RateSource(provider: .custom("market"), observation: .exchangeRate)
+    let source = RateSource(provider: .custom("market"), observation: .minuteReference)
     let rates = RateSnapshot(
       quotes: [
         "BTC": .init(2, published: "2027-01-15", source: source, retrievedAt: now),

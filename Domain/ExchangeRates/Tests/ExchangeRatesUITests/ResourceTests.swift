@@ -9,36 +9,13 @@ import UniformTypeIdentifiers
   @Test func provenanceInterpolationUsesTheOwningCatalog() {
     #expect(
       RateMessages.providerDescription(
-        RateSource(provider: .coinMetrics, observation: .dailyClose, timeZone: .gmt),
-        locale: Locale(identifier: "en_US")) == "Coin Metrics · daily closes · GMT")
+        RateSource(provider: .coinMetrics, observation: .dailyReference, timeZone: .gmt),
+        locale: Locale(identifier: "en_US")) == "Coin Metrics · daily reference rates · GMT")
     #expect(
       RateMessages.providerDescription(
-        RateSource(provider: .custom("Example"), observation: .exchangeRate),
-        locale: Locale(identifier: "en_US")) == "Example · retrieved")
+        RateSource(provider: .custom("Example"), observation: .unspecified),
+        locale: Locale(identifier: "en_US")) == "Example")
   }
-  @Test(arguments: [
-    (RateObservation.dailyClose, "Coin Metrics · daily closes · latest hourly close · GMT"),
-    (.monthlyLastClose, "Coin Metrics · monthly last available close · latest hourly close · GMT")
-  ])
-  func mixedHistoryDescribesBothAggregationAndHourlyEndpoint(
-    observation: RateObservation, expected: String
-  ) {
-    #expect(
-      RateMessages.providerDescription(
-        RateSource(
-          provider: .coinMetrics, observation: observation, timeZone: .gmt,
-          latestObservation: .hourlyClose), locale: Locale(identifier: "en_US")) == expected)
-  }
-
-  @Test func convertedHistoryKeepsBothProvidersAndNamesItsHourlyEndpoint() {
-    #expect(
-      RateMessages.providerDescription(
-        RateSource(
-          provider: .custom("Coin Metrics + Frankfurter"), timeZone: .gmt,
-          latestObservation: .hourlyClose), locale: Locale(identifier: "en_US"))
-        == "Coin Metrics + Frankfurter · latest hourly close · GMT")
-  }
-
   @Test func convertedReferenceNamesTheActualFXInputAndEverySource() throws {
     let source = RateSource(
       provider: .coinMetrics, observation: .minuteReference, timeZone: .gmt,

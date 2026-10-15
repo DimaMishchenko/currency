@@ -9,7 +9,7 @@ test('All history renders the actual bundled Bitcoin archive from 2010', { tags:
   await start('ready-crypto');
   const udid = process.env.CURRENCY_E2E_UDID!;
   const directory = execFileSync('xcrun', ['simctl', 'get_app_container', udid, 'com.dimasike.currency', 'group.com.dimasike.currency.shared'], { encoding: 'utf8' }).trim();
-  const cache = join(directory, 'history-v2-intradayEnhanced-BTC-USD-0.json');
+  const cache = join(directory, 'history-v3-BTC-USD-0.json');
   if (existsSync(cache)) unlinkSync(cache);
   await agent.act('Open Details & history for the Bitcoin destination currency.');
   await expect(screen.getByTestId('currency.details.BTC')).toBeVisible();

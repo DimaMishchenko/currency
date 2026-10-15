@@ -46,7 +46,7 @@ actor MinuteHistoryHTTP: HTTPClient {
     let client = MinuteHistoryHTTP()
     await client.omitQuoteMinute()
     let result = await HistoryService(
-      directory: directory, client: client, policy: .intradayEnhanced
+      directory: directory, client: client
     )
     .load(base: "BTC", quote: "ETH", range: .day, now: now)
     #expect(result.issue == nil)
@@ -64,7 +64,7 @@ actor MinuteHistoryHTTP: HTTPClient {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }
     let client = MinuteHistoryHTTP()
-    let service = HistoryService(directory: directory, client: client, policy: .intradayEnhanced)
+    let service = HistoryService(directory: directory, client: client)
     let direct = await service.load(base: "BTC", quote: "CZK", range: .day, now: now)
     let inverse = await service.load(base: "CZK", quote: "BTC", range: .day, now: now)
     #expect(direct.issue == nil)
@@ -81,7 +81,7 @@ actor MinuteHistoryHTTP: HTTPClient {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }
     let client = MinuteHistoryHTTP()
-    let service = HistoryService(directory: directory, client: client, policy: .intradayEnhanced)
+    let service = HistoryService(directory: directory, client: client)
     await client.shorten()
     let missing = await service.load(base: "BTC", quote: "USD", range: .day, now: now)
     #expect(missing.issue == .unavailable)

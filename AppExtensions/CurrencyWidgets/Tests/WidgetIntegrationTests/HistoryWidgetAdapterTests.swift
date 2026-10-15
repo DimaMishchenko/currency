@@ -28,7 +28,6 @@ import Widgets
     #expect(requests.withLock { $0 } == [.day])
     #expect(settings.range == .day)
     #expect(settings.availableRanges(input: ConverterState()).contains(.day))
-    #expect(timeline.entries.first?.snapshot.pair.policy == CurrencyRateConfiguration.policy)
     #expect(timeline.policy == .after(now.addingTimeInterval(3_600)))
   }
 
@@ -193,9 +192,9 @@ import Widgets
     #expect(settings.availableRanges(input: input) == fiatRanges)
   }
 
-  @Test func dailyProviderHidesIntradayOptionsAndNormalizesSavedSelection() {
+  @Test func fiatPairHidesIntradayOptionsAndNormalizesSavedSelection() {
     let pair = HistoryWidgetPair(
-      app: ConverterState(), base: "BTC", quote: "USD", policy: .daily)
+      app: ConverterState(), base: "EUR", quote: "USD")
     let settings = HistorySettings()
     settings.range = .day
     #expect(!HistoryWidgetRange.available(for: pair).contains(.day))

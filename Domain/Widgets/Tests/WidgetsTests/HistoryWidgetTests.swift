@@ -20,10 +20,10 @@ import Testing
             }, source: .init(provider: .frankfurter), fetchedAt: now), issue: issue))
   }
 
-  @Test func dailyPolicyNormalizesSavedIntradaySelectionAndRefreshesDaily() {
+  @Test func fiatPairNormalizesIntradaySelectionAndRefreshesDaily() {
     let now = Date(timeIntervalSince1970: 1_700_000_000)
     let pair = HistoryWidgetPair(
-      app: ConverterState(), base: "BTC", quote: "USD", policy: .daily)
+      app: ConverterState(), base: "EUR", quote: "USD")
     #expect(pair.isSupported)
     #expect(!pair.supportsIntradayHistory)
     #expect(pair.normalizedRange(.day) == .month)
@@ -218,7 +218,7 @@ import Testing
       ],
       source: .init(
         provider: intraday ? .coinMetrics : .fawaz,
-        observation: intraday ? .hourlyClose : .dailyReference, timeZone: .gmt),
+        observation: intraday ? .minuteReference : .dailyReference, timeZone: .gmt),
       fetchedAt: now)
     let pair = HistoryWidgetPair(app: ConverterState(), base: "BTC", quote: "USD")
     let fresh = HistoryWidgetSnapshot(

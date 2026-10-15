@@ -43,7 +43,7 @@ struct CryptoHistoryWidgetHarness: View {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }
     let history = HistoryService(
-      directory: directory, client: CryptoHistoryFixture(), policy: .intradayEnhanced)
+      directory: directory, client: CryptoHistoryFixture())
     let pair = HistoryWidgetPair(app: ConverterState(), base: "BTC", quote: "USD")
     for range: HistoryRange in [.day, .week, .month] {
       let result = await history.load(base: "BTC", quote: "USD", range: range, now: date)

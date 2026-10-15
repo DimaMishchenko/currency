@@ -110,7 +110,7 @@ enum WatchWidgetComposition {
     return WatchWidgetEntry(
       date: now, style: style, source: base, targets: selected, input: input, key: key,
       initialAmount: initial,
-      snapshot: RateStore(directory: directory, policy: CurrencyRateConfiguration.policy)
+      snapshot: RateStore(directory: directory)
         .loadRates(),
       configurationIsValid: WidgetMath.parseAmount(amount) != nil
         && CurrencyCatalog.codes.contains(base)
@@ -153,10 +153,10 @@ enum WatchWidgetComposition {
     var refreshed = entry
     do {
       let result = try await RateStore(
-        directory: directory(), policy: CurrencyRateConfiguration.policy
+        directory: directory()
       )
       .refreshRates(
-        using: RateService(policy: CurrencyRateConfiguration.policy),
+        using: RateService(),
         force: entry.snapshot.quotes.isEmpty, providerTimeout: .seconds(2))
       refreshed = WatchWidgetEntry(
         date: .now, style: entry.style, source: entry.source, targets: entry.targets,
@@ -274,13 +274,12 @@ struct WatchHistoryTimeline: AppIntentTimelineProvider {
     let now = Date()
     let pair = HistoryWidgetPair(
       app: WatchWidgetComposition.input(), base: configuration.source?.id,
-      quote: configuration.quote?.id, policy: CurrencyRateConfiguration.policy)
+      quote: configuration.quote?.id)
     let range = pair.normalizedRange(configuration.range.value)
     let result: HistoryResult
     if let request = pair.historyRequest {
       result = await HistoryService(
-        directory: WatchWidgetComposition.directory(), client: client,
-        policy: CurrencyRateConfiguration.policy
+        directory: WatchWidgetComposition.directory(), client: client
       )
       .load(
         base: request.base, quote: request.quote, range: range, now: now,

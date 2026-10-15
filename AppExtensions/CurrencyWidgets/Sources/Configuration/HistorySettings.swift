@@ -215,7 +215,6 @@ struct HistorySettings: WidgetConfigurationIntent {
       }
     }
     return HistoryWidgetPair(
-      app: input, base: resolve(base), quote: resolve(comparison),
-      policy: CurrencyRateConfiguration.policy)
+      app: input, base: resolve(base), quote: resolve(comparison))
   }
 }

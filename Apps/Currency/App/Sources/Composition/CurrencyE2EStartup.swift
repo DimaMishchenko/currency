@@ -36,7 +36,7 @@
         try seed(state, directory: directory(), defaults: defaults, now: now)
         WidgetCenter.shared.reloadAllTimelines()
       }
-      return RateService(policy: CurrencyRateConfiguration.policy, client: FixedRateClient())
+      return RateService(client: FixedRateClient())
     }
 
     private static func parse(
@@ -73,8 +73,7 @@
     private static func seed(
       _ state: InitialState, directory: URL, defaults: UserDefaults, now: Date
     ) throws {
-      let policy = CurrencyRateConfiguration.policy
-      let rates = RateStore(directory: directory, policy: policy)
+      let rates = RateStore(directory: directory)
       let daily = FixedRateClient.quotes(now: now)
       var effective = daily
       effective["BTC"] = FixedRateClient.coinMetricsQuote(now: now)
@@ -85,17 +84,16 @@
               quotes: effective, fetchedAt: now, dailyQuotes: daily, dailyFetchedAt: now,
               checkedAt: now, supplementalFetchedAt: now, supplementalQuotes: daily))
       }
-      for mode in [RateProviderPolicy.daily, .intradayEnhanced] {
-        try seedHistory(
-          base: "EUR", quote: "USD", values: [1.8, 2], mode: mode,
-          directory: directory, now: now)
-        try seedHistory(
-          base: "EUR", quote: "XAU", values: [0.009, 0.01], mode: mode,
-          directory: directory, now: now)
-        try seedHistory(
-          base: "BTC", quote: "USD", values: [90_000, 100_000], mode: mode,
-          directory: directory, now: now)
-      }
+
+      try seedHistory(
+        base: "EUR", quote: "USD", values: [1.8, 2],
+        directory: directory, now: now)
+      try seedHistory(
+        base: "EUR", quote: "XAU", values: [0.009, 0.01],
+        directory: directory, now: now)
+      try seedHistory(
+        base: "BTC", quote: "USD", values: [90_000, 100_000],
+        directory: directory, now: now)
       let end = Date(timeIntervalSince1970: floor(now.timeIntervalSince1970 / 300) * 300)
       let intraday = HistorySeries(
         points: (0...288)
@@ -106,17 +104,7 @@
           }, source: .init(provider: .coinMetrics, observation: .minuteReference, timeZone: .gmt),
         fetchedAt: end)
       try writeHistory(
-        intraday, filename: "history-v2-intradayEnhanced-BTC-USD-1.json",
-        directory: directory)
-      let legacy = HistorySeries(
-        points: [
-          HistoryPoint(date: now.addingTimeInterval(-3600), value: 1),
-          HistoryPoint(date: now, value: 2)
-        ],
-        source: .init(provider: .custom("Coinbase"), observation: .hourlyClose, timeZone: .gmt),
-        fetchedAt: now)
-      try writeHistory(
-        legacy, filename: "history-coinbaseEnhanced-coinbase-BTC-USD-1.json",
+        intraday, filename: "history-v3-BTC-USD-1.json",
         directory: directory)
       let files = [
         "input.json", "onboarding.json", "widget-location-refresh.json",
@@ -166,15 +154,15 @@
       let seededRates = rates.loadRates()
       guard seededRates.quotes["EUR"]?.value == 1, seededRates.quotes["USD"]?.value == 2,
         seededRates.quotes["CHF"]?.value == 0.5, seededRates.quotes["CZK"]?.value == 25,
-        seededRates.quotes["BTC"]?.value == (policy == .intradayEnhanced ? 0.00004 : 0.00002),
+        seededRates.quotes["BTC"]?.value == 0.00004,
         seededRates.quotes["BTC"]?.source.provider
-          == (policy == .intradayEnhanced ? .coinMetrics : .fawaz),
+          == .coinMetrics,
         discoveryStore.load() == discovery
       else { throw StartupError.seedVerificationFailed }
     }
 
     private static func seedHistory(
-      base: String, quote: String, values: [Double], mode: RateProviderPolicy,
+      base: String, quote: String, values: [Double],
       directory: URL, now: Date
     ) throws {
       var calendar = Calendar(identifier: .gregorian)
@@ -203,7 +191,7 @@
           ? "\(range.rawValue)-\(calendar.component(.year, from: now))" : "\(range.rawValue)"
         try writeHistory(
           series,
-          filename: "history-v2-\(mode.rawValue)-\(base)-\(quote)-\(interval).json",
+          filename: "history-v3-\(base)-\(quote)-\(interval).json",
           directory: directory)
       }
     }

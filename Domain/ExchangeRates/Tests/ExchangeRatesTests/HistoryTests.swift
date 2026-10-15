@@ -62,9 +62,8 @@ func historyDate(_ string: String) throws -> Date {
     defer { try? FileManager.default.removeItem(at: directory) }
     let client = DailyHistoryHTTP()
     let now = try historyDate("2026-01-08T12:00:00Z")
-    let service = HistoryService(directory: directory, client: client, policy: .intradayEnhanced)
+    let service = HistoryService(directory: directory, client: client)
     let first = await service.load(base: "BTC", quote: "EUR", range: .week, now: now)
-    #expect(first.series?.source.latestObservation == nil)
     _ = await service.load(base: "USD", quote: "XAU", range: .week, now: now)
     _ = await service.load(
       base: "BTC", quote: "EUR", range: .week, now: now.addingTimeInterval(21600))

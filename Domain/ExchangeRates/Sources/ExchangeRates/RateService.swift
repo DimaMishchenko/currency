@@ -19,14 +19,12 @@ public actor RateService {
   private let daily: any RateProvider
 
   private let crypto: (any RateProvider)?
-  private let policy: RateProviderPolicy?
   private let sleep: @Sendable (Duration) async throws -> Void
-  /// Creates the provider set selected by the application, defaulting to daily Fawaz data.
-  public init(policy: RateProviderPolicy = .daily, client: any HTTPClient = NetworkClient()) {
-    self.policy = policy
+  /// Creates a service using Fawaz daily rates and Coin Metrics crypto reference rates.
+  public init(client: any HTTPClient = NetworkClient()) {
     self.fiat = nil
     self.daily = FawazProvider(client: client)
-    self.crypto = policy == .intradayEnhanced ? CoinMetricsProvider(client: client) : nil
+    self.crypto = CoinMetricsProvider(client: client)
     self.sleep = { try await Task.sleep(for: $0) }
   }
 
@@ -35,7 +33,6 @@ public actor RateService {
     fiat: any RateProvider, daily: any RateProvider = FawazProvider(),
     crypto: (any RateProvider)? = nil
   ) {
-    self.policy = nil
     self.fiat = fiat
     self.daily = daily
     self.crypto = crypto
@@ -46,7 +43,6 @@ public actor RateService {
     fiat: any RateProvider, daily: any RateProvider, crypto: (any RateProvider)?,
     sleep: @escaping @Sendable (Duration) async throws -> Void
   ) {
-    self.policy = nil
     self.fiat = fiat
     self.daily = daily
     self.crypto = crypto
@@ -69,7 +65,7 @@ public actor RateService {
     previous: RateSnapshot, force: Bool = false, now: Date = .now,
     providerTimeout: Duration? = nil
   ) async -> RefreshResult {
-    let previous = policy?.filter(previous) ?? previous
+    let previous = previous.aligningCoinMetricsQuotes()
     guard !Task.isCancelled else { return RefreshResult(snapshot: previous, warning: nil) }
     let refreshFiat =
       fiat != nil
@@ -132,7 +128,7 @@ public actor RateService {
   /// own the foreground deadline, so an uncooperative provider cannot keep recovery pending.
   /// The stream preserves daily fallbacks and the primary provider's freshness precedence.
   public func bootstrap(previous: RateSnapshot, now: Date = .now) -> AsyncStream<BootstrapUpdate> {
-    let previous = policy?.filter(previous) ?? previous
+    let previous = previous.aligningCoinMetricsQuotes()
     let providers: [(Int, any RateProvider)] =
       [(0, daily)] + (fiat.map { [(1, $0)] } ?? [])
       + (crypto.map { [(2, $0)] } ?? [])

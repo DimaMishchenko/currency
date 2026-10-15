@@ -79,15 +79,15 @@ For widget/shared-data changes, run the affected widget and both Calculator shar
 
 ## Fixtures, widgets and cache
 
-Start each case once with a matching fixture. `fresh-onboarding` and `ready-converter` cover general flows; `ready-metals` adds Gold as a destination and `ready-metal-source` starts with one troy ounce of Gold for measurement checks. The first launch resets real stores; restart keeps edits. Fixed rates are EUR 1 / USD 2 / CHF 0.5 / CZK 25 / XAU 0.01 troy oz, with versioned reference-history caches for EUR/USD, EUR/Gold and BTC/USD. `ready-crypto` starts USD 1 → Bitcoin: 0.00002 from Coin Metrics, with a distinct 0.00001 Fawaz daily fallback stored alongside it. An old-provider chart cache is retained as a rejection fixture. Restart omits fixture state and preserves the real stores. Keep `-CurrencyE2EState` out of default launch arguments.
+Start each case once with a matching fixture. `fresh-onboarding` and `ready-converter` cover general flows; `ready-metals` adds Gold as a destination and `ready-metal-source` starts with one troy ounce of Gold for measurement checks. The first launch resets real stores; restart keeps edits. Fixed rates are EUR 1 / USD 2 / CHF 0.5 / CZK 25 / XAU 0.01 troy oz, with versioned reference-history caches for EUR/USD, EUR/Gold and BTC/USD. `ready-crypto` starts USD 1 → Bitcoin: 0.00002 from Coin Metrics, with a distinct 0.00001 Fawaz daily fallback stored alongside it. Restart omits fixture state and preserves the real stores. Keep `-CurrencyE2EState` out of default launch arguments.
 
-Run the provider journey with the normal app build. It verifies the standard Coin Metrics current rate, 1D capability, source credits and restart behavior. The fixture cache identity is `currency-fixtures-v8-CM`; rebuild after app or fixture changes.
+Run the provider journey with the normal app build. It verifies the standard Coin Metrics current rate, 1D capability, source credits and restart behavior. The fixture cache identity is `currency-fixtures-v9-CM`; rebuild after app or fixture changes.
 
 ```sh
 npm run test:e2e -- tests/provider-policy.e2e.ts
 ```
 
-The fixtures use the production provider decoders with a fixed HTTP client. Fawaz supplies daily rates; Coin Metrics supplies current crypto reference prices. Fresh v2 chart caches include a full day of five-minute sampled reference observations and monthly All provenance; they avoid live network timing. These fixture journeys do not prove live provider coverage or provider-shortfall handling. This journey verifies the standard provider configuration and same-build relaunch with compatible reference caches; the legacy chart fixture must remain excluded.
+The fixtures use the production provider decoders with a fixed HTTP client. Fawaz supplies daily rates; Coin Metrics supplies current crypto reference prices. Fresh chart caches include a full day of five-minute sampled reference observations and monthly All provenance; they avoid live network timing. These fixture journeys do not prove live provider coverage or provider-shortfall handling. This journey verifies the standard provider configuration and same-build relaunch with compatible reference caches.
 
 Home Screen setup uses [widgetctl](https://github.com/DimaMishchenko/widgetctl), pinned as a GitHub dev dependency. It installs/configures the requested kind and size, preserves other apps’ widgets and unloads its helper after the module. Tests still validate rendered data and interactions. Set `CURRENCY_E2E_WIDGET_SETUP=gallery` to exercise system installation; private-configuration cases then skip. Lock Screen installation uses system UI.
 

@@ -191,19 +191,4 @@ private func metricsClient(_ http: MetricsHTTP) -> CoinMetricsClient {
     }
   }
 
-  @Test func oldProviderCacheDecodesButCannotReenterEitherPolicy() throws {
-    let source = try JSONDecoder()
-      .decode(
-        RateSource.self,
-        from: Data(#"{"provider":{"coinbase":{}},"observation":"exchangeRate"}"#.utf8))
-    #expect(source.provider == .custom("Coinbase"))
-    let saved = RateSnapshot(
-      quotes: [
-        "BTC": ExchangeRate(1, published: "2026-01-02", source: source, retrievedAt: metricsNow)
-      ], fetchedAt: metricsNow)
-    for policy in [RateProviderPolicy.daily, .intradayEnhanced] {
-      #expect(policy.filter(saved).quotes.isEmpty)
-      #expect(policy.filter(saved).checkedAt == nil)
-    }
-  }
 }

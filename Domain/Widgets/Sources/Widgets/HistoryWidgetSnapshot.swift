@@ -10,15 +10,11 @@ public struct HistoryWidgetPair: Sendable, Equatable {
   public let quote: String?
   /// The app-selected mass unit for both metal currencies.
   public let metalUnit: MetalUnit
-  /// Provider capabilities selected by the host for chart ranges and scheduling.
-  public let policy: RateProviderPolicy
 
   /// Nil overrides follow the app base and first displayed destination independently.
   public init(
-    app: ConverterState, base: String? = nil, quote: String? = nil,
-    policy: RateProviderPolicy = .intradayEnhanced
+    app: ConverterState, base: String? = nil, quote: String? = nil
   ) {
-    self.policy = policy
     metalUnit = app.metalUnit
     self.base = base ?? app.source
     self.quote = quote ?? app.destinationRows.first?.code
@@ -48,7 +44,7 @@ public struct HistoryWidgetPair: Sendable, Equatable {
 
   /// Whether the supported pair can load intraday reference observations.
   public var supportsIntradayHistory: Bool {
-    guard policy == .intradayEnhanced, let request = historyRequest else { return false }
+    guard let request = historyRequest else { return false }
     return HistoryService.supportsIntraday(base: request.base, quote: request.quote)
   }
   /// Replaces an unavailable saved intraday range with daily one-month history.

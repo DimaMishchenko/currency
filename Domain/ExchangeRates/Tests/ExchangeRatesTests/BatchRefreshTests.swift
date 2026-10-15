@@ -36,7 +36,8 @@ private actor BatchHTTP: HTTPClient {
     let time = Date(timeIntervalSince1970: 1_767_355_200)
     let daily = ExchangeRate(1, published: "2026-01-02", source: .init(provider: .fawaz))
     let live = ExchangeRate(
-      2, published: "2026-01-02", source: .init(provider: .coinMetrics, observation: .exchangeRate),
+      2, published: "2026-01-02",
+      source: .init(provider: .coinMetrics, observation: .minuteReference),
       retrievedAt: time)
     let previous = RateSnapshot(quotes: ["BTC": live], checkedAt: time)
     let service = RateService(
@@ -65,7 +66,8 @@ private actor BatchHTTP: HTTPClient {
     let now = Date()
     let daily = ExchangeRate(1, published: "2026-01-02", source: .init(provider: .fawaz))
     let live = ExchangeRate(
-      2, published: "2026-01-02", source: .init(provider: .coinMetrics, observation: .exchangeRate),
+      2, published: "2026-01-02",
+      source: .init(provider: .coinMetrics, observation: .minuteReference),
       retrievedAt: now)
     let result = await RateService(
       fiat: StubRateProvider(quotes: nil),

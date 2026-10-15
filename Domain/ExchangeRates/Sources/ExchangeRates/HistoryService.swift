@@ -1,6 +1,6 @@
 import Foundation
 
-/// Loads dated daily publications, bundled monthly references, and optional intraday crypto references.
+/// Loads dated daily publications, bundled monthly references, and intraday crypto references.
 public actor HistoryService {
   private let client: any HTTPClient
   private let directory: URL
@@ -12,22 +12,15 @@ public actor HistoryService {
       && !CurrencyCatalog.metals.contains(base) && !CurrencyCatalog.metals.contains(quote)
   }
 
-  /// The provider capabilities configured by the host.
-  public nonisolated let policy: RateProviderPolicy
-
-  /// Whether the configured providers can supply intraday references for this pair.
+  /// Whether providers can supply intraday references for this pair.
   public nonisolated func supportsIntraday(base: String, quote: String) -> Bool {
-    policy == .intradayEnhanced && Self.supportsIntraday(base: base, quote: quote)
+    Self.supportsIntraday(base: base, quote: quote)
   }
 
-  /// Creates a history service, defaulting to Fawaz daily history.
-  public init(
-    directory: URL, client: any HTTPClient = NetworkClient(timeout: 30),
-    policy: RateProviderPolicy = .daily
-  ) {
+  /// Creates a history service using daily publications and intraday crypto references.
+  public init(directory: URL, client: any HTTPClient = NetworkClient(timeout: 30)) {
     self.directory = directory
     self.client = client
-    self.policy = policy
   }
 
   /// Loads provider observations or returns compatible saved observations with an explicit stale issue.
@@ -45,7 +38,7 @@ public actor HistoryService {
     let year = calendar.component(.year, from: now)
     let interval = range == .yearToDate ? "\(range.rawValue)-\(year)" : "\(range.rawValue)"
     let file = directory.appendingPathComponent(
-      "history-v2-\(policy.rawValue)-\(base)-\(quote)-\(interval).json")
+      "history-v3-\(base)-\(quote)-\(interval).json")
     let cached = (try? Data(contentsOf: file))
       .flatMap { try? JSONDecoder().decode(HistorySeries.self, from: $0) }
       .flatMap { series -> HistorySeries? in
@@ -57,7 +50,7 @@ public actor HistoryService {
           (series.source.provider == expected
             || (range == .all && [.coinMetrics, .frankfurter].contains(series.source.provider))),
           series.source.observation == observation,
-          series.source.latestObservation == nil, series.points.count >= 2,
+          series.points.count >= 2,
           series.points.allSatisfy({ $0.value.isFinite && $0.value > 0 && $0.date <= now }),
           series.fetchedAt <= now,
           zip(series.points, series.points.dropFirst()).allSatisfy({ $0.date < $1.date })

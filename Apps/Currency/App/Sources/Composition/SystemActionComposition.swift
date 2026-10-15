@@ -13,13 +13,13 @@ struct SystemActionComposition: Sendable {
   let readLocal: @Sendable () -> (LocalCurrency.WidgetLocation?, WidgetLocationStatus)
 
   init(
-    directory: URL, policy: RateProviderPolicy = CurrencyRateConfiguration.policy,
+    directory: URL,
     service: RateService? = nil
   ) {
-    let service = service ?? RateService(policy: policy)
+    let service = service ?? RateService()
     let conversion = ConversionStore(directory: directory)
     let local = LocalCurrencyStore(directory: directory)
-    let rates = RateStore(directory: directory, policy: policy)
+    let rates = RateStore(directory: directory)
     let readLocal: @Sendable () -> (LocalCurrency.WidgetLocation?, WidgetLocationStatus) = {
       let (observation, saved) = local.snapshot()
       switch CLLocationManager().authorizationStatus {
@@ -40,6 +40,6 @@ struct SystemActionComposition: Sendable {
           try Task.checkCancellation()
           WidgetCenter.shared.reloadAllTimelines()
           return result
-        }, refreshInterval: policy.refreshInterval))
+        }, refreshInterval: CurrencyRateConfiguration.widgetRefreshInterval))
   }
 }

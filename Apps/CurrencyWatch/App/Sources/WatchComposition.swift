@@ -17,7 +17,7 @@ final class WatchComposition {
   let conversion: ConversionStore
   let rates: RateStore
   let history: HistoryService
-  private let service = RateService(policy: CurrencyRateConfiguration.policy)
+  private let service = RateService()
   private let discovery = HomeDiscoveryStore(defaults: .standard)
   private var issue: HomeIssue?
   private var observers: [UUID: AsyncStream<Void>.Continuation] = [:]
@@ -30,8 +30,8 @@ final class WatchComposition {
     else { preconditionFailure("Currency Watch requires its App Group entitlement") }
     self.directory = directory
     conversion = ConversionStore(directory: directory)
-    rates = RateStore(directory: directory, policy: CurrencyRateConfiguration.policy)
-    history = HistoryService(directory: directory, policy: CurrencyRateConfiguration.policy)
+    rates = RateStore(directory: directory)
+    history = HistoryService(directory: directory)
     systemActions = SystemActionComposition(directory: directory)
     let actions = systemActions
     AppDependencyManager.shared.add(dependency: actions)
@@ -114,8 +114,8 @@ struct SystemActionComposition: Sendable {
 
   init(directory: URL) {
     let conversion = ConversionStore(directory: directory)
-    let rates = RateStore(directory: directory, policy: CurrencyRateConfiguration.policy)
-    let service = RateService(policy: CurrencyRateConfiguration.policy)
+    let rates = RateStore(directory: directory)
+    let service = RateService()
     readSelected = { [conversion] in
       let input = conversion.input()
       return [input.source] + input.manualDestinations
@@ -130,6 +130,6 @@ struct SystemActionComposition: Sendable {
           try Task.checkCancellation()
           WidgetCenter.shared.reloadAllTimelines()
           return result
-        }, refreshInterval: CurrencyRateConfiguration.policy.refreshInterval))
+        }, refreshInterval: CurrencyRateConfiguration.widgetRefreshInterval))
   }
 }

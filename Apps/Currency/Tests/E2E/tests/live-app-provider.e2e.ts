@@ -10,8 +10,8 @@ test('real provider refresh and phone history survive a live-network relaunch', 
   const udid = process.env.CURRENCY_E2E_UDID!;
   const directory = execFileSync('xcrun', ['simctl', 'get_app_container', udid, 'com.dimasike.currency', 'group.com.dimasike.currency.shared'], { encoding: 'utf8' }).trim();
   const ratesPath = join(directory, 'rates.json');
-  const dayPath = join(directory, 'history-v2-intradayEnhanced-BTC-USD-1.json');
-  const allPath = join(directory, 'history-v2-intradayEnhanced-BTC-USD-0.json');
+  const dayPath = join(directory, 'history-v3-BTC-USD-1.json');
+  const allPath = join(directory, 'history-v3-BTC-USD-0.json');
   await device.closeApp();
   for (const file of [ratesPath, dayPath, allPath]) {
     if (existsSync(file)) unlinkSync(file);

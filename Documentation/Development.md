@@ -22,9 +22,9 @@ For command-line Xcode builds, use `set -o pipefail` and pipe combined output th
 
 ## Rate providers
 
-Coin Metrics Community supplies current crypto reference prices and supported 1D charts across the phone app, widgets, independent Watch app and Watch widgets. Fawaz supplies daily rates and automatically provides the crypto fallback when current Coin Metrics data is unavailable. Selected Frankfurter fiat sources and Coin Metrics archives extend bundled monthly history before March 2024 where observations exist. Incompatible legacy provider caches are excluded. WidgetKit controls timeline delivery; no requested refresh cadence guarantees execution.
+Coin Metrics Community supplies current crypto reference prices and supported 1D charts across the phone app, widgets, independent Watch app and Watch widgets. Fawaz supplies daily rates and automatically provides the crypto fallback when current Coin Metrics data is unavailable. Selected Frankfurter fiat sources and Coin Metrics archives extend bundled monthly history before March 2024 where observations exist. WidgetKit controls timeline delivery; no requested refresh cadence guarantees execution.
 
-The app uses the domain’s `.intradayEnhanced` policy. The reusable `.daily` policy remains available to package consumers and baseline/fallback tests.
+The standard provider set is Fawaz daily rates plus Coin Metrics crypto reference prices. Provider failures retain daily fallback; there is no provider-mode flag.
 
 Crypto prices converted from USD using a dated daily fiat reference are approximate estimates, not intraday FX. All uses bundled completed-month samples where available and omits the incomplete current month. Bundled Fawaz observations use March 2, 2024 and then each completed month’s first day; missing completed months may be fetched. These are reference observations, not exchange closes. Preserve source metadata, gaps and [data licence notices](DataSources.md) when refreshing bundled data with `Scripts/History/generate_archive.py`. The [monthly refresh workflow](../Scripts/History/README.md) proposes meaningful archive changes through a review PR; unchanged data is skipped.
 

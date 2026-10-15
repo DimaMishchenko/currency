@@ -5,9 +5,9 @@ import Foundation
 import Testing
 
 @MainActor
-struct ProviderPolicyIntegrationTests {
-  @Test(arguments: [RateProviderPolicy.daily, .intradayEnhanced])
-  func everyPhoneEntryUsesTheSelectedPolicy(policy: RateProviderPolicy) throws {
+struct ProviderIntegrationTests {
+  @Test
+  func everyPhoneEntryUsesCurrentCryptoRates() throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     let suite = UUID().uuidString
     let defaults = try #require(UserDefaults(suiteName: suite))
@@ -23,7 +23,7 @@ struct ProviderPolicyIntegrationTests {
     ]
     var quotes = daily
     quotes["BTC"] = .init(
-      0.02, published: day, source: .init(provider: .coinMetrics, observation: .exchangeRate),
+      0.02, published: day, source: .init(provider: .coinMetrics, observation: .minuteReference),
       retrievedAt: now)
     try RateCache(directory: directory)
       .save(
@@ -32,17 +32,16 @@ struct ProviderPolicyIntegrationTests {
           checkedAt: now, supplementalFetchedAt: now, supplementalQuotes: daily))
     let composition = AppComposition(
       directory: directory, appearance: AppearancePreferences(defaults: defaults),
-      discoveryDefaults: defaults, policy: policy)
+      discoveryDefaults: defaults)
     _ = try composition.edit { $0.setDestinations(["BTC"]) }
-    let expected: Decimal = policy == .daily ? 1 : 2
+    let expected: Decimal = 2
     #expect(composition.home.readRates().convert(100, from: "EUR", to: "BTC") == expected)
     #expect(
       composition.systemActions.action.dependencies.readRates()
         .convert(100, from: "EUR", to: "BTC") == expected)
     let settings = composition.settings(scene: composition.makeScene())
     #expect(settings.readState().snapshot.convert(100, from: "EUR", to: "BTC") == expected)
-    #expect(composition.details.supportsIntraday("BTC", "USD") == (policy == .intradayEnhanced))
+    #expect(composition.details.supportsIntraday("BTC", "USD") == true)
     #expect(!composition.details.supportsIntraday("EUR", "USD"))
-    #expect(composition.history.policy == policy)
   }
 }

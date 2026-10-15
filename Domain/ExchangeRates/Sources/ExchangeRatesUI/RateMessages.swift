@@ -47,11 +47,6 @@ public enum RateMessages {
       approximate.locale = locale
       description = String(localized: approximate)
     }
-    if source.latestObservation == .hourlyClose {
-      var endpoint = LocalizedStringResource.Support.sourceWithLatestHourlyClose(description)
-      endpoint.locale = locale
-      description = String(localized: endpoint)
-    }
     guard let timeZone = source.timeZone else { return description }
     var withZone = LocalizedStringResource.Support.sourceWithTimeZone(
       description, timeZone.identifier)
@@ -87,15 +82,11 @@ public enum RateMessages {
   ) -> String {
     var resource: LocalizedStringResource
     switch observation {
-    case .unspecified, .trade: return provider
-    case .exchangeRate: resource = .Support.retrievedRates(provider)
+    case .unspecified: return provider
     case .dailyRate: resource = .Support.dailyRates(provider)
     case .minuteReference: resource = .Support.minuteReference(provider)
     case .dailyReference: resource = .Support.dailyReference(provider)
     case .monthlyReference: resource = .Support.monthlyReference(provider)
-    case .dailyClose: resource = .Support.dailyCloses(provider)
-    case .hourlyClose: resource = .Support.hourlyCloses(provider)
-    case .monthlyLastClose: resource = .Support.monthlyLastClose(provider)
     }
     resource.locale = locale
     return String(localized: resource)

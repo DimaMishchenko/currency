@@ -29,7 +29,6 @@ final class AppComposition {
   let discovery: HomeDiscoveryStore
   let history: HistoryService
   let service: RateService
-  let policy: RateProviderPolicy
   let appearance: AppearancePreferences
   let systemActions: SystemActionComposition
   lazy var searchIndex = CurrencySearchIndex.live(composition: systemActions)
@@ -46,8 +45,8 @@ final class AppComposition {
         refreshRates: { [weak self] in _ = try? await self?.refresh(force: false) },
         refreshLocalCurrency: { [weak self] in await self?.foregroundLocation.refreshIfNeeded() },
         changed: { [weak self] in self?.changed() },
-        sleepRates: { [policy] in
-          try await Task.sleep(for: .seconds(policy == .intradayEnhanced ? 60 : 21_600))
+        sleepRates: {
+          try await Task.sleep(for: .seconds(CurrencyRateConfiguration.foregroundRefreshInterval))
         }, sleepLocalCurrency: { try await Task.sleep(for: .seconds(300)) }))
   }
 
@@ -67,20 +66,19 @@ final class AppComposition {
   init(
     directory: URL = AppGroup.directory, appearance: AppearancePreferences? = nil,
     discoveryDefaults: UserDefaults = .standard,
-    policy: RateProviderPolicy = CurrencyRateConfiguration.policy, service: RateService? = nil
+    service: RateService? = nil
   ) {
     syncDirectory = directory
-    self.policy = policy
-    self.service = service ?? RateService(policy: policy)
+    self.service = service ?? RateService()
     self.appearance = appearance ?? AppearancePreferences(defaults: .standard)
-    rates = RateStore(directory: directory, policy: policy)
+    rates = RateStore(directory: directory)
     conversion = ConversionStore(directory: directory)
     local = LocalCurrencyStore(directory: directory)
     progress = OnboardingProgressStore(directory: directory)
     discovery = HomeDiscoveryStore(defaults: discoveryDefaults)
-    history = HistoryService(directory: directory, policy: policy)
+    history = HistoryService(directory: directory)
     systemActions = SystemActionComposition(
-      directory: directory, policy: policy, service: self.service)
+      directory: directory, service: self.service)
     let actions = systemActions
     AppDependencyManager.shared.add(dependency: actions)
     let index = searchIndex

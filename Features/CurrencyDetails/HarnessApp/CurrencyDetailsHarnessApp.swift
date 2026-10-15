@@ -77,8 +77,7 @@ struct CurrencyDetailsHarnessApp: App {
           points: points,
           source: .init(
             provider: isCrypto ? .coinMetrics : .frankfurter,
-            observation: isCrypto
-              ? (range == .day ? .hourlyClose : .dailyClose) : .dailyReference,
+            observation: isCrypto && range == .day ? .minuteReference : .dailyReference,
             timeZone: .gmt), fetchedAt: .now),
         issue: name == "cached" ? .usingCachedSeries : nil)
     }

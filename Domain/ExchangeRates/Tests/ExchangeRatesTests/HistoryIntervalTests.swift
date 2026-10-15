@@ -16,7 +16,7 @@ import Testing
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     let client = MinuteHistoryHTTP()
     let result = await HistoryService(
-      directory: directory, client: client, policy: .intradayEnhanced
+      directory: directory, client: client
     )
     .load(base: base, quote: quote, range: .day)
     #expect(result.series == nil)
@@ -29,7 +29,7 @@ import Testing
     defer { try? FileManager.default.removeItem(at: directory) }
     let now = try historyDate("2026-01-05T00:00:00Z")
     let client = MinuteHistoryHTTP()
-    let service = HistoryService(directory: directory, client: client, policy: .intradayEnhanced)
+    let service = HistoryService(directory: directory, client: client)
     let first = await service.load(base: "BTC", quote: "USD", range: .day, now: now)
     #expect(first.issue == nil)
     await client.fail()
@@ -50,7 +50,7 @@ import Testing
     let now = try historyDate("2026-01-05T00:05:17Z")
     let endpoint = try historyDate("2026-01-05T00:05:00Z")
     let client = MinuteHistoryHTTP()
-    let service = HistoryService(directory: directory, client: client, policy: .intradayEnhanced)
+    let service = HistoryService(directory: directory, client: client)
     let first = await service.load(base: "BTC", quote: "USD", range: .day, now: now)
     let series = try #require(first.series)
     #expect(first.issue == nil)

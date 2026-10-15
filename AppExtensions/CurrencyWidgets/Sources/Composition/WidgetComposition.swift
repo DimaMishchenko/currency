@@ -35,7 +35,7 @@ enum WidgetComposition {
   static func timeline() -> WidgetTimelineDependencies {
     let directory = directory()
     let conversion = ConversionStore(directory: directory)
-    let rates = RateStore(directory: directory, policy: CurrencyRateConfiguration.policy)
+    let rates = RateStore(directory: directory)
     let local = LocalCurrencyStore(directory: directory)
     let widgets = WidgetStore(directory: directory)
     return WidgetTimelineDependencies(
@@ -46,7 +46,7 @@ enum WidgetComposition {
       },
       refreshRates: { force in
         try await rates.refreshRates(
-          using: RateService(policy: CurrencyRateConfiguration.policy), force: force,
+          using: RateService(), force: force,
           providerTimeout: .seconds(2))
       },
       refreshLocalCurrency: {
@@ -62,8 +62,7 @@ enum WidgetComposition {
     let conversion = ConversionStore(directory: directory)
     let local = LocalCurrencyStore(directory: directory)
     let history = HistoryService(
-      directory: directory, client: NetworkClient(timeout: 10),
-      policy: CurrencyRateConfiguration.policy)
+      directory: directory, client: NetworkClient(timeout: 10))
     return HistoryTimelineDependencies(
       input: { conversion.input() },
       load: { base, quote, range, now in
@@ -76,7 +75,7 @@ enum WidgetComposition {
 
   static func action() -> WidgetActionDependencies {
     let directory = directory()
-    let rates = RateStore(directory: directory, policy: CurrencyRateConfiguration.policy)
+    let rates = RateStore(directory: directory)
     let widgets = WidgetStore(directory: directory)
     return WidgetActionDependencies(
       rates: { rates.loadRates() },

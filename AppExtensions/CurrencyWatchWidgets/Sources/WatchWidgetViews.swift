@@ -448,9 +448,6 @@ struct WatchHistoryView: View {
   private var provenance: LocalizedStringResource {
     if snapshot.issue == .usingCachedSeries { return .WatchWidgets.savedHistory }
     switch snapshot.series?.source.observation {
-    case .hourlyClose: return .WatchWidgets.hourlyCloses
-    case .dailyClose: return .WatchWidgets.dailyCloses
-    case .monthlyLastClose: return .WatchWidgets.monthlyCloses
     case .monthlyReference: return .WatchWidgets.monthlyReference
     default: return .WatchWidgets.referenceHistory
     }
