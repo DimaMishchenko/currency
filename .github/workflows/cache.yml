@@ -62,6 +62,10 @@ jobs:
           config=$(mktemp -d "$RUNNER_TEMP/currency-tuist-cache.XXXXXX")
           echo "TUIST_XDG_CONFIG_HOME=$config" >> "$GITHUB_ENV"
       - uses: jdx/mise-action@v5
+      - name: Identify cache toolchain
+        run: |
+          identity=$(python3 Scripts/CI/cache_toolchain.py)
+          echo "TUIST_CURRENCY_CACHE_TOOLCHAIN=$identity" >> "$GITHUB_ENV"
       - name: Warm tested Debug modules
         run: |
           tuist install

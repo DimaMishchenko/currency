@@ -361,7 +361,7 @@ struct CurrencyTile: View {
   }
 
   private var amount: some View {
-    HStack(alignment: .firstTextBaseline, spacing: 3) {
+    HStack(alignment: .center, spacing: 3) {
       Text(verbatim: displayAmount)
         .monospacedDigit().lineLimit(1).minimumScaleFactor(0.35)
         .contentTransition(.identity)

@@ -3,10 +3,69 @@ import os
 from pathlib import Path
 import subprocess
 import tempfile
+import textwrap
 import unittest
+from unittest.mock import patch
+
+from cache_toolchain import SDKS, cache_toolchain
 
 
 SCRIPT = Path(__file__).with_name('run_native_checks.sh').resolve()
+
+
+class CacheToolchainTests(unittest.TestCase):
+    def identity(self, xcode='Xcode 27.1\nBuild version 27B501', sdk_build='24B501'):
+        with patch('cache_toolchain.subprocess.check_output') as command:
+            command.side_effect = lambda args, **kwargs: xcode if args[0] == 'xcodebuild' else sdk_build
+            result = cache_toolchain()
+            self.assertEqual(command.call_args_list[0].args[0], ('xcodebuild', '-version'))
+            self.assertEqual([call.args[0][2] for call in command.call_args_list[1:]], list(SDKS))
+            return result
+
+    def test_same_toolchain_has_stable_identity(self):
+        self.assertEqual(self.identity(), self.identity())
+        self.assertRegex(self.identity(), r'^[a-f0-9]{64}$')
+
+    def test_xcode_and_sdk_builds_each_change_identity(self):
+        baseline = self.identity()
+        self.assertNotEqual(baseline, self.identity(xcode='Xcode 27.1\nBuild version 27B502'))
+        self.assertNotEqual(baseline, self.identity(sdk_build='24B502'))
+
+    def test_toolchain_query_failure_is_fatal(self):
+        with patch('cache_toolchain.subprocess.check_output', side_effect=subprocess.CalledProcessError(1, 'xcrun')):
+            with self.assertRaises(subprocess.CalledProcessError):
+                cache_toolchain()
+
+    def test_warming_and_consuming_export_same_identity_before_tuist(self):
+        root = SCRIPT.parents[2]
+        command = 'identity=$(python3 Scripts/CI/cache_toolchain.py)'
+        for name in ('tests.yml', 'cache.yml'):
+            workflow = (root / '.github/workflows' / name).read_text()
+            with self.subTest(workflow=name):
+                self.assertEqual(workflow.count(command), 1)
+                self.assertLess(workflow.index(command), workflow.index('tuist install'))
+        project = (root / 'Project.swift').read_text()
+        self.assertIn('Environment.currencyCacheToolchain', project)
+        self.assertIn('"CURRENCY_CACHE_TOOLCHAIN"', project)
+
+    def test_toolchain_query_failure_stops_workflow_before_export(self):
+        root = SCRIPT.parents[2]
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory)
+            executable = path / 'python3'
+            executable.write_text('#!/bin/sh\nexit 17\n')
+            executable.chmod(0o755)
+            environment_file = path / 'environment'
+            for name in ('tests.yml', 'cache.yml'):
+                workflow = (root / '.github/workflows' / name).read_text()
+                step = workflow.split('      - name: Identify cache toolchain\n', 1)[1]
+                run = textwrap.dedent(step.split('        run: |\n', 1)[1].split('      - ', 1)[0])
+                with self.subTest(workflow=name):
+                    result = subprocess.run(['bash', '-e', '-c', run], capture_output=True,
+                                            env={**os.environ, 'PATH': directory + os.pathsep + os.environ['PATH'],
+                                                 'GITHUB_ENV': str(environment_file)})
+                    self.assertEqual(result.returncode, 17, result.stderr)
+                    self.assertFalse(environment_file.exists())
 
 
 class NativeChecksTests(unittest.TestCase):
