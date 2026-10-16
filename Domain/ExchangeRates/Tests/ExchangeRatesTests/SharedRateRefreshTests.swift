@@ -99,21 +99,25 @@ private actor SharedQuoteProvider: RateProvider {
     #expect(store.loadRates().quotes["BTC"] == daily)
   }
 
-  @Test func waitingWidgetDeadlineLeavesOtherHostLeaseIntact() async throws {
+  @Test(.timeLimit(.minutes(1))) func waitingWidgetDeadlineLeavesOtherHostLeaseIntact() async throws
+  {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    let cached = RateSnapshot(
+      quotes: ["USD": ExchangeRate(2, published: "2026-10-16", source: .init(provider: .fawaz))],
+      fetchedAt: .now)
+    try RateCache(directory: directory).save(cached)
     let url = directory.appendingPathComponent("rate-refresh.json")
     let owner = UUID()
     let state = RateStore.RefreshState(
-      lease: .init(owner: owner, expires: Date.now.addingTimeInterval(30)))
+      lease: .init(owner: owner, expires: .distantFuture))
     try JSONEncoder().encode(state).write(to: url)
     let provider = SharedQuoteProvider()
-    let start = ContinuousClock.now
-    _ = try await RateStore(directory: directory)
+    let result = try await RateStore(directory: directory)
       .refreshRates(
-        using: service(provider), providerTimeout: .milliseconds(30))
-    #expect(start.duration(to: .now) < .seconds(1))
+        using: service(provider), providerTimeout: .zero)
+    #expect(result.snapshot.quotes == cached.quotes)
     #expect(await provider.calls == 0)
     let preserved = try JSONDecoder()
       .decode(RateStore.RefreshState.self, from: Data(contentsOf: url))

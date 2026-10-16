@@ -588,12 +588,9 @@ private func waitFor(_ predicate: () -> Bool) async throws {
     defer { try? FileManager.default.removeItem(at: location) }
     let store = OnboardingTestStore(directory: location)
     let daily = onboardingQuotes()
-    var live = daily
-    live["BTC"] = ExchangeRate(
-      2, published: "2026-09-10", source: .init(provider: .coinMetrics), observedAt: .now)
     try RateCache(directory: location)
       .save(
-        RateSnapshot(quotes: live, fetchedAt: .now, dailyQuotes: daily))
+        RateSnapshot(quotes: daily, fetchedAt: .now, dailyQuotes: daily))
     var draft = ConverterState()
     draft.changeSource("BTC")
     draft.setDestinations(["EUR", "USD"])
@@ -603,7 +600,7 @@ private func waitFor(_ predicate: () -> Bool) async throws {
       service: RateService(
         fiat: OnboardingProvider(), daily: OnboardingProvider(),
         crypto: OnboardingProvider(error: .badServerResponse)))
-    #expect(model.canContinue)
+    #expect(!model.canContinue)
     model.back()
     #expect(model.step == .baseCurrency)
     model.start()
@@ -619,6 +616,52 @@ private func waitFor(_ predicate: () -> Bool) async throws {
     #expect(model.canContinue)
     #expect(model.draft.destinations == ["BTC", "USD"])
     #expect(!model.isAvailable("BTC"))
+  }
+
+  @Test func savedLiveBaseRemainsUsableAfterCryptoRefreshFailure() async throws {
+    let location = directory()
+    defer { try? FileManager.default.removeItem(at: location) }
+    let store = OnboardingTestStore(directory: location)
+    let now = Date(timeIntervalSince1970: 1_790_000_000)
+    let observedAt = now.addingTimeInterval(-3600)
+    let fetchedAt = now.addingTimeInterval(-1800)
+    let daily = onboardingQuotes()
+    let bitcoin = ExchangeRate(
+      2, published: "2026-09-10", source: .init(provider: .coinMetrics),
+      observedAt: observedAt)
+    var live = daily
+    live["BTC"] = bitcoin
+    try RateCache(directory: location)
+      .save(RateSnapshot(quotes: live, fetchedAt: fetchedAt, dailyQuotes: daily))
+    var draft = ConverterState()
+    draft.changeSource("BTC")
+    draft.setDestinations(["EUR", "USD"])
+    try store.saveOnboardingProgress(OnboardingProgress(draft: draft, step: .selection))
+    let model = makeModel(
+      store: store,
+      service: RateService(
+        fiat: OnboardingProvider(quotes: daily), daily: OnboardingProvider(),
+        crypto: OnboardingProvider(error: .badServerResponse)),
+      configuration: .init(now: { now }))
+    #expect(model.canContinue)
+    model.start()
+    try await waitFor { !model.isRefreshing }
+    #expect(model.phase == .ready)
+    #expect(model.hasUsableRates)
+    #expect(model.canUseAsBase("BTC"))
+    #expect(model.isAvailable("EUR"))
+    #expect(model.isAvailable("USD"))
+    #expect(model.canContinue)
+    #expect(model.snapshot.quotes["BTC"] == bitcoin)
+    #expect(model.snapshot.quotes["BTC"]?.observedAt == observedAt)
+    #expect(store.loadRates().quotes["BTC"] == bitcoin)
+    #expect(model.step == .selection)
+    #expect(model.draft.source == "BTC")
+    #expect(model.draft.destinations == ["EUR", "USD"])
+    model.continueFromSelection()
+    #expect(model.step == .homeScreen)
+    #expect(store.input().source == "BTC")
+    #expect(store.input().destinations == ["EUR", "USD"])
   }
 
   @Test func savedUnavailableBaseWithCorruptCacheKeepsFiatRecoveryQuotes() async throws {
