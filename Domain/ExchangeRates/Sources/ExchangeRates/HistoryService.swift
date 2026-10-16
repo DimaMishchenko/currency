@@ -203,7 +203,7 @@ public actor HistoryService {
     let end = Self.minuteEndpoint(now)
     let start = end.addingTimeInterval(-86400)
     let assets = [base, quote].filter { CurrencyCatalog.crypto.contains($0) }
-    let observations = try await CoinMetricsClient(client: client)
+    let observations = try await CoinMetricsClient(client: client, directory: directory)
       .observations(
         assets: assets, start: start, end: end, frequency: "1m")
     for asset in assets {

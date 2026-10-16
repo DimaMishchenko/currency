@@ -16,7 +16,9 @@ test('simultaneous Bitcoin History ranges share their latest rate and date with 
   for (let attempt = 0; attempt < 2; attempt++) {
     const seededHour = Math.floor(Date.now() / 3_600_000);
     await start('ready-history-sync');
-    await expect(screen.getByRole('button', /^Bitcoin,/i)).toHaveAccessibleName('Bitcoin, 0.00002');
+    await expect(screen.getByRole('button', 'Edit amount in BTC')).toHaveValue('1');
+    await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 52,500');
+    await app.screenshot('app-home-bitcoin-one-usd-52500-shared-quote');
     await device.closeApp();
     await device.openApp('com.apple.springboard');
     for (const configuration of configurations) {

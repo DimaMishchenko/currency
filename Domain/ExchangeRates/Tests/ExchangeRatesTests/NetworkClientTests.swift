@@ -230,7 +230,7 @@ private func waitUntil(_ predicate: () async -> Bool) async throws {
     do {
       _ = try await first.value
       Issue.record("HTTP 429 succeeded")
-    } catch RateError.http(let status) { #expect(status == 429) }
+    } catch RateError.rateLimited(let retryAfter) { #expect(retryAfter == nil) }
     let next = Task { try await client.get(url) }
     try await waitUntil { ControlledProtocol.state.count(url) == 2 }
     ControlledProtocol.state.reply(url)

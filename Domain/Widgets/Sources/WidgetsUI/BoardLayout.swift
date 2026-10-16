@@ -72,7 +72,7 @@ public struct BoardLayout: View {
       }
     }
     .animation(nil, value: entry.spec.amount)
-    .modifier(WidgetSurface())
+    .modifier(WidgetSurface(openURL: entry.openURL))
   }
 
   private func row(

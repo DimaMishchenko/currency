@@ -16,7 +16,7 @@ struct SystemActionComposition: Sendable {
     directory: URL,
     service: RateService? = nil
   ) {
-    let service = service ?? RateService()
+    let service = service ?? RateService(directory: directory)
     let conversion = ConversionStore(directory: directory)
     let local = LocalCurrencyStore(directory: directory)
     let rates = RateStore(directory: directory)

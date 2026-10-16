@@ -8,13 +8,14 @@ import WidgetKit
 import Widgets
 
 struct WidgetSurface: ViewModifier {
+  let openURL: URL?
   func body(content: Content) -> some View {
     content
       .dynamicTypeSize(...DynamicTypeSize.large)
       .font(AppStyle.font(.caption))
       .tint(Color(uiColor: .label))
       .modifier(WidgetContainerBackground())
-      .widgetURL(URL(string: "currency://convert"))
+      .widgetURL(openURL ?? URL(string: "currency://convert"))
   }
 }
 

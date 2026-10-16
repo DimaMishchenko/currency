@@ -1966,85 +1966,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Some crypto rates use the daily fallback."
+            "value": "Some crypto rates couldn’t be updated. Showing saved rates."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "部分加密货币汇率使用每日备用数据。"
+            "value": "部分加密货币汇率无法更新。正在显示已保存的汇率。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "一部の暗号資産レートは日次の代替レートを使用します。"
+            "value": "一部の暗号資産レートを更新できませんでした。保存済みのレートを表示しています。"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Algunos tipos de cambio de criptomonedas usan los datos diarios de respaldo."
+            "value": "No se pudieron actualizar algunos tipos de cambio de criptomonedas. Se muestran los tipos guardados."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Einige Kryptokurse verwenden den täglichen Ersatzkurs."
+            "value": "Einige Kryptokurse konnten nicht aktualisiert werden. Gespeicherte Kurse werden angezeigt."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Certains taux de cryptomonnaies utilisent les données quotidiennes de secours."
+            "value": "Certains taux de cryptomonnaies n’ont pas pu être actualisés. Les taux enregistrés sont affichés."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Algumas taxas de câmbio de criptomoedas usam os dados diários de reserva."
+            "value": "Não foi possível atualizar algumas taxas de câmbio de criptomoedas. Exibindo as taxas salvas."
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "일부 암호화폐 환율은 일일 대체 환율을 사용합니다."
+            "value": "일부 암호화폐 환율을 업데이트하지 못했습니다. 저장된 환율을 표시합니다."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "部分加密貨幣匯率使用每日備用資料。"
+            "value": "部分加密貨幣匯率無法更新。正在顯示已儲存的匯率。"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Alcuni tassi delle criptovalute usano i dati giornalieri della fonte di riserva."
+            "value": "Non è stato possibile aggiornare alcuni tassi delle criptovalute. Vengono mostrati i tassi salvati."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bazı kripto paralar için günlük yedek kurlar kullanılır."
+            "value": "Bazı kripto para kurları güncellenemedi. Kayıtlı kurlar gösteriliyor."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Для некоторых криптовалют используются резервные ежедневные курсы."
+            "value": "Не удалось обновить некоторые курсы криптовалют. Показаны сохранённые курсы."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Для деяких криптовалют використовуються резервні щоденні курси."
+            "value": "Не вдалося оновити деякі курси криптовалют. Показано збережені курси."
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mõne krüptovaluuta puhul kasutatakse varuvariandina päevakursse."
+            "value": "Mõnda krüptovaluutakurssi ei saanud uuendada. Kuvatakse salvestatud kursid."
           }
         }
       }

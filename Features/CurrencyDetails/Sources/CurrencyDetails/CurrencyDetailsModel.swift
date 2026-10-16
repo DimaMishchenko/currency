@@ -68,7 +68,7 @@ public final class CurrencyDetailsModel {
   }
 
   /// Immutable currency identity for this flow.
-  public let input: CurrencyDetailsInput
+  public private(set) var input: CurrencyDetailsInput
   /// Selected historical range.
   public var range: HistoryRange = .month
   /// The current request phase.
@@ -79,6 +79,7 @@ public final class CurrencyDetailsModel {
   public private(set) var issue: HistoryIssue?
   @ObservationIgnored private let dependencies: CurrencyDetailsDependencies
   @ObservationIgnored private var requestID: UUID?
+  @ObservationIgnored private var loadedHistory: (range: HistoryRange, result: HistoryResult)?
 
   /// Constructs one model for a flow identity without starting work.
   public init(input: CurrencyDetailsInput, dependencies: CurrencyDetailsDependencies) {
@@ -114,6 +115,25 @@ public final class CurrencyDetailsModel {
       if requestID == identity { phase = .idle }
       return
     }
+    loadedHistory = (requestedRange, result)
+    apply(result)
+    phase = .loaded
+  }
+
+  /// Updates quotes within the current details flow without replacing its selected history range.
+  public func updateSnapshot(_ snapshot: RateSnapshot) {
+    input = CurrencyDetailsInput(
+      code: input.code, reference: input.reference,
+      snapshot: snapshot, metalUnit: input.metalUnit)
+    if phase == .loaded, let loadedHistory, loadedHistory.range == range {
+      apply(loadedHistory.result)
+    }
+  }
+
+  private func apply(_ history: HistoryResult) {
+    let request = historyRequest
+    let result = history.includingLatestQuote(
+      from: input.snapshot, base: request.base, quote: request.quote)
     series = result.series.flatMap { received in
       let factor = NSDecimalNumber(decimal: input.metalUnit.rateFactor(from: input.code, to: quote))
         .doubleValue
@@ -125,7 +145,6 @@ public final class CurrencyDetailsModel {
 
     }
     issue = result.series != nil && series == nil ? .unavailable : result.issue
-    phase = .loaded
   }
 
   /// Invalidates the active flow even if a provider does not cooperate with cancellation.

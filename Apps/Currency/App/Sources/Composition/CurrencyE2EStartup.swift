@@ -77,7 +77,8 @@
       let rates = RateStore(directory: directory)
       let daily = FixedRateClient.quotes(now: now)
       var effective = daily
-      effective["BTC"] = FixedRateClient.coinMetricsQuote(now: now)
+      let bitcoinPrice: Decimal = state == .readyHistorySync ? 52_500 : 50_000
+      effective["BTC"] = FixedRateClient.coinMetricsQuote(now: now, priceUSD: bitcoinPrice)
       effective["ETH"] = FixedRateClient.coinMetricsQuote(now: now, priceUSD: 100)
       try FileCoordination.write(at: directory.appendingPathComponent("rates.json")) {
         try RateCache(directory: directory)
@@ -174,9 +175,13 @@
           $0 = ConverterState()
           $0.setDestinations(state == .readyMetals ? ["USD", "XAU"] : ["USD"])
           if state == .readyMetalSource { $0.changeSource("XAU") }
-          if state == .readyCrypto || state == .readyHistorySync {
+          if state == .readyCrypto {
             $0.changeSource("USD")
             $0.setDestinations(["BTC"])
+          }
+          if state == .readyHistorySync {
+            $0.changeSource("BTC")
+            $0.setDestinations(["USD"])
           }
         }
         try progress.save(OnboardingProgress(draft: input, step: .ready, completed: true))
@@ -201,7 +206,7 @@
       let seededRates = rates.loadRates()
       guard seededRates.quotes["EUR"]?.value == 1, seededRates.quotes["USD"]?.value == 2,
         seededRates.quotes["CHF"]?.value == 0.5, seededRates.quotes["CZK"]?.value == 25,
-        seededRates.quotes["BTC"]?.value == 0.00004,
+        seededRates.quotes["BTC"]?.value == 2 / bitcoinPrice,
         seededRates.quotes["BTC"]?.source.provider
           == .coinMetrics,
         discoveryStore.load() == discovery

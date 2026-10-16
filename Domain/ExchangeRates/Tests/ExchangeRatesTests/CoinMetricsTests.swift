@@ -35,6 +35,11 @@ private func metricsClient(_ http: MetricsHTTP) -> CoinMetricsClient {
   CoinMetricsClient(client: http, acquire: {}, sleep: { _ in })
 }
 
+private actor RetryDelays {
+  private(set) var values: [Duration] = []
+  func record(_ duration: Duration) { values.append(duration) }
+}
+
 @Suite struct CoinMetricsTests {
   @Test func communityNanosecondTimestampDecodesWithoutInventingPrecision() throws {
     let parsed = try #require(CoinMetricsClient.date("2026-01-02T11:59:00.000000000Z"))
@@ -110,6 +115,30 @@ private func metricsClient(_ http: MetricsHTTP) -> CoinMetricsClient {
     #expect(await http.urls.count == 3)
   }
 
+  @Test func retryDelayGrowsExponentiallyAndHonorsServerMinimum() async throws {
+    let recorder = RetryDelays()
+    let http = MetricsHTTP([
+      .failure(.http(429)), .failure(.rateLimited(retryAfter: Date.now.addingTimeInterval(60))),
+      .success(try metricsPage([]))
+    ])
+    let client = CoinMetricsClient(client: http, acquire: {}, sleep: { await recorder.record($0) })
+    _ = try await client.observations(assets: ["btc"], start: metricsNow, end: metricsNow)
+    let values = await recorder.values
+    #expect(values.count == 2)
+    #expect(values[0] >= .seconds(5.9) && values[0] <= .seconds(7))
+    #expect(values[1] >= .seconds(59) && values[1] <= .seconds(60))
+    let exponential = RetryDelays()
+    let repeated = MetricsHTTP([
+      .failure(.http(429)), .failure(.http(429)), .success(try metricsPage([]))
+    ])
+    _ = try await CoinMetricsClient(
+      client: repeated, acquire: {}, sleep: { await exponential.record($0) }
+    )
+    .observations(assets: ["btc"], start: metricsNow, end: metricsNow)
+    let backoff = await exponential.values
+    #expect(backoff[1] >= .seconds(11.9) && backoff[1] <= .seconds(13))
+  }
+
   @Test func separateClientsShareCommunityRequestPacing() async throws {
     let page = try metricsPage([metricsRow("btc", "100")])
     let http = MetricsHTTP([.success(page), .success(page), .success(page)])
@@ -128,6 +157,26 @@ private func metricsClient(_ http: MetricsHTTP) -> CoinMetricsClient {
     for (first, second) in zip(starts, starts.dropFirst()) {
       #expect(first.duration(to: second) >= .milliseconds(640))
     }
+  }
+
+  @Test func latestBatchUsesOneObservationPerAssetAndStillFollowsPagination() async throws {
+    let next =
+      "https://community-api.coinmetrics.io/v4/timeseries/asset-metrics?next_page_token=last"
+    let http = MetricsHTTP([
+      .success(try metricsPage([metricsRow("btc", "100")], next: next)),
+      .success(try metricsPage([metricsRow("eth", "10")]))
+    ])
+    let values = try await metricsClient(http)
+      .observations(
+        assets: ["BTC", "ETH"], start: metricsNow.addingTimeInterval(-600), end: metricsNow,
+        latestPerAsset: true)
+    #expect(values.keys.sorted() == ["BTC", "ETH"])
+    let first = try #require(await http.urls.first)
+    let items = try #require(URLComponents(url: first, resolvingAgainstBaseURL: false)?.queryItems)
+    #expect(items.first { $0.name == "limit_per_asset" }?.value == "1")
+    #expect(items.first { $0.name == "page_size" }?.value == "2")
+    #expect(items.first { $0.name == "assets" }?.value == "btc,eth")
+    #expect(await http.urls.count == 2)
   }
 
   @Test func malformedEnvelopeIsRejected() async {

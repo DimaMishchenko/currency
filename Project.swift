@@ -367,7 +367,7 @@ let project = Project(
         .target(name: "SettingsUI"), .target(name: "WidgetOnboarding"),
         .target(name: "WidgetOnboardingUI"), .target(name: "AppearancePreferences"),
         .target(name: "CurrencyApplication"), .target(name: "ForegroundRefresh"),
-        .target(name: "CurrencyWidgets"), .target(name: "CurrencyWatch"),
+        .target(name: "Widgets"), .target(name: "CurrencyWidgets"), .target(name: "CurrencyWatch"),
         .target(name: "CompanionSync")
       ],
       settings: releaseSigning(profile: appProfile)),

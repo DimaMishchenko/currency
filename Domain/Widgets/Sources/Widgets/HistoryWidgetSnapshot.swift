@@ -64,48 +64,14 @@ public struct HistoryWidgetSnapshot: Sendable {
   /// Availability or cache warning supplied by the history loader.
   public let issue: HistoryIssue?
 
-  /// Validates history for rendering without substituting live or sample rates.
-  /// Longer ranges can include the newest intraday observation for a shared graph and headline
-  /// endpoint. An unavailable intraday result preserves the saved chart with a cache warning.
-  public init(
-    pair: HistoryWidgetPair, range: HistoryRange, result: HistoryResult,
-    intraday: HistoryResult? = nil
-  ) {
+  /// Validates a quote-aligned history result before applying presentation direction and units.
+  public init(pair: HistoryWidgetPair, range: HistoryRange, result: HistoryResult) {
     self.pair = pair
     self.range = range
-    guard pair.isSupported, let historical = result.series, Self.isValid(historical) else {
+    guard pair.isSupported, let combined = result.series, Self.isValid(combined) else {
       series = nil
       issue = pair.isSupported ? .unavailable : .unsupportedPair
       return
-    }
-    var combined = historical
-    var combinedIssue = result.issue
-    if range != .day, pair.supportsIntradayHistory, let intraday {
-      if let recent = intraday.series, Self.isValid(recent) {
-        if let endpoint = recent.points.last, let last = historical.points.last,
-          endpoint.date >= last.date
-        {
-          let points = historical.points.filter { $0.date < endpoint.date } + [endpoint]
-          var providers = [recent.source.provider]
-          for provider in (recent.source.contributingProviders ?? [])
-            + [historical.source.provider] + (historical.source.contributingProviders ?? [])
-          where !providers.contains(provider) {
-            providers.append(provider)
-          }
-          combined = HistorySeries(
-            points: points,
-            source: RateSource(
-              provider: recent.source.provider, observation: .unspecified,
-              timeZone: recent.source.timeZone, conversion: recent.source.conversion,
-              contributingProviders: providers.count > 1 ? Array(providers.dropFirst()) : nil),
-            fetchedAt: max(historical.fetchedAt, recent.fetchedAt))
-        }
-        combinedIssue =
-          result.issue == .usingCachedSeries || intraday.issue == .usingCachedSeries
-          ? .usingCachedSeries : intraday.issue ?? result.issue
-      } else {
-        combinedIssue = .usingCachedSeries
-      }
     }
     let inverted = pair.historyRequest?.inverted == true
     let factor = NSDecimalNumber(
@@ -122,7 +88,7 @@ public struct HistoryWidgetSnapshot: Sendable {
       valid
       ? HistorySeries(points: points, source: combined.source, fetchedAt: combined.fetchedAt)
       : nil
-    issue = valid ? combinedIssue : .unavailable
+    issue = valid ? result.issue : .unavailable
   }
 
   private static func isValid(_ series: HistorySeries) -> Bool {

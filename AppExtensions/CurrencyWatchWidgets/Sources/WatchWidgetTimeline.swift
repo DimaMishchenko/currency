@@ -156,7 +156,7 @@ enum WatchWidgetComposition {
         directory: directory()
       )
       .refreshRates(
-        using: RateService(),
+        using: RateService(directory: directory()),
         force: entry.snapshot.quotes.isEmpty, providerTimeout: .seconds(2))
       refreshed = WatchWidgetEntry(
         date: .now, style: entry.style, source: entry.source, targets: entry.targets,

@@ -52,7 +52,16 @@ import Widgets
               points: points,
               source: .init(provider: range == .day ? .coinMetrics : .fawaz), fetchedAt: now),
             issue: nil)
-        }, now: { now }))
+        }, now: { now },
+        rates: {
+          RateSnapshot(
+            quotes: [
+              "BTC": ExchangeRate(
+                1 / Decimal(52500), published: "2026-10-16",
+                source: .init(provider: .coinMetrics), observedAt: now.addingTimeInterval(-300)),
+              "USD": ExchangeRate(1, published: "2026-10-16", source: .init(provider: .frankfurter))
+            ], fetchedAt: now)
+        }))
     let settings = HistorySettings()
     settings.base = HistoryCurrency("BTC")
     settings.comparison = HistoryCurrency("USD")
@@ -63,7 +72,8 @@ import Widgets
     let daySnapshot = try #require(day.entries.first?.snapshot)
     let weekSnapshot = try #require(week.entries.first?.snapshot)
     #expect(daySnapshot.latest == weekSnapshot.latest)
-    #expect(weekSnapshot.latest?.value == 52_500)
+    let latest = try #require(weekSnapshot.latest?.value)
+    #expect(abs(latest - 52_500) < 0.000001)
     #expect(daySnapshot.change == 0.05)
     #expect(weekSnapshot.change == 0.3125)
     #expect(day.policy == week.policy)
@@ -446,7 +456,7 @@ import Widgets
     let inverse = await provider.entry(settings)
     #expect(
       requested.withLock { $0.map { [$0.0, $0.1] } }
-        == Array(repeating: ["BTC", "EUR"], count: range == .day ? 2 : 4))
+        == Array(repeating: ["BTC", "EUR"], count: 2))
     #expect(direct.snapshot.latest?.value == 120)
     #expect(abs((inverse.snapshot.latest?.value ?? 0) - 1.0 / 120) < 0.0000001)
     #expect(abs((inverse.snapshot.change ?? 0) + 1.0 / 6) < 0.0001)
