@@ -68,7 +68,7 @@ Owners: [widget guide](../Features/WidgetOnboarding/Sources/WidgetOnboardingUI/O
 | ID | Capability / entry | Observable outcome |
 | --- | --- | --- |
 | WID-01 | Converter widget button or onboarding widget guide | Browse the gallery/collection, supported sizes and configuration previews; calculator/cash previews are interactive, motion can be paused, and Home/Lock Screen setup tutorials remain accessible. Navigation preserves app input. |
-| WID-02 | Calculator: medium/large, Default currency list | Follow the app’s currencies; keypad edits update shared app input and synchronized widgets. Medium shows the first four currencies; large shows up to eight. |
+| WID-02 | Calculator: medium/large, Default currency list | Follow the app’s currencies; keypad edits update shared app input and synchronized widgets. Medium shows the first four currencies; large shows up to eight. Rate-only refreshes preserve the active entered amount and update converted results; genuine app input changes still synchronize. Dense metal amounts show their measurement inline. |
 | WID-03 | Calculator: Custom list and calculator instance | Configured currencies and editing state remain independent of Default/app input; separate calculator instances retain their own state. |
 | WID-04 | Currency Board: small/medium/large | Display the configured base/targets and amount, with Default following the app and Custom retaining its selection. |
 | WID-05 | Cash: medium | Configured base/comparison and cash presets/keypad produce the corresponding amounts, including Local setup/unavailable states where applicable. |

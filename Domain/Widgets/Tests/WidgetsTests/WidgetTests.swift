@@ -323,6 +323,115 @@ struct WidgetTests {
     #expect(input.decimal == rates.convert(9, from: "EUR", to: code))
   }
 
+  @Test(arguments: ["EUR", "USD", "XAU"])
+  func typedAmountSurvivesRateRefreshAndReload(code: String) throws {
+    let old = RateSnapshot(quotes: [
+      "EUR": quote(1), "USD": quote(2), "XAU": quote(Decimal(string: "0.0001")!)
+    ])
+    let refreshed = RateSnapshot(
+      quotes: [
+        "EUR": quote(1), "USD": quote(Decimal(string: "1.999998")!),
+        "XAU": quote(Decimal(string: "0.0000999999")!)
+      ])
+    var app = ConverterState()
+    var input = WidgetInput(codes: ["EUR", "USD", "XAU"])
+    input.synchronize(with: app, snapshot: old)
+    input.select(code, snapshot: old)
+    for key in ["1", "0", "0", ".", "0", "0"] { input.press(key) }
+    input.publish(to: &app, snapshot: old)
+    input = try JSONDecoder().decode(WidgetInput.self, from: JSONEncoder().encode(input))
+    let editedAt = input.editedAt
+    input.synchronize(with: app, snapshot: refreshed)
+    #expect(input.amount == "100.00")
+    #expect(!input.replacesOnDigit)
+    #expect(input.editedAt == editedAt)
+    app.setAmount("9")
+    input.synchronize(with: app, snapshot: refreshed)
+    #expect(input.decimal == refreshed.convert(9, from: "EUR", to: code))
+    app.changeSource("USD")
+    input.synchronize(with: app, snapshot: refreshed)
+    #expect(input.decimal == refreshed.convert(9, from: "USD", to: code))
+  }
+
+  @Test func typedMetalAmountSurvivesUnitChangeAndRateRefresh() throws {
+    var app = ConverterState()
+    var input = WidgetInput(codes: ["XAU", "EUR"])
+    input.synchronize(with: app, snapshot: rates)
+    input.press("1")
+    input.publish(to: &app, snapshot: rates)
+    app.setMetalUnit(.gram)
+    let refreshed = RateSnapshot(quotes: [
+      "EUR": quote(1), "XAU": quote(Decimal(string: "0.00099")!)
+    ])
+    input.synchronize(with: app, snapshot: refreshed)
+    #expect(input.metalUnit == .gram)
+    #expect(input.decimal == MetalUnit.troyOunce.gramsPerUnit)
+  }
+
+  @Test func typedFiatAmountSurvivesMetalSourceUnitChangeAndRateRefresh() throws {
+    let initial = RateSnapshot(quotes: [
+      "EUR": quote(1), "USD": quote(2), "XAU": quote(Decimal(string: "0.0001")!)
+    ])
+    let refreshed = RateSnapshot(quotes: [
+      "EUR": quote(1), "USD": quote(2), "XAU": quote(Decimal(string: "0.0000999999")!)
+    ])
+    var app = ConverterState()
+    app.changeSource("XAU")
+    var input = WidgetInput(codes: ["USD", "XAU"])
+    input.synchronize(with: app, snapshot: initial)
+    for key in ["1", "0", "0", ".", "0", "0"] { input.press(key) }
+    input.publish(to: &app, snapshot: initial)
+    #expect(app.decimal == Decimal(string: "0.005")!)
+    input = try JSONDecoder().decode(WidgetInput.self, from: JSONEncoder().encode(input))
+    let editedAt = input.editedAt
+    app.setMetalUnit(.gram)
+    input.synchronize(with: app, snapshot: refreshed)
+    #expect(input.amount == "100.00")
+    #expect(!input.replacesOnDigit)
+    #expect(input.editedAt == editedAt)
+    #expect(input.metalUnit == .gram)
+    app.setAmount("1")
+    input.synchronize(with: app, snapshot: refreshed)
+    #expect(input.decimal == refreshed.convert(1, from: "XAU", to: "USD", metalUnit: .gram))
+  }
+
+  @Test func legacySynchronizedInputIgnoresSavedRateDuringRefresh() throws {
+    let legacy = Data(
+      #"{"codes":["XAU","EUR"],"active":"XAU","amount":"100.00","replacesOnDigit":false,"sharedValue":{"source":"EUR","amount":"1000000","rate":0.0001}}"#
+        .utf8)
+    var input = try JSONDecoder().decode(WidgetInput.self, from: legacy)
+    var app = ConverterState()
+    app.setAmount("1000000")
+    let refreshed = RateSnapshot(quotes: [
+      "EUR": quote(1), "XAU": quote(Decimal(string: "0.0000999999")!)
+    ])
+    input.synchronize(with: app, snapshot: refreshed)
+    #expect(input.amount == "100.00")
+    #expect(!input.replacesOnDigit)
+  }
+
+  @Test func metalSourceUnitChangeSynchronizesPhysicalQuantity() {
+    var app = ConverterState()
+    app.changeSource("XAU")
+    app.setAmount("1")
+    var input = WidgetInput(codes: ["XAU", "EUR"])
+    input.synchronize(with: app, snapshot: rates)
+    app.setMetalUnit(.gram)
+    input.synchronize(with: app, snapshot: rates)
+    #expect(input.metalUnit == .gram)
+    #expect(input.amount == app.amount)
+    #expect(input.decimal == MetalUnit.troyOunce.gramsPerUnit)
+  }
+
+  @Test func unavailableInitialConversionRecoversWhenRatesArrive() {
+    var app = ConverterState()
+    app.setAmount("9")
+    var input = WidgetInput(codes: ["USD", "EUR"])
+    input.synchronize(with: app, snapshot: RateSnapshot())
+    input.synchronize(with: app, snapshot: rates)
+    #expect(input.amount == "18")
+  }
+
   @Test func missingRateDoesNotDisableSelectedDefaultTile() {
     var app = ConverterState()
     app.setAmount("7")

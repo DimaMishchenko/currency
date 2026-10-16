@@ -124,13 +124,11 @@ public enum AppStyle {
     /// Corner radius for standard currency tiles.
     public static let tileRadius: CGFloat = 14
     /// Primary-color opacity behind a key.
-    public static let keyFill: Double = 0.09
+    public static let keyFill: Double = 0.075
     /// Primary-color opacity behind an unselected tile.
     public static let tileFill: Double = 0.045
     /// Primary-color opacity behind the active currency.
     public static let selectedFill: Double = 0.13
-    /// Primary-color opacity for key outlines.
-    public static let keyBorder: Double = 0.035
     /// Primary-color opacity for the active tile outline.
     public static let selectedBorder: Double = 0.45
   }
