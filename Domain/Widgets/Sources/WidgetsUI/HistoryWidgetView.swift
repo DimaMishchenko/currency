@@ -17,6 +17,7 @@ public struct HistoryWidgetEntry: TimelineEntry {
   /// Permission state used by the shared Local setup presentation.
   public let locationStatus: WidgetLocationStatus
 
+  /// Navigation URL for the retained rendered quote, when available.
   public let openURL: URL?
   /// Creates an entry from an explicitly supplied history snapshot.
   public init(

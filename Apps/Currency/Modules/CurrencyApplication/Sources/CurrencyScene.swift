@@ -8,10 +8,15 @@ import Onboarding
 /// Scene-owned identities prevent navigation and in-flight feature state leaking between windows.
 @MainActor @Observable
 public final class CurrencyScene {
+  /// The rendered quote and optional pair resolved from a widget navigation context.
   public struct WidgetContext {
+    /// Immutable rates used when the widget rendered.
     public let snapshot: RateSnapshot
+    /// Configured source currency, or nil when the widget follows converter input.
     public let base: String?
+    /// Configured comparison currency, or nil when the widget follows converter input.
     public let quote: String?
+    /// Creates a rendered quote context without changing saved converter input.
     public init(snapshot: RateSnapshot, base: String? = nil, quote: String? = nil) {
       self.snapshot = snapshot; self.base = base; self.quote = quote
     }
@@ -69,7 +74,9 @@ public final class CurrencyScene {
   public var sheet: Sheet?
   /// The active location flow and its correlation identity.
   public var location: Location?
+  /// Scene-local rendered rates retained during the initial widget handoff.
   public private(set) var widgetSnapshot: RateSnapshot?
+  /// Identifies the active widget handoff so superseded work cannot update this scene.
   public private(set) var widgetContextID: UUID?
   private let readWidgetContext: (UUID) -> WidgetContext?
   private let readInput: () -> ConverterState
@@ -144,12 +151,14 @@ public final class CurrencyScene {
     if showsOnboarding { pendingRoute = route } else { present(route) }
   }
 
+  /// Adopts shared rates after the initial display window while retaining refresh correlation.
   public func releaseWidgetSnapshot(id: UUID, snapshot: RateSnapshot) {
     guard widgetContextID == id else { return }
     updateWidgetDetails(snapshot)
     widgetSnapshot = nil
   }
 
+  /// Completes only the matching handoff, preserving any active details flow identity.
   public func finishWidgetHandoff(id: UUID, snapshot: RateSnapshot? = nil) {
     guard widgetContextID == id else { return }
     if let snapshot { updateWidgetDetails(snapshot) }

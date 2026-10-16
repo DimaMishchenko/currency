@@ -5,9 +5,13 @@ import Foundation
 
 /// Retains immutable rendered quotes without modifying the authoritative rate cache.
 public struct WidgetQuoteContextStore: Sendable {
+  /// Immutable rates and optional configured pair retained for widget navigation.
   public struct Context: Sendable {
+    /// Rates used when the widget rendered.
     public let snapshot: RateSnapshot
+    /// Configured source currency, or nil for a converter-following context.
     public let base: String?
+    /// Configured comparison currency, or nil for a converter-following context.
     public let quote: String?
   }
   private struct Record: Codable {
@@ -19,9 +23,12 @@ public struct WidgetQuoteContextStore: Sendable {
     let quote: String?
   }
   private let directory: URL
+  /// Maximum age, in seconds, of a context accepted for navigation.
   public static let lifetime: TimeInterval = 7 * 86_400
+  /// Maximum number of distinct rendered contexts retained on disk.
   public static let capacity = 128
 
+  /// Uses the host-supplied shared directory to retain widget contexts.
   public init(directory: URL) { self.directory = directory }
   private var url: URL { directory.appendingPathComponent("widget-quote-contexts.json") }
 
@@ -58,6 +65,7 @@ public struct WidgetQuoteContextStore: Sendable {
     context(id, now: now)?.snapshot
   }
 
+  /// Returns a valid saved context, or nil when it is missing, expired or unreadable.
   public func context(_ id: UUID, now: Date = .now) -> Context? {
     guard let record = try? read().first(where: { $0.id == id && valid($0, now: now) }) else {
       return nil
