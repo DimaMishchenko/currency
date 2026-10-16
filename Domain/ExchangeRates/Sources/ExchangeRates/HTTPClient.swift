@@ -39,6 +39,10 @@ public struct NetworkClient: HTTPClient {
     transport = session.map { HTTPTransport(session: $0) } ?? Self.shared
   }
 
+  func inFlightWaiterCount(for url: URL) async -> Int {
+    await transport.waiterCount(url, timeout: timeout)
+  }
+
   /// Loads and validates a response, sharing identical active requests within this process.
   public func get(_ url: URL) async throws -> Data {
     let data = try await transport.get(url, timeout: timeout)
@@ -98,6 +102,10 @@ private actor HTTPTransport {
     } onCancel: {
       Task { await self.cancel(key, waiter: waiter) }
     }
+  }
+
+  func waiterCount(_ url: URL, timeout: TimeInterval) -> Int {
+    pending[Key(url: url, timeout: timeout)]?.waiters.count ?? 0
   }
 
   private func finish(_ key: Key, id: UUID, result: Result<Data, any Error>) {
