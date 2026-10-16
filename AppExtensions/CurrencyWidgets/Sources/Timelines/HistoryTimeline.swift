@@ -48,13 +48,21 @@ struct HistoryTimeline: AppIntentTimelineProvider {
     let pair = configuration.pair(input: dependencies.input(), localCurrency: local.localCode)
     let range = configuration.effectiveRange(for: pair)
     let result: HistoryResult
+    let intraday: HistoryResult?
     if let request = pair.historyRequest {
       result = await dependencies.load(request.base, request.quote, range, now)
+      if range != .day, pair.supportsIntradayHistory, result.series != nil {
+        intraday = await dependencies.load(request.base, request.quote, .day, now)
+      } else {
+        intraday = nil
+      }
     } else {
       result = HistoryResult(series: nil, issue: .unsupportedPair)
+      intraday = nil
     }
     return HistoryWidgetEntry(
-      date: now, snapshot: HistoryWidgetSnapshot(pair: pair, range: range, result: result),
+      date: now,
+      snapshot: HistoryWidgetSnapshot(pair: pair, range: range, result: result, intraday: intraday),
       locationStatus: status)
   }
 }

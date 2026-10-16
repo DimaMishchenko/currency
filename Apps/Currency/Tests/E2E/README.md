@@ -34,6 +34,7 @@ Select journeys using the [feature map](../../../../Documentation/FeatureMap.md)
 npm run test:e2e -- tests/currency-selection.e2e.ts
 npm run test:e2e:extended -- tests/home-screen-widget.e2e.ts
 npm run test:e2e:widgets -- tests/widget-display.e2e.ts
+npm run test:e2e:widgets -- tests/widget-history-sync.e2e.ts
 
 # Additional sizes or private widget configurations:
 AGENT_DEVICE_STATE_DIR=$PWD/.local/agent-device npx e2e run --tag widget-sizes
@@ -74,6 +75,7 @@ These are representative outcomes, not exhaustive coverage of each feature ID.
 | PREF-06, PREF-08 | [creator-contact](tests/creator-contact.e2e.ts) | Website opens dimasike.com in Safari; returning preserves the Settings screen and theme; Feedback in Help opens an Email/X alert, cancellation preserves Settings, selected Email offers a copyable address on simulators without Mail, and selected X opens its website |
 | WID-02, WID-10 | [widget-input-refresh](tests/widget-input-refresh.e2e.ts) | An entered USD 42 stays fixed after a controlled rate-cache update and app foreground refresh; its EUR result changes from 21 to 14 |
 | WID-02, WID-10, CONV-05 | [home-screen-widget](tests/home-screen-widget.e2e.ts), [app-to-widget](tests/app-to-widget.e2e.ts) | Calculator keypad → app and app edits → widget |
+| WID-08 | [widget-history-sync](tests/widget-history-sync.e2e.ts) | Simultaneously installed BTC/USD small 1D and medium 1W widgets share the latest rate/date while showing their own percentages and graph endpoints |
 | WID-04–08, WID-10 | [widget-display](tests/widget-display.e2e.ts) | Board, Cash, Pocket, Mental Math and History data; additional sizes |
 | WID-04, WID-06–07 | [widget-configuration](tests/widget-configuration.e2e.ts) | Reversed pairs and Custom Board amount/list independent of app input |
 | WID-09–10 | [widget-lock-screen](tests/widget-lock-screen.e2e.ts) | Default Dollar icon installation/reuse and saved display |
@@ -82,9 +84,9 @@ For widget/shared-data changes, run the affected widget and both Calculator shar
 
 ## Fixtures, widgets and cache
 
-Start each case once with a matching fixture. `fresh-onboarding` and `ready-converter` cover general flows; `ready-metals` adds Gold as a destination and `ready-metal-source` starts with one troy ounce of Gold for measurement checks. The first launch resets real stores; restart keeps edits. Fixed rates are EUR 1 / USD 2 / CHF 0.5 / CZK 25 / XAU 0.01 troy oz, with versioned reference-history caches for EUR/USD, EUR/Gold, BTC against USD/EUR/CZK/CHF/VND and ETH/BTC. Ethereum has distinct live/daily fixture quotes; VND exercises tiny crypto reference values. `ready-crypto` starts USD 1 → Bitcoin: 0.00002 from Coin Metrics, with a distinct 0.00001 Fawaz daily fallback stored alongside it. Restart omits fixture state and preserves the real stores. Keep `-CurrencyE2EState` out of default launch arguments.
+Start each case once with a matching fixture. `fresh-onboarding` and `ready-converter` cover general flows; `ready-metals` adds Gold as a destination and `ready-metal-source` starts with one troy ounce of Gold for measurement checks. The first launch resets real stores; restart keeps edits. Fixed rates are EUR 1 / USD 2 / CHF 0.5 / CZK 25 / XAU 0.01 troy oz, with versioned reference-history caches for EUR/USD, EUR/Gold, BTC against USD/EUR/CZK/CHF/VND and ETH/BTC. Ethereum has distinct live/daily fixture quotes; VND exercises tiny crypto reference values. `ready-history-sync` retains the crypto converter selection and seeds distinct day/week History values before widget reload. `ready-crypto` starts USD 1 → Bitcoin: 0.00002 from Coin Metrics, with a distinct 0.00001 Fawaz daily fallback stored alongside it. Restart omits fixture state and preserves the real stores. Keep `-CurrencyE2EState` out of default launch arguments.
 
-Run the provider journey with the normal app build. It verifies the standard Coin Metrics current rate, 1D capability, source credits and restart behavior. The fixture cache identity is `currency-fixtures-v10-pairs`; rebuild after app or fixture changes.
+Run the provider journey with the normal app build. It verifies the standard Coin Metrics current rate, 1D capability, source credits and restart behavior. The fixture cache identity is `currency-fixtures-v11-history-sync`; rebuild after app or fixture changes.
 
 ```sh
 npm run test:e2e -- tests/provider-policy.e2e.ts
@@ -94,7 +96,7 @@ The fixtures use the production provider decoders with a fixed HTTP client. Fawa
 
 Home Screen setup uses [widgetctl](https://github.com/DimaMishchenko/widgetctl), pinned as a GitHub dev dependency. It installs/configures the requested kind and size, preserves other apps’ widgets and unloads its helper after the module. Tests still validate rendered data and interactions. Set `CURRENCY_E2E_WIDGET_SETUP=gallery` to exercise system installation; private-configuration cases then skip. Lock Screen installation uses system UI.
 
-Private History display fixtures explicitly configure EUR/USD/month because replacing a widget can retain its previous pair. Board checks reveal the installed widget again after returning from the app.
+Private History display fixtures explicitly configure EUR/USD/month because replacement can retain the previous pair. The range-sync journey keeps small 1D and medium 1W installed, checking the shared 52,500 rate/date and respective +5.00%/+31.25% changes. Device-targeted reveal handles different Home Screen pages. Percentages and dates use native assertions; rates and graphs use vision because the driver can duplicate currency-row labels. The journey retries once across a UTC-hour boundary. Board checks reveal the widget after returning from the app.
 
 Cache remains enabled and local, ignored by Git. Fresh checkouts record their own. Inspect it with `npx e2e cache ls` or `stats`; `clear` removes all recordings. Unused entries are not automatically pruned. Keep goal/test identities stable and bump `app.identity` when fixture semantics change. Diagnose failed outcomes before accepting replacement recordings. `--no-cache` neither reads nor writes cache. Visual assertions and cache misses still require model access; these simulator tests run locally, not in CI.
 

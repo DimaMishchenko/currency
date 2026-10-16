@@ -44,6 +44,29 @@ import Testing
     #expect(await client.urls.count == 2)
   }
 
+  @Test func hourlyWidgetCacheExpiresAtTheNextUtcHour() async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let now = try historyDate("2026-01-05T00:55:00Z")
+    let client = MinuteHistoryHTTP()
+    let service = HistoryService(directory: directory, client: client)
+    let first = await service.load(
+      base: "BTC", quote: "USD", range: .day, now: now, cacheLifetime: 3600)
+    #expect(first.issue == nil)
+    await client.fail()
+    let fresh = await service.load(
+      base: "BTC", quote: "USD", range: .day,
+      now: now.addingTimeInterval(299), cacheLifetime: 3600)
+    #expect(fresh.issue == nil)
+    #expect(await client.urls.count == 1)
+    let expired = await service.load(
+      base: "BTC", quote: "USD", range: .day,
+      now: now.addingTimeInterval(300), cacheLifetime: 3600)
+    #expect(expired.issue == .usingCachedSeries)
+    #expect(expired.series?.points == first.series?.points)
+    #expect(await client.urls.count == 2)
+  }
+
   @Test func fractionalFetchTimeReusesFullWindowAndPreservesItWhenOffline() async throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }

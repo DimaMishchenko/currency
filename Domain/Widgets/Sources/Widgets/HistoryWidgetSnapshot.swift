@@ -65,30 +65,72 @@ public struct HistoryWidgetSnapshot: Sendable {
   public let issue: HistoryIssue?
 
   /// Validates history for rendering without substituting live or sample rates.
-  public init(pair: HistoryWidgetPair, range: HistoryRange, result: HistoryResult) {
+  /// Longer ranges can include the newest intraday observation for a shared graph and headline
+  /// endpoint. An unavailable intraday result preserves the saved chart with a cache warning.
+  public init(
+    pair: HistoryWidgetPair, range: HistoryRange, result: HistoryResult,
+    intraday: HistoryResult? = nil
+  ) {
     self.pair = pair
     self.range = range
+    guard pair.isSupported, let historical = result.series, Self.isValid(historical) else {
+      series = nil
+      issue = pair.isSupported ? .unavailable : .unsupportedPair
+      return
+    }
+    var combined = historical
+    var combinedIssue = result.issue
+    if range != .day, pair.supportsIntradayHistory, let intraday {
+      if let recent = intraday.series, Self.isValid(recent) {
+        if let endpoint = recent.points.last, let last = historical.points.last,
+          endpoint.date >= last.date
+        {
+          let points = historical.points.filter { $0.date < endpoint.date } + [endpoint]
+          var providers = [recent.source.provider]
+          for provider in (recent.source.contributingProviders ?? [])
+            + [historical.source.provider] + (historical.source.contributingProviders ?? [])
+          where !providers.contains(provider) {
+            providers.append(provider)
+          }
+          combined = HistorySeries(
+            points: points,
+            source: RateSource(
+              provider: recent.source.provider, observation: .unspecified,
+              timeZone: recent.source.timeZone, conversion: recent.source.conversion,
+              contributingProviders: providers.count > 1 ? Array(providers.dropFirst()) : nil),
+            fetchedAt: max(historical.fetchedAt, recent.fetchedAt))
+        }
+        combinedIssue =
+          result.issue == .usingCachedSeries || intraday.issue == .usingCachedSeries
+          ? .usingCachedSeries : intraday.issue ?? result.issue
+      } else {
+        combinedIssue = .usingCachedSeries
+      }
+    }
     let inverted = pair.historyRequest?.inverted == true
     let factor = NSDecimalNumber(
       decimal: pair.metalUnit.rateFactor(from: pair.base, to: pair.quote ?? pair.base)
     )
     .doubleValue
     let points =
-      result.series?.points
-      .map {
+      combined.points.map {
         HistoryPoint(date: $0.date, value: (inverted ? 1 / $0.value : $0.value) * factor)
-      } ?? []
+      }
     let valid =
-      pair.isSupported && points.count >= 2
-      && points.allSatisfy { $0.value.isFinite && $0.value > 0 }
-      && zip(points, points.dropFirst()).allSatisfy { $0.date < $1.date }
+      points.allSatisfy { $0.value.isFinite && $0.value > 0 }
     series =
       valid
-      ? result.series.map {
-        HistorySeries(points: points, source: $0.source, fetchedAt: $0.fetchedAt)
-      }
+      ? HistorySeries(points: points, source: combined.source, fetchedAt: combined.fetchedAt)
       : nil
-    issue = !pair.isSupported ? .unsupportedPair : valid ? result.issue : .unavailable
+    issue = valid ? combinedIssue : .unavailable
+  }
+
+  private static func isValid(_ series: HistorySeries) -> Bool {
+    series.points.count >= 2
+      && series.points.allSatisfy {
+        $0.value.isFinite && $0.value > 0 && $0.date <= series.fetchedAt
+      }
+      && zip(series.points, series.points.dropFirst()).allSatisfy { $0.date < $1.date }
   }
 
   /// The rate and date always come from the same last observation shown by the graph.
@@ -103,16 +145,14 @@ public struct HistoryWidgetSnapshot: Sendable {
     return value.rounded() / 10_000
   }
 
-  /// Intraday series refresh at UTC hour boundaries; longer ranges follow daily cache expiry.
+  /// Pairs with intraday history refresh at UTC hour boundaries for every chart range.
   public func nextRefresh(after now: Date) -> Date {
-    let hourly = range == .day && pair.supportsIntradayHistory
-    let interval: TimeInterval = hourly ? 3600 : 86_400
+    if pair.supportsIntradayHistory { return HistoryService.nextHour(after: now) }
+    let interval: TimeInterval = 86_400
     if let fetchedAt = series?.fetchedAt, fetchedAt <= now, issue != .usingCachedSeries {
-      let expiry =
-        hourly
-        ? HistoryService.nextHour(after: fetchedAt) : fetchedAt.addingTimeInterval(interval)
+      let expiry = fetchedAt.addingTimeInterval(interval)
       if expiry > now { return expiry }
     }
-    return hourly ? HistoryService.nextHour(after: now) : now.addingTimeInterval(interval)
+    return now.addingTimeInterval(interval)
   }
 }

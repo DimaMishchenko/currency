@@ -74,7 +74,7 @@ Owners: [widget guide](../Features/WidgetOnboarding/Sources/WidgetOnboardingUI/O
 | WID-05 | Cash: medium | Configured base/comparison and cash presets/keypad produce the corresponding amounts, including Local setup/unavailable states where applicable. |
 | WID-06 | Pocket Rate: small | Show a convenient reference amount and conversion for the configured pair. |
 | WID-07 | Mental Math: small | Show the configured pair’s approximate mental-conversion rule and its accuracy information. |
-| WID-08 | History: small/medium | Configured base/quote/range show history and its current, cached or unavailable state. Coin Metrics supplies supported crypto 1D reference history; incomplete data remains explicitly cached or unavailable. 1D requests hourly refresh and other ranges daily refresh. |
+| WID-08 | History: small/medium | Configured base/quote/range show history and its current, cached or unavailable state. Coin Metrics supplies supported crypto 1D reference history; incomplete data remains explicitly cached or unavailable. Intraday-capable pairs share their latest reference rate and observation date across ranges, while each graph and percentage retain the selected period. These pairs refresh hourly for every range; daily-only fiat and metal pairs refresh daily. |
 | WID-09 | Currency Icon: accessory circular Lock Screen widget | The configured currency symbol appears in the system accessory presentation. |
 | WID-10 | System gallery, Edit Widget, taps, removal and reload | Installation/configuration produce the selected widget; intents execute in the real extension; removal works and shared data remains consistent. |
 
