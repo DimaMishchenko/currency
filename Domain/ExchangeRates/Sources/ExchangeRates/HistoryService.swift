@@ -70,7 +70,9 @@ public actor HistoryService {
         return series
       }
     let lifetime: TimeInterval = range == .day ? 1800 : (range == .all ? 86400 : 21600)
-    if let cached, now.timeIntervalSince(cached.fetchedAt) < (cacheLifetime ?? lifetime) {
+    if let cached, now.timeIntervalSince(cached.fetchedAt) < (cacheLifetime ?? lifetime),
+      range != .day || now < Self.nextHour(after: cached.fetchedAt)
+    {
       return HistoryResult(series: cached, issue: nil)
     }
     do {
@@ -201,7 +203,7 @@ public actor HistoryService {
     let end = Self.minuteEndpoint(now)
     let start = end.addingTimeInterval(-86400)
     let assets = [base, quote].filter { CurrencyCatalog.crypto.contains($0) }
-    let observations = try await CoinMetricsClient(client: client)
+    let observations = try await CoinMetricsClient(client: client, directory: directory)
       .observations(
         assets: assets, start: start, end: end, frequency: "1m")
     for asset in assets {

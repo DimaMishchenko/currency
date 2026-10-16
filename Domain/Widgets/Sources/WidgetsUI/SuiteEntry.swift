@@ -2,6 +2,7 @@ import Conversion
 import DesignSystem
 import ExchangeRates
 import ExchangeRatesUI
+import Foundation
 import LocalCurrency
 import WidgetKit
 import Widgets
@@ -16,6 +17,8 @@ public struct SuiteEntry: TimelineEntry {
   public var input: WidgetInput
   /// Cached or explicitly labeled sample rates.
   public var snapshot: RateSnapshot
+  /// Navigation URL for the retained rendered quote, when available.
+  public var openURL: URL?
   /// Creates a presentation snapshot without fetching or saving data.
   public init(date: Date, spec: WidgetSpec, input: WidgetInput, snapshot: RateSnapshot) {
     self.date = date; self.spec = spec; self.input = input; self.snapshot = snapshot

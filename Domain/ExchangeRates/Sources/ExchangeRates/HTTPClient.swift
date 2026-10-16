@@ -6,6 +6,8 @@ public enum RateError: Error {
   case invalidData
   /// A server returned an unsuccessful HTTP status code.
   case http(Int)
+  /// A rate limit response, including the earliest server-permitted retry time.
+  case rateLimited(retryAfter: Date?)
   /// No configured source could provide usable data.
   case unavailable
 }
@@ -51,7 +53,7 @@ public struct NetworkClient: HTTPClient {
   }
 }
 
-private actor HTTPTransport {
+actor HTTPTransport {
   struct Key: Hashable {
     let url: URL
     let timeout: TimeInterval
@@ -91,6 +93,9 @@ private actor HTTPTransport {
             try Task.checkCancellation()
             guard let response = response as? HTTPURLResponse else { throw RateError.invalidData }
             guard (200..<300).contains(response.statusCode) else {
+              if response.statusCode == 429 {
+                throw RateError.rateLimited(retryAfter: Self.retryAfter(response, now: .now))
+              }
               throw RateError.http(response.statusCode)
             }
             result = .success(data)
@@ -106,6 +111,27 @@ private actor HTTPTransport {
 
   func waiterCount(_ url: URL, timeout: TimeInterval) -> Int {
     pending[Key(url: url, timeout: timeout)]?.waiters.count ?? 0
+  }
+
+  static func retryAfter(_ response: HTTPURLResponse, now: Date) -> Date? {
+    var dates: [Date] = []
+    if let raw = response.value(forHTTPHeaderField: "Retry-After") {
+      if let seconds = TimeInterval(raw), seconds.isFinite, seconds >= 0 {
+        dates.append(now.addingTimeInterval(seconds))
+      } else {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss z"
+        if let date = formatter.date(from: raw) { dates.append(date) }
+      }
+    }
+    if let raw = response.value(forHTTPHeaderField: "X-RateLimit-Reset"),
+      let seconds = TimeInterval(raw), seconds.isFinite, seconds >= 0
+    {
+      dates.append(Date(timeIntervalSince1970: seconds))
+    }
+    return dates.filter { $0 > now }.max()
   }
 
   private func finish(_ key: Key, id: UUID, result: Result<Data, any Error>) {

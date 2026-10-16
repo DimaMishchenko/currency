@@ -35,6 +35,8 @@ struct SuiteTimeline<Configuration: SuiteConfiguration>: AppIntentTimelineProvid
   }
 
   func timeline(starting current: SuiteEntry, retry: Bool = false) -> Timeline<SuiteEntry> {
+    var current = current
+    current.openURL = dependencies.saveContext(current.snapshot, dependencies.now())
     var entries = [current]
     if current.spec.usesLocation, current.spec.localCode != nil, !current.spec.localIsStale,
       let expiresAt = current.spec.localExpiresAt

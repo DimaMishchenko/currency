@@ -33,7 +33,7 @@ private actor DefaultProvidersHTTP: HTTPClient {
 }
 
 @Suite struct DefaultProvidersTests {
-  @Test func refreshOverlaysCryptoAndFallsBackToUnmodifiedDailyOnFailure() async throws {
+  @Test func refreshOverlaysCryptoAndRetainsLatestQuoteOnFailure() async throws {
     let client = DefaultProvidersHTTP()
     let service = RateService(client: client)
     let now = Date()
@@ -45,14 +45,14 @@ private actor DefaultProvidersHTTP: HTTPClient {
     await client.failRequests()
     let fallback = await service.refresh(
       previous: first.snapshot, now: now.addingTimeInterval(1800))
-    #expect(fallback.snapshot.quotes["BTC"]?.value == Decimal(string: "0.00002"))
-    #expect(fallback.snapshot.quotes["BTC"]?.source.provider == .fawaz)
+    #expect(fallback.snapshot.quotes["BTC"] == first.snapshot.quotes["BTC"])
+    #expect(fallback.snapshot.quotes["BTC"]?.source.provider == .coinMetrics)
     #expect(fallback.warning == .partialCryptoFallback)
     #expect(await client.urls.filter { $0.host == "community-api.coinmetrics.io" }.count == 2)
     #expect(await client.urls.filter { $0.host == "cdn.jsdelivr.net" }.count == 3)
   }
 
-  @Test func refreshAttemptsAreSpacedThirtyMinutes() async throws {
+  @Test func refreshAttemptsAreSpacedOneMinute() async throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }
     let client = DefaultProvidersHTTP()
@@ -61,9 +61,9 @@ private actor DefaultProvidersHTTP: HTTPClient {
     let service = RateService(client: client)
     _ = try await store.refreshRates(using: service, now: now)
     let initialRequests = await client.urls.count
-    _ = try await store.refreshRates(using: service, now: now.addingTimeInterval(1799))
+    _ = try await store.refreshRates(using: service, now: now.addingTimeInterval(59))
     #expect(await client.urls.count == initialRequests)
-    _ = try await store.refreshRates(using: service, now: now.addingTimeInterval(1800))
+    _ = try await store.refreshRates(using: service, now: now.addingTimeInterval(60))
     #expect(await client.urls.count > initialRequests)
   }
 

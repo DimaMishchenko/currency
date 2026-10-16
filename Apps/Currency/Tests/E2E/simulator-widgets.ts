@@ -44,9 +44,9 @@ export async function prepareWidgetHelper() {
   prepared = true;
 }
 
-export async function placeWidget(title: string, family: 'Small' | 'Medium' | 'Large') {
+export async function placeWidget(title: string, family: 'Small' | 'Medium' | 'Large', exclusive = true) {
   placementUsed = true;
-  await widgets().ensure(target(title, family), { exclusive: true, replace: true, position: 'top' });
+  await widgets().ensure(target(title, family), { exclusive, replace: true, position: 'top' });
 }
 
 export async function revealWidget(title: string, family: 'Small' | 'Medium' | 'Large') {

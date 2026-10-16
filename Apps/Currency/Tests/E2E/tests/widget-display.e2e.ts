@@ -59,7 +59,9 @@ test('medium History displays the actual seeded EUR USD rate and one month graph
   await expect(history).toBeVisible();
   await expect(history.getByLabel('Rate change over the selected range', { exact: true })).toHaveValue(/^\+11[.,]11%$/, { timeout: 30_000 });
   await expect(history.getByLabel('One month', { exact: true })).toBeVisible();
-  await agent.waitFor(`${loadedContent} The medium History widget shows the EUR row with exactly 1 and the USD row with current rate exactly 2 (the formatted value of 2.0). It shows exactly +11.11% (or +11,11% with a decimal comma) and the one month range label 1M. A rising historical graph is visibly drawn behind the loaded currency data. Its displayed observation date is ${new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', timeZone: 'UTC' }).format(new Date(Date.now() - 86_400_000))}, displayed in abbreviated form such as day followed by month (for example 3 Oct). The widget does not display the year.`, { vision: 'only', timeout: 30_000 });
+  const observed = new Intl.DateTimeFormat('en-GB', { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(new Date(Date.now() - 86_400_000));
+  await expect(history.getByLabel(`Rate as of ${observed}`, { exact: true })).toBeVisible();
+  await agent.waitFor(`${loadedContent} The visible medium Currency widget shows EUR with exactly 1 and USD with exactly 2. The selected range is 1M. A line chart is drawn behind the values. The currency codes, amounts and range are readable without clipping.`, { vision: 'only', timeout: 30_000 });
   await app.screenshot('widget-history-medium-eur-usd-2-plus-11-11');
 });
 

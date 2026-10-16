@@ -89,7 +89,7 @@ public struct CalculatorLayout: View {
       }
     }
     .animation(nil, value: entry.input)
-    .modifier(WidgetSurface())
+    .modifier(WidgetSurface(openURL: entry.openURL))
   }
 
   private func preview(progress: CGFloat) -> some View {

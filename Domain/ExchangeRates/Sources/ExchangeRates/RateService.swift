@@ -21,10 +21,10 @@ public actor RateService {
   private let crypto: (any RateProvider)?
   private let sleep: @Sendable (Duration) async throws -> Void
   /// Creates a service using Fawaz daily rates and Coin Metrics crypto reference rates.
-  public init(client: any HTTPClient = NetworkClient()) {
+  public init(directory: URL? = nil, client: any HTTPClient = NetworkClient()) {
     self.fiat = nil
     self.daily = FawazProvider(client: client)
-    self.crypto = CoinMetricsProvider(client: client)
+    self.crypto = CoinMetricsProvider(client: client, directory: directory)
     self.sleep = { try await Task.sleep(for: $0) }
   }
 
@@ -54,7 +54,7 @@ public actor RateService {
   /// Primary fiat quotes are preferred during their six-hour reuse window. Supplemental
   /// quotes fill missing assets and replace expired primary data after an unsuccessful retry.
   /// Providers retain independent success timestamps. Intraday crypto overlays are rebuilt
-  /// on each call, so missing live quotes revert to daily data. Hosts control polling.
+  /// with the newest saved observation retained after transient failures. Hosts control polling.
   /// - Parameters:
   ///   - previous: Last saved snapshot, including separate daily fallbacks when available.
   ///   - force: Bypasses the daily-feed freshness check.
@@ -102,7 +102,8 @@ public actor RateService {
     var quotes = dailyQuotes
     let live = await cryptoResult
     guard !Task.isCancelled else { return RefreshResult(snapshot: previous, warning: nil) }
-    for (code, quote) in live ?? [:]
+    for (code, quote) in Self.retainingObservations(
+      previous: previous, incoming: live ?? [:], now: now)
     where CurrencyCatalog.crypto.contains(code)
       && quote.published >= (dailyQuotes[code]?.published ?? "")
     {
@@ -182,12 +183,8 @@ public actor RateService {
               primary: primary, supplemental: supplemental,
               primaryFetchedAt: fiatTime, now: now)
             var effective = dailyQuotes
-            var liveQuotes = results[2]?.quotes ?? [:]
-            if crypto != nil, results[2] == nil, previous.hasValidFetchTimestamp(now: now) {
-              liveQuotes = previous.quotes.filter {
-                $0.value.isLive && !$0.value.value.isNaN && $0.value.value > 0
-              }
-            }
+            let liveQuotes = Self.retainingObservations(
+              previous: previous, incoming: results[2]?.quotes ?? [:], now: now)
             for (code, quote) in liveQuotes
             where CurrencyCatalog.crypto.contains(code)
               && quote.published >= (dailyQuotes[code]?.published ?? "")
@@ -220,6 +217,23 @@ public actor RateService {
       }
       continuation.onTermination = { _ in worker.cancel() }
     }
+  }
+
+  private static func retainingObservations(
+    previous: RateSnapshot, incoming: [String: ExchangeRate], now: Date
+  ) -> [String: ExchangeRate] {
+    var quotes = previous.quotes.filter {
+      previous.fetchedAt <= now && $0.value.isLive
+        && ($0.value.overlayTimestamp ?? .distantFuture) <= now
+        && !$0.value.value.isNaN && $0.value.value > 0
+    }
+    for (code, quote) in incoming
+    where (quote.overlayTimestamp ?? .distantPast)
+      >= (quotes[code]?.overlayTimestamp ?? .distantPast)
+    {
+      quotes[code] = quote
+    }
+    return quotes
   }
 
   private func fetch(

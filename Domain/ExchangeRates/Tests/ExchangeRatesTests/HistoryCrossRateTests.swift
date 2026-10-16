@@ -86,6 +86,7 @@ actor MinuteHistoryHTTP: HTTPClient {
     let missing = await service.load(base: "BTC", quote: "USD", range: .day, now: now)
     #expect(missing.issue == .unavailable)
     #expect(missing.series == nil)
-    #expect(!FileManager.default.fileExists(atPath: directory.path))
+    let files = try FileManager.default.contentsOfDirectory(atPath: directory.path)
+    #expect(!files.contains { $0.hasPrefix("history-") })
   }
 }

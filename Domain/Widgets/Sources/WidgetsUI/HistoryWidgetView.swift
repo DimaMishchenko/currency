@@ -17,14 +17,17 @@ public struct HistoryWidgetEntry: TimelineEntry {
   /// Permission state used by the shared Local setup presentation.
   public let locationStatus: WidgetLocationStatus
 
+  /// Navigation URL for the retained rendered quote, when available.
+  public let openURL: URL?
   /// Creates an entry from an explicitly supplied history snapshot.
   public init(
     date: Date, snapshot: HistoryWidgetSnapshot,
-    locationStatus: WidgetLocationStatus = .notDetermined
+    locationStatus: WidgetLocationStatus = .notDetermined, openURL: URL? = nil
   ) {
     self.date = date
     self.snapshot = snapshot
     self.locationStatus = locationStatus
+    self.openURL = openURL
   }
 
   /// Illustrative data exclusively for the widget gallery and redacted placeholders.
@@ -119,9 +122,9 @@ public struct HistoryWidgetView: View {
     .dynamicTypeSize(...DynamicTypeSize.large)
     .modifier(HistoryWidgetBackground(snapshot: snapshot, preview: preview))
     .widgetURL(
-      URL(
-        string: snapshot.pair.needsLocalCurrency
-          ? "currency://local-currency" : "currency://convert"))
+      snapshot.pair.needsLocalCurrency
+        ? URL(string: "currency://local-currency")
+        : entry.openURL ?? URL(string: "currency://convert"))
   }
 
   private func currencyRow(_ code: String?, value: Double?, prominent: Bool) -> some View {

@@ -7,8 +7,8 @@ public struct CoinMetricsProvider: RateProvider {
   private let now: @Sendable () -> Date
 
   /// Fetches reference observations and their daily FX anchor through one transport.
-  public init(client: any HTTPClient = NetworkClient()) {
-    metrics = CoinMetricsClient(client: client)
+  public init(client: any HTTPClient = NetworkClient(), directory: URL? = nil) {
+    metrics = CoinMetricsClient(client: client, directory: directory)
     daily = FawazProvider(client: client)
     now = { .now }
   }
@@ -23,7 +23,8 @@ public struct CoinMetricsProvider: RateProvider {
   public func fetch() async throws -> [String: ExchangeRate] {
     let time = now()
     async let observations = metrics.observations(
-      assets: Array(CurrencyCatalog.crypto), start: time.addingTimeInterval(-600), end: time)
+      assets: Array(CurrencyCatalog.crypto), start: time.addingTimeInterval(-600), end: time,
+      latestPerAsset: true)
     async let dailyQuotes = daily.fetch()
     let (points, quotes) = try await (observations, dailyQuotes)
     try Task.checkCancellation()

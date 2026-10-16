@@ -151,8 +151,10 @@ private actor SlowWidgetProvider: RateProvider {
     await suspended.waitUntilStarted()
     let newService = RateService(
       fiat: ImmediateProvider(value: 2), daily: ImmediateProvider(value: 2), crypto: nil)
-    _ = try await store.refreshRates(
-      using: newService, force: true, now: Date(timeIntervalSince1970: 200))
+    let newer = await newService.refresh(
+      previous: RateSnapshot(), force: true,
+      now: Date(timeIntervalSince1970: 200))
+    _ = try store.saveBootstrapRates(newer.snapshot, now: Date(timeIntervalSince1970: 200))
     await suspended.fail()
     let result = try await task.value
     #expect(result.warning == nil)

@@ -17,6 +17,7 @@
       case readyMetals = "ready-metals"
       case readyMetalSource = "ready-metal-source"
       case readyCrypto = "ready-crypto"
+      case readyHistorySync = "ready-history-sync"
     }
 
     enum StartupError: Error, Equatable {
@@ -76,7 +77,8 @@
       let rates = RateStore(directory: directory)
       let daily = FixedRateClient.quotes(now: now)
       var effective = daily
-      effective["BTC"] = FixedRateClient.coinMetricsQuote(now: now)
+      let bitcoinPrice: Decimal = state == .readyHistorySync ? 52_500 : 50_000
+      effective["BTC"] = FixedRateClient.coinMetricsQuote(now: now, priceUSD: bitcoinPrice)
       effective["ETH"] = FixedRateClient.coinMetricsQuote(now: now, priceUSD: 100)
       try FileCoordination.write(at: directory.appendingPathComponent("rates.json")) {
         try RateCache(directory: directory)
@@ -131,6 +133,27 @@
           }, source: .init(provider: .coinMetrics, observation: .minuteReference, timeZone: .gmt),
         fetchedAt: end)
       try writeHistory(cryptoPair, filename: "history-v3-ETH-BTC-1.json", directory: directory)
+      if state == .readyHistorySync {
+        let end = Date(timeIntervalSince1970: floor(now.timeIntervalSince1970 / 3600) * 3600)
+        let day = HistorySeries(
+          points: (0...288)
+            .map { index in
+              HistoryPoint(
+                date: end.addingTimeInterval(Double(index - 288) * 300),
+                value: 50_000 + Double(index) * 2_500 / 288)
+            },
+          source: .init(provider: .coinMetrics, observation: .minuteReference, timeZone: .gmt),
+          fetchedAt: end)
+        let week = HistorySeries(
+          points: [
+            HistoryPoint(date: end.addingTimeInterval(-6 * 86_400), value: 40_000),
+            HistoryPoint(date: end.addingTimeInterval(-86_400), value: 48_000)
+          ],
+          source: .init(provider: .fawaz, observation: .dailyReference, timeZone: .gmt),
+          fetchedAt: end)
+        try writeHistory(day, filename: "history-v3-BTC-USD-1.json", directory: directory)
+        try writeHistory(week, filename: "history-v3-BTC-USD-7.json", directory: directory)
+      }
       let files = [
         "input.json", "onboarding.json", "widget-location-refresh.json",
         "widget-location.json", "widget-location-status.json"
@@ -147,7 +170,7 @@
       let conversion = ConversionStore(directory: directory)
       let progress = OnboardingProgressStore(directory: directory)
       switch state {
-      case .readyConverter, .readyMetals, .readyMetalSource, .readyCrypto:
+      case .readyConverter, .readyMetals, .readyMetalSource, .readyCrypto, .readyHistorySync:
         let input = try conversion.updateInput {
           $0 = ConverterState()
           $0.setDestinations(state == .readyMetals ? ["USD", "XAU"] : ["USD"])
@@ -155,6 +178,10 @@
           if state == .readyCrypto {
             $0.changeSource("USD")
             $0.setDestinations(["BTC"])
+          }
+          if state == .readyHistorySync {
+            $0.changeSource("BTC")
+            $0.setDestinations(["USD"])
           }
         }
         try progress.save(OnboardingProgress(draft: input, step: .ready, completed: true))
@@ -179,7 +206,7 @@
       let seededRates = rates.loadRates()
       guard seededRates.quotes["EUR"]?.value == 1, seededRates.quotes["USD"]?.value == 2,
         seededRates.quotes["CHF"]?.value == 0.5, seededRates.quotes["CZK"]?.value == 25,
-        seededRates.quotes["BTC"]?.value == 0.00004,
+        seededRates.quotes["BTC"]?.value == 2 / bitcoinPrice,
         seededRates.quotes["BTC"]?.source.provider
           == .coinMetrics,
         discoveryStore.load() == discovery
