@@ -179,10 +179,6 @@ struct WidgetKeypad: View {
                   .primary.opacity(AppStyle.Widget.keyFill),
                   in: .rect(cornerRadius: AppStyle.Widget.keyRadius)
                 )
-                .overlay {
-                  RoundedRectangle(cornerRadius: AppStyle.Widget.keyRadius)
-                    .strokeBorder(.primary.opacity(AppStyle.Widget.keyBorder), lineWidth: 1)
-                }
                 .contentShape(.rect)
               }
               .accessibilityLabel(
@@ -206,8 +202,33 @@ struct WidgetCurrencyIcon: View {
   let code: String
   let size: CGFloat
   var isLocal = false
+  var normalizesGeometry = false
+
+  private var artworkSize: CGFloat {
+    guard normalizesGeometry else { return size }
+    let currency = CurrencyCode(rawValue: code)
+    return currency?.isCryptocurrency == true || currency?.isMetal == true ? size : size * 0.85
+  }
 
   var body: some View {
+    artwork
+      .frame(
+        width: normalizesGeometry ? size + 4 : nil,
+        height: normalizesGeometry ? size + 4 : nil
+      )
+      .overlay(alignment: .bottomTrailing) {
+        if isLocal {
+          Image(systemName: "location.fill")
+            .font(.system(size: 5, weight: .medium))
+            .foregroundStyle(.secondary)
+            .offset(x: 3, y: 2)
+            .accessibilityLabel(.WidgetPresentation.localCurrencyChoice)
+            .allowsHitTesting(false)
+        }
+      }
+  }
+
+  private var artwork: some View {
     Group {
       if renderingMode == .accented,
         let data = CurrencyIcon.pickerImageData(code),
@@ -216,17 +237,7 @@ struct WidgetCurrencyIcon: View {
         accentedIcon(image)
           .accessibilityHidden(true)
       } else {
-        CurrencyIcon(code, size: size)
-      }
-    }
-    .overlay(alignment: .bottomTrailing) {
-      if isLocal {
-        Image(systemName: "location.fill")
-          .font(.system(size: 5, weight: .medium))
-          .foregroundStyle(.secondary)
-          .offset(x: 3, y: 2)
-          .accessibilityLabel(.WidgetPresentation.localCurrencyChoice)
-          .allowsHitTesting(false)
+        CurrencyIcon(code, size: artworkSize)
       }
     }
   }
@@ -237,7 +248,7 @@ struct WidgetCurrencyIcon: View {
       .resizable()
       .widgetAccentedRenderingMode(.fullColor)
       .scaledToFit()
-      .frame(width: size, height: size)
+      .frame(width: artworkSize, height: artworkSize)
 
     if CurrencyCatalog.crypto.contains(code) {
       artwork.clipShape(Circle())
@@ -258,11 +269,19 @@ struct CurrencyTile: View {
   var showsCode = true
   var previewSpread: CGFloat? = nil
   var previewDense = false
+  var amountSize: CGFloat = 22
 
   private var displayCode: String { WidgetSelection.currency(code) }
   private var selected: Bool { code == entry.input.active }
+  private var cornerRadius: CGFloat {
+    if let previewSpread {
+      return AppStyle.Widget.keyRadius
+        + (previewDense ? 0 : AppStyle.Widget.tileRadius - AppStyle.Widget.keyRadius)
+        * previewSpread
+    }
+    return compact ? AppStyle.Widget.keyRadius : AppStyle.Widget.tileRadius
+  }
   private var codeVisibility: CGFloat {
-    if CurrencyCode(rawValue: displayCode)?.isMetal == true { return 1 }
     if previewDense, let previewSpread { return 1 - previewSpread }
     return showsCode ? 1 : 0
   }
@@ -305,57 +324,69 @@ struct CurrencyTile: View {
       WidgetCurrencyIcon(
         code: displayCode,
         size: previewSpread.map { 16 + (previewDense ? 0 : 6) * $0 } ?? (compact ? 16 : 22),
-        isLocal: WidgetSelection.isLocal(code)
+        isLocal: WidgetSelection.isLocal(code), normalizesGeometry: true
       )
       currencyCode.opacity(codeVisibility)
-      amount.font(AppStyle.font(stacked && !compact ? .title : .title2, weight: .medium))
+      amount.font(.system(size: amountSize, weight: .medium, design: .rounded))
     }
     .padding(
       .horizontal,
-      previewSpread.map { 4 + (previewDense ? 0 : 4) * $0 }
-        ?? (compact ? AppStyle.Space.xs : AppStyle.Space.small)
+      previewSpread.map { 6 + (previewDense ? 0 : 2) * $0 }
+        ?? (compact ? 6 : AppStyle.Space.small)
     )
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .background(
-      .primary.opacity(selected ? AppStyle.Widget.selectedFill : AppStyle.Widget.tileFill),
-      in: .rect(cornerRadius: compact ? AppStyle.Widget.keyRadius : AppStyle.Widget.tileRadius)
+      .primary.opacity(selected ? AppStyle.Widget.selectedFill : 0.03),
+      in: .rect(cornerRadius: cornerRadius)
     )
     .overlay {
-      RoundedRectangle(
-        cornerRadius: compact ? AppStyle.Widget.keyRadius : AppStyle.Widget.tileRadius
-      )
-      .strokeBorder(
-        .primary.opacity(selected ? AppStyle.Widget.selectedBorder : 0), lineWidth: 1.2)
+      RoundedRectangle(cornerRadius: cornerRadius)
+        .strokeBorder(
+          .primary.opacity(selected ? AppStyle.Widget.selectedBorder : 0), lineWidth: 1.2)
     }
     .contentShape(.rect)
   }
 
   private var currencyCode: some View {
-    Text(
-      verbatim: displayCode
-        + (CurrencyCode(rawValue: displayCode)?.isMetal == true
-          ? " · " + entry.input.metalUnit.symbol : "")
-    )
-    .font(AppStyle.font(.caption2, weight: .medium))
+    let compactHeader = compact && (previewSpread ?? 0) < 0.5
+    let isMetal = CurrencyCode(rawValue: displayCode)?.isMetal == true
+    let label =
+      isMetal
+      ? (compactHeader
+        ? entry.input.metalUnit.symbol
+        : displayCode + " · " + entry.input.metalUnit.symbol)
+      : displayCode
+    return Text(verbatim: label)
+      .font(AppStyle.font(.caption2, weight: .medium))
   }
 
   private var amount: some View {
-    Text(
-      selected
-        ? (entry.input.replacesOnDigit
-          ? CurrencyDisplay.format(
-            entry.input.decimal, code: displayCode, locale: locale, metalUnit: entry.input.metalUnit
-          )
-          : CurrencyDisplay.inputAmount(entry.input.amount, locale: locale))
-        : CurrencyDisplay.format(
-          entry.snapshot.convert(
-            entry.input.decimal, from: WidgetSelection.currency(entry.input.active),
-            to: displayCode, metalUnit: entry.input.metalUnit
-          ),
-          code: displayCode, locale: locale, metalUnit: entry.input.metalUnit)
-    )
-    .monospacedDigit().lineLimit(1).minimumScaleFactor(0.35)
-    .contentTransition(.identity)
+    HStack(alignment: .center, spacing: 3) {
+      Text(verbatim: displayAmount)
+        .monospacedDigit().lineLimit(1).minimumScaleFactor(0.35)
+        .contentTransition(.identity)
+      if CurrencyCode(rawValue: displayCode)?.isMetal == true && codeVisibility < 0.5 {
+        Text(verbatim: entry.input.metalUnit.symbol)
+          .font(.system(size: 10, weight: .medium, design: .rounded))
+          .foregroundStyle(.secondary)
+          .fixedSize()
+      }
+    }
+  }
+
+  private var displayAmount: String {
+    selected
+      ? (entry.input.replacesOnDigit
+        ? CurrencyDisplay.format(
+          entry.input.decimal, code: displayCode, locale: locale, metalUnit: entry.input.metalUnit
+        )
+        : CurrencyDisplay.inputAmount(entry.input.amount, locale: locale))
+      : CurrencyDisplay.format(
+        entry.snapshot.convert(
+          entry.input.decimal, from: WidgetSelection.currency(entry.input.active),
+          to: displayCode, metalUnit: entry.input.metalUnit
+        ),
+        code: displayCode, locale: locale, metalUnit: entry.input.metalUnit)
   }
 }
 

@@ -19,7 +19,6 @@ public struct WidgetInput: Codable, Equatable, Sendable {
   private struct SharedValue: Codable, Equatable, Sendable {
     var source: String
     var amount: String
-    var rate: Decimal?
   }
   private var sharedValue: SharedValue?
   private var storedMetalUnit: MetalUnit?
@@ -33,15 +32,18 @@ public struct WidgetInput: Codable, Equatable, Sendable {
     if CurrencyCode(rawValue: WidgetSelection.currency(active))?.isMetal == true {
       amount = NSDecimalNumber(decimal: metalUnit.converted(decimal, to: unit)).stringValue
     }
+    if let sharedValue, CurrencyCode(rawValue: sharedValue.source)?.isMetal == true,
+      let value = Decimal(string: sharedValue.amount, locale: Locale(identifier: "en_US_POSIX")),
+      !value.isNaN
+    {
+      let converted = metalUnit.converted(value, to: unit)
+      self.sharedValue?.amount = NSDecimalNumber(decimal: converted).stringValue
+    }
     storedMetalUnit = unit
-    sharedValue = nil
   }
 
-  private func sharedValue(for app: ConverterState, snapshot: RateSnapshot) -> SharedValue {
-    SharedValue(
-      source: app.source, amount: app.amount,
-      rate: snapshot.convert(
-        1, from: app.source, to: WidgetSelection.currency(active), metalUnit: app.metalUnit))
+  private func sharedValue(for app: ConverterState) -> SharedValue {
+    SharedValue(source: app.source, amount: app.amount)
   }
 
   /// Creates normalized input for a currency list.
@@ -74,15 +76,16 @@ public struct WidgetInput: Codable, Equatable, Sendable {
   /// Shares value with the app while retaining this widget's active tile.
   public mutating func synchronize(with app: ConverterState, snapshot: RateSnapshot) {
     setMetalUnit(app.metalUnit)
-    let incoming = sharedValue(for: app, snapshot: snapshot)
+    let incoming = sharedValue(for: app)
     guard sharedValue != incoming else { return }
-    sharedValue = incoming
     let currency = WidgetSelection.currency(active)
     if currency == app.source {
+      sharedValue = incoming
       if amount != app.amount { amount = app.amount; replacesOnDigit = true }
     } else if let value = snapshot.convert(
       app.decimal, from: app.source, to: currency, metalUnit: app.metalUnit)
     {
+      sharedValue = incoming
       if decimal != value {
         amount = NSDecimalNumber(decimal: value).stringValue; replacesOnDigit = true
       }
@@ -99,7 +102,7 @@ public struct WidgetInput: Codable, Equatable, Sendable {
     {
       app.setRoundedAmount(value)
     }
-    sharedValue = sharedValue(for: app, snapshot: snapshot)
+    sharedValue = sharedValue(for: app)
   }
 
   /// The parsed amount used for Decimal conversion.

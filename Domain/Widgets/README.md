@@ -17,6 +17,7 @@ Select the `WidgetsHarness` scheme and add launch arguments under **Run → Argu
 | Case | Behavior |
 | --- | --- |
 | `calculator` | Medium and large calculator layouts. |
+| `calculator-2`, `calculator-4`, `calculator-6`, `calculator-8` | A large Calculator with repeatable mixed fiat, crypto and metal values. Append `-medium`, `-metals`, `-grams` or `-long` for compact, measurement and long-input checks. |
 | `board` | Large board layout. |
 | `cash` | Cash reference layout. |
 | `icon` | Configurable Lock Screen currency-symbol layout. |

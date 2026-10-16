@@ -28,31 +28,50 @@ private final class ControlledProtocol: URLProtocol, @unchecked Sendable {
       lock.withLock { requests.filter { $0.url == url }.count }
     }
 
-    func reply(_ url: URL, status: Int = 200) {
-      let loaders = lock.withLock {
-        let result = active.filter { $0.request.url == url }
-        active.removeAll { $0.request.url == url }
-        return result
-      }
-      for loader in loaders {
-        guard
-          let response = HTTPURLResponse(
-            url: url, statusCode: status, httpVersion: nil, headerFields: nil)
-        else {
-          Issue.record("Invalid mock HTTP response")
-          continue
-        }
-        loader.client?.urlProtocol(loader, didReceive: response, cacheStoragePolicy: .notAllowed)
-        loader.client?.urlProtocol(loader, didLoad: Data("response".utf8))
-        loader.client?.urlProtocolDidFinishLoading(loader)
+    func finish(_ loader: ControlledProtocol) -> Bool {
+      lock.withLock {
+        guard active.contains(where: { $0 === loader }) else { return false }
+        active.removeAll { $0 === loader }
+        return true
       }
     }
+
+    func reply(_ url: URL, status: Int = 200) {
+      let loaders = lock.withLock { active.filter { $0.request.url == url } }
+      for loader in loaders { loader.reply(status: status) }
+    }
+  }
+
+  private var loadingThread: Thread?
+  private var loadingRunLoop: CFRunLoop?
+  private var loadingMode: CFRunLoopMode?
+
+  private func reply(status: Int) {
+    guard let loadingRunLoop else { Issue.record("Mock request has not started"); return }
+    CFRunLoopPerformBlock(loadingRunLoop, (loadingMode ?? .defaultMode).rawValue) {
+      [self] in
+      guard Self.state.finish(self) else { return }
+      #expect(Thread.current == loadingThread)
+      guard let url = request.url,
+        let response = HTTPURLResponse(
+          url: url, statusCode: status, httpVersion: nil, headerFields: nil)
+      else { Issue.record("Invalid mock HTTP response"); return }
+      client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+      client?.urlProtocol(self, didLoad: Data("response".utf8))
+      client?.urlProtocolDidFinishLoading(self)
+    }
+    CFRunLoopWakeUp(loadingRunLoop)
   }
 
   static let state = State()
   override class func canInit(with request: URLRequest) -> Bool { true }
   override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
-  override func startLoading() { Self.state.start(self) }
+  override func startLoading() {
+    loadingThread = Thread.current
+    loadingRunLoop = CFRunLoopGetCurrent()
+    loadingMode = CFRunLoopCopyCurrentMode(loadingRunLoop)
+    Self.state.start(self)
+  }
   override func stopLoading() { Self.state.stop(self) }
 }
 
@@ -71,6 +90,10 @@ private final class ControlledProtocol: URLProtocol, @unchecked Sendable {
   }
 
   @Test func separateTransportsCompleteIndependentEndpoints() async throws {
+    try await verifySeparateTransportsCompleteIndependentEndpoints()
+  }
+
+  func verifySeparateTransportsCompleteIndependentEndpoints() async throws {
     let (firstClient, firstSession) = setup()
     let (secondClient, secondSession) = setup()
     defer {
@@ -110,12 +133,12 @@ private final class ControlledProtocol: URLProtocol, @unchecked Sendable {
   }
 }
 
-private func waitUntil(_ predicate: () -> Bool) async throws {
+private func waitUntil(_ predicate: () async -> Bool) async throws {
   for _ in 0..<200 {
-    if predicate() { return }
+    if await predicate() { return }
     try await Task.sleep(for: .milliseconds(10))
   }
-  try #require(predicate())
+  try #require(await predicate())
 }
 
 @Suite struct NetworkClientTests {
@@ -129,13 +152,20 @@ private func waitUntil(_ predicate: () -> Bool) async throws {
     )
   }
 
+  @Test func parallelResponsesPreserveTransportAndWaiterIndependence() async throws {
+    async let independent: Void = IndependentTransportTests()
+      .verifySeparateTransportsCompleteIndependentEndpoints()
+    async let cancellation: Void = verifyCancellingOneWaiterDoesNotCancelAnother()
+    _ = try await (independent, cancellation)
+  }
+
   @Test func overlappingRequestsShareTransferAndLaterCallsRefetch() async throws {
     let (client, session, url) = try setup()
     defer { session.invalidateAndCancel() }
     let first = Task { try await client.get(url) }
     let second = Task { try await client.get(url) }
     try await waitUntil { ControlledProtocol.state.count(url) == 1 }
-    try await Task.sleep(for: .milliseconds(50))
+    try await waitUntil { await client.inFlightWaiterCount(for: url) == 2 }
     #expect(ControlledProtocol.state.count(url) == 1)
     ControlledProtocol.state.reply(url)
     #expect(try await first.value == Data("response".utf8))
@@ -153,12 +183,16 @@ private func waitUntil(_ predicate: () -> Bool) async throws {
   }
 
   @Test func cancellingOneWaiterDoesNotCancelAnother() async throws {
+    try await verifyCancellingOneWaiterDoesNotCancelAnother()
+  }
+
+  private func verifyCancellingOneWaiterDoesNotCancelAnother() async throws {
     let (client, session, url) = try setup()
     defer { session.invalidateAndCancel() }
     let first = Task { try await client.get(url) }
     let second = Task { try await client.get(url) }
     try await waitUntil { ControlledProtocol.state.count(url) == 1 }
-    try await Task.sleep(for: .milliseconds(50))
+    try await waitUntil { await client.inFlightWaiterCount(for: url) == 2 }
     first.cancel()
     do {
       _ = try await first.value
