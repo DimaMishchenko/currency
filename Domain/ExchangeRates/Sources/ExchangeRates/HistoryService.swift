@@ -1,4 +1,3 @@
-import CoordinatedFiles
 import Foundation
 
 /// Loads daily fiat references, dated fallback publications, bundled months, and intraday crypto.
@@ -50,12 +49,11 @@ public actor HistoryService {
     }
     let fiatPolicy =
       range != .day && range != .all && Self.usesFiatHistory(base: base, quote: quote)
-    let lifetime: TimeInterval = range == .day ? 1800 : (range == .all ? 86400 : 21600)
     let fresh =
-      cached.map { now.timeIntervalSince($0.fetchedAt) < (cacheLifetime ?? lifetime) } ?? false
+      cached.map { Self.freshHistory($0, range: range, now: now, cacheLifetime: cacheLifetime) }
+      ?? false
     if let cached, fresh,
-      !fiatPolicy || cached.source.provider != .fawaz || record?.fiatHistoryPolicyVersion == 1,
-      range != .day || now < Self.nextHour(after: cached.fetchedAt)
+      !fiatPolicy || cached.source.provider != .fawaz || record?.fiatHistoryPolicyVersion == 1
     {
       return HistoryResult(series: cached, issue: nil)
     }
@@ -155,17 +153,13 @@ public actor HistoryService {
       guard Self.validHistory(series, base: base, quote: quote, range: range, now: now)
       else { throw RateError.invalidData }
       do {
-        try FileCoordination.write(at: file) {
-          try JSONEncoder()
-            .encode(
-              HistoryCacheRecord(series: series, fiatHistoryPolicyVersion: fiatPolicy ? 1 : nil)
-            )
-            .write(to: file, options: .atomic)
-        }
+        let selected = try Self.recordSuccessfulRefresh(
+          at: file, series: series, base: base, quote: quote, range: range,
+          now: now, cacheLifetime: cacheLifetime, fiatPolicy: fiatPolicy)
+        return HistoryResult(series: selected, issue: nil)
       } catch {
         return HistoryResult(series: series, issue: .cacheWriteFailed)
       }
-      return HistoryResult(series: series, issue: nil)
     } catch {
       return HistoryResult(series: cached, issue: cached == nil ? .unavailable : .usingCachedSeries)
     }

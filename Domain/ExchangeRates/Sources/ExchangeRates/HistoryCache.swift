@@ -28,6 +28,40 @@ struct HistoryCacheRecord: Codable {
 }
 
 extension HistoryService {
+  static func freshHistory(
+    _ series: HistorySeries, range: HistoryRange, now: Date, cacheLifetime: TimeInterval?
+  ) -> Bool {
+    let lifetime: TimeInterval = range == .day ? 1800 : (range == .all ? 86400 : 21600)
+    return now.timeIntervalSince(series.fetchedAt) < (cacheLifetime ?? lifetime)
+      && (range != .day || now < nextHour(after: series.fetchedAt))
+  }
+
+  static func recordSuccessfulRefresh(
+    at file: URL, series: HistorySeries, base: String, quote: String,
+    range: HistoryRange, now: Date, cacheLifetime: TimeInterval?, fiatPolicy: Bool
+  ) throws -> HistorySeries {
+    try FileCoordination.write(at: file) {
+      if let data = try FileCoordination.dataIfPresent(at: file),
+        let current = try? JSONDecoder().decode(HistoryCacheRecord.self, from: data),
+        validHistory(
+          current.series, base: base, quote: quote, range: range,
+          now: max(now, current.series.fetchedAt)),
+        freshHistory(
+          current.series, range: range, now: max(now, current.series.fetchedAt),
+          cacheLifetime: cacheLifetime),
+        current.series.fetchedAt > series.fetchedAt
+          || (fiatPolicy && current.series.source.provider == .frankfurter
+            && series.source.provider == .fawaz)
+      {
+        return current.series
+      }
+      try JSONEncoder()
+        .encode(HistoryCacheRecord(series: series, fiatHistoryPolicyVersion: fiatPolicy ? 1 : nil))
+        .write(to: file, options: .atomic)
+      return series
+    }
+  }
+
   static func recordFailedFiatRefresh(
     at file: URL, originalData: Data, cached: HistorySeries,
     base: String, quote: String, range: HistoryRange, now: Date
