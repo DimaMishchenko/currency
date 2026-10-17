@@ -71,6 +71,7 @@ for (const scenario of ['legacy daily source', 'wrong month'] as const) {
     }
     const saved = readHistory();
     assert.ok(saved.source.provider.frankfurter);
+    assert.equal(saved.source.observation, 'dailyReference');
     assert.equal(saved.fiatHistoryPolicyVersion, 1);
     assert.ok(saved.fetchedAt >= seeded.fetchedAt);
     assert.ok(saved.points.length >= 15, 'The production daily provider must supply a full month of publication dates.');

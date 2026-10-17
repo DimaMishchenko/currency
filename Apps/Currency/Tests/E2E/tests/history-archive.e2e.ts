@@ -16,16 +16,24 @@ test('All history renders the actual bundled Bitcoin archive from 2010', { tags:
   const all = screen.getByTestId('currency.details.historyRange').getByRole('tab', 'All available history', { exact: true });
   await all.tap();
   await expect(all).toBeSelected();
-  const source = screen.getByTestId('currency.details.sourceDisclosure').filter({ hasText: /Fawaz.*Coin Metrics.*monthly reference/i });
+  const source = screen.getByTestId('currency.details.sourceDisclosure');
+  await expect(source).toHaveAccessibleName('Coin Metrics + Fawaz · GMT');
   await expect(source).toBeVisible();
   assert.ok(existsSync(cache));
-  const saved = JSON.parse(readFileSync(cache, 'utf8')) as { points: { date: number; value: number }[] };
+  const saved = JSON.parse(readFileSync(cache, 'utf8')) as { points: { date: number; value: number }[]; source: { provider: object; observation: string; contributingProviders?: object[] } };
+  assert.deepEqual(saved.source.provider, { fawaz: {} });
+  assert.equal(saved.source.observation, 'monthlyReference');
+  assert.deepEqual(saved.source.contributingProviders, [{ coinMetrics: {} }]);
   assert.ok(saved.points.length >= 190);
   assert.equal(new Date((saved.points[0]!.date + 978_307_200) * 1000).getUTCFullYear(), 2010);
   assert.ok(saved.points.every(point => point.value > 0 && Number.isFinite(point.value)));
   await app.screenshot('bitcoin-actual-bundled-all-history-from-2010');
   await source.tap();
   await expect(source).toHaveValue('Expanded');
-  await agent.waitFor('Bitcoin All history is shown with a visible historical chart and the expanded source information identifies Fawaz and Coin Metrics monthly reference data. The date range starts in 2010.', { vision: 'only', timeout: 30_000 });
+  const firstDate = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' })
+    .format(new Date((saved.points[0]!.date + 978_307_200) * 1000));
+  await expect(screen.getByText(new RegExp(`^${firstDate} – `))).toBeVisible();
+  await expect(screen.getByText(/^Saved /)).toBeVisible();
+  await agent.waitFor('Bitcoin All history is shown with a visible historical chart and the expanded source information identifies Coin Metrics and Fawaz, shows a saved time and explains that All groups the available history monthly. The date range starts in 2010 and ends at the current quote date.', { vision: 'only', timeout: 30_000 });
   await app.screenshot('bitcoin-actual-bundled-all-history-source-dates');
 });
