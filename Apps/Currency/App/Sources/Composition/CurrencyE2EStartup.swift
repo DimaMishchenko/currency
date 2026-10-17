@@ -221,17 +221,23 @@
       calendar.timeZone = .gmt
       guard
         let yearStart = calendar.date(
-          from: DateComponents(year: calendar.component(.year, from: now), month: 1, day: 1))
+          from: DateComponents(year: calendar.component(.year, from: now), month: 1, day: 1)),
+        let monthStart = calendar.dateInterval(of: .month, for: now)?.start,
+        let lastMonth = calendar.date(byAdding: .month, value: -1, to: monthStart),
+        let previousMonth = calendar.date(byAdding: .month, value: -2, to: monthStart)
       else { throw StartupError.seedVerificationFailed }
       for range in HistoryRange.allCases where range != .day {
         let first =
-          range == .yearToDate
-          ? yearStart
-          : now.addingTimeInterval(-Double(range == .all ? 60 : max(2, range.rawValue - 1)) * 86400)
+          range == .all
+          ? previousMonth
+          : range == .yearToDate
+            ? yearStart
+            : now.addingTimeInterval(-Double(max(2, range.rawValue - 1)) * 86400)
         let series = HistorySeries(
           points: [
             HistoryPoint(date: first, value: values[0]),
-            HistoryPoint(date: now.addingTimeInterval(-86400), value: values[1])
+            HistoryPoint(
+              date: range == .all ? lastMonth : now.addingTimeInterval(-86400), value: values[1])
           ],
           source: .init(
             provider: .fawaz,
@@ -252,8 +258,14 @@
       _ history: HistorySeries, filename: String, directory: URL
     ) throws {
       let file = directory.appendingPathComponent(filename)
+      guard
+        var payload = try JSONSerialization.jsonObject(with: JSONEncoder().encode(history))
+          as? [String: Any]
+      else { throw StartupError.seedVerificationFailed }
+      payload["fiatHistoryPolicyVersion"] = 1
+      let data = try JSONSerialization.data(withJSONObject: payload, options: .sortedKeys)
       try FileCoordination.write(at: file) {
-        try JSONEncoder().encode(history).write(to: file, options: .atomic)
+        try data.write(to: file, options: .atomic)
       }
       let saved = try JSONDecoder().decode(HistorySeries.self, from: Data(contentsOf: file))
       guard saved.points == history.points, saved.source == history.source,
