@@ -16,6 +16,15 @@ let currencyUnitTestTargets: [TargetReference] = [
   "CurrencyApplicationTests", "ForegroundRefreshTests", "AppearancePreferencesTests",
   "WidgetIntegrationTests", "ApplicationIntegrationTests", "CompanionSyncTests"
 ]
+let currencyHarnessNames = [
+  "WidgetsHarness", "HomeHarness", "OnboardingHarness", "CurrencyDetailsHarness",
+  "SettingsHarness", "LocationOnboardingHarness", "WidgetOnboardingHarness"
+]
+let ciHarnessNames = Environment.currencyCiHarnessTargets.getString(default: "")
+  .split(separator: " ").map(String.init)
+precondition(Set(ciHarnessNames).isSubset(of: Set(currencyHarnessNames)))
+let currencyHarnessTargets = (ciHarnessNames.isEmpty ? currencyHarnessNames : ciHarnessNames)
+  .map(TargetReference.target)
 
 func releaseSigning(profile: String) -> Settings? {
   guard !profile.isEmpty else { return nil }
@@ -131,15 +140,21 @@ let modules: [Target] = [
     ])
 ]
 
+let cacheToolchain = Environment.currencyCacheToolchain.getString(default: "")
+var projectBaseSettings: SettingsDictionary = [
+  "CODE_SIGN_STYLE": "Automatic", "CURRENT_PROJECT_VERSION": "1",
+  "DEVELOPMENT_TEAM": .string(teamID), "MARKETING_VERSION": "1.0", "SWIFT_VERSION": "6.0",
+  "STRING_CATALOG_GENERATE_SYMBOLS": "YES", "SWIFT_EMIT_LOC_STRINGS": "YES",
+  "LOCALIZATION_PREFERS_STRING_CATALOGS": "YES", "TARGETED_DEVICE_FAMILY": "1,2"
+]
+if !cacheToolchain.isEmpty {
+  projectBaseSettings["CURRENCY_CACHE_TOOLCHAIN"] = .string(cacheToolchain)
+}
+
 let project = Project(
   name: "Currency", organizationName: "dimasike",
   settings: .settings(
-    base: [
-      "CODE_SIGN_STYLE": "Automatic", "CURRENT_PROJECT_VERSION": "1",
-      "DEVELOPMENT_TEAM": .string(teamID), "MARKETING_VERSION": "1.0", "SWIFT_VERSION": "6.0",
-      "STRING_CATALOG_GENERATE_SYMBOLS": "YES", "SWIFT_EMIT_LOC_STRINGS": "YES",
-      "LOCALIZATION_PREFERS_STRING_CATALOGS": "YES", "TARGETED_DEVICE_FAMILY": "1,2"
-    ],
+    base: projectBaseSettings,
     configurations: [
       .debug(name: "Debug"),
       .release(
@@ -352,7 +367,7 @@ let project = Project(
         .target(name: "SettingsUI"), .target(name: "WidgetOnboarding"),
         .target(name: "WidgetOnboardingUI"), .target(name: "AppearancePreferences"),
         .target(name: "CurrencyApplication"), .target(name: "ForegroundRefresh"),
-        .target(name: "CurrencyWidgets"), .target(name: "CurrencyWatch"),
+        .target(name: "Widgets"), .target(name: "CurrencyWidgets"), .target(name: "CurrencyWatch"),
         .target(name: "CompanionSync")
       ],
       settings: releaseSigning(profile: appProfile)),
@@ -559,10 +574,7 @@ let project = Project(
       testAction: .targets(["NativeIntentTests"], expandVariableFromTarget: "Currency")),
     .scheme(
       name: "CurrencyHarnesses", shared: true,
-      buildAction: .buildAction(targets: [
-        "WidgetsHarness", "HomeHarness", "OnboardingHarness", "CurrencyDetailsHarness",
-        "SettingsHarness", "LocationOnboardingHarness", "WidgetOnboardingHarness"
-      ])),
+      buildAction: .buildAction(targets: currencyHarnessTargets)),
     .scheme(
       name: "CurrencyTests", shared: true,
       buildAction: .buildAction(targets: ["Currency", "CurrencyWidgets"] + currencyUnitTestTargets),

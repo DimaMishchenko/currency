@@ -64,31 +64,39 @@ public struct HistoryWidgetSnapshot: Sendable {
   /// Availability or cache warning supplied by the history loader.
   public let issue: HistoryIssue?
 
-  /// Validates history for rendering without substituting live or sample rates.
+  /// Validates a quote-aligned history result before applying presentation direction and units.
   public init(pair: HistoryWidgetPair, range: HistoryRange, result: HistoryResult) {
     self.pair = pair
     self.range = range
+    guard pair.isSupported, let combined = result.series, Self.isValid(combined) else {
+      series = nil
+      issue = pair.isSupported ? .unavailable : .unsupportedPair
+      return
+    }
     let inverted = pair.historyRequest?.inverted == true
     let factor = NSDecimalNumber(
       decimal: pair.metalUnit.rateFactor(from: pair.base, to: pair.quote ?? pair.base)
     )
     .doubleValue
     let points =
-      result.series?.points
-      .map {
+      combined.points.map {
         HistoryPoint(date: $0.date, value: (inverted ? 1 / $0.value : $0.value) * factor)
-      } ?? []
+      }
     let valid =
-      pair.isSupported && points.count >= 2
-      && points.allSatisfy { $0.value.isFinite && $0.value > 0 }
-      && zip(points, points.dropFirst()).allSatisfy { $0.date < $1.date }
+      points.allSatisfy { $0.value.isFinite && $0.value > 0 }
     series =
       valid
-      ? result.series.map {
-        HistorySeries(points: points, source: $0.source, fetchedAt: $0.fetchedAt)
-      }
+      ? HistorySeries(points: points, source: combined.source, fetchedAt: combined.fetchedAt)
       : nil
-    issue = !pair.isSupported ? .unsupportedPair : valid ? result.issue : .unavailable
+    issue = valid ? result.issue : .unavailable
+  }
+
+  private static func isValid(_ series: HistorySeries) -> Bool {
+    series.points.count >= 2
+      && series.points.allSatisfy {
+        $0.value.isFinite && $0.value > 0 && $0.date <= series.fetchedAt
+      }
+      && zip(series.points, series.points.dropFirst()).allSatisfy { $0.date < $1.date }
   }
 
   /// The rate and date always come from the same last observation shown by the graph.
@@ -103,16 +111,14 @@ public struct HistoryWidgetSnapshot: Sendable {
     return value.rounded() / 10_000
   }
 
-  /// Intraday series refresh at UTC hour boundaries; longer ranges follow daily cache expiry.
+  /// Pairs with intraday history refresh at UTC hour boundaries for every chart range.
   public func nextRefresh(after now: Date) -> Date {
-    let hourly = range == .day && pair.supportsIntradayHistory
-    let interval: TimeInterval = hourly ? 3600 : 86_400
+    if pair.supportsIntradayHistory { return HistoryService.nextHour(after: now) }
+    let interval: TimeInterval = 86_400
     if let fetchedAt = series?.fetchedAt, fetchedAt <= now, issue != .usingCachedSeries {
-      let expiry =
-        hourly
-        ? HistoryService.nextHour(after: fetchedAt) : fetchedAt.addingTimeInterval(interval)
+      let expiry = fetchedAt.addingTimeInterval(interval)
       if expiry > now { return expiry }
     }
-    return hourly ? HistoryService.nextHour(after: now) : now.addingTimeInterval(interval)
+    return now.addingTimeInterval(interval)
   }
 }

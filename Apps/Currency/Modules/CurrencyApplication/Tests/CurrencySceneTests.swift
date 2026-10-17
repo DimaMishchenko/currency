@@ -1,3 +1,4 @@
+import Conversion
 import ExchangeRates
 import Foundation
 import Home
@@ -159,4 +160,128 @@ import Testing
     #expect(scene.location?.id == new.id)
   }
 
+}
+
+@MainActor @Suite struct WidgetQuoteHandoffTests {
+  @Test func renderedSnapshotIsSceneLocalAndCorrelatedUntilRefresh() throws {
+    let id = UUID()
+    let rendered = RateSnapshot(quotes: [
+      "USD": ExchangeRate(
+        1.1, published: "2026-10-16",
+        source: .init(provider: .frankfurter))
+    ])
+    let first = CurrencyScene(
+      completed: true, replay: {},
+      readWidgetContext: { $0 == id ? CurrencyScene.WidgetContext(snapshot: rendered) : nil })
+    let second = CurrencyScene(completed: true, replay: {})
+    let previousFlow = first.homeID
+    let route = CurrencyRoute.widget(id)
+    #expect(CurrencyRoute(url: try #require(route.url)) == route)
+    first.open(route)
+    #expect(first.homeID != previousFlow)
+    #expect(first.widgetSnapshot?.quotes["USD"]?.value == 1.1)
+    #expect(second.widgetSnapshot == nil)
+    first.finishWidgetHandoff(id: UUID())
+    #expect(first.widgetSnapshot != nil)
+    first.finishWidgetHandoff(id: id)
+    #expect(first.widgetSnapshot == nil)
+    #expect(first.widgetContextID == nil)
+    first.open(.widget(UUID()))
+    #expect(first.widgetSnapshot == nil)
+    #expect(CurrencyRoute(url: try #require(URL(string: "currency://convert"))) == .converter)
+    #expect(
+      CurrencyRoute(url: try #require(URL(string: "currency://widget?v=2&context=\(id)"))) == nil)
+    #expect(
+      CurrencyRoute(url: try #require(URL(string: "currency://widget?v=1&context=bad"))) == nil)
+  }
+}
+
+@MainActor @Suite struct WidgetPairHandoffTests {
+  @Test func customHistoryPairOpensItsQuoteWithoutChangingSavedInput() {
+    let id = UUID()
+    let snapshot = RateSnapshot(quotes: [
+      "BTC": ExchangeRate(
+        0.00001, published: "2026-10-16",
+        source: .init(provider: .coinMetrics))
+    ])
+    let saved = ConverterState()
+    let scene = CurrencyScene(
+      completed: true, replay: {},
+      readWidgetContext: { _ in
+        CurrencyScene.WidgetContext(snapshot: snapshot, base: "BTC", quote: "USD")
+      }, readInput: { saved })
+    scene.open(.widget(id))
+    #expect(scene.detail?.request.code == "BTC")
+    #expect(scene.detail?.request.reference == "USD")
+    #expect(scene.detail?.request.snapshot.quotes["BTC"]?.value == 0.00001)
+    #expect(saved.source == ConverterState().source)
+    let newer = RateSnapshot(quotes: [
+      "BTC": ExchangeRate(
+        0.00002, published: "2026-10-16",
+        source: .init(provider: .coinMetrics))
+    ])
+    scene.finishWidgetHandoff(id: id, snapshot: newer)
+    #expect(scene.detail?.request.snapshot.quotes["BTC"]?.value == 0.00002)
+    #expect(scene.widgetSnapshot == nil)
+  }
+
+  @Test func visibleHomePairStaysInTheConverter() {
+    let id = UUID()
+    var saved = ConverterState()
+    saved.changeSource("BTC")
+    saved.setDestinations(["USD"])
+    let input = saved
+    let scene = CurrencyScene(
+      completed: true, replay: {},
+      readWidgetContext: { _ in
+        CurrencyScene.WidgetContext(snapshot: RateSnapshot(), base: "BTC", quote: "USD")
+      }, readInput: { input })
+    scene.open(.widget(id))
+    #expect(scene.detail == nil)
+    #expect(scene.widgetSnapshot != nil)
+  }
+}
+
+@MainActor @Suite struct WidgetNavigationSupersessionTests {
+  @Test(arguments: [CurrencyRoute.converter, .currency("EUR")])
+  func externalNavigationInvalidatesThePreviousHandoff(route: CurrencyRoute) {
+    let widgetID = UUID()
+    let snapshot = RateSnapshot()
+    let scene = CurrencyScene(
+      completed: true, replay: {},
+      readWidgetContext: { _ in
+        CurrencyScene.WidgetContext(snapshot: snapshot, base: "BTC", quote: "USD")
+      },
+      openCurrency: { code in
+        HomeDetailsRequest(selectionID: code, code: code, reference: "USD", snapshot: snapshot)
+      })
+    scene.open(.widget(widgetID))
+    let widgetDetails = scene.detail?.id
+    #expect(widgetDetails != nil)
+    scene.open(route)
+    let externalDetails = scene.detail?.id
+    #expect(scene.widgetContextID == nil)
+    #expect(scene.widgetSnapshot == nil)
+    scene.finishWidgetHandoff(id: widgetID, snapshot: RateSnapshot())
+    #expect(scene.detail?.id == externalDetails)
+    #expect(scene.detail?.id != widgetDetails)
+    if case .currency = route { #expect(scene.detail?.request.code == "EUR") }
+  }
+
+  @Test func handoffRefreshPreservesDetailsFlowIdentity() {
+    let widgetID = UUID()
+    let scene = CurrencyScene(
+      completed: true, replay: {},
+      readWidgetContext: { _ in
+        CurrencyScene.WidgetContext(snapshot: RateSnapshot(), base: "BTC", quote: "USD")
+      })
+    scene.open(.widget(widgetID))
+    let flowID = scene.detail?.id
+    scene.releaseWidgetSnapshot(id: widgetID, snapshot: RateSnapshot())
+    #expect(scene.widgetSnapshot == nil)
+    #expect(scene.widgetContextID == widgetID)
+    #expect(scene.detail?.id == flowID)
+    scene.finishWidgetHandoff(id: widgetID, snapshot: RateSnapshot())
+    #expect(scene.detail?.id == flowID)
+  }
 }

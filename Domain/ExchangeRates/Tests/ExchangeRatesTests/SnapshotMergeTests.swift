@@ -27,14 +27,27 @@ import Testing
     }
   }
 
-  @Test func newerFailedAttemptDoesNotResurrectOldLiveOverlay() {
+  @Test(arguments: [false, true])
+  func futureObservationCannotDisplaceValidSavedOrDailyQuote(hasValidObservation: Bool) {
+    let future = RateSnapshot(
+      quotes: ["BTC": quote(9, time: 160)], dailyQuotes: ["BTC": quote(1)],
+      checkedAt: Date(timeIntervalSince1970: 40))
+    let latest = RateSnapshot(
+      quotes: ["BTC": hasValidObservation ? quote(3, time: 90) : quote(1)],
+      dailyQuotes: ["BTC": quote(1)], checkedAt: Date(timeIntervalSince1970: 100))
+    for merged in [future.merging(latest), latest.merging(future)] {
+      #expect(merged.quotes["BTC"] == latest.quotes["BTC"])
+    }
+  }
+
+  @Test func newerFailedAttemptRetainsLatestSuccessfulObservation() {
     let live = RateSnapshot(
       quotes: ["BTC": quote(4, time: 30)],
       dailyQuotes: ["BTC": quote(1)], checkedAt: Date(timeIntervalSince1970: 40))
     let failed = RateSnapshot(
       quotes: ["BTC": quote(1)],
       dailyQuotes: ["BTC": quote(1)], checkedAt: Date(timeIntervalSince1970: 50))
-    #expect(live.merging(failed).quotes["BTC"]?.observedAt == nil)
-    #expect(failed.merging(live).quotes["BTC"]?.value == 1)
+    #expect(live.merging(failed).quotes["BTC"]?.observedAt == Date(timeIntervalSince1970: 30))
+    #expect(failed.merging(live).quotes["BTC"]?.value == 4)
   }
 }

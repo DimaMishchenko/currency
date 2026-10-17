@@ -17,7 +17,7 @@ final class WatchComposition {
   let conversion: ConversionStore
   let rates: RateStore
   let history: HistoryService
-  private let service = RateService()
+  private let service: RateService
   private let discovery = HomeDiscoveryStore(defaults: .standard)
   private var issue: HomeIssue?
   private var observers: [UUID: AsyncStream<Void>.Continuation] = [:]
@@ -29,6 +29,7 @@ final class WatchComposition {
         forSecurityApplicationGroupIdentifier: "group.com.dimasike.currency.shared")
     else { preconditionFailure("Currency Watch requires its App Group entitlement") }
     self.directory = directory
+    service = RateService(directory: directory)
     conversion = ConversionStore(directory: directory)
     rates = RateStore(directory: directory)
     history = HistoryService(directory: directory)
@@ -115,7 +116,7 @@ struct SystemActionComposition: Sendable {
   init(directory: URL) {
     let conversion = ConversionStore(directory: directory)
     let rates = RateStore(directory: directory)
-    let service = RateService()
+    let service = RateService(directory: directory)
     readSelected = { [conversion] in
       let input = conversion.input()
       return [input.source] + input.manualDestinations

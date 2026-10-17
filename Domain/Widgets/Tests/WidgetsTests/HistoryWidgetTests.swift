@@ -166,7 +166,7 @@ import Testing
   }
 
   @Test(arguments: HistoryRange.allCases)
-  func cryptoPairsScheduleAccordingToTheirRangeEvenWhenHistoryIsUnavailable(range: HistoryRange) {
+  func cryptoPairsRefreshHourlyForEveryRangeEvenWhenHistoryIsUnavailable(range: HistoryRange) {
     let fetchedAt = now.addingTimeInterval(2220)
     for (base, quote) in [("USD", "BTC"), ("EUR", "BTC"), ("GBP", "ETH"), ("ETH", "BTC")] {
       let state = HistoryWidgetSnapshot(
@@ -174,14 +174,13 @@ import Testing
         result: HistoryResult(series: nil, issue: .unavailable))
       #expect(
         state.nextRefresh(after: fetchedAt)
-          == (range == .day
-            ? HistoryService.nextHour(after: fetchedAt) : fetchedAt.addingTimeInterval(86_400)))
+          == HistoryService.nextHour(after: fetchedAt))
     }
   }
 
   @Test(arguments: [HistoryRange.week, .month, .quarter, .year, .yearToDate, .all])
-  func fiatAndCryptoWithoutHourlyMarketsKeepDailyRefresh(range: HistoryRange) {
-    for (base, quote) in [("EUR", "CZK"), ("BTC", "XAU"), ("AVAX", "GBP"), ("USDC", "USD")] {
+  func pairsWithoutIntradayHistoryKeepDailyRefresh(range: HistoryRange) {
+    for (base, quote) in [("EUR", "CZK"), ("BTC", "XAU"), ("XAU", "BTC")] {
       let state = HistoryWidgetSnapshot(
         pair: HistoryWidgetPair(app: ConverterState(), base: base, quote: quote), range: range,
         result: HistoryResult(series: nil, issue: .unavailable))
@@ -205,11 +204,11 @@ import Testing
     #expect(state.series?.fetchedAt == now)
     #expect(state.change == ((80_000 / latest.value - 1) * 10_000).rounded() / 10_000)
     #expect(
-      state.nextRefresh(after: now.addingTimeInterval(2220)) == now.addingTimeInterval(86_400))
+      state.nextRefresh(after: now.addingTimeInterval(2220)) == HistoryService.nextHour(after: now))
   }
 
   @Test(arguments: HistoryRange.allCases)
-  func cryptoRefreshCadenceFollowsSelectedRange(range: HistoryRange) {
+  func cryptoRefreshCadenceUsesHourlyBoundariesForEveryRange(range: HistoryRange) {
     let intraday = range == .day
     let series = HistorySeries(
       points: [
@@ -225,13 +224,13 @@ import Testing
       pair: pair, range: range, result: HistoryResult(series: series, issue: nil))
     #expect(
       fresh.nextRefresh(after: now.addingTimeInterval(1200))
-        == now.addingTimeInterval(intraday ? 3600 : 86_400))
+        == now.addingTimeInterval(3600))
     #expect(
       fresh.nextRefresh(after: now.addingTimeInterval(4000))
-        == now.addingTimeInterval(intraday ? 7200 : 86_400))
+        == now.addingTimeInterval(7200))
     let stale = HistoryWidgetSnapshot(
       pair: pair, range: range,
       result: HistoryResult(series: series, issue: .usingCachedSeries))
-    #expect(stale.nextRefresh(after: now) == now.addingTimeInterval(intraday ? 3600 : 86_400))
+    #expect(stale.nextRefresh(after: now) == now.addingTimeInterval(3600))
   }
 }

@@ -60,7 +60,10 @@ public struct CalculatorLayout: View {
                       showsCode: medium || rows != 4,
                       previewSpread: previewProgress.map {
                         CalculatorPreviewTransition(progress: $0).spread
-                      })
+                      },
+                      amountSize: medium
+                        ? (codes.count > 2 ? 18 : 24)
+                        : (rows == 4 ? 19 : rows == 1 ? 28 : 22))
                   }
                   if columns == 2 && row * columns + 1 >= codes.count {
                     Color.clear.frame(maxWidth: .infinity)
@@ -86,15 +89,16 @@ public struct CalculatorLayout: View {
       }
     }
     .animation(nil, value: entry.input)
-    .modifier(WidgetSurface())
+    .modifier(WidgetSurface(openURL: entry.openURL))
   }
 
-  /// Preview cells keep their identity even when one column becomes two or new rows appear.
   private func preview(progress: CGFloat) -> some View {
     let mediumCodes = entry.input.visibleCodes(limit: 4, reservesLocal: entry.spec.synchronized)
     let largeCodes = entry.input.visibleCodes(limit: 8, reservesLocal: entry.spec.synchronized)
     let rows = max(1, (largeCodes.count + 1) / 2)
     let spread = CalculatorPreviewTransition(progress: progress).spread
+    let mediumAmountSize: CGFloat = mediumCodes.count > 2 ? 18 : 24
+    let largeAmountSize: CGFloat = rows == 4 ? 19 : rows == 1 ? 28 : 22
     let visibleEntry = entry.input.displayedInput(
       limit: progress < 0.5 ? 4 : 8,
       reservesLocal: entry.spec.synchronized, snapshot: entry.snapshot)
@@ -110,7 +114,8 @@ public struct CalculatorLayout: View {
             CurrencyTile(
               entry: display, code: code, compact: mediumCodes.count > 2,
               stacked: rows == 1, showsCode: true,
-              previewSpread: rows == 1 ? nil : spread, previewDense: rows == 4
+              previewSpread: rows == 1 ? nil : spread, previewDense: rows == 4,
+              amountSize: mediumAmountSize + (largeAmountSize - mediumAmountSize) * spread
             )
             .opacity(mediumCodes.contains(code) ? 1 : spread)
             .allowsHitTesting(mediumCodes.contains(code) || progress == 1)
@@ -129,7 +134,6 @@ public struct CalculatorLayout: View {
   }
 }
 
-/// Interpolates tile positions without reparenting cells between row containers.
 private struct CalculatorPreviewGrid: Layout {
   let medium: [String]
   let large: [String]
@@ -149,8 +153,6 @@ private struct CalculatorPreviewGrid: Layout {
         .map {
           cell(index: $0, count: medium.count, columns: medium.count <= 2 ? 1 : 2, bounds: bounds)
         } ?? end
-      // For a one-column medium widget, narrow the cells before moving them into one row.
-      // Interpolating both axes together would make the two currency labels cross each other.
       let oneColumn = medium.count <= 2
       let horizontal = oneColumn ? min(1, spread * 2) : spread
       let vertical = oneColumn ? max(0, (spread - 0.5) * 2) : spread
@@ -174,8 +176,6 @@ private struct CalculatorPreviewGrid: Layout {
   }
 }
 
-/// Moves the keypad below the tiles before either group expands horizontally.
-/// Endpoints retain the installed widget's medium and large sizing.
 private struct CalculatorArrangement: Layout {
   var expansion: CGFloat
   let largeTileHeight: CGFloat
@@ -196,7 +196,6 @@ private struct CalculatorArrangement: Layout {
       let gap = AppStyle.Space.small
       let mediumWidth = bounds.width * 0.46
       let targetTileHeight = largeTileHeight
-      // Two medium rows must keep enough height until they spread into one large row.
       let tileResize =
         targetTileHeight < 140 ? max(0, (transition.spread - 0.5) * 2) : transition.move
       let tileHeight = 140 + (targetTileHeight - 140) * tileResize

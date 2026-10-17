@@ -16,6 +16,7 @@ import Onboarding
 import Settings
 import UIKit
 import WidgetKit
+import Widgets
 
 @MainActor
 final class AppComposition {
@@ -69,7 +70,7 @@ final class AppComposition {
     service: RateService? = nil
   ) {
     syncDirectory = directory
-    self.service = service ?? RateService()
+    self.service = service ?? RateService(directory: directory)
     self.appearance = appearance ?? AppearancePreferences(defaults: .standard)
     rates = RateStore(directory: directory)
     conversion = ConversionStore(directory: directory)
@@ -90,6 +91,14 @@ final class AppComposition {
       replay: { [self] in
         try progress.restart(input: conversion.input())
       },
+      readWidgetContext: { [syncDirectory] id in
+        guard let context = WidgetQuoteContextStore(directory: syncDirectory).context(id) else {
+          return nil
+        }
+        return CurrencyScene.WidgetContext(
+          snapshot: context.snapshot, base: context.base, quote: context.quote)
+      },
+      readInput: conversion.input,
       openCurrency: { [self] id in
         let input = conversion.input()
         guard id == CurrencySelection.localID || CurrencyCode(rawValue: id) != nil else {
@@ -166,9 +175,11 @@ final class AppComposition {
       throw error
     }
   }
-  var home: HomeDependencies {
+  var home: HomeDependencies { home(scene: nil) }
+  func home(scene: CurrencyScene?) -> HomeDependencies {
     HomeDependencies(
-      readInput: conversion.input, readRates: rates.loadRates,
+      readInput: conversion.input,
+      readRates: { [rates] in scene?.widgetSnapshot ?? rates.loadRates() },
       readRateIssue: { [self] in rateIssue },
       readLocalCurrency: local.snapshot,
       editInput: { [self] in try edit($0) },

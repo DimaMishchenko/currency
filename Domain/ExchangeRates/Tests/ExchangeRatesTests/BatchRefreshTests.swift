@@ -32,7 +32,7 @@ private actor BatchHTTP: HTTPClient {
     #expect(await client.urls.filter { $0.host == "community-api.coinmetrics.io" }.count == 1)
   }
 
-  @Test func batchOverlayFallsBackAndCannotLeakIntoDailyCache() async throws {
+  @Test func batchOverlaySurvivesFailureAndCannotLeakIntoDailyCache() async throws {
     let time = Date(timeIntervalSince1970: 1_767_355_200)
     let daily = ExchangeRate(1, published: "2026-01-02", source: .init(provider: .fawaz))
     let live = ExchangeRate(
@@ -49,14 +49,14 @@ private actor BatchHTTP: HTTPClient {
       cachedAt: refreshedAt)
     let failed = await service.refresh(previous: previous, now: refreshedAt)
     for merged in [previous.merging(failed.snapshot), failed.snapshot.merging(previous)] {
-      #expect(merged.quotes["BTC"] == cachedDaily)
+      #expect(merged.quotes["BTC"] == live)
       #expect(merged.dailyQuotes?["BTC"] == cachedDaily)
     }
     let offline = await RateService(
       fiat: StubRateProvider(quotes: nil), daily: StubRateProvider(quotes: nil), crypto: nil
     )
     .refresh(previous: previous)
-    #expect(offline.snapshot.quotes["BTC"] == nil)
+    #expect(offline.snapshot.quotes["BTC"] == live)
     let restored = try JSONDecoder().decode(ExchangeRate.self, from: JSONEncoder().encode(live))
     #expect(restored == live)
     #expect(restored.observedAt == nil)

@@ -9,8 +9,9 @@ private final class PendingHistory {
   func load(_ range: HistoryRange) async -> HistoryResult {
     await withCheckedContinuation { requests[range] = $0 }
   }
-  func finish(_ range: HistoryRange, issue: HistoryIssue?) {
-    requests.removeValue(forKey: range)?.resume(returning: HistoryResult(series: nil, issue: issue))
+  func finish(_ range: HistoryRange, series: HistorySeries? = nil, issue: HistoryIssue?) {
+    requests.removeValue(forKey: range)?
+      .resume(returning: HistoryResult(series: series, issue: issue))
   }
 }
 
@@ -75,8 +76,8 @@ struct CurrencyDetailsTests {
     let expectedQuote = try #require(values[reference])
     let received = HistorySeries(
       points: [
-        HistoryPoint(date: date, value: 7),
-        HistoryPoint(date: date.addingTimeInterval(3600), value: 11)
+        HistoryPoint(date: date.addingTimeInterval(-7200), value: 7),
+        HistoryPoint(date: date.addingTimeInterval(-3600), value: 11)
       ], source: source, fetchedAt: date.addingTimeInterval(7200))
     var requests: [(String, String, HistoryRange)] = []
     let model = CurrencyDetailsModel(
@@ -105,8 +106,11 @@ struct CurrencyDetailsTests {
       #expect(requests.last?.0 == code)
       #expect(requests.last?.1 == reference)
       #expect(requests.last?.2 == range)
-      #expect(model.series?.points == received.points)
-      #expect(model.series?.source == source)
+      #expect(model.series?.points.dropLast() == received.points[...])
+      #expect(
+        model.series?.points.last?.value == NSDecimalNumber(decimal: expectedQuote / 8).doubleValue)
+      #expect(model.series?.points.last?.date == date)
+      #expect(model.series?.source.provider == source.provider)
       #expect(model.series?.fetchedAt == received.fetchedAt)
       #expect(model.issue == .usingCachedSeries)
     }
@@ -121,8 +125,8 @@ struct CurrencyDetailsTests {
     let source = RateSource(provider: .coinMetrics, observation: .minuteReference, timeZone: .gmt)
     let received = HistorySeries(
       points: [
-        HistoryPoint(date: date, value: 40_000),
-        HistoryPoint(date: date.addingTimeInterval(3600), value: 50_000)
+        HistoryPoint(date: date.addingTimeInterval(-7200), value: 40_000),
+        HistoryPoint(date: date.addingTimeInterval(-3600), value: 50_000)
       ],
       source: source, fetchedAt: date.addingTimeInterval(7200))
     let snapshot = RateSnapshot(
@@ -145,9 +149,9 @@ struct CurrencyDetailsTests {
       model.range = range
       await model.load()
       #expect(model.quote == reference)
-      #expect(model.series?.points.map(\.value) == [1.0 / 40_000, 1.0 / 50_000])
-      #expect(model.series?.points.map(\.date) == received.points.map(\.date))
-      #expect(model.series?.source == source)
+      #expect(model.series?.points.map(\.value) == [1.0 / 40_000, 1.0 / 50_000, 2])
+      #expect(model.series?.points.map(\.date) == received.points.map(\.date) + [date])
+      #expect(model.series?.source.provider == source.provider)
       #expect(model.series?.fetchedAt == received.fetchedAt)
       #expect(model.issue == .usingCachedSeries)
     }
@@ -233,6 +237,32 @@ struct CurrencyDetailsTests {
     #expect(requestedRange == .month)
   }
 
+  @Test func rangeChangesReplaceTheChartWithLoadingUntilTheRequestedHistoryArrives() async {
+    let pending = PendingHistory()
+    let model = CurrencyDetailsModel(
+      input: .init(code: "EUR", reference: "USD", snapshot: RateSnapshot()),
+      dependencies: .init { _, _, range in await pending.load(range) })
+    let date = Date(timeIntervalSince1970: 1_700_000_000)
+    for (index, range) in [HistoryRange.month, .year, .month].enumerated() {
+      model.range = range
+      let request = Task { await model.load() }
+      while pending.requests[range] == nil { await Task.yield() }
+      #expect(model.phase == .loading)
+      #expect(model.series == nil)
+      #expect(model.issue == nil)
+      let series = HistorySeries(
+        points: [
+          HistoryPoint(date: date, value: Double(index + 1)),
+          HistoryPoint(date: date.addingTimeInterval(86400), value: Double(index + 2))
+        ], source: .init(provider: .custom("test")), fetchedAt: date.addingTimeInterval(86400))
+      pending.finish(range, series: series, issue: index == 0 ? .usingCachedSeries : nil)
+      await request.value
+      #expect(model.phase == .loaded)
+      #expect(model.series?.points == series.points)
+      #expect(model.issue == (index == 0 ? .usingCachedSeries : nil))
+    }
+  }
+
   @Test func supersededNoncooperatingRequestCannotReplaceNewerRange() async {
     let pending = PendingHistory()
     let model = CurrencyDetailsModel(
@@ -276,5 +306,45 @@ struct CurrencyDetailsTests {
     pending.finish(.month, issue: .unavailable)
     await task.value
     #expect(model.issue == nil)
+  }
+}
+
+@MainActor @Suite struct DetailsQuoteRefreshTests {
+  @Test func refreshedQuotePreservesTheSelectedRangeAndHistoricalPrefix() async {
+    let now = Date.now
+    func rates(_ btc: Decimal, at date: Date) -> RateSnapshot {
+      RateSnapshot(
+        quotes: [
+          "BTC": ExchangeRate(
+            btc, published: "2026-10-16", source: .init(provider: .coinMetrics),
+            observedAt: date),
+          "USD": ExchangeRate(1, published: "2026-10-16", source: .init(provider: .frankfurter))
+        ], fetchedAt: date)
+    }
+    var requests = 0
+    let history = HistoryResult(
+      series: HistorySeries(
+        points: [
+          HistoryPoint(date: now.addingTimeInterval(-7200), value: 40000),
+          HistoryPoint(date: now.addingTimeInterval(-3600), value: 50000)
+        ], source: .init(provider: .coinMetrics), fetchedAt: now), issue: nil)
+    let model = CurrencyDetailsModel(
+      input: .init(
+        code: "BTC", reference: "USD", snapshot: rates(0.00001, at: now.addingTimeInterval(-60))),
+      dependencies: .init { _, _, range in
+        #expect(range == .year)
+        requests += 1
+        return history
+      })
+    model.range = .year
+    await model.load()
+    #expect(model.series?.points.last?.value == 100000)
+    model.updateSnapshot(rates(0.00002, at: now))
+    #expect(model.range == .year)
+    #expect(model.phase == .loaded)
+    #expect(requests == 1)
+    #expect(model.input.snapshot.convert(1, from: "BTC", to: "USD") == 50000)
+    #expect(model.series?.points.map(\.value) == [40000, 50000, 50000])
+    #expect(model.series?.points.last?.date == now)
   }
 }

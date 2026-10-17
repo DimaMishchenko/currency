@@ -41,13 +41,13 @@ mise exec -- tuist cache --cache-profile all-possible --configuration Debug --no
 mise exec -- tuist generate --no-open
 ```
 
-To upload newly built binaries, authenticate before warming and omit `--no-upload`; binaries already warmed locally are not uploaded again. Main and same-repository PR checks authenticate with GitHub OIDC and warm the shared cache, except Dependabot PRs. Fork and Dependabot PRs receive no Tuist writer credentials. Warming is optional and CI continues if it fails. See [Tuist's module cache guide](https://tuist.dev/en/docs/guides/features/cache/module-cache).
+To upload newly built binaries, authenticate before warming and omit `--no-upload`; binaries already warmed locally are not uploaded again. The separate Warm module cache workflow authenticates with GitHub OIDC after successful native checks on `main` and warms the exact tested commit. It does not delay PR checks or TestFlight publication. Same-repository PR checks authenticate to reuse shared binaries and successful test results; fork and Dependabot PRs receive no Tuist writer credentials and can build from source on cache misses. CI warming and consumption include the selected Xcode build and iOS/watchOS SDK builds in module hashes, so beta and release SDK artifacts cannot share a key merely because their version labels match. Normal development keeps its existing source and external-cache behavior; manual warms without this CI fingerprint use separate module keys. See [Tuist's module cache guide](https://tuist.dev/en/docs/guides/features/cache/module-cache).
 
 Use `tuist generate --no-open --cache-profile all-possible` to opt into replacing repository modules with cached binaries. This focused build view can omit module sources from the navigator. Default generation preserves the complete source tree. Signed release archives use `--cache-profile none`.
 
 After generation, run `python3 Scripts/CI/check_project_structure.py` to verify one workspace project, complete tracked-file coverage, and no duplicate navigator paths. CI runs the same check.
 
-Before delivery, run the relevant tests, check affected UI, and verify formatting with `swift format lint --recursive --strict Apps AppExtensions Domain Features Foundation` and `git diff --check`. Outstanding device and release checks live in [GitHub Issues](https://github.com/DimaMishchenko/currency/issues?q=is%3Aissue+is%3Aopen+label%3Averification).
+Before delivery, run the relevant tests, check affected UI, and verify tracked Swift formatting with `bash Scripts/CI/check_swift_format.sh` and `git diff --check`. Outstanding device and release checks live in [GitHub Issues](https://github.com/DimaMishchenko/currency/issues?q=is%3Aissue+is%3Aopen+label%3Averification).
 
 See [Adaptive layouts](AdaptiveLayouts.md) for Duo and iPad behavior and the remaining native acceptance matrix.
 
@@ -57,7 +57,7 @@ Run native intent tests with `xcodebuild test -workspace Currency.xcworkspace -s
 
 [Dependabot](../.github/dependabot.yml) checks GitHub Actions in all `.github/workflows` files weekly, including Tests, TestFlight Publish, and Public Beta. Minor and patch updates share one group; major updates get separate PRs. At most five version-update PRs can be open at once.
 
-Update PRs run the existing Tests workflow and its required `test` check. Changes to Tests or TestFlight Publish run simulator tests; Public Beta changes run the lightweight CI checks. Dependabot PRs skip authenticated Tuist cache warming and can build from source without Actions secrets. Signing and release secrets stay in the main-only release workflows.
+Update PRs run the Tests workflow and its required `test` check. Changes to Tests, cache policy or TestFlight Publish run full native validation; Public Beta changes run the lightweight CI checks. Dependabot PRs can build from source without Actions secrets. Signing and release secrets stay in the main-only release workflows.
 
 Swift packages currently use only local path dependencies. Add a `swift` ecosystem entry for each manifest directory that introduces an external Swift package, including `/Tuist` if `Tuist/Package.swift` owns it. Dependabot does not cover the Tuist pin in `.mise.toml` or tools installed by Homebrew or download scripts; review those separately.
 
@@ -73,17 +73,26 @@ Use Xcode-generated string-catalog symbols in the owning UI module. Keep resourc
 
 ## CI skip rules
 
-The Tests workflow always checks CI shell syntax and skip-rule regressions. It classifies the whole main push or the PR's merged diff before starting the simulator job, and records each main push's release decision for TestFlight Publish. The required `test` check still reports failures from these lightweight checks when simulator work is skipped.
+The Tests workflow plans checks first, then runs Linux tooling and native validation in parallel. It always checks CI execution, selection rules and shell syntax. `Scripts/CI/changes.sh` records `CurrencyCIPlan.json`, selection reasons and the separate TestFlight decision for the whole push or PR merged diff. The required `test` check waits for both branches and fails when planning or any selected check fails, including when no Xcode work is needed.
 
-| Changes | Simulator tests | TestFlight upload |
-| --- | --- | --- |
-| Documentation, module READMEs, license, Git ignore rules | Skip | Skip |
-| Tests, development harnesses, Tests workflow, Swift formatting rules | Run | Skip |
-| TestFlight notes generator | Skip | Run |
-| Public-beta workflow and other CI helpers | Skip | Skip |
-| App/package code, resources, entitlements, manifests, signed-release workflow/helpers, unknown paths | Run | Run |
+| Changes | PR checks |
+| --- | --- |
+| Documentation and module READMEs | CI guard checks |
+| E2E TypeScript or configuration | E2E install and typecheck |
+| Native tests | Owning test target and build dependencies |
+| Development harness | Affected harness build |
+| Production sources or resources | Reverse-dependent tests, affected app/Watch products and harnesses; App Intents when their app host is affected |
+| Project manifests, dependencies, toolchain, execution/selection policy, unknown ownership or missing history | Full native and tooling checks |
 
-Missing comparison history runs both jobs. Failed or cancelled Tests runs cannot publish. Public Beta skips release events without a build artifact; hourly/manual retries select the latest successful release with an unexpired artifact, so no-op releases do not hide builds awaiting Apple review.
+Tuist owns native test selection through the complete `CurrencyTests` scheme. It hashes test targets, sources, resources and their dependencies, then reuses successful target results on PRs. Python only decides whether the native test job is needed and which app, Watch and harness builds are affected. It does not filter native test targets. The exported Tuist graph includes file membership shared across targets; CI narrows only `CurrencyHarnesses` through `TUIST_CURRENCY_CI_HARNESS_TARGETS`.
+
+PR builds reuse cached modules through `TUIST_CURRENCY_CI_CACHE`; missing entries build from source. Unauthenticated CI omits the Tuist project handle because [4.209.0’s skipped-test reporting](https://github.com/tuist/tuist/blob/4.209.0/cli/Sources/TuistKit/Services/TestService.swift#L2451) otherwise uploads a report even with `--no-upload`. Native changes on `main` disable both module caching and test-result reuse and run full validation during rollout. Source navigator validation generates with `--cache-profile none` so it can check the complete source tree; signed archives also use sources.
+
+After formatting and project checks, the owned simulator starts without a blocking boot wait. Boot overlaps the native build; Xcode waits for readiness before executing tests. Native commands remain serial because they share the generated workspace and build directory. npm downloads and mise-installed tools use their actions' existing caches; Tuist handles module and test-result caches.
+
+Plans and native test results are attached to the workflow run. Native phase summaries report generation/build wall time and, when an `.xcresult` exists, Xcode build duration, post-build test-session duration and pass/fail/skip counts separately from cold preparation. Simulator E2E journeys remain local and are selected using the feature map and E2E coverage table.
+
+Documentation, tests, harnesses and CI-only changes do not request publication. App/package code, resources, entitlements, manifests, signed-release helpers and unknown production paths do. The notes generator requests publication without native tests. Failed or cancelled Tests runs cannot publish. TestFlight Publish still reads the decision from the exact successful `main` run and archives its tested SHA. Public Beta skips release events without a build artifact; hourly/manual retries select the latest successful release with an unexpired artifact.
 
 ## TestFlight testing notes
 

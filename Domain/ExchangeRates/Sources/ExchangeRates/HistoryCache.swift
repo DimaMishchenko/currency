@@ -1,3 +1,4 @@
+import CoordinatedFiles
 import Foundation
 
 struct HistoryCacheRecord: Codable {
@@ -27,6 +28,26 @@ struct HistoryCacheRecord: Codable {
 }
 
 extension HistoryService {
+  static func recordFailedFiatRefresh(
+    at file: URL, originalData: Data, cached: HistorySeries,
+    base: String, quote: String, range: HistoryRange, now: Date
+  ) throws -> HistorySeries {
+    try FileCoordination.write(at: file) {
+      guard let currentData = try FileCoordination.dataIfPresent(at: file) else { return cached }
+      guard currentData == originalData else {
+        guard let current = try? JSONDecoder().decode(HistoryCacheRecord.self, from: currentData),
+          validHistory(
+            current.series, base: base, quote: quote, range: range,
+            now: max(now, current.series.fetchedAt))
+        else { return cached }
+        return current.series
+      }
+      try JSONEncoder().encode(HistoryCacheRecord(series: cached, fiatHistoryPolicyVersion: 1))
+        .write(to: file, options: .atomic)
+      return cached
+    }
+  }
+
   static func historyStart(range: HistoryRange, at date: Date, calendar: Calendar) -> Date? {
     switch range {
     case .year: calendar.date(byAdding: .year, value: -1, to: date)

@@ -34,6 +34,8 @@ Select journeys using the [feature map](../../../../Documentation/FeatureMap.md)
 npm run test:e2e -- tests/currency-selection.e2e.ts
 npm run test:e2e:extended -- tests/home-screen-widget.e2e.ts
 npm run test:e2e:widgets -- tests/widget-display.e2e.ts
+npm run test:e2e:widgets -- tests/widget-history-sync.e2e.ts tests/widget-quote-handoff.e2e.ts
+npm run test:e2e:widgets -- tests/widget-input-refresh.e2e.ts tests/app-to-widget.e2e.ts tests/home-screen-widget.e2e.ts
 
 # Additional sizes or private widget configurations:
 AGENT_DEVICE_STATE_DIR=$PWD/.local/agent-device npx e2e run --tag widget-sizes
@@ -59,7 +61,7 @@ These are representative outcomes, not exhaustive coverage of each feature ID.
 | CONV-02–03, CONV-05 | [currency-selection](tests/currency-selection.e2e.ts) | Change source, add/remove currencies, exact amounts and restart |
 | CONV-01, HIST-01–04, PREF-04 | [provider-policy](tests/provider-policy.e2e.ts) | Configured Fawaz/Coin Metrics conversion, 24-hour minute-reference provenance, All monthly sources, no spurious USD approximation and retained non-USD daily-FX notices, 1D capability, source credits and saved-cache compatibility after restart |
 | HIST-02 | [history-archive](tests/history-archive.e2e.ts) | With the seeded All cache removed, the real bundled BTC/USD history starts in 2010 and exposes monthly source/date information |
-| HIST-02–04 | [history-cache](tests/history-cache.e2e.ts) | A legacy Fawaz USD/AED month refreshes to the real preferred source; an out-of-range month cache is replaced with recent dated observations; exact repaired history survives relaunch. Flat rates remain valid; requires network |
+| HIST-02–04 | [history-cache](tests/history-cache.e2e.ts) | A legacy Fawaz USD/AED month refreshes to the real preferred source; an out-of-range month cache is replaced with recent dated observations; exact repaired history, source and migration marker survive relaunch. Flat rates remain valid; requires network |
 | HIST-02, HIST-04, RATE-01 | [fiat-history-live](tests/fiat-history-live.e2e.ts) | Refresh production rates, load complete Frankfurter USD/EUR and AED/EUR years and bundled monthly All archive from 2010, record cold/All/warm times and prove exact yearly cache reuse after relaunch; requires network |
 | HIST-02–03, WID-08 | [converted-crypto-history](tests/converted-crypto-history.e2e.ts) | An installed BTC/EUR History widget fetches a complete live day with the app closed and retains its historical USD/EUR rate, provider and publication date; requires network |
 | RATE-01–02, HIST-01–04, CONV-05, PREF-04 | [live-app-provider](tests/live-app-provider.e2e.ts) | Disable the fixture network adapter, force-refresh all 22 crypto quotes, inspect the real phone USD and EUR 1D charts and bundled All history from 2010, then relaunch and verify saved input/chart reuse; requires network |
@@ -73,18 +75,21 @@ These are representative outcomes, not exhaustive coverage of each feature ID.
 | PREF-04 | [settings-information](tests/settings-information.e2e.ts) | Rates disclaimer, sources, credits and About legal/source controls are accessible; Open source opens the Currency repository in Safari; returning preserves Settings |
 | PREF-01, PREF-04, PREF-06–08 | [preferences](tests/preferences.e2e.ts) | Help feedback and About legal/creator controls are visible; creator contact pills align with native legal rows; light/dark appearance, theme persistence, converter values and readable version are preserved |
 | PREF-06, PREF-08 | [creator-contact](tests/creator-contact.e2e.ts) | Website opens dimasike.com in Safari; returning preserves the Settings screen and theme; Feedback in Help opens an Email/X alert, cancellation preserves Settings, selected Email offers a copyable address on simulators without Mail, and selected X opens its website |
+| WID-02, WID-10 | [widget-input-refresh](tests/widget-input-refresh.e2e.ts) | An entered USD 42 stays fixed after a controlled rate-cache update and app foreground refresh; its EUR result changes from 21 to 14 |
 | WID-02, WID-10, CONV-05 | [home-screen-widget](tests/home-screen-widget.e2e.ts), [app-to-widget](tests/app-to-widget.e2e.ts) | Calculator keypad → app and app edits → widget |
+| CONV-01, RATE-01–02, WID-08 | [widget-history-sync](tests/widget-history-sync.e2e.ts) | App home and simultaneously installed BTC/USD small 1D and medium 1W widgets share 52,500, while widgets retain their own percentages and historical periods |
+| CONV-01, RATE-01–02, WID-08, WID-10 | [widget-quote-handoff](tests/widget-quote-handoff.e2e.ts) | Actual widget tap retains an immutable 52,500 quote context, then displays a newer shared 55,000 quote without another refresh attempt |
 | WID-04–08, WID-10 | [widget-display](tests/widget-display.e2e.ts) | Board, Cash, Pocket, Mental Math and History data; additional sizes |
 | WID-04, WID-06–07 | [widget-configuration](tests/widget-configuration.e2e.ts) | Reversed pairs and Custom Board amount/list independent of app input |
 | WID-09–10 | [widget-lock-screen](tests/widget-lock-screen.e2e.ts) | Default Dollar icon installation/reuse and saved display |
 
-For widget/shared-data changes, run the affected widget and both Calculator sharing directions when relevant. Keep numerical/configuration combinations in native tests. App Intents contracts belong in `NativeIntentTests`; a Shortcuts system-UI journey is still missing. Update this table when coverage changes and preserve IDs in the feature map.
+For widget/shared-data changes, run the affected widget and both Calculator sharing directions when relevant. Keep numerical/configuration combinations in native tests. App Intents contracts belong in `NativeIntentTests`; that suite seeds `ready-converter` once, keeps fixed rates on later launches and verifies saved Settings preferences across app termination. It does not prove live provider coverage; a Shortcuts system-UI journey is still missing. Update this table when coverage changes and preserve IDs in the feature map.
 
 ## Fixtures, widgets and cache
 
-Start each case once with a matching fixture. `fresh-onboarding` and `ready-converter` cover general flows; `ready-metals` adds Gold as a destination and `ready-metal-source` starts with one troy ounce of Gold for measurement checks. The first launch resets real stores; restart keeps edits. Fixed rates are EUR 1 / USD 2 / CHF 0.5 / CZK 25 / XAU 0.01 troy oz, with versioned reference-history caches for EUR/USD, EUR/Gold, BTC against USD/EUR/CZK/CHF/VND and ETH/BTC. Ethereum has distinct live/daily fixture quotes; VND exercises tiny crypto reference values. `ready-crypto` starts USD 1 → Bitcoin: 0.00002 from Coin Metrics, with a distinct 0.00001 Fawaz daily fallback stored alongside it. Restart omits fixture state and preserves the real stores. Keep `-CurrencyE2EState` out of default launch arguments.
+Start each case once with a matching fixture. `fresh-onboarding` and `ready-converter` cover general flows; `ready-metals` adds Gold as a destination and `ready-metal-source` starts with one troy ounce of Gold for measurement checks. The first launch resets real stores; restart keeps edits. Fixed rates are EUR 1 / USD 2 / CHF 0.5 / CZK 25 / XAU 0.01 troy oz, with versioned reference-history caches for EUR/USD, EUR/Gold, BTC against USD/EUR/CZK/CHF/VND and ETH/BTC. Ethereum has distinct live/daily fixture quotes; VND exercises tiny crypto reference values. `ready-history-sync` starts BTC 1 → USD 52,500 and seeds the same timestamped current quote plus distinct day/week History values before widget reload. `ready-crypto` starts USD 1 → Bitcoin: 0.00002 from Coin Metrics, with a distinct 0.00001 Fawaz daily fallback stored alongside it. Restart omits fixture state and preserves the real stores. Keep `-CurrencyE2EState` out of default launch arguments.
 
-Run the provider journey with the normal app build. It verifies the standard Coin Metrics current rate, 1D capability, source credits and restart behavior. The fixture cache identity is `currency-fixtures-v11-cache`; daily fiat fixtures include the current history-policy marker and All fixtures use completed months; rebuild after app or fixture changes.
+Run the provider journey with the normal app build. It verifies the standard Coin Metrics current rate, 1D capability, source credits and restart behavior. The fixture cache identity is `currency-fixtures-v13-history-cache`; daily fiat fixtures include the current history-policy marker and All fixtures use completed months; rebuild after app or fixture changes.
 
 ```sh
 npm run test:e2e -- tests/provider-policy.e2e.ts
@@ -94,7 +99,7 @@ The fixtures use the production provider decoders with a fixed HTTP client. Fawa
 
 Home Screen setup uses [widgetctl](https://github.com/DimaMishchenko/widgetctl), pinned as a GitHub dev dependency. It installs/configures the requested kind and size, preserves other apps’ widgets and unloads its helper after the module. Tests still validate rendered data and interactions. Set `CURRENCY_E2E_WIDGET_SETUP=gallery` to exercise system installation; private-configuration cases then skip. Lock Screen installation uses system UI.
 
-Private History display fixtures explicitly configure EUR/USD/month because replacing a widget can retain its previous pair. Board checks reveal the installed widget again after returning from the app.
+Private History display fixtures explicitly configure EUR/USD/month because replacement can retain the previous pair. The range-sync journey keeps small 1D and medium 1W installed, checking the shared 52,500 rate/date and respective +5.00%/+31.25% changes. Device-targeted reveal handles different Home Screen pages. Percentages and dates use native assertions; rates and graphs use vision because the driver can duplicate currency-row labels. The journey retries once across a UTC-hour boundary. The handoff journey advances only the authoritative cache to 55,000, verifies the captured widget context remains 52,500, then taps the installed widget and verifies eventual app 55,000 without a new refresh attempt. Native scene tests verify the initial captured snapshot because the driver may observe the app after its 1.5-second handoff window. After the actual widget tap, vision verifies the app is foreground before a non-relaunching open retargets the driver from SpringBoard for native assertions. Board checks reveal the widget after returning from the app.
 
 Cache remains enabled and local, ignored by Git. Fresh checkouts record their own. Inspect it with `npx e2e cache ls` or `stats`; `clear` removes all recordings. Unused entries are not automatically pruned. Keep goal/test identities stable and bump `app.identity` when fixture semantics change. Diagnose failed outcomes before accepting replacement recordings. `--no-cache` neither reads nor writes cache. Visual assertions and cache misses still require model access; these simulator tests run locally, not in CI.
 
@@ -118,6 +123,8 @@ Stop only your helper and simulator; use the matching state directory for altern
 AGENT_DEVICE_STATE_DIR="$PWD/.local/agent-device" npx agent-device daemon stop
 xcrun simctl shutdown "$CURRENCY_E2E_UDID"
 ```
+
+Watch history loading (WATCH-04–05) uses the [maintained native Watch journey](../../../CurrencyWatch/README.md#history-loading-acceptance); its delayed range-state regression is in `CurrencyDetailsTests`. The iPhone E2E driver does not cover Watch.
 
 Watch metal measurement (WATCH-14) uses the [maintained native Watch journey](../../../CurrencyWatch/README.md#metal-measurement-acceptance). The iPhone E2E driver does not cover Watch. Numerical, stale-draft and preference-sync regressions remain in the native unit test targets.
 

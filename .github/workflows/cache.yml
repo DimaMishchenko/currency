@@ -1,0 +1,76 @@
+name: Warm module cache
+
+on:
+  workflow_run:
+    workflows: [Tests]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  changes:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    outputs:
+      xcode: ${{ steps.plan.outputs.xcode }}
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: currency-ci-plan
+          path: ${{ runner.temp }}/ci-plan
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+      - name: Read tested validation plan
+        id: plan
+        run: |
+          python3 - <<'PYTHON'
+          import json
+          import os
+          from pathlib import Path
+          plan = json.loads((Path(os.environ['RUNNER_TEMP']) / 'ci-plan/CurrencyCIPlan.json').read_text())
+          if type(plan['xcode']) is not bool:
+              raise ValueError('Invalid Xcode decision')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write(f"xcode={str(plan['xcode']).lower()}\n")
+          PYTHON
+  warm:
+    needs: changes
+    if: needs.changes.outputs.xcode == 'true'
+    runs-on: xcode-27
+    timeout-minutes: 30
+    concurrency:
+      group: currency-module-cache-main
+      cancel-in-progress: true
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_27.1.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - name: Isolate Tuist credentials
+        run: |
+          config=$(mktemp -d "$RUNNER_TEMP/currency-tuist-cache.XXXXXX")
+          echo "TUIST_XDG_CONFIG_HOME=$config" >> "$GITHUB_ENV"
+      - uses: jdx/mise-action@v5
+      - name: Identify cache toolchain
+        run: |
+          identity=$(python3 Scripts/CI/cache_toolchain.py)
+          echo "TUIST_CURRENCY_CACHE_TOOLCHAIN=$identity" >> "$GITHUB_ENV"
+      - name: Warm tested Debug modules
+        run: |
+          tuist install
+          tuist auth login
+          tuist cache --cache-profile all-possible --configuration Debug
+      - name: Remove Tuist CI credentials
+        if: always()
+        run: tuist auth logout

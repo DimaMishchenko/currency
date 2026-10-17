@@ -40,6 +40,35 @@ private actor HistoryCacheHTTP: HTTPClient {
   }
 }
 
+private actor BlockedHistoryCacheFailure: HTTPClient {
+  private var started = false
+  private var released = false
+  private var startWaiters: [CheckedContinuation<Void, Never>] = []
+  private var releaseWaiters: [CheckedContinuation<Void, Never>] = []
+
+  func get(_ url: URL) async throws -> Data {
+    started = true
+    for waiter in startWaiters { waiter.resume() }
+    startWaiters.removeAll()
+    if !released {
+      await withCheckedContinuation { releaseWaiters.append($0) }
+    }
+    throw RateError.http(503)
+  }
+
+  func waitUntilStarted() async {
+    if !started {
+      await withCheckedContinuation { startWaiters.append($0) }
+    }
+  }
+
+  func release() {
+    released = true
+    for waiter in releaseWaiters { waiter.resume() }
+    releaseWaiters.removeAll()
+  }
+}
+
 @Suite struct HistoryCacheValidationTests {
   let now = Date(timeIntervalSince1970: 1_792_065_600)
 
@@ -96,6 +125,64 @@ private actor HistoryCacheHTTP: HTTPClient {
     #expect(second.issue == nil)
     #expect(second.series?.points == saved.points)
     #expect(await client.urls.count == 2)
+  }
+
+  @Test(arguments: [0.0, 60.0])
+  func failedMigrationPreservesConcurrentPreferredRefresh(fetchOffset: TimeInterval) async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let file = try save(flatSeries(at: now), directory: directory)
+    let blocked = BlockedHistoryCacheFailure()
+    let service = HistoryService(directory: directory, client: blocked)
+    let failure = Task { await service.load(base: "USD", quote: "AED", range: .month, now: now) }
+    await blocked.waitUntilStarted()
+    let success = await HistoryService(directory: directory, client: HistoryCacheHTTP())
+      .load(base: "USD", quote: "AED", range: .month, now: now.addingTimeInterval(fetchOffset))
+    let saved = try Data(contentsOf: file)
+    await blocked.release()
+    let result = await failure.value
+    #expect(success.issue == nil)
+    #expect(success.series?.source.provider == .frankfurter)
+    #expect(result.issue == .usingCachedSeries)
+    #expect(result.series?.source.provider == .frankfurter)
+    #expect(result.series?.points == success.series?.points)
+    #expect(result.series?.fetchedAt == success.series?.fetchedAt)
+    #expect(try Data(contentsOf: file) == saved)
+    let client = HistoryCacheHTTP(failing: true)
+    let next = await HistoryService(directory: directory, client: client)
+      .load(base: "USD", quote: "AED", range: .month, now: now.addingTimeInterval(120))
+    #expect(next.series?.source.provider == .frankfurter)
+    #expect(next.issue == nil)
+    #expect(await client.urls.isEmpty)
+  }
+
+  @Test(arguments: ["removed", "invalid", "unreadable"])
+  func failedMigrationDoesNotRestoreChangedCache(change: String) async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let original = flatSeries(at: now)
+    let file = try save(original, directory: directory)
+    let blocked = BlockedHistoryCacheFailure()
+    let service = HistoryService(directory: directory, client: blocked)
+    let failure = Task { await service.load(base: "USD", quote: "AED", range: .month, now: now) }
+    await blocked.waitUntilStarted()
+    switch change {
+    case "removed": try FileManager.default.removeItem(at: file)
+    case "unreadable":
+      try FileManager.default.removeItem(at: file)
+      try FileManager.default.createDirectory(at: file, withIntermediateDirectories: false)
+    default: try Data("invalid".utf8).write(to: file, options: .atomic)
+    }
+    await blocked.release()
+    let result = await failure.value
+    #expect(result.series?.points == original.points)
+    #expect(result.issue == (change == "unreadable" ? .cacheWriteFailed : .usingCachedSeries))
+    switch change {
+    case "removed": #expect(!FileManager.default.fileExists(atPath: file.path))
+    case "unreadable":
+      #expect(try file.resourceValues(forKeys: [.isDirectoryKey]).isDirectory == true)
+    default: #expect(try Data(contentsOf: file) == Data("invalid".utf8))
+    }
   }
 
   @Test(arguments: ["wrongRange", "afterFetch", "duplicateDay", "currentMonth", "duplicateMonth"])

@@ -1,3 +1,4 @@
+import CoordinatedFiles
 import Foundation
 
 /// Loads daily fiat references, dated fallback publications, bundled months, and intraday crypto.
@@ -39,7 +40,9 @@ public actor HistoryService {
     let interval = range == .yearToDate ? "\(range.rawValue)-\(year)" : "\(range.rawValue)"
     let file = directory.appendingPathComponent(
       "history-v3-\(base)-\(quote)-\(interval).json")
-    let record = (try? Data(contentsOf: file))
+    let cachedData = try? Data(contentsOf: file)
+    let record =
+      cachedData
       .flatMap { try? JSONDecoder().decode(HistoryCacheRecord.self, from: $0) }
     let cached: HistorySeries? = record.flatMap { record in
       Self.validHistory(record.series, base: base, quote: quote, range: range, now: now)
@@ -51,7 +54,8 @@ public actor HistoryService {
     let fresh =
       cached.map { now.timeIntervalSince($0.fetchedAt) < (cacheLifetime ?? lifetime) } ?? false
     if let cached, fresh,
-      !fiatPolicy || cached.source.provider != .fawaz || record?.fiatHistoryPolicyVersion == 1
+      !fiatPolicy || cached.source.provider != .fawaz || record?.fiatHistoryPolicyVersion == 1,
+      range != .day || now < Self.nextHour(after: cached.fetchedAt)
     {
       return HistoryResult(series: cached, issue: nil)
     }
@@ -119,17 +123,15 @@ public actor HistoryService {
           } catch {
             try Task.checkCancellation()
             if cached?.source.provider == .frankfurter { throw error }
-            if let cached, fresh, record?.fiatHistoryPolicyVersion != 1 {
+            if let cached, let cachedData, fresh, record?.fiatHistoryPolicyVersion != 1 {
               do {
-                try JSONEncoder()
-                  .encode(
-                    HistoryCacheRecord(series: cached, fiatHistoryPolicyVersion: 1)
-                  )
-                  .write(to: file, options: .atomic)
+                let latest = try Self.recordFailedFiatRefresh(
+                  at: file, originalData: cachedData, cached: cached,
+                  base: base, quote: quote, range: range, now: now)
+                return HistoryResult(series: latest, issue: .usingCachedSeries)
               } catch {
                 return HistoryResult(series: cached, issue: .cacheWriteFailed)
               }
-              return HistoryResult(series: cached, issue: .usingCachedSeries)
             }
             recent = try await Self.fetchDailyHistory(
               client: client, directory: directory, base: base, quote: quote,
@@ -153,12 +155,13 @@ public actor HistoryService {
       guard Self.validHistory(series, base: base, quote: quote, range: range, now: now)
       else { throw RateError.invalidData }
       do {
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        try JSONEncoder()
-          .encode(
-            HistoryCacheRecord(series: series, fiatHistoryPolicyVersion: fiatPolicy ? 1 : nil)
-          )
-          .write(to: file, options: .atomic)
+        try FileCoordination.write(at: file) {
+          try JSONEncoder()
+            .encode(
+              HistoryCacheRecord(series: series, fiatHistoryPolicyVersion: fiatPolicy ? 1 : nil)
+            )
+            .write(to: file, options: .atomic)
+        }
       } catch {
         return HistoryResult(series: series, issue: .cacheWriteFailed)
       }
@@ -194,7 +197,7 @@ public actor HistoryService {
     let end = Self.minuteEndpoint(now)
     let start = end.addingTimeInterval(-86400)
     let assets = [base, quote].filter { CurrencyCatalog.crypto.contains($0) }
-    let observations = try await CoinMetricsClient(client: client)
+    let observations = try await CoinMetricsClient(client: client, directory: directory)
       .observations(
         assets: assets, start: start, end: end, frequency: "1m")
     for asset in assets {

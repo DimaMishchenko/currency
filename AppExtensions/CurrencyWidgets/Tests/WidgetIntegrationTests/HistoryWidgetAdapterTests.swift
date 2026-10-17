@@ -31,6 +31,54 @@ import Widgets
     #expect(timeline.policy == .after(now.addingTimeInterval(3_600)))
   }
 
+  @Test func dayAndWeekShareLatestObservationWhileKeepingPeriodChanges() async throws {
+    let now = now
+    let provider = HistoryTimeline(
+      dependencies: HistoryTimelineDependencies(
+        input: { ConverterState() },
+        load: { _, _, range, _ in
+          let points =
+            range == .day
+            ? [
+              HistoryPoint(date: now.addingTimeInterval(-86400), value: 50_000),
+              HistoryPoint(date: now.addingTimeInterval(-300), value: 52_500)
+            ]
+            : [
+              HistoryPoint(date: now.addingTimeInterval(-604800), value: 40_000),
+              HistoryPoint(date: now.addingTimeInterval(-86400), value: 48_000)
+            ]
+          return HistoryResult(
+            series: HistorySeries(
+              points: points,
+              source: .init(provider: range == .day ? .coinMetrics : .fawaz), fetchedAt: now),
+            issue: nil)
+        }, now: { now },
+        rates: {
+          RateSnapshot(
+            quotes: [
+              "BTC": ExchangeRate(
+                1 / Decimal(52500), published: "2026-10-16",
+                source: .init(provider: .coinMetrics), observedAt: now.addingTimeInterval(-300)),
+              "USD": ExchangeRate(1, published: "2026-10-16", source: .init(provider: .frankfurter))
+            ], fetchedAt: now)
+        }))
+    let settings = HistorySettings()
+    settings.base = HistoryCurrency("BTC")
+    settings.comparison = HistoryCurrency("USD")
+    settings.range = .day
+    let day = await provider.loadTimeline(settings)
+    settings.range = .week
+    let week = await provider.loadTimeline(settings)
+    let daySnapshot = try #require(day.entries.first?.snapshot)
+    let weekSnapshot = try #require(week.entries.first?.snapshot)
+    #expect(daySnapshot.latest == weekSnapshot.latest)
+    let latest = try #require(weekSnapshot.latest?.value)
+    #expect(abs(latest - 52_500) < 0.000001)
+    #expect(daySnapshot.change == 0.05)
+    #expect(weekSnapshot.change == 0.3125)
+    #expect(day.policy == week.policy)
+  }
+
   @Test func nativeDefaultsFollowAppAndOverridesAreIndependent() {
     var input = ConverterState()
     input.setDestinations(["CZK", "USD"])
@@ -340,7 +388,7 @@ import Widgets
             series: HistorySeries(
               points: [
                 HistoryPoint(date: now.addingTimeInterval(-86_400), value: 24),
-                HistoryPoint(date: now, value: 25)
+                HistoryPoint(date: now.addingTimeInterval(-3600), value: 25)
               ], source: .init(provider: .frankfurter), fetchedAt: now.addingTimeInterval(-3600)),
             issue: nil)
         }, now: { now }))
@@ -406,7 +454,9 @@ import Widgets
     settings.base = HistoryCurrency("EUR")
     settings.comparison = HistoryCurrency("BTC")
     let inverse = await provider.entry(settings)
-    #expect(requested.withLock { $0.map { [$0.0, $0.1] } } == [["BTC", "EUR"], ["BTC", "EUR"]])
+    #expect(
+      requested.withLock { $0.map { [$0.0, $0.1] } }
+        == Array(repeating: ["BTC", "EUR"], count: 2))
     #expect(direct.snapshot.latest?.value == 120)
     #expect(abs((inverse.snapshot.latest?.value ?? 0) - 1.0 / 120) < 0.0000001)
     #expect(abs((inverse.snapshot.change ?? 0) + 1.0 / 6) < 0.0001)
@@ -452,7 +502,7 @@ import Widgets
   }
 
   @Test(arguments: HistoryWidgetRange.allCases)
-  func cryptoRangeSchedulesOnlyIntradayHourlyRefresh(range: HistoryWidgetRange) async {
+  func cryptoRangesShareHourlyRefresh(range: HistoryWidgetRange) async {
     let now = now.addingTimeInterval(2220)
     let requests = Mutex<[HistoryRange]>([])
     let provider = HistoryTimeline(
@@ -472,8 +522,7 @@ import Widgets
     #expect(
       timeline.policy
         == .after(
-          range == .day
-            ? HistoryService.nextHour(after: now) : now.addingTimeInterval(86_400)))
+          HistoryService.nextHour(after: now)))
   }
 
   @Test func unsupportedPairSkipsNetworkAndFailedLoadHasNoSampleData() async throws {
@@ -497,6 +546,6 @@ import Widgets
     #expect(calls.withLock { $0 } == 1)
     #expect(timeline.entries.first?.snapshot.series == nil)
     #expect(timeline.entries.first?.snapshot.latest == nil)
-    #expect(timeline.policy == .after(now.addingTimeInterval(86_400)))
+    #expect(timeline.policy == .after(HistoryService.nextHour(after: now)))
   }
 }

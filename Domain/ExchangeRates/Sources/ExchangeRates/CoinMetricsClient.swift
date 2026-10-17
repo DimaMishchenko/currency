@@ -3,13 +3,16 @@ import Foundation
 /// Keyless Community reference-rate observations, expressed in USD per asset.
 public struct CoinMetricsClient: Sendable {
   private let client: any HTTPClient
-  private let acquire: @Sendable () async throws -> Void
+  private let acquire: @Sendable () async throws -> UUID
+  private let finish: @Sendable (UUID, Date?) async throws -> Void
   private let sleep: @Sendable (Duration) async throws -> Void
 
-  /// Uses a supplied transport and process-shared Community request pacing.
-  public init(client: any HTTPClient = NetworkClient()) {
+  /// Uses the supplied shared directory for cross-process Community request pacing.
+  public init(client: any HTTPClient = NetworkClient(), directory: URL? = nil) {
     self.client = client
-    self.acquire = { try await CoinMetricsPacer.shared.acquire() }
+    let budget = CoinMetricsBudget(directory: directory)
+    self.acquire = { try await budget.acquire() }
+    self.finish = { try await budget.finish($0, cooldown: $1) }
     self.sleep = { try await Task.sleep(for: $0) }
   }
 
@@ -18,13 +21,17 @@ public struct CoinMetricsClient: Sendable {
     sleep: @escaping @Sendable (Duration) async throws -> Void
   ) {
     self.client = client
-    self.acquire = acquire
+    self.acquire = {
+      try await acquire(); return UUID()
+    }
+    self.finish = { _, _ in }
     self.sleep = sleep
   }
 
   /// Returns ascending, unique observations within the inclusive requested time range.
   public func observations(
-    assets: [String], start: Date, end: Date, frequency: String = "1m"
+    assets: [String], start: Date, end: Date, frequency: String = "1m",
+    latestPerAsset: Bool = false
   ) async throws -> [String: [HistoryPoint]] {
     let assets = Set(assets.map { $0.lowercased() })
     guard !assets.isEmpty,
@@ -44,8 +51,11 @@ public struct CoinMetricsClient: Sendable {
       .init(name: "frequency", value: frequency),
       .init(name: "start_time", value: start.ISO8601Format()),
       .init(name: "end_time", value: end.ISO8601Format()),
-      .init(name: "page_size", value: "10000")
+      .init(name: "page_size", value: latestPerAsset ? String(assets.count) : "10000")
     ]
+    if latestPerAsset {
+      components.queryItems?.append(.init(name: "limit_per_asset", value: "1"))
+    }
     var next = components.url
     var visited: Set<URL> = []
     var points: [String: [Date: Double]] = [:]
@@ -81,14 +91,32 @@ public struct CoinMetricsClient: Sendable {
   private func load(_ url: URL) async throws -> Data {
     for attempt in 0..<3 {
       try Task.checkCancellation()
-      try await acquire()
+      let owner = try await acquire()
+      let result: Result<Data, any Error>
       do {
-        let data = try await client.get(url)
+        try Task.checkCancellation()
+        result = .success(try await client.get(url))
+      } catch { result = .failure(error) }
+      switch result {
+      case .success(let data):
+        try await finish(owner, nil)
         try Task.checkCancellation()
         return data
-      } catch RateError.http(429) {
-        guard attempt < 2 else { throw RateError.http(429) }
-        try await sleep(.seconds(6))
+      case .failure(let error):
+        let retryAfter: Date?
+        switch error {
+        case RateError.http(429): retryAfter = .distantPast
+        case RateError.rateLimited(let date): retryAfter = date ?? .distantPast
+        default:
+          try await finish(owner, nil)
+          throw error
+        }
+        let delay = 6 * pow(2, Double(attempt)) + Double.random(in: 0...1)
+        let deadline = max(retryAfter ?? .distantPast, Date.now.addingTimeInterval(delay))
+        try await finish(owner, deadline)
+        try Task.checkCancellation()
+        guard attempt < 2 else { throw error }
+        try await sleep(.seconds(max(0, deadline.timeIntervalSinceNow)))
       }
     }
     throw RateError.unavailable
@@ -123,19 +151,5 @@ public struct CoinMetricsClient: Sendable {
       time = try? values.decode(String.self, forKey: .time)
       rate = try? values.decode(String.self, forKey: .rate)
     }
-  }
-}
-
-private actor CoinMetricsPacer {
-  static let shared = CoinMetricsPacer()
-  private let clock = ContinuousClock()
-  private var lastStart: ContinuousClock.Instant?
-
-  func acquire() async throws {
-    while let lastStart, clock.now < lastStart.advanced(by: .milliseconds(650)) {
-      try await clock.sleep(until: lastStart.advanced(by: .milliseconds(650)))
-    }
-    try Task.checkCancellation()
-    lastStart = clock.now
   }
 }

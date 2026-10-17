@@ -46,7 +46,7 @@ enum WidgetComposition {
       },
       refreshRates: { force in
         try await rates.refreshRates(
-          using: RateService(), force: force,
+          using: RateService(directory: directory), force: force,
           providerTimeout: .seconds(2))
       },
       refreshLocalCurrency: {
@@ -54,13 +54,17 @@ enum WidgetComposition {
           store: local, timeoutDuration: .seconds(5), reloadWidgets: {})
         await controller.refreshForWidget()
       },
-      now: { .now }, refreshInterval: CurrencyRateConfiguration.widgetRefreshInterval)
+      now: { .now },
+      saveContext: { snapshot, now in
+        try? WidgetQuoteContextStore(directory: directory).save(snapshot, now: now)
+      }, refreshInterval: CurrencyRateConfiguration.widgetRefreshInterval)
   }
 
   static func history() -> HistoryTimelineDependencies {
     let directory = directory()
     let conversion = ConversionStore(directory: directory)
     let local = LocalCurrencyStore(directory: directory)
+    let rates = RateStore(directory: directory)
     let history = HistoryService(
       directory: directory, client: NetworkClient(timeout: 10))
     return HistoryTimelineDependencies(
@@ -70,7 +74,16 @@ enum WidgetComposition {
           base: base, quote: quote, range: range, now: now,
           cacheLifetime: range == .day ? 3600 : 86_400)
       },
-      now: { .now }, localSnapshot: local.snapshot)
+      now: { .now }, rates: rates.loadRates,
+      refreshRates: {
+        _ = try? await rates.refreshRates(
+          using: RateService(directory: directory), force: false,
+          providerTimeout: .seconds(2))
+      },
+      saveContext: { snapshot, pair, now in
+        try? WidgetQuoteContextStore(directory: directory)
+          .save(snapshot, base: pair.base, quote: pair.quote, now: now)
+      }, localSnapshot: local.snapshot)
   }
 
   static func action() -> WidgetActionDependencies {

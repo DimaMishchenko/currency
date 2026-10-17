@@ -71,6 +71,7 @@ for (const scenario of ['legacy daily source', 'wrong month'] as const) {
     }
     const saved = readHistory();
     assert.ok(saved.source.provider.frankfurter);
+    assert.equal(saved.fiatHistoryPolicyVersion, 1);
     assert.ok(saved.fetchedAt >= seeded.fetchedAt);
     assert.ok(saved.points.length >= 15, 'The production daily provider must supply a full month of publication dates.');
     assert.ok(saved.points.every((point, index) => Number.isFinite(point.value) && point.value > 0 && point.value !== 777
@@ -86,6 +87,8 @@ for (const scenario of ['legacy daily source', 'wrong month'] as const) {
     await expect(screen.getByTestId('currency.details.sourceDisclosure').filter({ hasText: /Frankfurter.*daily reference rates/i })).toBeVisible();
     assert.equal(readHistory().fetchedAt, saved.fetchedAt);
     assert.deepEqual(readHistory().points, saved.points);
+    assert.deepEqual(readHistory().source, saved.source);
+    assert.equal(readHistory().fiatHistoryPolicyVersion, 1);
     await app.screenshot(`usd-aed-${scenario.replaceAll(' ', '-')}-after-relaunch`);
   });
 }

@@ -116,13 +116,29 @@ struct CurrencyRoot: View {
         AnyView(WidgetLocationPresenter(composition: composition, scene: scene, content: content))
       }
     )
-    .environment(\.homeDependencies, composition.home)
+    .environment(\.homeDependencies, composition.home(scene: scene))
     .environment(\.onboardingDependencies, composition.onboarding)
     .environment(\.currencyDetailsDependencies, composition.details)
     .environment(appearance)
     .tint(appearance.accent)
     .preferredColorScheme(appearance.theme.colorScheme)
     .onOpenURL(perform: scene.open)
+    .task(id: scene.widgetContextID) {
+      guard let id = scene.widgetContextID else { return }
+      do {
+        try await Task.sleep(for: .seconds(1.5))
+        scene.releaseWidgetSnapshot(id: id, snapshot: composition.rates.loadRates())
+        composition.changed()
+        let result = try await composition.refresh(force: false)
+        try Task.checkCancellation()
+        scene.finishWidgetHandoff(id: id, snapshot: result.snapshot)
+        composition.changed()
+      } catch {
+        guard !Task.isCancelled else { return }
+        scene.finishWidgetHandoff(id: id)
+        composition.changed()
+      }
+    }
     .handlesExternalEvents(preferring: ["OpenCurrencyIntent"], allowing: ["*"])
     .onAppIntentExecution(OpenCurrencyIntent.self) { intent in
       scene.open(.currency(intent.target.id))
@@ -193,8 +209,9 @@ struct CurrencyRoot: View {
       }
     }
   }
-  private func detailsContent(_ detail: CurrencyScene.Details) -> some View {
-    CurrencyDetailsEntry(
+  private func detailsContent(_ presented: CurrencyScene.Details) -> some View {
+    let detail = scene.detail.flatMap { $0.id == presented.id ? $0 : nil } ?? presented
+    return CurrencyDetailsEntry(
       flowID: detail.id,
       input: CurrencyDetailsInput(
         code: detail.request.code, reference: detail.request.reference,

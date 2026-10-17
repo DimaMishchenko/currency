@@ -42,11 +42,16 @@ public struct CurrencyDetailsEntry: View {
 }
 
 private struct CurrencyDetailsContent: View {
+  let input: CurrencyDetailsInput
   @State private var model: CurrencyDetailsModel
 
   init(input: CurrencyDetailsInput, dependencies: CurrencyDetailsDependencies) {
+    self.input = input
     _model = State(initialValue: CurrencyDetailsModel(input: input, dependencies: dependencies))
   }
 
-  var body: some View { RateDetailsScreen(model: model) }
+  var body: some View {
+    RateDetailsScreen(model: model)
+      .onChange(of: input.snapshot.quotes) { _, _ in model.updateSnapshot(input.snapshot) }
+  }
 }

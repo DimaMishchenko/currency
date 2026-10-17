@@ -100,8 +100,7 @@ public struct RateSnapshot: Codable, Sendable {
 extension RateSnapshot {
   /// Merges concurrent refresh results without regressing published rates or trade times.
   ///
-  /// The latest refresh attempt controls which live overlays remain available. An older
-  /// result cannot resurrect a live quote removed by a newer failed refresh. Equal-date
+  /// The newest successful observation survives subsequent failed refreshes. Equal-date
   /// daily quotes prefer newer successful retrievals, then the latest attempt. The receiver
   /// wins when both retrieval and attempt timestamps are equal.
   public func merging(_ other: RateSnapshot) -> RateSnapshot {
@@ -117,14 +116,14 @@ extension RateSnapshot {
       primary: primary, supplemental: supplement,
       primaryFetchedAt: primaryTime ?? latest.dailyFetchedAt, now: evaluation)
     var effective = daily
-    for (code, quote) in latest.quotes where quote.isLive {
-      var live = quote
-      if let previous = older.quotes[code], let time = previous.overlayTimestamp,
-        time > (live.overlayTimestamp ?? .distantPast)
-      {
-        live = previous
+    for snapshot in [older, latest] {
+      for (code, quote) in snapshot.quotes {
+        guard let time = quote.overlayTimestamp, time <= evaluation,
+          quote.published >= (daily[code]?.published ?? "")
+        else { continue }
+        if let selectedTime = effective[code]?.overlayTimestamp, selectedTime > time { continue }
+        effective[code] = quote
       }
-      if live.published >= (daily[code]?.published ?? "") { effective[code] = live }
     }
     return RateSnapshot(
       quotes: effective, fetchedAt: max(fetchedAt, other.fetchedAt), dailyQuotes: daily,

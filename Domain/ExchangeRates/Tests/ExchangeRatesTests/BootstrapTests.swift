@@ -124,7 +124,7 @@ private func bootstrapQuotes(_ usd: Decimal = 2) -> [String: ExchangeRate] {
   }
 
   @Test(arguments: [false, true])
-  func pendingCryptoFallsBackOnlyAfterFailure(hasDailyFallback: Bool) async {
+  func pendingCryptoPreservesSuccessfulObservationAfterFailure(hasDailyFallback: Bool) async {
     var live = bootstrapQuotes()
     live["BTC"] = ExchangeRate(
       5, published: "2026-09-10", source: .init(provider: .coinMetrics), observedAt: .now)
@@ -146,13 +146,8 @@ private func bootstrapQuotes(_ usd: Decimal = 2) -> [String: ExchangeRate] {
     await crypto.finish()
     let final = await updates.next()
     #expect(final?.isFinal == true)
-    let cachedFallback = daily["BTC"]
-      .map {
-        ExchangeRate(
-          $0.value, published: $0.published, source: $0.source, cachedAt: saved.fetchedAt)
-      }
-    #expect(final?.snapshot.quotes["BTC"] == cachedFallback)
-    #expect(final?.snapshot.quotes["BTC"]?.observedAt == nil)
+    #expect(final?.snapshot.quotes["BTC"] == live["BTC"])
+    #expect(final?.snapshot.quotes["BTC"]?.observedAt == live["BTC"]?.observedAt)
   }
 
   @Test func readinessRejectsIdentityUnsupportedInvalidTimeAndOverflow() {
