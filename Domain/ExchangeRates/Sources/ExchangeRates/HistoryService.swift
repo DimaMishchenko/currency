@@ -154,7 +154,8 @@ public actor HistoryService {
       else { throw RateError.invalidData }
       do {
         let selected = try Self.recordSuccessfulRefresh(
-          at: file, series: series, base: base, quote: quote, range: range,
+          at: file, originalData: cachedData, series: series, base: base, quote: quote,
+          range: range,
           now: now, cacheLifetime: cacheLifetime, fiatPolicy: fiatPolicy)
         return HistoryResult(series: selected, issue: nil)
       } catch {

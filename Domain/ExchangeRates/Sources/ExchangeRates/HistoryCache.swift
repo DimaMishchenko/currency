@@ -37,11 +37,11 @@ extension HistoryService {
   }
 
   static func recordSuccessfulRefresh(
-    at file: URL, series: HistorySeries, base: String, quote: String,
+    at file: URL, originalData: Data?, series: HistorySeries, base: String, quote: String,
     range: HistoryRange, now: Date, cacheLifetime: TimeInterval?, fiatPolicy: Bool
   ) throws -> HistorySeries {
     try FileCoordination.write(at: file) {
-      if let data = try FileCoordination.dataIfPresent(at: file),
+      if let data = try FileCoordination.dataIfPresent(at: file), data != originalData,
         let current = try? JSONDecoder().decode(HistoryCacheRecord.self, from: data),
         validHistory(
           current.series, base: base, quote: quote, range: range,

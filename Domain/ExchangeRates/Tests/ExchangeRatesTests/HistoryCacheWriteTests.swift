@@ -148,6 +148,23 @@ private actor GatedHistoryWriteHTTP: HTTPClient {
     try await expectSelected(result.series, result: result, directory: directory, at: now)
   }
 
+  @Test func successfulRefreshReplacesInitiallyFutureDatedCache() async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let future = saved(at: now.addingTimeInterval(60), value: 0.75)
+    #expect(
+      !HistoryService.validHistory(future, base: "USD", quote: "EUR", range: .month, now: now))
+    try save(future, in: directory)
+    let client = GatedHistoryWriteHTTP(rate: 4)
+    let result = await HistoryService(directory: directory, client: client)
+      .load(base: "USD", quote: "EUR", range: .month, now: now)
+    #expect(await client.requests == 1)
+    #expect(result.series?.fetchedAt == now)
+    #expect(result.series?.points.last?.value == 0.25)
+    #expect(result.series?.source.provider == .frankfurter)
+    try await expectSelected(result.series, result: result, directory: directory, at: now)
+  }
+
   @Test func completedMonthExtensionReplacesBundledFrankfurterSource() throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }
@@ -167,7 +184,7 @@ private actor GatedHistoryWriteHTTP: HTTPClient {
     #expect(HistoryService.validHistory(current, base: "USD", quote: "EUR", range: .all, now: now))
     #expect(HistoryService.validHistory(extended, base: "USD", quote: "EUR", range: .all, now: now))
     let selected = try HistoryService.recordSuccessfulRefresh(
-      at: file, series: extended, base: "USD", quote: "EUR", range: .all,
+      at: file, originalData: nil, series: extended, base: "USD", quote: "EUR", range: .all,
       now: now, cacheLifetime: nil, fiatPolicy: false)
     #expect(selected.points == extended.points)
     #expect(selected.source == extended.source)
