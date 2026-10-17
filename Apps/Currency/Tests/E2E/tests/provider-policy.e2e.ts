@@ -27,7 +27,7 @@ test('crypto reference prices preserve ranges, provenance and credits after rest
     await expect(screen.getByTestId('currency.details.rate')).toHaveValue('50,000 USD');
     const ranges = screen.getByTestId('currency.details.historyRange');
     const day = ranges.getByRole('tab', 'One day', { exact: true });
-    const source = screen.getByTestId('currency.details.sourceDisclosure');
+    const source = screen.getByTestId('currency.details.sourceDisclosure').filter({ hasText: /Coin Metrics/ });
     await expect(source.filter({ hasText: /^Coin Metrics \+ Fawaz · GMT$/ })).toBeVisible();
     assertHistorySource(30, 'dailyReference', { fawaz: {} });
     await expect(day).toBeVisible();
