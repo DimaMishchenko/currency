@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect } from 'e2e';
 import { test } from '../fixtures.js';
@@ -30,9 +30,13 @@ for (const scenario of ['legacy daily source', 'wrong month'] as const) {
     type Rates = { quotes: Record<string, { value: number; source: { provider: { fawaz?: object } } }> };
     const readRates = (): Rates => JSON.parse(readFileSync(join(directory, 'rates.json'), 'utf8'));
     for (let attempt = 0; attempt < 180; attempt++) {
-      if (readRates().quotes.AED?.source.provider.fawaz && Number(readRates().quotes.USD?.value) !== 2) break;
+      if (existsSync(join(directory, 'rates.json'))) {
+        const current = readRates();
+        if (current.quotes.AED?.source.provider.fawaz && Number(current.quotes.USD?.value) !== 2) break;
+      }
       await new Promise(resolve => setTimeout(resolve, 500));
     }
+    assert.ok(existsSync(join(directory, 'rates.json')), 'Production refresh must create its rate cache.');
     assert.ok(readRates().quotes.AED?.source.provider.fawaz, 'The actual FX feed must contain AED.');
     assert.notEqual(Number(readRates().quotes.USD!.value), 2);
     await agent.act('Close Settings and return to the converter. Leave the amount at 1.');
