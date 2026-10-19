@@ -15,7 +15,8 @@ test('Japanese weekly crypto history uses natural hourly provenance', {
   await range.getByText('1か月', { exact: true }).tap();
   await agent.act('Choose the history menu item labelled 1週間 (one week). Keep Bitcoin details open.');
   await expect(range).toHaveValue('1週間');
-  await expect(screen.getByTestId('currency.details.sourceDisclosure')
-    .filter({ hasText: /Coin Metrics.*1時間ごとの参考価格/ })).toBeVisible();
+  const source = screen.getByTestId('currency.details.sourceDisclosure');
+  await expect(source).toBeVisible();
+  await expect(source).toHaveAccessibleName('Coin Metrics · 1時間ごとの参考価格 · GMT');
   await app.screenshot('japanese-bitcoin-hourly-week-provenance');
 });
