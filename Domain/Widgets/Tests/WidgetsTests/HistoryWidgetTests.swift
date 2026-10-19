@@ -179,12 +179,15 @@ import Testing
   }
 
   @Test(arguments: [HistoryRange.week, .month, .quarter, .year, .yearToDate, .all])
-  func pairsWithoutIntradayHistoryKeepDailyRefresh(range: HistoryRange) {
+  func nonIntradayPairsRefreshDailyExceptCryptoWeeks(range: HistoryRange) {
     for (base, quote) in [("EUR", "CZK"), ("BTC", "XAU"), ("XAU", "BTC")] {
       let state = HistoryWidgetSnapshot(
         pair: HistoryWidgetPair(app: ConverterState(), base: base, quote: quote), range: range,
         result: HistoryResult(series: nil, issue: .unavailable))
-      #expect(state.nextRefresh(after: now) == now.addingTimeInterval(86_400))
+      let expected =
+        range == .week && (base == "BTC" || quote == "BTC")
+        ? HistoryService.nextHour(after: now) : now.addingTimeInterval(86_400)
+      #expect(state.nextRefresh(after: now) == expected)
     }
   }
 

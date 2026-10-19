@@ -85,6 +85,7 @@ public enum RateMessages {
     case .unspecified: return provider
     case .dailyRate: resource = .Support.dailyRates(provider)
     case .minuteReference: resource = .Support.minuteReference(provider)
+    case .hourlyReference: resource = .Support.hourlyReference(provider)
     case .dailyReference: resource = .Support.dailyReference(provider)
     case .monthlyReference: resource = .Support.monthlyReference(provider)
     }

@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
+import { join } from 'node:path';
 import { expect } from 'e2e';
+import { assertHourlyWeek, readHistory, sharedDirectory } from './history-cache.js';
 import { test } from '../fixtures.js';
 import { configureWidget, placeWidget, prepareWidgetHelper, revealWidget, unloadWidgetHelper, widgetSetupMethod } from '../simulator-widgets.js';
 
@@ -16,6 +18,12 @@ test('simultaneous Bitcoin History ranges share their latest rate and date with 
   for (let attempt = 0; attempt < 2; attempt++) {
     const seededHour = Math.floor(Date.now() / 3_600_000);
     await start('ready-history-sync');
+    const weekly = readHistory(join(sharedDirectory(), 'history-v3-BTC-USD-7.json'));
+    assertHourlyWeek(weekly);
+    assert.equal(weekly.points[0]!.value, 40_000);
+    assert.equal(weekly.points.at(-1)!.value, 52_500);
+    const changes = weekly.points.slice(1).map((point, index) => Math.sign(point.value - weekly.points[index]!.value));
+    assert.ok(changes.slice(1).filter((direction, index) => direction !== changes[index]).length >= 8);
     await expect(screen.getByRole('button', 'Edit amount in BTC')).toHaveValue('1');
     await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 52,500');
     await app.screenshot('app-home-bitcoin-one-usd-52500-shared-quote');
@@ -41,7 +49,7 @@ test('simultaneous Bitcoin History ranges share their latest rate and date with 
         await expect(widget.getByLabel('Rate change over the selected range', { exact: true }))
           .toHaveValue(isDay ? /^\+5[.,]00%$/ : /^\+31[.,]25%$/, { timeout: 30_000 });
         await expect(widget.getByLabel(new RegExp(`^Rate as of (${observed}|${alternativeDate})$`))).toBeVisible();
-        await agent.waitFor(`The visible ${configuration.family.toLowerCase()} Currency widget on the Home Screen has BTC and USD currency rows. The USD amount is exactly 52,500 (52 500 with a space grouping separator is equivalent). Its observation date is ${observed}; its selected range is ${isDay ? '1D and its displayed change is exactly +5.00%' : '1W and its displayed change is exactly +31.25%'} (decimal comma is equivalent). A line chart is drawn behind the values. The currency codes, amount, percentage, date and range are readable without clipping. There are no placeholders, missing values or History unavailable messages.`, { vision: 'only', timeout: 30_000 });
+        await agent.waitFor(`The visible ${configuration.family.toLowerCase()} Currency widget on the Home Screen has BTC and USD currency rows. The USD amount is exactly 52,500 (52 500 with a space grouping separator is equivalent). Its observation date is ${observed}; its selected range is ${isDay ? '1D and its displayed change is exactly +5.00%' : '1W and its displayed change is exactly +31.25%'} (decimal comma is equivalent). ${isDay ? 'A line chart is drawn behind the values.' : 'The weekly line chart has multiple visible rises and dips across the whole week, retaining intraday detail instead of a few straight daily segments.'} The currency codes, amount, percentage, date and range are readable without clipping. There are no placeholders, missing values or History unavailable messages.`, { vision: 'only', timeout: 30_000 });
         await app.screenshot(`widget-history-${configuration.family.toLowerCase()}-${configuration.range}-shared-latest`);
       }
       assert.equal(seededHour, Math.floor(Date.now() / 3_600_000), 'The fixture must remain in its current UTC cache hour.');

@@ -111,9 +111,15 @@ public struct HistoryWidgetSnapshot: Sendable {
     return value.rounded() / 10_000
   }
 
-  /// Pairs with intraday history refresh at UTC hour boundaries for every chart range.
+  /// Intraday pairs and crypto weeks refresh at UTC hour boundaries.
   public func nextRefresh(after now: Date) -> Date {
-    if pair.supportsIntradayHistory { return HistoryService.nextHour(after: now) }
+    let cryptoWeek =
+      range == .week && pair.isSupported
+      && (CurrencyCatalog.crypto.contains(pair.base)
+        || pair.quote.map { CurrencyCatalog.crypto.contains($0) } == true)
+    if pair.supportsIntradayHistory || cryptoWeek {
+      return HistoryService.nextHour(after: now)
+    }
     let interval: TimeInterval = 86_400
     if let fetchedAt = series?.fetchedAt, fetchedAt <= now, issue != .usingCachedSeries {
       let expiry = fetchedAt.addingTimeInterval(interval)

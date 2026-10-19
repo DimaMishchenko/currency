@@ -54,11 +54,14 @@ import Testing
     #expect(eth.series?.source.conversion == nil)
   }
 
-  @Test func minuteHistoryRetainsItsSamplingDescription() {
-    let result = history(observation: .minuteReference)
+  @Test(arguments: [RateObservation.minuteReference, .hourlyReference])
+  func intradayHistoryRetainsItsSamplingDescription(observation: RateObservation) {
+    let result = history(observation: observation)
       .includingLatestQuote(
         from: snapshot(observedAt: now), base: "BTC", quote: "USD", now: now)
-    #expect(result.series?.source.observation == .minuteReference)
+    #expect(result.series?.source.observation == observation)
+    #expect(result.series?.points.last?.date == now)
+    #expect(abs((result.series?.points.last?.value ?? 0) - 52_500) < 0.000001)
   }
 
   @Test func cachedQuoteKeepsItsActualObservationTimeAndWarning() throws {

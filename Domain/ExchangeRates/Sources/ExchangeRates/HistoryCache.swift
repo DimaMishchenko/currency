@@ -4,17 +4,24 @@ import Foundation
 struct HistoryCacheRecord: Codable {
   let series: HistorySeries
   let fiatHistoryPolicyVersion: Int?
+  let weeklyHourlyAttemptedAt: Date?
 
-  init(series: HistorySeries, fiatHistoryPolicyVersion: Int? = nil) {
+  init(
+    series: HistorySeries, fiatHistoryPolicyVersion: Int? = nil,
+    weeklyHourlyAttemptedAt: Date? = nil
+  ) {
+    self.weeklyHourlyAttemptedAt = weeklyHourlyAttemptedAt
     self.series = series
     self.fiatHistoryPolicyVersion = fiatHistoryPolicyVersion
   }
 
   private enum CodingKeys: String, CodingKey {
-    case fiatHistoryPolicyVersion
+    case fiatHistoryPolicyVersion, weeklyHourlyAttemptedAt
   }
 
   init(from decoder: any Decoder) throws {
+    weeklyHourlyAttemptedAt = try decoder.container(keyedBy: CodingKeys.self)
+      .decodeIfPresent(Date.self, forKey: .weeklyHourlyAttemptedAt)
     series = try HistorySeries(from: decoder)
     fiatHistoryPolicyVersion = try decoder.container(keyedBy: CodingKeys.self)
       .decodeIfPresent(Int.self, forKey: .fiatHistoryPolicyVersion)
@@ -24,6 +31,7 @@ struct HistoryCacheRecord: Codable {
     try series.encode(to: encoder)
     var container = encoder.container(keyedBy: CodingKeys.self)
     try container.encodeIfPresent(fiatHistoryPolicyVersion, forKey: .fiatHistoryPolicyVersion)
+    try container.encodeIfPresent(weeklyHourlyAttemptedAt, forKey: .weeklyHourlyAttemptedAt)
   }
 }
 
@@ -31,6 +39,10 @@ extension HistoryService {
   static func freshHistory(
     _ series: HistorySeries, range: HistoryRange, now: Date, cacheLifetime: TimeInterval?
   ) -> Bool {
+    if range == .week && series.source.observation == .hourlyReference {
+      return now.timeIntervalSince(series.fetchedAt) < min(cacheLifetime ?? 3600, 3600)
+        && now < nextHour(after: series.fetchedAt)
+    }
     let lifetime: TimeInterval = range == .day ? 1800 : (range == .all ? 86400 : 21600)
     return now.timeIntervalSince(series.fetchedAt) < (cacheLifetime ?? lifetime)
       && (range != .day || now < nextHour(after: series.fetchedAt))
@@ -38,11 +50,15 @@ extension HistoryService {
 
   static func recordSuccessfulRefresh(
     at file: URL, originalData: Data?, series: HistorySeries, base: String, quote: String,
-    range: HistoryRange, now: Date, cacheLifetime: TimeInterval?, fiatPolicy: Bool
+    range: HistoryRange, now: Date, cacheLifetime: TimeInterval?, fiatPolicy: Bool,
+    weeklyPolicy: Bool = false, weeklyHourlyAttemptedAt: Date? = nil
   ) throws -> HistorySeries {
     try FileCoordination.write(at: file) {
-      if let data = try FileCoordination.dataIfPresent(at: file), data != originalData,
-        let current = try? JSONDecoder().decode(HistoryCacheRecord.self, from: data),
+      let currentData = try FileCoordination.dataIfPresent(at: file)
+      let currentRecord = currentData.flatMap {
+        try? JSONDecoder().decode(HistoryCacheRecord.self, from: $0)
+      }
+      if currentData != originalData, let current = currentRecord,
         validHistory(
           current.series, base: base, quote: quote, range: range,
           now: max(now, current.series.fetchedAt)),
@@ -50,15 +66,43 @@ extension HistoryService {
           current.series, range: range, now: max(now, current.series.fetchedAt),
           cacheLifetime: cacheLifetime),
         current.series.fetchedAt > series.fetchedAt
+          || (weeklyPolicy && current.series.source.observation == .hourlyReference
+            && series.source.observation != .hourlyReference)
           || (fiatPolicy && current.series.source.provider == .frankfurter
             && series.source.provider == .fawaz)
       {
         return current.series
       }
+      let hourlyAttempt = [weeklyHourlyAttemptedAt, currentRecord?.weeklyHourlyAttemptedAt]
+        .compactMap { $0 }.max()
       try JSONEncoder()
-        .encode(HistoryCacheRecord(series: series, fiatHistoryPolicyVersion: fiatPolicy ? 1 : nil))
+        .encode(
+          HistoryCacheRecord(
+            series: series, fiatHistoryPolicyVersion: fiatPolicy ? 1 : nil,
+            weeklyHourlyAttemptedAt: weeklyPolicy ? hourlyAttempt : nil)
+        )
         .write(to: file, options: .atomic)
       return series
+    }
+  }
+
+  static func recordWeeklyAttempt(
+    at file: URL, originalData: Data?, cached: HistorySeries,
+    base: String, quote: String, now: Date
+  ) throws -> HistorySeries {
+    try FileCoordination.write(at: file) {
+      guard let data = try FileCoordination.dataIfPresent(at: file) else { return cached }
+      guard data == originalData else {
+        guard let current = try? JSONDecoder().decode(HistoryCacheRecord.self, from: data),
+          validHistory(
+            current.series, base: base, quote: quote, range: .week,
+            now: max(now, current.series.fetchedAt))
+        else { return cached }
+        return current.series
+      }
+      try JSONEncoder().encode(HistoryCacheRecord(series: cached, weeklyHourlyAttemptedAt: now))
+        .write(to: file, options: .atomic)
+      return cached
     }
   }
 
@@ -96,20 +140,24 @@ extension HistoryService {
   static func validHistory(
     _ series: HistorySeries, base: String, quote: String, range: HistoryRange, now: Date
   ) -> Bool {
+    let hourly =
+      range == .week && supportsWeeklyHourly(base: base, quote: quote)
+      && series.source.provider == .coinMetrics && series.source.observation == .hourlyReference
     let expected: RateProviderID = range == .day ? .coinMetrics : .fawaz
     let observation: RateObservation =
       range == .day ? .minuteReference : range == .all ? .monthlyReference : .dailyReference
     guard
-      (series.source.provider == expected
+      (hourly || series.source.provider == expected
         || (range == .all && [.coinMetrics, .frankfurter].contains(series.source.provider))
         || (range != .day && range != .all && usesFiatHistory(base: base, quote: quote)
           && series.source.provider == .frankfurter)),
-      series.source.observation == observation,
+      (hourly || series.source.observation == observation),
       series.points.count >= 2, series.fetchedAt <= now,
       series.points.allSatisfy({ $0.value.isFinite && $0.value > 0 && $0.date <= series.fetchedAt }
       ),
       zip(series.points, series.points.dropFirst()).allSatisfy({ $0.date < $1.date })
     else { return false }
+    if hourly { return coversWeek(series.points, ending: hourEndpoint(series.fetchedAt)) }
     if range == .day {
       let end = Date(timeIntervalSince1970: floor(series.fetchedAt.timeIntervalSince1970 / 60) * 60)
       return coversDay(series.points, ending: end)

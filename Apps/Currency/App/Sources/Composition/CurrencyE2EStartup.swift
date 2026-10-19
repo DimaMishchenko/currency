@@ -121,6 +121,9 @@
             conversion: conversion), fetchedAt: end)
         try writeHistory(
           intraday, filename: "history-v3-BTC-\(reference)-1.json", directory: directory)
+        try seedHourlyWeek(
+          base: "BTC", quote: reference, first: 45_000 * factor, latest: 50_000 * factor,
+          conversion: conversion, directory: directory, now: now)
       }
       try seedHistory(
         base: "ETH", quote: "BTC", values: [0.0018, 0.002], directory: directory, now: now)
@@ -133,6 +136,9 @@
           }, source: .init(provider: .coinMetrics, observation: .minuteReference, timeZone: .gmt),
         fetchedAt: end)
       try writeHistory(cryptoPair, filename: "history-v3-ETH-BTC-1.json", directory: directory)
+      try seedHourlyWeek(
+        base: "ETH", quote: "BTC", first: 0.0018, latest: 0.002,
+        directory: directory, now: now)
       if state == .readyHistorySync {
         let end = Date(timeIntervalSince1970: floor(now.timeIntervalSince1970 / 3600) * 3600)
         let day = HistorySeries(
@@ -144,15 +150,10 @@
             },
           source: .init(provider: .coinMetrics, observation: .minuteReference, timeZone: .gmt),
           fetchedAt: end)
-        let week = HistorySeries(
-          points: [
-            HistoryPoint(date: end.addingTimeInterval(-6 * 86_400), value: 40_000),
-            HistoryPoint(date: end.addingTimeInterval(-86_400), value: 48_000)
-          ],
-          source: .init(provider: .fawaz, observation: .dailyReference, timeZone: .gmt),
-          fetchedAt: end)
         try writeHistory(day, filename: "history-v3-BTC-USD-1.json", directory: directory)
-        try writeHistory(week, filename: "history-v3-BTC-USD-7.json", directory: directory)
+        try seedHourlyWeek(
+          base: "BTC", quote: "USD", first: 40_000, latest: 52_500,
+          directory: directory, now: now)
       }
       let files = [
         "input.json", "onboarding.json", "widget-location-refresh.json",
@@ -211,6 +212,27 @@
           == .coinMetrics,
         discoveryStore.load() == discovery
       else { throw StartupError.seedVerificationFailed }
+    }
+
+    private static func seedHourlyWeek(
+      base: String, quote: String, first: Double, latest: Double,
+      conversion: RateConversion? = nil, directory: URL, now: Date
+    ) throws {
+      let end = Date(timeIntervalSince1970: floor(now.timeIntervalSince1970 / 3600) * 3600)
+      let week = HistorySeries(
+        points: (0...168)
+          .map { index in
+            let progress = Double(index) / 168
+            let fluctuation = sin(Double(index) * .pi / 12) * (latest - first) * 0.12
+            return HistoryPoint(
+              date: end.addingTimeInterval(Double(index - 168) * 3600),
+              value: index == 168 ? latest : first + (latest - first) * progress + fluctuation)
+          },
+        source: .init(
+          provider: .coinMetrics, observation: .hourlyReference, timeZone: .gmt,
+          conversion: conversion), fetchedAt: end)
+      try writeHistory(
+        week, filename: "history-v3-\(base)-\(quote)-7.json", directory: directory)
     }
 
     private static func seedHistory(
