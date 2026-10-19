@@ -54,8 +54,8 @@ extension HistoryResult {
         points: points,
         source: RateSource(
           provider: current.provider,
-          observation: series.source.observation == .minuteReference
-            ? .minuteReference : .unspecified,
+          observation: [.minuteReference, .hourlyReference].contains(series.source.observation)
+            ? series.source.observation : .unspecified,
           timeZone: .gmt,
           conversion: fx,
           contributingProviders: providers.count > 1 ? Array(providers.dropFirst()) : nil),

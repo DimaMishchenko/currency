@@ -16,6 +16,22 @@ import UniformTypeIdentifiers
         RateSource(provider: .custom("Example"), observation: .unspecified),
         locale: Locale(identifier: "en_US")) == "Example")
   }
+  @Test func hourlyHistoryNamesItsSamplingAndDailyConversion() {
+    let locale = Locale(identifier: "en_US")
+    let source = RateSource(
+      provider: .coinMetrics, observation: .hourlyReference, timeZone: .gmt,
+      conversion: RateConversion(
+        provider: .fawaz, published: "2026-10-19", value: 0.9,
+        base: "USD", quote: "EUR"), contributingProviders: [.fawaz])
+    #expect(
+      RateMessages.providerDescription(source, locale: locale)
+        == "Coin Metrics + Fawaz · hourly reference prices · approximate conversion · GMT")
+    #expect(
+      RateMessages.providerDescription(
+        .init(provider: .coinMetrics, observation: .hourlyReference), locale: locale)
+        == "Coin Metrics · hourly reference prices")
+  }
+
   @Test func convertedReferenceNamesTheActualFXInputAndEverySource() throws {
     let source = RateSource(
       provider: .coinMetrics, observation: .minuteReference, timeZone: .gmt,

@@ -2,8 +2,15 @@ import Foundation
 
 /// Loads daily fiat references, dated fallback publications, bundled months, and intraday crypto.
 public actor HistoryService {
-  private let client: any HTTPClient
-  private let directory: URL
+  let client: any HTTPClient
+  let directory: URL
+  private var weeklyAttempts: [String: Date] = [:]
+  private var weeklyLoads: [String: WeeklyLoad] = [:]
+
+  private struct WeeklyLoad {
+    let task: Task<HistoryResult, Never>
+    var waiters: Set<UUID>
+  }
 
   /// Whether a distinct catalog pair contains a cryptocurrency and no precious metal.
   public static func supportsIntraday(base: String, quote: String) -> Bool {
@@ -28,6 +35,48 @@ public actor HistoryService {
     base: String, quote: String, range: HistoryRange, now: Date = .now,
     cacheLifetime: TimeInterval? = nil
   ) async -> HistoryResult {
+    guard range == .week, Self.supportsWeeklyHourly(base: base, quote: quote) else {
+      return await loadUnshared(
+        base: base, quote: quote, range: range, now: now, cacheLifetime: cacheLifetime)
+    }
+    let key =
+      "\(base)-\(quote)-\(Self.hourEndpoint(now).timeIntervalSince1970)-\(cacheLifetime ?? -1)"
+    let waiter = UUID()
+    let task: Task<HistoryResult, Never>
+    if var existing = weeklyLoads[key] {
+      task = existing.task
+      existing.waiters.insert(waiter)
+      weeklyLoads[key] = existing
+    } else {
+      task = Task {
+        await self.loadUnshared(
+          base: base, quote: quote, range: range, now: now, cacheLifetime: cacheLifetime)
+      }
+      weeklyLoads[key] = WeeklyLoad(task: task, waiters: [waiter])
+    }
+    return await withTaskCancellationHandler {
+      let result = await task.value
+      finishWeeklyLoad(key: key, waiter: waiter, cancelled: false)
+      return result
+    } onCancel: {
+      Task { await self.finishWeeklyLoad(key: key, waiter: waiter, cancelled: true) }
+    }
+  }
+
+  private func finishWeeklyLoad(key: String, waiter: UUID, cancelled: Bool) {
+    guard var load = weeklyLoads[key], load.waiters.remove(waiter) != nil else { return }
+    if load.waiters.isEmpty {
+      weeklyLoads.removeValue(forKey: key)
+      if cancelled { load.task.cancel() }
+    } else {
+      weeklyLoads[key] = load
+    }
+  }
+
+  private func loadUnshared(
+    base: String, quote: String, range: HistoryRange, now: Date,
+    cacheLifetime: TimeInterval?
+  ) async -> HistoryResult {
     guard CurrencyCatalog.codes.contains(base), CurrencyCatalog.codes.contains(quote), base != quote
     else { return HistoryResult(series: nil, issue: .unsupportedPair) }
     guard range != .day || supportsIntraday(base: base, quote: quote) else {
@@ -47,17 +96,59 @@ public actor HistoryService {
       Self.validHistory(record.series, base: base, quote: quote, range: range, now: now)
         ? record.series : nil
     }
+    let weeklyPolicy = range == .week && Self.supportsWeeklyHourly(base: base, quote: quote)
+    let lastHourlyAttempt = record?.weeklyHourlyAttemptedAt ?? weeklyAttempts[file.path]
+    let hourlyRetryDue =
+      lastHourlyAttempt.map {
+        now.timeIntervalSince($0) >= 3600
+          || (cached.map {
+            $0.source.observation == .hourlyReference
+              && (lastHourlyAttempt ?? .distantPast) <= $0.fetchedAt
+          } ?? false)
+      } ?? true
     let fiatPolicy =
       range != .day && range != .all && Self.usesFiatHistory(base: base, quote: quote)
     let fresh =
       cached.map { Self.freshHistory($0, range: range, now: now, cacheLifetime: cacheLifetime) }
       ?? false
     if let cached, fresh,
+      !weeklyPolicy || cached.source.observation == .hourlyReference || !hourlyRetryDue,
       !fiatPolicy || cached.source.provider != .fawaz || record?.fiatHistoryPolicyVersion == 1
     {
       return HistoryResult(series: cached, issue: nil)
     }
+    var attemptedHourly = false
     do {
+      if weeklyPolicy && hourlyRetryDue {
+        attemptedHourly = true
+        do {
+          let (points, source) = try await weeklyHourly(base: base, quote: quote, now: now)
+          try Task.checkCancellation()
+          let series = HistorySeries(points: points, source: source, fetchedAt: now)
+          do {
+            let selected = try Self.recordSuccessfulRefresh(
+              at: file, originalData: cachedData, series: series, base: base, quote: quote,
+              range: range, now: now, cacheLifetime: cacheLifetime, fiatPolicy: false,
+              weeklyPolicy: true, weeklyHourlyAttemptedAt: now)
+            return HistoryResult(series: selected, issue: nil)
+          } catch {
+            return HistoryResult(series: series, issue: .cacheWriteFailed)
+          }
+        } catch {
+          try Task.checkCancellation()
+          weeklyAttempts[file.path] = now
+          if let cached, fresh {
+            do {
+              let selected = try Self.recordWeeklyAttempt(
+                at: file, originalData: cachedData, cached: cached, base: base, quote: quote,
+                now: now)
+              return HistoryResult(series: selected, issue: .usingCachedSeries)
+            } catch {
+              return HistoryResult(series: cached, issue: .cacheWriteFailed)
+            }
+          }
+        }
+      }
       let points: [HistoryPoint]
       let source: RateSource
       if range == .day {
@@ -156,12 +247,23 @@ public actor HistoryService {
         let selected = try Self.recordSuccessfulRefresh(
           at: file, originalData: cachedData, series: series, base: base, quote: quote,
           range: range,
-          now: now, cacheLifetime: cacheLifetime, fiatPolicy: fiatPolicy)
+          now: now, cacheLifetime: cacheLifetime, fiatPolicy: fiatPolicy,
+          weeklyPolicy: weeklyPolicy,
+          weeklyHourlyAttemptedAt: attemptedHourly ? now : lastHourlyAttempt)
         return HistoryResult(series: selected, issue: nil)
       } catch {
         return HistoryResult(series: series, issue: .cacheWriteFailed)
       }
     } catch {
+      if attemptedHourly, !Task.isCancelled, let cached {
+        do {
+          let selected = try Self.recordWeeklyAttempt(
+            at: file, originalData: cachedData, cached: cached, base: base, quote: quote, now: now)
+          return HistoryResult(series: selected, issue: .usingCachedSeries)
+        } catch {
+          return HistoryResult(series: cached, issue: .cacheWriteFailed)
+        }
+      }
       return HistoryResult(series: cached, issue: cached == nil ? .unavailable : .usingCachedSeries)
     }
   }

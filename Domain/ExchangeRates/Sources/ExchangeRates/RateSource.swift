@@ -25,6 +25,8 @@ public enum RateObservation: String, Codable, Sendable {
   case dailyReference
   /// A minute reference-rate observation.
   case minuteReference
+  /// An hourly historical reference-rate observation.
+  case hourlyReference
   /// A historical monthly reference rate.
   case monthlyReference
 }

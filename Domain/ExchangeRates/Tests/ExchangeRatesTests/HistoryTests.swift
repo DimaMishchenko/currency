@@ -17,6 +17,7 @@ actor DailyHistoryHTTP: HTTPClient {
   func get(_ url: URL) async throws -> Data {
     if url.host == "api.frankfurter.dev" { throw RateError.http(404) }
     urls.append(url)
+    if url.host == "community-api.coinmetrics.io" { throw RateError.unavailable }
     if failing || (failPrimary && url.host == "cdn.jsdelivr.net") { throw RateError.http(503) }
     let day: String
     if let segment = url.absoluteString.components(separatedBy: "currency-api@").last,
@@ -43,7 +44,9 @@ func historyDate(_ string: String) throws -> Date {
     ("BTC", "USD", 100_000.0), ("BTC", "ETH", 25.0),
     ("USD", "BTC", 0.00001), ("XAU", "EUR", 1_000.0), ("XAU", "XAG", 50.0)
   ])
-  func dailyHistoryCrossRatesUseOnlyFawaz(base: String, quote: String, value: Double) async throws {
+  func dailyHistoryFallbackCrossRatesUseFawaz(
+    base: String, quote: String, value: Double
+  ) async throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }
     let client = DailyHistoryHTTP()
@@ -55,7 +58,9 @@ func historyDate(_ string: String) throws -> Date {
     #expect(series.points.count == 8)
     #expect(series.points.allSatisfy { abs($0.value - value) < 0.000001 })
     #expect(series.source == .init(provider: .fawaz, observation: .dailyReference, timeZone: .gmt))
-    #expect(await client.urls.allSatisfy { $0.host == "cdn.jsdelivr.net" })
+    #expect(
+      await client.urls.filter { $0.host != "community-api.coinmetrics.io" }
+        .allSatisfy { $0.host == "cdn.jsdelivr.net" })
   }
 
   @Test func sharedDatedPayloadsAvoidRepeatedPairAndRangeRequests() async throws {
@@ -64,12 +69,14 @@ func historyDate(_ string: String) throws -> Date {
     let client = DailyHistoryHTTP()
     let now = try historyDate("2026-01-08T12:00:00Z")
     let service = HistoryService(directory: directory, client: client)
-    let first = await service.load(base: "BTC", quote: "EUR", range: .week, now: now)
+    _ = await service.load(base: "BTC", quote: "EUR", range: .week, now: now)
     _ = await service.load(base: "USD", quote: "XAU", range: .week, now: now)
     _ = await service.load(
       base: "BTC", quote: "EUR", range: .week, now: now.addingTimeInterval(21600))
-    #expect(await client.urls.count == 8)
-    #expect(await client.urls.allSatisfy { $0.host == "cdn.jsdelivr.net" })
+    #expect(await client.urls.count == 10)
+    #expect(
+      await client.urls.filter { $0.host != "community-api.coinmetrics.io" }
+        .allSatisfy { $0.host == "cdn.jsdelivr.net" })
   }
 
   @Test func allHistorySamplesAvailableMonthEndsWithoutDailyFanout() async throws {
