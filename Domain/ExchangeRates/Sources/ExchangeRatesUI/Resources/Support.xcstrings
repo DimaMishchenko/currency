@@ -3257,7 +3257,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ · 時間次参考価格"
+            "value": "%@ · 1時間ごとの参考価格"
           }
         },
         "ko": {
