@@ -50,6 +50,23 @@ private actor WeeklyHistoryHTTP: HTTPClient {
   }
 }
 
+private actor ConcurrentWeeklyAttemptHTTP: HTTPClient {
+  let file: URL
+  let replacement: Data
+  private(set) var requests = 0
+
+  init(file: URL, replacement: Data) {
+    self.file = file
+    self.replacement = replacement
+  }
+
+  func get(_ url: URL) async throws -> Data {
+    requests += 1
+    if requests == 1 { try replacement.write(to: file, options: .atomic) }
+    throw RateError.unavailable
+  }
+}
+
 @Suite struct WeeklyHistoryTests {
   let now = Date(timeIntervalSince1970: 1_792_065_600)
 
@@ -154,6 +171,44 @@ private actor WeeklyHistoryHTTP: HTTPClient {
     #expect(await client.urls.filter { $0.host == "community-api.coinmetrics.io" }.count == 3)
     let retried = try JSONDecoder().decode(HistoryCacheRecord.self, from: Data(contentsOf: file))
     #expect(retried.weeklyHourlyAttemptedAt == attemptedAt.addingTimeInterval(3600))
+  }
+
+  @Test func concurrentCacheWriteCannotHideNewerFailedHourlyAttempt() async throws {
+    let directory = directory()
+    defer { try? FileManager.default.removeItem(at: directory) }
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    let file = directory.appendingPathComponent("history-v3-BTC-USD-7.json")
+    let points = (0...7)
+      .map {
+        HistoryPoint(date: now.addingTimeInterval(Double($0 - 7) * 86400), value: 100)
+      }
+    let oldAttempt = now.addingTimeInterval(-7200)
+    let source = RateSource(provider: .fawaz, observation: .dailyReference)
+    let original = HistoryCacheRecord(
+      series: HistorySeries(points: points, source: source, fetchedAt: now),
+      weeklyHourlyAttemptedAt: oldAttempt)
+    let concurrent = HistoryCacheRecord(
+      series: HistorySeries(points: points, source: source, fetchedAt: now.addingTimeInterval(1)),
+      weeklyHourlyAttemptedAt: oldAttempt)
+    try JSONEncoder().encode(original).write(to: file)
+    let replacement = try JSONEncoder().encode(concurrent)
+    let client = ConcurrentWeeklyAttemptHTTP(file: file, replacement: replacement)
+    let service = HistoryService(directory: directory, client: client)
+    let first = await service.load(base: "BTC", quote: "USD", range: .week, now: now)
+    #expect(first.issue == .usingCachedSeries)
+    #expect(try Data(contentsOf: file) == replacement)
+    for elapsed in [60.0, 3599.0] {
+      let reused = await service.load(
+        base: "BTC", quote: "USD", range: .week, now: now.addingTimeInterval(elapsed))
+      #expect(reused.series?.points == points)
+      #expect(await client.requests == 1)
+    }
+    _ = await service.load(
+      base: "BTC", quote: "USD", range: .week, now: now.addingTimeInterval(3600))
+    #expect(await client.requests == 2)
+    let saved = try JSONDecoder().decode(HistoryCacheRecord.self, from: Data(contentsOf: file))
+    #expect(saved.weeklyHourlyAttemptedAt == now.addingTimeInterval(3600))
+    #expect(saved.series.points == points)
   }
 
   @Test func hourlyCacheExpiresAtUtcBoundaryDespiteWidgetLifetime() async throws {

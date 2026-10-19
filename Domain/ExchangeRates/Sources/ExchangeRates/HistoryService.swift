@@ -97,7 +97,8 @@ public actor HistoryService {
         ? record.series : nil
     }
     let weeklyPolicy = range == .week && Self.supportsWeeklyHourly(base: base, quote: quote)
-    let lastHourlyAttempt = record?.weeklyHourlyAttemptedAt ?? weeklyAttempts[file.path]
+    let lastHourlyAttempt = [record?.weeklyHourlyAttemptedAt, weeklyAttempts[file.path]]
+      .compactMap { $0 }.max()
     let hourlyRetryDue =
       lastHourlyAttempt.map {
         now.timeIntervalSince($0) >= 3600
