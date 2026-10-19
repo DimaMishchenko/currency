@@ -33,16 +33,18 @@ public struct HomeWatchScreen: View {
             amountMetalUnit = model.input.metalUnit
             editingAmount = true
           } label: {
-            VStack(alignment: .leading, spacing: 0) {
-              Text(verbatim: formatted(model.input.decimal, code: model.input.source))
-                .font(.system(.title3, design: .rounded, weight: .medium)).monospacedDigit()
-                .contentTransition(reduceMotion ? .identity : .numericText())
-                .animation(reduceMotion ? nil : .snappy(duration: 0.25), value: model.input.amount)
-                .lineLimit(1).minimumScaleFactor(0.35)
-              if CurrencyCatalog.metals.contains(model.input.source) {
-                Text(verbatim: model.input.metalUnit.symbol).font(.caption2)
-                  .foregroundStyle(.secondary)
-                  .lineLimit(1).minimumScaleFactor(0.5)
+            HStack(alignment: .center, spacing: 8) {
+              CurrencyIcon(model.input.source, size: 24)
+              VStack(alignment: .leading, spacing: 3) {
+                Text(verbatim: model.input.source)
+                  .font(.system(.headline, design: .rounded, weight: .medium))
+                Text(verbatim: amountLabel(model.input.decimal, code: model.input.source))
+                  .font(.system(.body, design: .rounded, weight: .bold)).monospacedDigit()
+                  .contentTransition(reduceMotion ? .identity : .numericText())
+                  .animation(
+                    reduceMotion ? nil : .snappy(duration: 0.25), value: model.input.amount
+                  )
+                  .lineLimit(1).minimumScaleFactor(0.35)
               }
             }
             .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
@@ -54,17 +56,13 @@ public struct HomeWatchScreen: View {
           Button {
             choosingSource = true
           } label: {
-            HStack(spacing: 4) {
-              CurrencyIcon(model.input.source, size: 20)
-              Text(verbatim: model.input.source).font(.system(.headline, design: .rounded))
-                .lineLimit(1).fixedSize(horizontal: true, vertical: false)
-              Image(systemName: "chevron.down").font(.caption2).foregroundStyle(.secondary)
-            }
-            .fixedSize(horizontal: true, vertical: false)
-            .frame(minHeight: 44)
-            .contentShape(Rectangle())
+            Image(systemName: "arrow.left.arrow.right")
+              .font(.body)
+              .foregroundStyle(.secondary)
+              .frame(width: 44, height: 44)
+              .contentShape(Rectangle())
           }
-          .accessibilityLabel(Text(.Watch.sourceCurrency))
+          .accessibilityLabel(Text(.Watch.swapBaseCurrency))
           .accessibilityValue(
             Text(
               verbatim:
@@ -82,8 +80,8 @@ public struct HomeWatchScreen: View {
                   selectionID: destination.id, code: destination.code,
                   reference: model.input.source, snapshot: model.snapshot)))
           } label: {
-            HStack(alignment: .top, spacing: 8) {
-              CurrencyIcon(destination.code, size: 24).padding(.top, 2)
+            HStack(alignment: .center, spacing: 8) {
+              CurrencyIcon(destination.code, size: 24)
               VStack(alignment: .leading, spacing: 3) {
                 Text(verbatim: destination.code).font(.system(.headline, design: .rounded))
                 if let value = model.row(destination.code, selectionID: destination.id).amount {
@@ -181,7 +179,7 @@ public struct HomeWatchScreen: View {
 
   private var sourceAccessibilityAmount: String {
     if CurrencyCatalog.metals.contains(model.input.source) {
-      return amountLabel(model.input.decimal, code: model.input.source)
+      return "\(amountLabel(model.input.decimal, code: model.input.source)) \(model.input.source)"
     }
     return "\(model.input.amount) \(model.input.source)"
   }
@@ -189,7 +187,7 @@ public struct HomeWatchScreen: View {
   private func amountLabel(_ value: Decimal, code: String) -> String {
     let amount = formatted(value, code: code)
     if CurrencyCatalog.metals.contains(code) {
-      return "\(amount) \(code) \(model.input.metalUnit.symbol)"
+      return "\(amount) \(model.input.metalUnit.symbol)"
     }
     return amount
   }

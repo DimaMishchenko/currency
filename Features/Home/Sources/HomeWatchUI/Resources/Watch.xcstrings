@@ -90,91 +90,91 @@
         }
       }
     },
-    "sourceCurrency": {
+    "swapBaseCurrency": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Source currency"
+            "value": "Swap base currency"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "原币种"
+            "value": "更换基础币种"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "変換元の通貨"
+            "value": "基準通貨を変更"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Moneda de origen"
+            "value": "Cambiar moneda base"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ausgangswährung"
+            "value": "Basiswährung wechseln"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Devise source"
+            "value": "Changer la devise de base"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Moeda de origem"
+            "value": "Trocar moeda base"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "원본 통화"
+            "value": "기준 통화 변경"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "原幣別"
+            "value": "更換基準幣別"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Valuta di origine"
+            "value": "Cambia valuta di base"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kaynak para birimi"
+            "value": "Baz para birimini değiştir"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Исходная валюта"
+            "value": "Сменить базовую валюту"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Вихідна валюта"
+            "value": "Змінити базову валюту"
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Lähtevaluuta"
+            "value": "Vaheta baasvaluutat"
           }
         }
       }
