@@ -62,7 +62,7 @@ public struct HomeWatchScreen: View {
               .frame(width: 44, height: 44)
               .contentShape(Rectangle())
           }
-          .accessibilityLabel(Text(.Watch.sourceCurrency))
+          .accessibilityLabel(Text(.Watch.swapBaseCurrency))
           .accessibilityValue(
             Text(
               verbatim:
