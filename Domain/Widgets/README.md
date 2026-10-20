@@ -12,13 +12,19 @@ Keep canonical selections independent of widget size. Default widgets share app 
 
 ## Harness
 
-Select the `WidgetsHarness` scheme and add launch arguments under **Run → Arguments**. Pass the case as the first argument, without `--case`. Omitting it selects `calculator`.
+Select the `WidgetsHarness` scheme and add launch arguments under **Run → Arguments**. Pass the case as the first argument, without `--case`. Omitting it selects `calculator`. Add `--large` after a board case to show only the large preview; add `--compact` to check shorter 164/164/364-point bounds.
 
 | Case | Behavior |
 | --- | --- |
 | `calculator` | Medium and large calculator layouts. |
 | `calculator-2`, `calculator-4`, `calculator-6`, `calculator-8` | A large Calculator with repeatable mixed fiat, crypto and metal values. Append `-medium`, `-metals`, `-grams` or `-long` for compact, measurement and long-input checks. |
-| `board` | Large board layout. |
+| `board` | Small (170 × 170), medium (364 × 170), and large (364 × 382) boards with four deterministic fiat quotes. |
+| `board-many` | All three board sizes with 26 fiat, cryptocurrency, and metal selections; verifies the 6/12/24 small/medium/large visible limits. |
+| `board-local` | All three board sizes with 26 selections and an unresolved Local slot last, beyond the small and medium cutoffs. |
+| `board-stale` | All three board sizes with 26 selections, resolved CZK Local currency last, and a stale-observation warning. |
+| `board-custom` | Unconfigured Custom list with its base currency and setup prompt. |
+| `board-long` | All three board sizes with 26 selections and a long fractional reference amount. |
+| `board-dark` | All three board sizes with 26 selections in dark appearance. |
 | `cash` | Cash reference layout. |
 | `icon` | Configurable Lock Screen currency-symbol layout. |
 | `location` | Calculator layouts with unresolved Local currency. |
@@ -32,3 +38,5 @@ Select the `WidgetsHarness` scheme and add launch arguments under **Run → Argu
 | `history-cached` | Saved-series indicator and original observation date. |
 | `history-unavailable` | No available history; no sample data. |
 | `history-unsupported` | Identical currencies cannot form a history pair. |
+
+Board scenarios use the production `BoardLayout`, a fixed English locale, deterministic quotes, 16-point content margins, and rounded system-background containers. Small and medium previews appear before the large preview in the scroll view.
