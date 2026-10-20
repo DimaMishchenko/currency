@@ -150,7 +150,7 @@ public struct HistoryWidgetView: View {
         Text(verbatim: "—").foregroundStyle(.secondary)
       }
       Spacer(minLength: AppStyle.Space.xs)
-      Text(value.map { rate($0) } ?? "—")
+      Text(value.map { rate($0, code: code) } ?? "—")
         .font(AppStyle.font(prominent ? (compact ? .title2 : .title) : .title3))
         .monospacedDigit().lineLimit(1).minimumScaleFactor(0.4).allowsTightening(true)
         .layoutPriority(1)
@@ -196,8 +196,12 @@ public struct HistoryWidgetView: View {
     }
   }
 
-  private func rate(_ value: Double) -> String {
-    value.formatted(.number.precision(.significantDigits(1...6)).locale(locale))
+  private func rate(_ value: Double, code: String?) -> String {
+    if let code, CurrencyCatalog.metals.contains(code) {
+      return CurrencyDisplay.format(
+        Decimal(value), code: code, locale: locale, metalUnit: snapshot.pair.metalUnit)
+    }
+    return value.formatted(.number.precision(.significantDigits(1...6)).locale(locale))
   }
 
   private func observationDate(_ date: Date) -> String {

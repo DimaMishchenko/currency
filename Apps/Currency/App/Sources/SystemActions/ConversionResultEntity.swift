@@ -64,7 +64,9 @@ enum ConversionPresentation {
       sign: .plus, exponent: -CurrencyDisplay.fractionDigits(code, metalUnit: request.metalUnit),
       significand: 1)
     let formatted: String
-    if style == .rate && value > 0 && value < step {
+    if CurrencyCatalog.metals.contains(code) {
+      formatted = CurrencyDisplay.format(value, code: code, metalUnit: request.metalUnit)
+    } else if style == .rate && value > 0 && value < step {
       let formatter = NumberFormatter()
       formatter.locale = .current; formatter.numberStyle = .decimal
       formatter.usesSignificantDigits = true; formatter.maximumSignificantDigits = 3

@@ -514,6 +514,9 @@ enum WatchWidgetFormat {
     _ value: Decimal?, code: String, locale: Locale, metalUnit: MetalUnit
   ) -> String {
     guard let value, !value.isNaN else { return "—" }
+    if CurrencyCode(rawValue: code)?.isMetal == true {
+      return CurrencyDisplay.format(value, code: code, locale: locale, metalUnit: metalUnit)
+    }
     let digits = CurrencyPrecision.fractionDigits(code, metalUnit: metalUnit)
     let step = pow(Decimal(10), -digits)
     if value != 0 && abs(value) < step {

@@ -3,9 +3,9 @@ import { test } from '../widget-gallery-fixtures.js';
 import { configureWidget, revealWidget, unloadWidgetHelper, widgetSetupMethod } from '../simulator-widgets.js';
 
 const cases = [
-  { title: 'Currency board', family: 'Medium', screenshot: 'board-metal-grams', expected: 'EUR 1, USD 2, and XAU with a visible g unit and exactly 0.31103477 (decimal comma is also valid)' },
+  { title: 'Currency board', family: 'Medium', screenshot: 'board-metal-grams', expected: 'EUR 1, USD 2, and XAU with a visible g unit and exactly 0.311035 (decimal comma is also valid)' },
   { title: 'Know Your Cash', family: 'Medium', screenshot: 'cash-metal-weights', expected: 'XAU to EUR with main weight 1 g, estimate approximately 3.22 EUR, and weight preset buttons 1 g, 10 g, and 1 kg' },
-  { title: 'Pocket Rate', family: 'Small', screenshot: 'pocket-metal-grams', expected: 'source EUR with exactly 50 and target XAU with a visible g unit and approximately 15.5517384 (decimal comma is also valid)' },
+  { title: 'Pocket Rate', family: 'Small', screenshot: 'pocket-metal-grams', expected: 'source EUR with exactly 50 and target XAU with a visible g unit and exactly 15.5517 (decimal comma is also valid)' },
   { title: 'Mental Math', family: 'Small', screenshot: 'mental-metal-grams', expected: 'source EUR, Divide by, factor exactly 3.2, and target XAU with a visible g unit (decimal comma is also valid)' },
   { title: 'History', family: 'Medium', screenshot: 'history-metal-grams', expected: 'source EUR with 1, target XAU with a visible g unit and current rate 0.311035 (decimal comma is also valid), a rising chart, +11.11 percent change, and one month range 1M' },
 ] as const;
@@ -29,7 +29,7 @@ for (const item of cases) {
     await screen.getByTestId('settings.metalUnit').getByText('Troy ounces').tap();
     await screen.getByTestId('settings.metalUnit.gram').tap();
     await screen.getByRole('button', 'Back', { exact: true }).tap();
-    await expect(screen.getByRole('button', /^Gold,/i)).toHaveAccessibleName('Gold, 0.31103477 g');
+    await expect(screen.getByRole('button', /^Gold,/i)).toHaveAccessibleName('Gold, 0.311035 g');
     await device.home();
     await device.openApp('com.apple.springboard');
     if (item.title !== 'Currency board') {

@@ -58,10 +58,7 @@ public struct CurrencyDetailsWatchScreen: View {
             if let latest = series.points.last {
               Text(
                 verbatim:
-                  amountLabel(
-                    latest.value.formatted(
-                      .number.precision(.significantDigits(1...6)).locale(locale)),
-                    code: model.quote)
+                  amountLabel(historyRate(latest.value), code: model.quote)
               )
               .font(.system(.body, design: .rounded, weight: .medium))
               .monospacedDigit()
@@ -127,6 +124,18 @@ public struct CurrencyDetailsWatchScreen: View {
         1, from: model.input.code, to: model.quote, metalUnit: model.input.metalUnit)
     else {
       return "—"
+    }
+    if CurrencyCatalog.metals.contains(model.quote) {
+      return CurrencyDisplay.format(
+        value, code: model.quote, locale: locale, metalUnit: model.input.metalUnit)
+    }
+    return value.formatted(.number.precision(.significantDigits(1...6)).locale(locale))
+  }
+
+  private func historyRate(_ value: Double) -> String {
+    if CurrencyCatalog.metals.contains(model.quote) {
+      return CurrencyDisplay.format(
+        Decimal(value), code: model.quote, locale: locale, metalUnit: model.input.metalUnit)
     }
     return value.formatted(.number.precision(.significantDigits(1...6)).locale(locale))
   }

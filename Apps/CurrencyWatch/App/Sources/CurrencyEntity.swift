@@ -1,6 +1,7 @@
 import AppIntents
 import Conversion
 import ExchangeRates
+import ExchangeRatesUI
 import Foundation
 
 struct CurrencyEntity: AppEntity {
@@ -87,7 +88,9 @@ enum ConversionPresentation {
         exponent: -CurrencyPrecision.fractionDigits(code, metalUnit: request.metalUnit),
         significand: 1)
       let formatted: String
-      if let value, value > 0, value < step {
+      if let value, CurrencyCatalog.metals.contains(code) {
+        formatted = CurrencyDisplay.format(value, code: code, metalUnit: request.metalUnit)
+      } else if let value, value > 0, value < step {
         formatted = value.formatted(.number.precision(.significantDigits(1...6)))
       } else if let value {
         formatted = value.formatted(
