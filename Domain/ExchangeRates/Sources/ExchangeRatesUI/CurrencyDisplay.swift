@@ -10,11 +10,12 @@ public enum CurrencyDisplay {
     return name.prefix(1).uppercased(with: locale) + name.dropFirst()
   }
 
-  /// Formats a currency value using the currency's supported precision.
+  /// Formats a currency value with compact metal amounts and supported fiat or crypto precision.
   public static func format(
     _ value: Decimal?, code: String, locale: Locale = .current, metalUnit: MetalUnit = .troyOunce
   ) -> String {
     guard let value, !value.isNaN else { return "—" }
+    if CurrencyCatalog.metals.contains(code) { return metalAmount(value, locale: locale) }
     let formatter = NumberFormatter()
     formatter.locale = locale
     formatter.numberStyle = .decimal
@@ -30,12 +31,13 @@ extension CurrencyDisplay {
     metalUnit: MetalUnit = .troyOunce
   ) -> String {
     guard let value, !value.isNaN else { return "—" }
+    if CurrencyCatalog.metals.contains(quote) { return metalAmount(value, locale: locale) }
     let formatter = NumberFormatter()
     formatter.locale = locale
     formatter.numberStyle = .decimal
     let quotePrecision = CurrencyPrecision.fractionDigits(quote, metalUnit: metalUnit)
     let digits =
-      CurrencyCatalog.crypto.contains(quote) || CurrencyCatalog.metals.contains(quote)
+      CurrencyCatalog.crypto.contains(quote)
       ? quotePrecision : CurrencyCatalog.crypto.contains(code) ? max(2, quotePrecision) : 6
     formatter.maximumFractionDigits = digits
     if value != 0 && abs(value) < Decimal(1) / pow(Decimal(10), digits) {
@@ -46,9 +48,29 @@ extension CurrencyDisplay {
     return formatter.string(from: NSDecimalNumber(decimal: value)) ?? "—"
   }
 
-  /// Returns the display precision for a currency code.
+  /// Returns the supported editing and conversion precision for a currency code.
   public static func fractionDigits(_ code: String, metalUnit: MetalUnit = .troyOunce) -> Int {
     CurrencyPrecision.fractionDigits(code, metalUnit: metalUnit)
+  }
+
+  private static func metalAmount(_ value: Decimal, locale: Locale) -> String {
+    var magnitude = abs(value)
+    var exponent = 0
+    if magnitude > 0 {
+      while magnitude < 1 {
+        magnitude *= 10
+        exponent -= 1
+      }
+      while magnitude >= 10 {
+        magnitude /= 10
+        exponent += 1
+      }
+    }
+    let formatter = NumberFormatter()
+    formatter.locale = locale
+    formatter.numberStyle = .decimal
+    formatter.maximumFractionDigits = max(0, 5 - exponent)
+    return formatter.string(from: NSDecimalNumber(decimal: value)) ?? "—"
   }
 
   /// Returns the flag or symbol associated with a currency code.

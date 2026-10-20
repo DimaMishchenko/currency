@@ -221,7 +221,7 @@ let project = Project(
       dependencies: [
         .target(name: "Home"), .target(name: "HomeWatchUI"), .target(name: "CurrencyDetails"),
         .target(name: "CurrencyDetailsWatchUI"), .target(name: "Conversion"),
-        .target(name: "ExchangeRates"), .target(name: "Widgets"),
+        .target(name: "ExchangeRates"), .target(name: "ExchangeRatesUI"), .target(name: "Widgets"),
         .target(name: "LocalCurrency"), .target(name: "CurrencyApplication"),
         .target(name: "CompanionSync"),
         .target(name: "CurrencyWatchWidgets")

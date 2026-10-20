@@ -102,6 +102,20 @@ import Testing
     #expect(result.monetaryAmount == nil)
     #expect(result.resultText.contains("troy oz") && result.resultText.contains("🥇"))
   }
+  @Test(arguments: ["0.311034768", "0.000000000311034768"])
+  func metalResultsRoundPresentationWithoutChangingChainingValue(_ amount: String) throws {
+    let request = try ConversionRequest(
+      amount: amount, source: "XAU", destinations: [.init(code: "XAU")], metalUnit: .kilogram)
+    let evaluation = try ConversionEvaluation(request: request, snapshot: .init(), now: now)
+    let result = ConversionResultEntity(result: evaluation.results[0], evaluation: evaluation)
+    let expected = CurrencyDisplay.format(
+      try #require(Decimal(string: amount)), code: "XAU", metalUnit: .kilogram)
+    #expect(result.convertedAmount == amount)
+    #expect(result.resultText.contains(expected))
+    #expect(ConversionPresentation.speech(evaluation).contains(expected))
+    #expect(!result.resultText.contains(String(localized: "Less than")))
+    #expect(result.metalMeasurementUnit == "kg")
+  }
   @Test(arguments: [MetalUnit.gram, .kilogram])
   func metalResultsExposeSelectedUnitForChainingAndSourceContext(_ unit: MetalUnit) throws {
     let request = try ConversionRequest(
