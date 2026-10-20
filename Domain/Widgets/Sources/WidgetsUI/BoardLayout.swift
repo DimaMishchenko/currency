@@ -18,7 +18,7 @@ public struct BoardLayout: View {
 
   private var base: String { entry.spec.codes.first ?? "EUR" }
 
-  private var limit: Int { family == .systemSmall ? 4 : family == .systemMedium ? 6 : 12 }
+  private var limit: Int { family == .systemSmall ? 6 : family == .systemMedium ? 12 : 24 }
 
   private var targets: [String] {
     var visible = Array(entry.spec.codes.prefix(limit))
@@ -29,40 +29,41 @@ public struct BoardLayout: View {
     return visible
   }
 
-  /// Currency rows, overflow information, and local-currency status.
+  /// Currency rows and actionable configuration or local-currency status.
   public var body: some View {
     VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
       if let amount = WidgetMath.parseAmount(entry.spec.amount) {
-        LazyVGrid(
-          columns: Array(
-            repeating: GridItem(.flexible(), spacing: AppStyle.Space.medium),
-            count: family == .systemSmall ? 1 : 2),
-          spacing: family == .systemLarge ? AppStyle.Space.large : AppStyle.Space.small
-        ) {
-          ForEach(targets, id: \.self) { selection in
-            let code = WidgetSelection.currency(selection)
-            if code == WidgetSelection.localID {
-              LocalCurrencySetup(status: entry.spec.locationStatus, compact: true)
-            } else {
-              row(
-                code: code,
-                amount: CurrencyDisplay.format(
-                  entry.snapshot.convert(
-                    amount, from: base, to: code, metalUnit: entry.input.metalUnit), code: code,
-                  locale: locale, metalUnit: entry.input.metalUnit),
-                primary: selection == base, local: WidgetSelection.isLocal(selection))
+        GeometryReader { geometry in
+          let columns = family == .systemSmall ? 1 : 2
+          let rows = (targets.count + columns - 1) / columns
+          let rowHeight = geometry.size.height / CGFloat(max(1, rows))
+          LazyVGrid(
+            columns: Array(
+              repeating: GridItem(.flexible(), spacing: AppStyle.Space.medium), count: columns),
+            spacing: 0
+          ) {
+            ForEach(targets, id: \.self) { selection in
+              let code = WidgetSelection.currency(selection)
+              Group {
+                if code == WidgetSelection.localID {
+                  LocalCurrencySetup(status: entry.spec.locationStatus, compact: true)
+                } else {
+                  row(
+                    code: code,
+                    amount: CurrencyDisplay.format(
+                      entry.snapshot.convert(
+                        amount, from: base, to: code, metalUnit: entry.input.metalUnit), code: code,
+                      locale: locale, metalUnit: entry.input.metalUnit),
+                    primary: selection == base, local: WidgetSelection.isLocal(selection))
+                }
+              }
+              .frame(height: rowHeight)
             }
           }
         }
-        Spacer(minLength: 0)
         if entry.spec.requiresCurrencySelection {
           Text(.WidgetPresentation.chooseCustomCurrencies).font(AppStyle.font(.caption2))
             .foregroundStyle(.secondary)
-        }
-        if entry.spec.codes.count > limit {
-          Text(.WidgetPresentation.boardOverflow(entry.spec.codes.count - limit))
-            .font(AppStyle.font(.caption2)).foregroundStyle(.secondary).lineLimit(1)
-            .minimumScaleFactor(0.6)
         }
         WidgetFooter(entry: entry)
       } else {
