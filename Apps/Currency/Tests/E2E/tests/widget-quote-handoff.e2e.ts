@@ -38,13 +38,15 @@ test('tapping a captured widget quote opens its snapshot then adopts newer share
   const udid = process.env.CURRENCY_E2E_UDID!;
   const directory = execFileSync('xcrun', ['simctl', 'get_app_container', udid,
     'com.dimasike.currency', 'group.com.dimasike.currency.shared'], { encoding: 'utf8' }).trim();
-  const contextPath = join(directory, 'widget-quote-contexts.json');
-  const contexts = readJSON<Context[]>(contextPath);
+  const contextDirectory = join(directory, 'widget-quote-contexts-v2');
+  const contexts = readJSON<{ id: string }[]>(join(contextDirectory, 'index.json'))
+    .map(({ id }) => readJSON<Context>(join(contextDirectory, `${id}.json`)));
   const captured = contexts.find(context => {
     const quotes = context.snapshot.quotes;
     return context.base === 'BTC' && context.quote === 'USD' && quotes.BTC && quotes.USD && Math.abs(quotes.USD.value / quotes.BTC.value - 52_500) < 0.01;
   });
   assert.ok(captured, 'The installed widget must retain its immutable rendered quote context.');
+  const contextPath = join(contextDirectory, `${captured.id}.json`);
   const ratePath = join(directory, 'rates.json');
   const original = readFileSync(ratePath, 'utf8');
   const newer = readJSON<Snapshot>(ratePath);
@@ -60,7 +62,7 @@ test('tapping a captured widget quote opens its snapshot then adopts newer share
   };
   try {
     writeRates(JSON.stringify(newer));
-    assert.deepEqual(readJSON<Context[]>(contextPath).find(context => context.id === captured.id), captured);
+    assert.deepEqual(readJSON<Context>(contextPath), captured);
     await expect(widget.getByLabel('Rate change over the selected range', { exact: true })).toHaveValue(/^\+31[.,]25%$/);
     await app.screenshot('widget-retains-usd-52500-after-authoritative-cache-55000');
     await widget.tap();
@@ -81,7 +83,7 @@ test('tapping a captured widget quote opens its snapshot then adopts newer share
     assert.equal(persisted.checkedAt, newer.checkedAt, 'Opening the widget must reuse the fresh shared quote without another refresh attempt.');
     assert.equal(persisted.fetchedAt, newer.fetchedAt);
     assert.deepEqual(persisted.quotes.BTC, newer.quotes.BTC);
-    assert.deepEqual(readJSON<Context[]>(contextPath).find(context => context.id === captured.id), captured);
+    assert.deepEqual(readJSON<Context>(contextPath), captured);
   } finally {
     writeRates(original);
   }
