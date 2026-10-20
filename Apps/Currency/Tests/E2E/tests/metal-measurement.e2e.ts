@@ -1,7 +1,7 @@
 import { expect } from 'e2e';
 import { test } from '../fixtures.js';
 
-test('metal measurement changes conversion and preserves weight after restart', { tags: ['core'] }, async ({ start, app, agent, screen }) => {
+test('metal measurement changes conversion and preserves weight after restart', { tags: ['core'] }, async ({ start, app, screen }) => {
   await start('ready-metals');
   const gold = screen.getByRole('button', /^Gold,/i);
   await expect(gold).toHaveAccessibleName('Gold, 0.01 troy oz');
@@ -24,11 +24,18 @@ test('metal measurement changes conversion and preserves weight after restart', 
   await screen.getByRole('button', 'Back', { exact: true }).tap();
   await expect(gold).toHaveAccessibleName('Gold, 0.000311035 kg');
 
-  await agent.act('Replace the Euro source amount with exactly 0.000001 using the calculator keypad. Keep the source amount in editing mode with the keypad visible.');
+  const amount = screen.getByRole('button', 'Edit amount in EUR');
+  await amount.tap();
+  for (const key of ['0', 'Decimal separator', '0', '0', '0', '0', '0', '1']) {
+    await screen.getByRole('button', key, { exact: true }).tap();
+  }
   await expect(screen.getByRole('button', 'Edit amount in EUR')).toHaveValue('0.000001');
   await expect(gold).toHaveAccessibleName('Gold, 0.000000000311035 kg');
   await app.screenshot('converter-metal-tiny-kilograms');
-  await agent.act('Replace the Euro source amount with exactly 1 using the calculator keypad. Finish with the keypad toolbar checkmark if it is shown. Stay on the converter.');
+  await screen.getByTestId('checkmark').tap();
+  await amount.tap();
+  await screen.getByRole('button', '1', { exact: true }).tap();
+  await screen.getByTestId('checkmark').tap();
   await expect(screen.getByRole('button', 'Edit amount in EUR')).toHaveValue('1');
   await expect(gold).toHaveAccessibleName('Gold, 0.000311035 kg');
 
