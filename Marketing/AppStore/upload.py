@@ -1,0 +1,514 @@
+#!/usr/bin/env python3
+"""Plan/reconcile App Store drafts through the pinned asc CLI. Never submit review."""
+import argparse
+from fractions import Fraction
+import hashlib
+import json
+import os
+from pathlib import Path, PurePosixPath
+import re
+import shutil
+import struct
+import subprocess
+import sys
+import tempfile
+import zipfile
+
+ASC_VERSION = '5.16.0'
+PROFILES = {'iphone': 'APP_IPHONE_61', 'ipad': 'APP_IPAD_PRO_3GEN_129', 'watch': 'APP_WATCH_SERIES_10'}
+DIMENSIONS = {'iphone': (1206, 2622), 'ipad': (2064, 2752), 'watch': (416, 496), 'duo-inner': (2853, 2007), 'duo-outer': (1398, 2034)}
+FAMILIES = ['default', 'offline', 'travel', 'history', 'crypto', 'metals']
+EDITABLE = {'PREPARE_FOR_SUBMISSION', 'DEVELOPER_REJECTED', 'REJECTED', 'METADATA_REJECTED'}
+SCOPES = {'metadata', 'default', 'cpp', 'duo', 'header'}
+INFO_FIELDS = {'name', 'subtitle', 'privacyPolicyUrl', 'privacyChoicesUrl'}
+VERSION_FIELDS = {'description', 'keywords', 'promotionalText', 'marketingUrl', 'supportUrl', 'whatsNew'}
+
+
+class UploadError(Exception):
+    pass
+
+
+def sha256(path):
+    h = hashlib.sha256()
+    with path.open('rb') as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b''):
+            h.update(block)
+    return h.hexdigest()
+
+
+def confined(root, name):
+    if not isinstance(name, str) or not name or '\\' in name or PurePosixPath(name).is_absolute() or any(p in ('', '.', '..') for p in name.split('/')):
+        raise UploadError('Bundle contains an invalid relative path')
+    path = (root / name).resolve()
+    if not path.is_relative_to(root.resolve()) or path.is_symlink():
+        raise UploadError('Bundle path escapes the extracted directory')
+    return path
+
+
+def extract_bundle(archive, expected, output):
+    if not re.fullmatch('[a-f0-9]{64}', expected) or sha256(archive) != expected:
+        raise UploadError('Approved bundle SHA-256 mismatch')
+    with zipfile.ZipFile(archive) as source:
+        names = set()
+        total = 0
+        for item in source.infolist():
+            name = item.filename
+            if name in names or item.is_dir() or (item.external_attr >> 16) & 0o170000 == 0o120000:
+                raise UploadError('Duplicate, directory, or symlink archive member refused')
+            names.add(name)
+            confined(output, name)
+            total += item.file_size
+            if total > 6 * 1024 ** 3 or item.file_size > 600 * 1024 ** 2:
+                raise UploadError('Approved bundle exceeds extraction limits')
+        if 'manifest.json' not in names:
+            raise UploadError('Bundle manifest.json is missing')
+        for item in source.infolist():
+            target = confined(output, item.filename)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with source.open(item) as src, target.open('wb') as dst:
+                shutil.copyfileobj(src, dst)
+
+
+def validate_media(root, manifest, metadata):
+    if manifest.get('schemaVersion') != 1 or metadata.get('schemaVersion') != 1 or metadata.get('families') != FAMILIES:
+        raise UploadError('Unsupported manifest or metadata schema/families')
+    if metadata.get('appId') != '6816213577' or len(metadata.get('locales', {})) != 18:
+        raise UploadError('Expected Currency app ID and all 18 locales')
+    slots, hashes = {}, {}
+    for item in manifest.get('placements', []):
+        slot = (item['locale'], item['profile'], item['family'], item['order'])
+        if slot in slots or item['locale'] not in metadata['locales'] or item['family'] not in FAMILIES or item['profile'] not in {*PROFILES, 'duo-inner', 'duo-outer'} or type(item['order']) is not int or item['order'] not in range(1, 7):
+            raise UploadError('Invalid or duplicate screenshot placement')
+        path = confined(root, item['path'])
+        if path.suffix.lower() != '.png' or not path.is_file():
+            raise UploadError('Screenshot must be a regular PNG')
+        if path not in hashes:
+            hashes[path] = sha256(path)
+        validate_png(path, DIMENSIONS[item['profile']])
+        if hashes[path] != item['sha256']:
+            raise UploadError('Screenshot SHA-256 mismatch')
+        slots[slot] = dict(item, file=path)
+    expected = {(l, p, f, n) for l in metadata['locales'] for p in {*PROFILES, 'duo-inner', 'duo-outer'} for f in FAMILIES for n in range(1, 7)}
+    if set(slots) != expected:
+        raise UploadError('Bundle must contain all 3240 screenshot placements')
+    header = manifest.get('header', {})
+    path = confined(root, header.get('path'))
+    if path.suffix.lower() not in {'.mp4', '.m4v', '.mov'} or not path.is_file() or sha256(path) != header.get('sha256'):
+        raise UploadError('Approved header video is missing or has the wrong hash')
+    validate_video(path)
+    return slots, dict(header, file=path)
+
+
+def validate_png(path, dimensions):
+    with path.open('rb') as stream:
+        header = stream.read(33)
+        if len(header) != 33 or header[:16] != b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR' or struct.unpack('>II', header[16:24]) != dimensions:
+            raise UploadError('Screenshot PNG dimensions do not match its device profile')
+        if header[25] not in {0, 2, 3}:
+            raise UploadError('Screenshot PNG alpha channel is not allowed')
+        while True:
+            chunk = stream.read(8)
+            if len(chunk) != 8:
+                raise UploadError('Truncated screenshot PNG')
+            size, kind = struct.unpack('>I4s', chunk)
+            if kind == b'tRNS':
+                raise UploadError('Screenshot PNG transparency is not allowed')
+            if size > path.stat().st_size:
+                raise UploadError('Invalid screenshot PNG chunk')
+            stream.seek(size + 4, 1)
+            if kind == b'IEND':
+                return
+
+
+def validate_video(path):
+    try:
+        result = subprocess.run(['ffprobe', '-v', 'error', '-show_streams', '-show_format', '-of', 'json', str(path)], text=True, capture_output=True, timeout=60, check=True)
+        info = json.loads(result.stdout)
+        videos = [s for s in info['streams'] if s.get('codec_type') == 'video']
+        video = videos[0]
+        fps = float(Fraction(video['avg_frame_rate']))
+        if len(videos) != 1 or (video['width'], video['height']) != (3840, 1646) or abs(float(info['format']['duration']) - 15) > .1 or min(abs(fps - 30), abs(fps - 60)) > .01:
+            raise ValueError()
+    except (OSError, subprocess.SubprocessError, ValueError, KeyError, IndexError, ZeroDivisionError):
+        raise UploadError('Header must be the approved 15-second 3840x1646 video at 30/60 fps; install ffprobe and verify the export') from None
+
+
+class CLI:
+    """Capture all CLI output; signed upload URLs/private API errors never reach logs."""
+    def __init__(self, executable='asc', apply=False, receipts=None):
+        self.executable, self.apply = executable, apply
+        self.receipts = receipts
+
+    def receipt(self, event, result=None):
+        if self.receipts is None:
+            return
+        identifiers = {}
+        def scan(value):
+            if isinstance(value, dict):
+                for key, item in value.items():
+                    if key in {'id', 'imageId', 'videoId', 'screenshotId', 'setId', 'localizationId'} and isinstance(item, str) and re.fullmatch('[A-Za-z0-9-]{1,180}', item):
+                        identifiers.setdefault(key, []).append(item)
+                    else:
+                        scan(item)
+            elif isinstance(value, list):
+                for item in value:
+                    scan(item)
+        scan(result)
+        self.receipts.parent.mkdir(parents=True, exist_ok=True)
+        fd = os.open(self.receipts, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o600)
+        with os.fdopen(fd, 'a') as stream:
+            stream.write(json.dumps({'event': event, 'resourceIds': identifiers}) + '\n')
+            stream.flush()
+            os.fsync(stream.fileno())
+
+    def run(self, args, body=None, mutate=False):
+        if mutate and not self.apply:
+            raise UploadError('Internal safety guard refused a mutation during dry-run')
+        env = os.environ.copy()
+        for key in ('ASC_PROFILE', 'ASC_CONFIG_PATH', 'ASC_BYPASS_KEYCHAIN', 'ASC_PRIVATE_KEY_PATH', 'ASC_PRIVATE_KEY', 'ASC_DEBUG', 'ASC_DEBUG_HTTP'):
+            env.pop(key, None)
+        env['ASC_STRICT_AUTH'] = 'true'
+        try:
+            if mutate:
+                self.receipt('mutation-started')
+            result = subprocess.run([self.executable, *args], input=None if body is None else json.dumps(body), text=True, capture_output=True, env=env, timeout=2100, check=False)
+        except (OSError, subprocess.TimeoutExpired):
+            raise UploadError('asc command could not finish; inspect remote draft state before retrying') from None
+        if result.returncode:
+            try:
+                self.receipt('mutation-failed-inspect-before-retry', json.loads(result.stdout))
+            except json.JSONDecodeError:
+                self.receipt('mutation-failed-no-receipt-inspect-before-retry')
+            raise UploadError('asc command failed; inspect App Store Connect draft state before retrying (raw output suppressed)')
+        try:
+            value = json.loads(result.stdout) if result.stdout.strip() else {}
+            if mutate:
+                self.receipt('mutation-completed', value)
+            return value
+        except json.JSONDecodeError:
+            raise UploadError('asc returned invalid JSON (raw output suppressed)') from None
+
+    def api(self, method, path, body=None):
+        args = ['api', method, path, '--output', 'json']
+        if method == 'GET':
+            args += ['--paginate'] if '?' not in path and not path.endswith('/assetLibrary') else []
+        else:
+            args += ['--confirm', '--body-file', '-']
+        return self.run(args, body, mutate=method != 'GET')
+
+
+def relationship(kind, identifier):
+    return {'data': {'type': kind, 'id': identifier}}
+
+
+def resource(kind, attrs, relations=None, identifier=None):
+    data = {'type': kind, 'attributes': attrs}
+    if identifier:
+        data['id'] = identifier
+    if relations:
+        data['relationships'] = relations
+    return {'data': data}
+
+
+class Planner:
+    def __init__(self, cli, metadata, slots, header, version_id, version_string, info_id, scopes):
+        self.cli, self.meta, self.slots, self.header = cli, metadata, slots, header
+        self.version, self.version_string, self.info = version_id, version_string, info_id
+        self.scopes, self.ops, self.blockers, self.notes = scopes, [], [], []
+        self.app = metadata['appId']
+        self.library = None
+        self.library_rows = {}
+        self.media = {}
+
+    def get(self, path):
+        if '@pending-' in path:
+            return []
+        value = self.cli.api('GET', path).get('data', [])
+        return value if isinstance(value, list) else [value]
+
+    def queue(self, method, path, body=None, **extra):
+        ref = '@pending-' + str(len(self.ops))
+        self.ops.append(dict(ref=ref, method=method, path=path, body=body, **extra))
+        return ref
+
+    def upsert(self, kind, existing, attrs, relations):
+        if existing:
+            changed = {k: v for k, v in attrs.items() if existing.get('attributes', {}).get(k) != v}
+            if changed:
+                self.queue('PATCH', '/v1/' + kind + '/' + existing['id'], resource(kind, changed, identifier=existing['id']))
+            return existing['id']
+        return self.queue('POST', '/v1/' + kind, resource(kind, attrs, relations))
+
+    @staticmethod
+    def unique(rows, key):
+        result = {}
+        for row in rows:
+            value = row.get('attributes', {}).get(key)
+            if value in result:
+                raise UploadError('Ambiguous remote resources; resolve duplicates before applying')
+            result[value] = row
+        return result
+
+    def preflight(self):
+        versions = self.get('/v1/apps/' + self.app + '/appStoreVersions')
+        selected = [v for v in versions if v['id'] == self.version]
+        if len(selected) != 1 or selected[0]['attributes'].get('versionString') != self.version_string or selected[0]['attributes'].get('platform') != 'IOS':
+            raise UploadError('Explicit iOS version ID/string does not belong to Currency')
+        if selected[0]['attributes'].get('appStoreState') not in EDITABLE:
+            raise UploadError('Selected App Store version is not an editable draft')
+        infos = [i for i in self.get('/v1/apps/' + self.app + '/appInfos') if i['id'] == self.info]
+        if len(infos) != 1 or infos[0]['attributes'].get('appStoreState') not in EDITABLE:
+            raise UploadError('Explicit app-info ID does not belong to an editable Currency draft')
+        version_locales = self.unique(self.get('/v1/appStoreVersions/' + self.version + '/appStoreVersionLocalizations'), 'locale')
+        info_locales = self.unique(self.get('/v1/appInfos/' + self.info + '/appInfoLocalizations'), 'locale')
+        targets = {}
+        for locale, fields in self.meta['locales'].items():
+            if 'metadata' in self.scopes:
+                self.upsert('appInfoLocalizations', info_locales.get(locale), dict(locale=locale, **{k: v for k, v in fields.items() if k in INFO_FIELDS}), {'appInfo': relationship('appInfos', self.info)})
+            existing = version_locales.get(locale)
+            attrs = {'locale': locale}
+            if 'metadata' in self.scopes:
+                attrs.update({k: v for k, v in fields.items() if k in VERSION_FIELDS})
+            targets[('default', locale)] = self.upsert('appStoreVersionLocalizations', existing, attrs, {'appStoreVersion': relationship('appStoreVersions', self.version)})
+        if 'cpp' in self.scopes or 'duo' in self.scopes:
+            self.cpp_targets(targets)
+        if 'header' in self.scopes or 'duo' in self.scopes:
+            libraries = self.get('/v1/apps/' + self.app + '/assetLibrary')
+            if len(libraries) != 1:
+                raise UploadError('No unique Asset Library; initialize it in App Store Connect first')
+            self.library = libraries[0]['id']
+        if 'header' in self.scopes:
+            video = self.library_media(self.header, 'video')
+            for (family, locale), target in targets.items():
+                self.place_header(target, family, video)
+        for (family, locale), target in targets.items():
+            if (family == 'default' and 'default' in self.scopes) or (family != 'default' and 'cpp' in self.scopes):
+                for profile in PROFILES:
+                    self.screenshots(target, family, locale, profile)
+            if 'duo' in self.scopes:
+                self.duo_screenshots(target, family, locale)
+        if 'duo' in self.scopes:
+            self.notes.append('Duo uses documented native APP_SCREENSHOT/IPHONE_DUO_PROFILE placements: six outer then six inner, ordered explicitly. Remote capacity/eligibility remains subject to Apple validation; no live upload has verified acceptance.')
+        return self
+
+    def cpp_targets(self, targets):
+        pages = self.unique(self.get('/v1/apps/' + self.app + '/appCustomProductPages'), 'name')
+        routing = self.meta.get('keywordRouting', {})
+        if not routing:
+            self.notes.append('CPP keyword associations deferred: choose terms from the latest approved app version and provide keywordRouting; draft uploads remain available.')
+        for family in FAMILIES[1:]:
+            name = 'Currency - ' + family
+            page = pages.get(name)
+            page_id = self.upsert('appCustomProductPages', page, {'name': name}, {'app': relationship('apps', self.app)})
+            versions = self.get('/v1/appCustomProductPages/' + page_id + '/appCustomProductPageVersions')
+            drafts = [v for v in versions if v.get('attributes', {}).get('state') in {'PREPARE_FOR_SUBMISSION', 'REJECTED'}]
+            if len(drafts) > 1:
+                raise UploadError('Multiple editable CPP drafts; choose one in App Store Connect')
+            if versions and not drafts:
+                raise UploadError('CPP has no editable draft; create its next draft in App Store Connect first')
+            version = drafts[0]['id'] if drafts else self.queue('POST', '/v1/appCustomProductPageVersions', resource('appCustomProductPageVersions', {}, {'appCustomProductPage': relationship('appCustomProductPages', page_id)}))
+            locales = self.unique(self.get('/v1/appCustomProductPageVersions/' + version + '/appCustomProductPageLocalizations'), 'locale')
+            for locale, fields in self.meta['locales'].items():
+                text = fields.get('contextualPromotionalText', {}).get(family)
+                if not isinstance(text, str) or not text:
+                    raise UploadError('Every CPP family/locale needs contextualPromotionalText')
+                target = self.upsert('appCustomProductPageLocalizations', locales.get(locale), {'locale': locale, 'promotionalText': text}, {'appCustomProductPageVersion': relationship('appCustomProductPageVersions', version)})
+                targets[(family, locale)] = target
+                if family in routing:
+                    terms = routing[family].get(locale)
+                    if not isinstance(terms, list) or not terms or any(not isinstance(t, str) or not t for t in terms):
+                        raise UploadError('keywordRouting needs nonempty terms per configured family/locale')
+                    approved = self.get('/v1/apps/' + self.app + '/searchKeywords')
+                    allowed = {r['id'] for r in approved}
+                    if not set(terms) <= allowed:
+                        raise UploadError('keywordRouting contains terms absent from approved search keywords')
+                    current = self.get('/v1/appCustomProductPageLocalizations/' + target + '/searchKeywords')
+                    present = {r['id'] for r in current}
+                    missing = [t for t in terms if t not in present]
+                    if missing:
+                        self.queue('POST', '/v1/appCustomProductPageLocalizations/' + target + '/relationships/searchKeywords', {'data': [{'type': 'appKeywords', 'id': t} for t in missing]})
+
+    def screenshots(self, target, family, locale, profile):
+        items = [self.slots[(locale, profile, family, i)] for i in range(1, 7)]
+        kind = 'appStoreVersionLocalizations' if family == 'default' else 'appCustomProductPageLocalizations'
+        sets = self.get('/v1/' + kind + '/' + target + '/appScreenshotSets')
+        matching = [s for s in sets if s.get('attributes', {}).get('screenshotDisplayType') == PROFILES[profile]]
+        if len(matching) > 1:
+            raise UploadError('Duplicate remote screenshot sets')
+        if matching:
+            actual = self.get('/v1/appScreenshotSets/' + matching[0]['id'] + '/appScreenshots')
+            expected = [hashlib.md5(i['file'].read_bytes()).hexdigest() for i in items]
+            received = [r.get('attributes', {}).get('sourceFileChecksum') for r in actual]
+            if received == expected and all(r.get('attributes', {}).get('assetDeliveryState', {}).get('state') == 'COMPLETE' for r in actual):
+                return
+            if actual:
+                raise UploadError('Existing screenshot set differs or is incomplete; reconcile it manually before apply. Automatic deletion is disabled.')
+        self.queue('SCREENSHOTS', target, family=family, profile=profile, files=[str(i['file']) for i in items])
+
+    def library_media(self, item, media_type):
+        reference = 'currency-approved-' + item['sha256']
+        if reference in self.media:
+            return self.media[reference]
+        if media_type not in self.library_rows:
+            self.library_rows[media_type] = self.get('/v1/appAssetLibraries/' + self.library + '/' + ('videos' if media_type == 'video' else 'images'))
+        resources = self.library_rows[media_type]
+        found = [r for r in resources if r.get('attributes', {}).get('referenceName') == reference]
+        if len(found) > 1:
+            raise UploadError('Duplicate approved library assets; resolve duplicates first')
+        if found:
+            attrs = found[0].get('attributes', {})
+            if attrs.get('state') not in {'PREPARE_FOR_SUBMISSION', 'APPROVED'}:
+                raise UploadError('Existing approved media is still processing or failed; inspect it before retry')
+            category = 'APP_SCREENSHOTS_AND_PREVIEWS' if media_type == 'image' else 'CREATIVE_ASSETS'
+            ready = attrs.get('videoAsset') if media_type == 'video' else attrs.get('imageAsset', {}).get('width') and attrs.get('imageAsset', {}).get('height')
+            if not ready or not attrs.get('specId') or attrs.get('category') != category or attrs.get('fileSize') != item['file'].stat().st_size:
+                raise UploadError('Existing library asset does not match approved media readiness, category or file size; inspect it before reuse')
+            identifier = found[0]['id']
+        else:
+            identifier = self.queue('LIBRARY', '', media_type=media_type, library=self.library, file=str(item['file']), reference=reference)
+        self.media[reference] = identifier
+        return identifier
+
+    def duo_screenshots(self, target, family, locale):
+        kind = 'appStoreVersionLocalizations' if family == 'default' else 'appCustomProductPageLocalizations'
+        rel = 'appStoreVersionLocalization' if family == 'default' else 'appCustomProductPageLocalization'
+        placements = self.get('/v1/' + kind + '/' + target + '/placements')
+        existing = [p for p in placements if p.get('attributes', {}).get('placementGroup') == 'IPHONE_DUO_PROFILE']
+        if any(p.get('attributes', {}).get('placementType') != 'APP_SCREENSHOT' for p in existing):
+            raise UploadError('Duo group contains app previews; reconcile mixed media ordering explicitly first')
+        desired, ordered = [], []
+        for profile in ('duo-outer', 'duo-inner'):
+            for order in range(1, 7):
+                image = self.library_media(self.slots[(locale, profile, family, order)], 'image')
+                desired.append(image)
+                matching = [p for p in existing if p.get('relationships', {}).get('image', {}).get('data', {}).get('id') == image]
+                if len(matching) > 1:
+                    raise UploadError('Duplicate Duo image placements; reconcile in App Store Connect first')
+                if matching:
+                    if matching[0].get('attributes', {}).get('state') == 'FAILED':
+                        raise UploadError('Existing Duo placement failed; inspect before retry')
+                    ordered.append(matching[0]['id'])
+                else:
+                    ordered.append(self.queue('POST', '/v1/appAssetLibraryPlacements', resource('appAssetLibraryPlacements', {'placementType': 'APP_SCREENSHOT', 'placementGroup': 'IPHONE_DUO_PROFILE'}, {'image': relationship('appAssetLibraryImages', image), rel: relationship(kind, target)})))
+        if len(set(desired)) != 12:
+            raise UploadError('Duo ordered set must contain 12 distinct outer/inner images')
+        if any(p.get('relationships', {}).get('image', {}).get('data', {}).get('id') not in desired for p in existing):
+            raise UploadError('Existing Duo placements differ from the approved set; automatic deletion is disabled')
+        self.queue('POST', '/v1/appAssetLibraryPlacementOrderingRequests', resource('appAssetLibraryPlacementOrderingRequests', {'placementGroup': 'IPHONE_DUO_PROFILE'}, {'orderedPlacements': {'data': [{'type': 'appAssetLibraryPlacements', 'id': p} for p in ordered]}, rel: relationship(kind, target)}))
+
+    def place_header(self, target, family, video):
+        kind = 'appStoreVersionLocalizations' if family == 'default' else 'appCustomProductPageLocalizations'
+        placements = self.get('/v1/' + kind + '/' + target + '/placements')
+        headers = [p for p in placements if p.get('attributes', {}).get('placementType') == 'PRODUCT_PAGE_HEADER_ASSET']
+        if headers:
+            if len(headers) == 1 and headers[0].get('relationships', {}).get('video', {}).get('data', {}).get('id') == video:
+                if headers[0].get('attributes', {}).get('state') == 'FAILED':
+                    raise UploadError('Existing header placement failed; inspect before retry')
+                return
+            raise UploadError('Existing product-page header differs; inspect and remove/swap explicitly in App Store Connect first')
+        self.queue('POST', '/v1/appAssetLibraryPlacements', resource('appAssetLibraryPlacements', {'placementType': 'PRODUCT_PAGE_HEADER_ASSET', 'placementGroup': 'DEFAULT_PROFILE'}, {'video': relationship('appAssetLibraryVideos', video), 'appStoreVersionLocalization' if family == 'default' else 'appCustomProductPageLocalization': relationship(kind, target)}))
+
+    def execute(self):
+        if self.blockers:
+            raise UploadError('; '.join(self.blockers))
+        if not self.cli.apply:
+            raise UploadError('Apply mode is required to execute a plan')
+        resolved = {}
+        def substitute(value):
+            if isinstance(value, str):
+                for ref, identifier in sorted(resolved.items(), key=lambda p: -len(p[0])):
+                    value = value.replace(ref, identifier)
+                if '@pending-' in value:
+                    raise UploadError('Unresolved planned resource; stopped before mutation')
+                return value
+            if isinstance(value, list):
+                return [substitute(v) for v in value]
+            if isinstance(value, dict):
+                return {k: substitute(v) for k, v in value.items()}
+            return value
+        for index, operation in enumerate(self.ops, 1):
+            op = substitute({k: v for k, v in operation.items() if k != 'ref'})
+            if hasattr(self.cli, 'receipt'):
+                self.cli.receipt('operation-%d-started' % index)
+            if op['method'] == 'LIBRARY':
+                plural = 'videos' if op['media_type'] == 'video' else 'images'
+                category = 'APP_SCREENSHOTS_AND_PREVIEWS' if op['media_type'] == 'image' else 'CREATIVE_ASSETS'
+                response = self.cli.run(['asset-library', plural, 'upload', '--library-id', op['library'], '--file', op['file'], '--reference-name', op['reference'], '--category', category, '--output', 'json'], mutate=True)
+                identifier = response.get(op['media_type'] + 'Id')
+                if not identifier:
+                    raise UploadError('Library upload returned no asset ID; inspect remote library before retry')
+            elif op['method'] == 'SCREENSHOTS':
+                with tempfile.TemporaryDirectory(prefix='currency-shots-') as directory:
+                    for order, name in enumerate(op['files'], 1):
+                        shutil.copyfile(name, Path(directory) / ('%02d.png' % order))
+                    args = ['screenshots', 'upload', '--version-localization', op['path']] if op['family'] == 'default' else ['product-pages', 'custom-pages', 'localizations', 'screenshot-sets', 'upload', '--localization-id', op['path']]
+                    self.cli.run([*args, '--path', directory, '--device-type', PROFILES[op['profile']], '--output', 'json'], mutate=True)
+                identifier = ''
+            else:
+                response = self.cli.api(op['method'], op['path'], op['body'])
+                identifier = response.get('data', {}).get('id', '')
+                if op['method'] == 'POST' and isinstance(response.get('data'), dict) and not identifier:
+                    raise UploadError('Creation response omitted resource identity; inspect before retry')
+            resolved[operation['ref']] = identifier
+            if hasattr(self.cli, 'receipt'):
+                self.cli.receipt('operation-%d-completed' % index, {'id': identifier})
+            print('Completed draft operation %d/%d' % (index, len(self.ops)), flush=True)
+
+    def summary(self):
+        result = []
+        for index, operation in enumerate(self.ops, 1):
+            data = (operation.get('body') or {}).get('data', {})
+            data = data if isinstance(data, dict) else {}
+            entry = {'operation': index, 'method': operation['method'], 'resource': data.get('type', operation['path']), 'fields': sorted(data.get('attributes', {}))}
+            if 'locale' in data.get('attributes', {}):
+                entry['locale'] = data['attributes']['locale']
+            if operation['method'] == 'SCREENSHOTS':
+                entry.update(family=operation['family'], profile=operation['profile'], screenshotCount=len(operation['files']))
+            if operation['method'] == 'LIBRARY':
+                entry.update(mediaType=operation['media_type'], approvedReference=operation['reference'])
+            if data.get('attributes', {}).get('placementGroup'):
+                entry['placementGroup'] = data['attributes']['placementGroup']
+            result.append(entry)
+        return result
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--metadata', type=Path, default=Path(__file__).with_name('metadata.json'))
+    parser.add_argument('--bundle', type=Path, required=True)
+    parser.add_argument('--bundle-sha256', required=True)
+    parser.add_argument('--version-id', required=True)
+    parser.add_argument('--version-string', required=True)
+    parser.add_argument('--app-info-id', required=True)
+    parser.add_argument('--scope', default='metadata,default,cpp,header,duo')
+    parser.add_argument('--apply', action='store_true')
+    parser.add_argument('--receipts', type=Path, required=True, help='Private durable JSONL receipt path; contains resource IDs only')
+    args = parser.parse_args()
+    scopes = set(args.scope.split(','))
+    if not scopes or not scopes <= SCOPES:
+        parser.error('--scope must select metadata,default,cpp,header,duo')
+    for identifier in (args.version_id, args.app_info_id):
+        if not re.fullmatch('[A-Za-z0-9-]+', identifier):
+            parser.error('Resource IDs may contain only letters, digits and hyphens')
+    cli = CLI(apply=args.apply, receipts=args.receipts)
+    with tempfile.TemporaryDirectory(prefix='currency-app-store-') as temporary:
+        root = Path(temporary)
+        extract_bundle(args.bundle, args.bundle_sha256, root)
+        metadata = json.loads(args.metadata.read_text())
+        manifest = json.loads((root / 'manifest.json').read_text())
+        slots, header = validate_media(root, manifest, metadata)
+        plan = Planner(cli, metadata, slots, header, args.version_id, args.version_string, args.app_info_id, scopes).preflight()
+        print(json.dumps({'mode': 'apply' if args.apply else 'dry-run', 'plannedDraftOperations': len(plan.ops), 'scopes': sorted(scopes), 'blockers': plan.blockers, 'notes': plan.notes, 'plan': plan.summary()}, ensure_ascii=False, indent=2))
+        if args.apply:
+            plan.execute()
+        elif plan.blockers:
+            return 2
+    return 0
+
+
+if __name__ == '__main__':
+    try:
+        sys.exit(main())
+    except (UploadError, OSError, ValueError, KeyError, zipfile.BadZipFile) as error:
+        print('Error: ' + (str(error) if isinstance(error, UploadError) else 'Invalid local input; validate bundle and metadata'), file=sys.stderr)
+        sys.exit(1)

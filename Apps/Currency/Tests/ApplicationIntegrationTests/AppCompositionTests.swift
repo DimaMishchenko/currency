@@ -10,6 +10,45 @@ import Testing
 
 @MainActor
 struct AppCompositionTests {
+  @Test(arguments: SettingsAppIcon.allCases)
+  func iconPresentationReconcilesPlatformChangesAndNewPresentations(icon: SettingsAppIcon) {
+    var platformName = icon.platformIconName
+    let current = AppIconPresentation(readName: { platformName })
+    #expect(current.icon == icon)
+    platformName = "AppIconGridBTC"
+    current.reload()
+    #expect(current.icon == .gridBitcoin)
+    platformName = "AppIconWorldEUR"
+    let reopened = AppIconPresentation(readName: { platformName })
+    #expect(reopened.icon == .worldEuro)
+    current.reload()
+    #expect(current.icon == .worldEuro)
+    platformName = nil
+    current.reload()
+    reopened.reload()
+    #expect(current.icon == .world)
+    #expect(reopened.icon == .world)
+  }
+
+  @Test func nativeIconCatalogHasElevenUniqueAlternatesAndOnePrimary() {
+    let expected: [SettingsAppIcon: String] = [
+      .worldEuro: "AppIconWorldEUR", .worldPound: "AppIconWorldGBP",
+      .worldRupee: "AppIconWorldINR", .worldWon: "AppIconWorldKRW",
+      .worldBitcoin: "AppIconWorldBTC", .grid: "AppIconGrid",
+      .gridEuro: "AppIconGridEUR", .gridPound: "AppIconGridGBP",
+      .gridRupee: "AppIconGridINR", .gridWon: "AppIconGridKRW",
+      .gridBitcoin: "AppIconGridBTC"
+    ]
+    #expect(SettingsAppIcon.world.platformIconName == nil)
+    #expect(SettingsAppIcon(platformIconName: nil) == .world)
+    #expect(SettingsAppIcon(platformIconName: "unknown") == .world)
+    #expect(Set(SettingsAppIcon.allCases.compactMap(\.platformIconName)).count == 11)
+    for (icon, name) in expected {
+      #expect(icon.platformIconName == name)
+      #expect(SettingsAppIcon(platformIconName: name) == icon)
+    }
+  }
+
   @Test(arguments: [false, true])
   func unreadableInputPreservesPublishedFavorites(unreadable: Bool) throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)

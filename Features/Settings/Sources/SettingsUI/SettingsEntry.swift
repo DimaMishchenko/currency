@@ -32,6 +32,7 @@ public struct SettingsEntry: View {
 }
 
 private struct SettingsFlow: View {
+  @Environment(\.scenePhase) private var scenePhase
   @State private var lifetime: SettingsFlowLifetime
   init(dependencies: SettingsDependencies) {
     _lifetime = State(initialValue: SettingsFlowLifetime(dependencies: dependencies))
@@ -39,5 +40,8 @@ private struct SettingsFlow: View {
   var body: some View {
     SettingsScreen(model: lifetime.model)
       .onAppear { lifetime.start() }
+      .onChange(of: scenePhase) { _, phase in
+        if phase == .active { lifetime.model.reloadAppIcon() }
+      }
   }
 }

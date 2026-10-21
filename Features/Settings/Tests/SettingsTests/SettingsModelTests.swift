@@ -11,6 +11,7 @@ import Testing
       SettingsRateState(snapshot: RateSnapshot(), base: "EUR", codes: [])
     },
     replay: (() throws -> Void)? = nil,
+    appIcon: SettingsAppIconCapability? = nil,
     output: @escaping (SettingsOutput) -> Void = { _ in }
   ) -> SettingsDependencies {
     SettingsDependencies(
@@ -20,8 +21,146 @@ import Testing
       changes: { AsyncStream<Void>(bufferingPolicy: .unbounded) { _ in } },
       readPreferences: { SettingsPreferences(theme: .system, accent: .primary) },
       setTheme: { _ in }, setAccent: { _ in }, setMetalUnit: { _ in }, refresh: refresh,
-      replay: replay, output: output)
+      replay: replay, appIcon: appIcon, output: output)
   }
+  @Test func iconCatalogOffersEachCurrencyOnceInBothFamilies() {
+    #expect(SettingsAppIcon.allCases.count == 12)
+    #expect(Set(SettingsAppIcon.allCases.map(\.rawValue)).count == 12)
+    for style in SettingsAppIconStyle.allCases {
+      #expect(style.icons.count == 6)
+      #expect(style.icons.map(\.currency) == SettingsAppIconCurrency.allCases)
+    }
+    #expect(SettingsAppIcon.world.style == .world)
+    #expect(SettingsAppIcon.world.currency == .yenYuan)
+    #expect(SettingsAppIcon.grid.style == .grid)
+    #expect(SettingsAppIcon.grid.currency == .yenYuan)
+  }
+
+  @Test(arguments: SettingsAppIcon.allCases)
+  func eachIconUsesPlatformStateAndSurvivesFlowRecreation(icon: SettingsAppIcon) async {
+    var applied = SettingsAppIcon.world
+    let capability = SettingsAppIconCapability(current: { applied }, select: { applied = $0 })
+    let model = SettingsModel(dependencies: dependencies(appIcon: capability))
+    model.selectAppIcon(icon)
+    for _ in 0..<100 where model.pendingAppIcon != nil { await Task.yield() }
+    #expect(model.selectedAppIcon == icon)
+    #expect(applied == icon)
+    model.stop()
+    let reopened = SettingsModel(dependencies: dependencies(appIcon: capability))
+    #expect(reopened.selectedAppIcon == icon)
+    reopened.selectAppIcon(.world)
+    for _ in 0..<100 where reopened.pendingAppIcon != nil { await Task.yield() }
+    #expect(applied == .world)
+    #expect(reopened.selectedAppIcon == .world)
+  }
+
+  @Test func hostsWithoutIconCapabilityHideSelection() {
+    let model = SettingsModel(dependencies: dependencies())
+    #expect(!model.allowsAppIconSelection)
+    #expect(model.selectedAppIcon == nil)
+    model.selectAppIcon(.grid)
+    #expect(model.pendingAppIcon == nil)
+  }
+
+  @Test func iconSelectionUsesAppliedStateAndReconcilesExternalChanges() async {
+    var applied = SettingsAppIcon.world
+    var requested: [SettingsAppIcon] = []
+    let model = SettingsModel(
+      dependencies: dependencies(
+        appIcon: SettingsAppIconCapability(
+          current: { applied },
+          select: {
+            requested.append($0); applied = $0
+          })))
+    #expect(model.allowsAppIconSelection)
+    model.selectAppIcon(.world)
+    #expect(requested.isEmpty)
+    model.selectAppIcon(.grid)
+    #expect(model.selectedAppIcon == .world)
+    #expect(model.pendingAppIcon == .grid)
+    for _ in 0..<100 where model.pendingAppIcon != nil { await Task.yield() }
+    #expect(requested == [.grid])
+    #expect(model.selectedAppIcon == .grid)
+    #expect(model.pendingAppIcon == nil)
+    applied = .world
+    model.reloadAppIcon()
+    #expect(model.selectedAppIcon == .world)
+  }
+
+  @Test func failedIconChangePreservesPlatformSelectionAndCanRetry() async {
+    var applied = SettingsAppIcon.world
+    var failing = true
+    let model = SettingsModel(
+      dependencies: dependencies(
+        appIcon: SettingsAppIconCapability(
+          current: { applied },
+          select: { icon in
+            if failing { throw CocoaError(.fileWriteUnknown) }
+            applied = icon
+          })))
+    model.selectAppIcon(.grid)
+    for _ in 0..<100 where model.pendingAppIcon != nil { await Task.yield() }
+    #expect(model.issue == .appIconChangeFailed)
+    #expect(model.selectedAppIcon == .world)
+    #expect(model.pendingAppIcon == nil)
+    failing = false
+    model.selectAppIcon(.grid)
+    #expect(model.issue == nil)
+    for _ in 0..<100 where model.pendingAppIcon != nil { await Task.yield() }
+    #expect(model.selectedAppIcon == .grid)
+  }
+
+  @Test func duplicateIconRequestsCoalesceAndStoppedFlowRejectsLateSuccess() async {
+    var applied = SettingsAppIcon.world
+    var calls = 0
+    var continuation: CheckedContinuation<Void, Never>?
+    let model = SettingsModel(
+      dependencies: dependencies(
+        appIcon: SettingsAppIconCapability(
+          current: { applied },
+          select: { icon in
+            calls += 1
+            await withCheckedContinuation { continuation = $0 }
+            applied = icon
+          })))
+    model.selectAppIcon(.grid)
+    model.selectAppIcon(.grid)
+    model.selectAppIcon(.world)
+    for _ in 0..<100 where continuation == nil { await Task.yield() }
+    #expect(calls == 1)
+    #expect(model.pendingAppIcon == .grid)
+    model.stop()
+    continuation?.resume()
+    for _ in 0..<100 where applied != .grid { await Task.yield() }
+    #expect(applied == .grid)
+    #expect(model.selectedAppIcon == .world)
+    #expect(model.pendingAppIcon == nil)
+    model.reloadAppIcon()
+    model.selectAppIcon(.grid)
+    #expect(model.selectedAppIcon == .world)
+    #expect(calls == 1)
+    #expect(model.issue == nil)
+  }
+
+  @Test func stoppedFlowRejectsLateIconFailure() async {
+    var continuation: CheckedContinuation<Void, any Error>?
+    let model = SettingsModel(
+      dependencies: dependencies(
+        appIcon: SettingsAppIconCapability(
+          current: { .world },
+          select: { _ in
+            try await withCheckedThrowingContinuation { continuation = $0 }
+          })))
+    model.selectAppIcon(.grid)
+    for _ in 0..<100 where continuation == nil { await Task.yield() }
+    model.stop()
+    continuation?.resume(throwing: CocoaError(.fileWriteUnknown))
+    for _ in 0..<10 { await Task.yield() }
+    #expect(model.issue == nil)
+    #expect(model.selectedAppIcon == .world)
+    #expect(model.pendingAppIcon == nil)
+  }
+
   @Test func failedReplayDoesNotEmitNavigationAndSuccessfulRetryCommitsFirst() {
     var failing = true
     var saved = false

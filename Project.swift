@@ -26,18 +26,20 @@ precondition(Set(ciHarnessNames).isSubset(of: Set(currencyHarnessNames)))
 let currencyHarnessTargets = (ciHarnessNames.isEmpty ? currencyHarnessNames : ciHarnessNames)
   .map(TargetReference.target)
 
-func releaseSigning(profile: String) -> Settings? {
-  guard !profile.isEmpty else { return nil }
-  return .settings(configurations: [
-    .release(
-      name: "Release",
-      settings: [
-        "CODE_SIGN_STYLE": "Manual",
-        "CODE_SIGN_IDENTITY": "Apple Distribution",
-        "DEVELOPMENT_TEAM": .string(teamID),
-        "PROVISIONING_PROFILE_SPECIFIER": .string(profile)
-      ])
-  ])
+func releaseSigning(profile: String, base: SettingsDictionary = [:]) -> Settings? {
+  guard !profile.isEmpty else { return base.isEmpty ? nil : .settings(base: base) }
+  return .settings(
+    base: base,
+    configurations: [
+      .release(
+        name: "Release",
+        settings: [
+          "CODE_SIGN_STYLE": "Manual",
+          "CODE_SIGN_IDENTITY": "Apple Distribution",
+          "DEVELOPMENT_TEAM": .string(teamID),
+          "PROVISIONING_PROFILE_SPECIFIER": .string(profile)
+        ])
+    ])
 }
 
 func module(name: String, owner: String, dependencies: [String] = [], watch: Bool = false) -> Target
@@ -225,7 +227,9 @@ let project = Project(
         .target(name: "LocalCurrency"), .target(name: "CurrencyApplication"),
         .target(name: "CompanionSync"),
         .target(name: "CurrencyWatchWidgets")
-      ], settings: releaseSigning(profile: watchProfile)),
+      ],
+      settings: releaseSigning(
+        profile: watchProfile, base: ["ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon"])),
     .target(
       name: "CompanionSyncTests", destinations: .iOS, product: .unitTests,
       bundleId: "com.dimasike.currency.companionsynctests", deploymentTargets: .iOS("26.0"),
@@ -370,7 +374,13 @@ let project = Project(
         .target(name: "Widgets"), .target(name: "CurrencyWidgets"), .target(name: "CurrencyWatch"),
         .target(name: "CompanionSync")
       ],
-      settings: releaseSigning(profile: appProfile)),
+      settings: releaseSigning(
+        profile: appProfile,
+        base: [
+          "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
+          "ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES":
+            "AppIconWorldEUR AppIconWorldGBP AppIconWorldINR AppIconWorldKRW AppIconWorldBTC AppIconGrid AppIconGridEUR AppIconGridGBP AppIconGridINR AppIconGridKRW AppIconGridBTC"
+        ])),
     .target(
       name: "DesignSystemPackageTests", destinations: .iOS, product: .unitTests,
       bundleId: "com.dimasike.currency.designsystempackagetests", deploymentTargets: .iOS("26.0"),

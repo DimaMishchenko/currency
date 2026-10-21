@@ -26,7 +26,11 @@ import WidgetOnboardingUI
       }
       .environment(
         \.widgetOnboardingPresentation,
-        WidgetOnboardingPresentation { AnyView(HarnessWidgetPresentation(content: $0)) }
+        WidgetOnboardingPresentation {
+          AnyView(
+            HarnessWidgetPresentation(content: $0)
+              .environment(\.widgetOnboardingAppIcon, Image(systemName: "app")))
+        }
       )
       .environment(appearance)
       .tint(appearance.accent)

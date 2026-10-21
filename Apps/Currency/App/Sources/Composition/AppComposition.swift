@@ -237,6 +237,12 @@ final class AppComposition {
         _ = try await refresh(force: true); return settingsState
       },
       replay: { try scene.restartOnboarding() },
+      appIcon: UIApplication.shared.supportsAlternateIcons
+        ? SettingsAppIconCapability(
+          current: { SettingsAppIcon(platformIconName: UIApplication.shared.alternateIconName) },
+          select: { icon in
+            try await UIApplication.shared.setAlternateIconName(icon.platformIconName)
+          }) : nil,
       output: { [self] output in
         if case .manageLocation = output {
           routeLocationPermission(
@@ -299,5 +305,32 @@ enum AppGroup {
     do { return try resolve(using: FileManager.default.containerURL) } catch {
       preconditionFailure("Currency requires its configured App Group entitlement: \(error)")
     }
+  }
+}
+
+extension SettingsAppIcon {
+  var platformIconName: String? {
+    guard self != .world else { return nil }
+    let family = style == .world ? "AppIconWorld" : "AppIconGrid"
+    return currency == .yenYuan ? family : family + currency.rawValue
+  }
+
+  init(platformIconName: String?) {
+    self = Self.allCases.first { $0.platformIconName == platformIconName } ?? .world
+  }
+}
+
+@MainActor @Observable
+final class AppIconPresentation {
+  private let readName: @MainActor () -> String?
+  private(set) var icon: SettingsAppIcon
+
+  init(readName: @escaping @MainActor () -> String? = { UIApplication.shared.alternateIconName }) {
+    self.readName = readName
+    icon = SettingsAppIcon(platformIconName: readName())
+  }
+
+  func reload() {
+    icon = SettingsAppIcon(platformIconName: readName())
   }
 }

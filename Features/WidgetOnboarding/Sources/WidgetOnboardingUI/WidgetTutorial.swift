@@ -524,6 +524,7 @@ struct WidgetTutorial: View {
 }
 
 private struct MiniHomeScreen: View {
+  @Environment(\.widgetOnboardingAppIcon) private var appIcon
   let kind: WidgetShowcaseKind
   let family: WidgetFamily
   let step: Int
@@ -812,6 +813,13 @@ private struct MiniHomeScreen: View {
       }
     }
   }
+  private var galleryAppIcon: Image {
+    guard let appIcon else {
+      preconditionFailure("Widget tutorial requires widgetOnboardingAppIcon from its host")
+    }
+    return appIcon
+  }
+
   private func galleryCard(width: CGFloat, height: CGFloat) -> some View {
     VStack(spacing: 14) {
       Capsule().fill(.tertiary).frame(width: 30, height: 4)
@@ -835,7 +843,7 @@ private struct MiniHomeScreen: View {
         .font(.system(size: 13, design: .rounded)).padding(12)
         .background(.quaternary, in: .rect(cornerRadius: 12))
         HStack {
-          Image("CurrencyAppIcon", bundle: .module)
+          galleryAppIcon
             .resizable()
             .frame(width: 40, height: 40)
             .clipShape(.rect(cornerRadius: 12))

@@ -1,0 +1,110 @@
+[
+  {
+    "name": "AppIcon",
+    "preview": "AppIconWorld",
+    "layers": {
+      "01-Dollar-disc": "W2-01-Dollar-disc.svg",
+      "02-Yen-disc": "W2-02-Yen-disc.svg"
+    }
+  },
+  {
+    "name": "AppIconWorldEUR",
+    "preview": "AppIconWorldEUR",
+    "layers": {
+      "01-Dollar-disc": "W2-01-Dollar-disc.svg",
+      "02-Yen-disc": "AppIconWorldEUR-layer.svg"
+    }
+  },
+  {
+    "name": "AppIconWorldGBP",
+    "preview": "AppIconWorldGBP",
+    "layers": {
+      "01-Dollar-disc": "W2-01-Dollar-disc.svg",
+      "02-Yen-disc": "AppIconWorldGBP-layer.svg"
+    }
+  },
+  {
+    "name": "AppIconWorldINR",
+    "preview": "AppIconWorldINR",
+    "layers": {
+      "01-Dollar-disc": "W2-01-Dollar-disc.svg",
+      "02-Yen-disc": "AppIconWorldINR-layer.svg"
+    }
+  },
+  {
+    "name": "AppIconWorldKRW",
+    "preview": "AppIconWorldKRW",
+    "layers": {
+      "01-Dollar-disc": "W2-01-Dollar-disc.svg",
+      "02-Yen-disc": "AppIconWorldKRW-layer.svg"
+    }
+  },
+  {
+    "name": "AppIconWorldBTC",
+    "preview": "AppIconWorldBTC",
+    "layers": {
+      "01-Dollar-disc": "W2-01-Dollar-disc.svg",
+      "02-Bitcoin-disc": "Bitcoin-stems-left-layer.svg"
+    }
+  },
+  {
+    "name": "AppIconGrid",
+    "preview": "AppIconGrid",
+    "layers": {
+      "03-Quiet-bottom": "G1-03-Quiet-bottom.svg",
+      "01-Dollar-tile": "G1-01-Dollar-tile.svg",
+      "02-Quiet-top": "G1-02-Quiet-top.svg",
+      "04-Yen-tile": "G1-04-Yen-tile.svg"
+    }
+  },
+  {
+    "name": "AppIconGridEUR",
+    "preview": "AppIconGridEUR",
+    "layers": {
+      "03-Quiet-bottom": "G1-03-Quiet-bottom.svg",
+      "01-Dollar-tile": "G1-01-Dollar-tile.svg",
+      "02-Quiet-top": "G1-02-Quiet-top.svg",
+      "04-Yen-tile": "AppIconGridEUR-layer.svg"
+    }
+  },
+  {
+    "name": "AppIconGridGBP",
+    "preview": "AppIconGridGBP",
+    "layers": {
+      "03-Quiet-bottom": "G1-03-Quiet-bottom.svg",
+      "01-Dollar-tile": "G1-01-Dollar-tile.svg",
+      "02-Quiet-top": "G1-02-Quiet-top.svg",
+      "04-Yen-tile": "AppIconGridGBP-layer.svg"
+    }
+  },
+  {
+    "name": "AppIconGridINR",
+    "preview": "AppIconGridINR",
+    "layers": {
+      "03-Quiet-bottom": "G1-03-Quiet-bottom.svg",
+      "01-Dollar-tile": "G1-01-Dollar-tile.svg",
+      "02-Quiet-top": "G1-02-Quiet-top.svg",
+      "04-Yen-tile": "AppIconGridINR-layer.svg"
+    }
+  },
+  {
+    "name": "AppIconGridKRW",
+    "preview": "AppIconGridKRW",
+    "layers": {
+      "03-Quiet-bottom": "G1-03-Quiet-bottom.svg",
+      "01-Dollar-tile": "G1-01-Dollar-tile.svg",
+      "02-Quiet-top": "G1-02-Quiet-top.svg",
+      "04-Yen-tile": "AppIconGridKRW-layer.svg"
+    }
+  },
+  {
+    "name": "AppIconGridBTC",
+    "preview": "AppIconGridBTC",
+    "layers": {
+      "03-Quiet-bottom": "G1-03-Quiet-bottom.svg",
+      "01-Dollar-tile": "G1-01-Dollar-tile.svg",
+      "02-Quiet-top": "G1-02-Quiet-top.svg",
+      "04-Yen-tile": "AppIconGridBTC-layer.svg"
+    }
+  }
+]

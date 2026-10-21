@@ -1966,85 +1966,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Some crypto rates couldn’t be updated. Showing saved rates."
+            "value": "Showing saved rates."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "部分加密货币汇率无法更新。正在显示已保存的汇率。"
+            "value": "正在显示已保存的汇率。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "一部の暗号資産レートを更新できませんでした。保存済みのレートを表示しています。"
+            "value": "保存済みのレートを表示しています。"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "No se pudieron actualizar algunos tipos de cambio de criptomonedas. Se muestran los tipos guardados."
+            "value": "Se muestran los tipos de cambio guardados."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Einige Kryptokurse konnten nicht aktualisiert werden. Gespeicherte Kurse werden angezeigt."
+            "value": "Gespeicherte Kurse werden angezeigt."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Certains taux de cryptomonnaies n’ont pas pu être actualisés. Les taux enregistrés sont affichés."
+            "value": "Affichage des taux enregistrés."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Não foi possível atualizar algumas taxas de câmbio de criptomoedas. Exibindo as taxas salvas."
+            "value": "Exibindo as taxas salvas."
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "일부 암호화폐 환율을 업데이트하지 못했습니다. 저장된 환율을 표시합니다."
+            "value": "저장된 환율을 표시합니다."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "部分加密貨幣匯率無法更新。正在顯示已儲存的匯率。"
+            "value": "正在顯示已儲存的匯率。"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Non è stato possibile aggiornare alcuni tassi delle criptovalute. Vengono mostrati i tassi salvati."
+            "value": "Vengono mostrati i tassi salvati."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bazı kripto para kurları güncellenemedi. Kayıtlı kurlar gösteriliyor."
+            "value": "Kayıtlı kurlar gösteriliyor."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Не удалось обновить некоторые курсы криптовалют. Показаны сохранённые курсы."
+            "value": "Показаны сохранённые курсы."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Не вдалося оновити деякі курси криптовалют. Показано збережені курси."
+            "value": "Показано збережені курси."
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mõnda krüptovaluutakurssi ei saanud uuendada. Kuvatakse salvestatud kursid."
+            "value": "Kuvatakse salvestatud kursid."
           }
         }
       }
@@ -2236,85 +2236,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Can’t update daily rates. Showing saved rates."
+            "value": "Showing saved rates."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无法更新每日汇率。正在显示已保存的汇率。"
+            "value": "正在显示已保存的汇率。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "日次レートを更新できません。保存済みレートを表示しています。"
+            "value": "保存済みのレートを表示しています。"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "No se pueden actualizar los tipos de cambio diarios. Se muestran los guardados."
+            "value": "Se muestran los tipos de cambio guardados."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tägliche Kurse können nicht aktualisiert werden. Gespeicherte Kurse werden angezeigt."
+            "value": "Gespeicherte Kurse werden angezeigt."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Impossible d’actualiser les taux quotidiens. Affichage des taux enregistrés."
+            "value": "Affichage des taux enregistrés."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Não foi possível atualizar as taxas diárias. Mostrando taxas salvas."
+            "value": "Exibindo as taxas salvas."
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "일일 환율을 갱신할 수 없습니다. 저장된 환율을 표시합니다."
+            "value": "저장된 환율을 표시합니다."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "無法更新每日匯率。正在顯示已儲存的匯率。"
+            "value": "正在顯示已儲存的匯率。"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Impossibile aggiornare i tassi giornalieri. Sono mostrati quelli salvati."
+            "value": "Vengono mostrati i tassi salvati."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Günlük kurlar güncellenemiyor. Kayıtlı kurlar gösteriliyor."
+            "value": "Kayıtlı kurlar gösteriliyor."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Не удалось обновить ежедневные курсы. Показаны сохранённые."
+            "value": "Показаны сохранённые курсы."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Не вдалося оновити щоденні курси. Показано збережені."
+            "value": "Показано збережені курси."
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Päevakursse ei saa värskendada. Kuvatakse salvestatud kursid."
+            "value": "Kuvatakse salvestatud kursid."
           }
         }
       }

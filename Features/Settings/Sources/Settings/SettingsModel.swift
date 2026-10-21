@@ -16,6 +16,63 @@ public enum SettingsAccent: String, CaseIterable, Identifiable, Sendable {
   public var id: Self { self }
 }
 
+/// App icon choices supported by Settings hosts.
+public enum SettingsAppIcon: String, CaseIterable, Identifiable, Sendable {
+  case world, worldEuro, worldPound, worldRupee, worldWon, worldBitcoin
+  case grid, gridEuro, gridPound, gridRupee, gridWon, gridBitcoin
+  /// Stable identity for the icon picker.
+  public var id: Self { self }
+  /// Visual family used to group the icon choices.
+  public var style: SettingsAppIconStyle {
+    switch self {
+    case .world, .worldEuro, .worldPound, .worldRupee, .worldWon, .worldBitcoin: .world
+    case .grid, .gridEuro, .gridPound, .gridRupee, .gridWon, .gridBitcoin: .grid
+    }
+  }
+  /// Currency artwork paired with the fixed dollar artwork.
+  public var currency: SettingsAppIconCurrency {
+    switch self {
+    case .world, .grid: .yenYuan
+    case .worldEuro, .gridEuro: .euro
+    case .worldPound, .gridPound: .pound
+    case .worldRupee, .gridRupee: .rupee
+    case .worldWon, .gridWon: .won
+    case .worldBitcoin, .gridBitcoin: .bitcoin
+    }
+  }
+}
+
+/// Visual families offered by the app icon picker.
+public enum SettingsAppIconStyle: String, CaseIterable, Identifiable, Sendable {
+  case world, grid
+  /// Stable identity for section rendering.
+  public var id: Self { self }
+  /// Ordered currency variants in this family.
+  public var icons: [SettingsAppIcon] { SettingsAppIcon.allCases.filter { $0.style == self } }
+}
+
+/// Artwork currencies; the yen and yuan share their currency symbol.
+public enum SettingsAppIconCurrency: String, CaseIterable, Sendable {
+  case yenYuan, euro = "EUR", pound = "GBP", rupee = "INR", won = "KRW", bitcoin = "BTC"
+}
+
+/// An optional platform capability whose current icon remains authoritative in the host.
+@MainActor
+public struct SettingsAppIconCapability {
+  /// Reads the icon currently applied by the platform.
+  public var current: () -> SettingsAppIcon
+  /// Applies an icon or throws if the platform cannot complete the change.
+  public var select: (SettingsAppIcon) async throws -> Void
+  /// Creates an app icon capability without feature-owned persistence.
+  public init(
+    current: @escaping () -> SettingsAppIcon,
+    select: @escaping (SettingsAppIcon) async throws -> Void
+  ) {
+    self.current = current
+    self.select = select
+  }
+}
+
 /// Owned preference values independent of platform colors and persistence.
 public struct SettingsPreferences: Sendable, Equatable {
   /// Preferred light, dark, or system appearance.
@@ -56,7 +113,7 @@ public struct SettingsRateState: Sendable {
 public enum SettingsOutput: Sendable { case manageLocation, replayed }
 /// Recoverable operation failure localized by SettingsUI.
 public enum SettingsIssue: Sendable, Equatable {
-  case refreshFailed, replayFailed, preferenceSaveFailed
+  case refreshFailed, replayFailed, preferenceSaveFailed, appIconChangeFailed
 }
 
 /// The host supplies preference persistence and operations; Settings owns their presentation flow.
@@ -78,6 +135,8 @@ public struct SettingsDependencies {
   public var refresh: () async throws -> SettingsRateState
   /// Saves replay progress before emitting a successful replay outcome.
   public var replay: (() throws -> Void)?
+  /// Optional icon support; hosts without this capability hide the picker.
+  public var appIcon: SettingsAppIconCapability?
   /// Receives semantic outcomes and requests for application coordination.
   public var output: (SettingsOutput) -> Void
   /// Creates the owned value or model with explicit host inputs and operations.
@@ -90,12 +149,13 @@ public struct SettingsDependencies {
     setMetalUnit: @escaping (MetalUnit) throws -> Void,
     refresh: @escaping () async throws -> SettingsRateState,
     replay: (() throws -> Void)?,
+    appIcon: SettingsAppIconCapability? = nil,
     output: @escaping (SettingsOutput) -> Void
   ) {
     self.readState = readState; self.changes = changes; self.readPreferences = readPreferences
     self.setTheme = setTheme; self.setAccent = setAccent; self.setMetalUnit = setMetalUnit
     self.refresh = refresh
-    self.replay = replay; self.output = output
+    self.replay = replay; self.appIcon = appIcon; self.output = output
   }
 }
 
@@ -109,6 +169,12 @@ public final class SettingsModel {
   public private(set) var isRefreshing = false
   /// Current recoverable operation failure.
   public private(set) var issue: SettingsIssue?
+  /// Icon last reconciled from the platform.
+  public private(set) var selectedAppIcon: SettingsAppIcon?
+  /// The icon being applied while the native operation completes.
+  public private(set) var pendingAppIcon: SettingsAppIcon?
+  private var appIconTask: Task<Void, Never>?
+  private var appIconGeneration = UUID()
   private var refreshTask: Task<Void, Never>?
   private var generation = UUID()
   private var stopped = false
@@ -120,10 +186,13 @@ public final class SettingsModel {
   }
   /// Whether the host supplies the optional setup replay capability.
   public var allowsReplay: Bool { dependencies.replay != nil }
+  /// Whether this host supports changing the app icon.
+  public var allowsAppIconSelection: Bool { dependencies.appIcon != nil }
   /// Creates the owned value or model with explicit host inputs and operations.
   public init(dependencies: SettingsDependencies) {
     self.dependencies = dependencies
     rates = dependencies.readState()
+    selectedAppIcon = dependencies.appIcon?.current()
   }
   /// Persists the selected theme through the host-owned preference capability.
   public func setTheme(_ value: SettingsTheme) {
@@ -143,6 +212,34 @@ public final class SettingsModel {
       if issue == .preferenceSaveFailed { issue = nil }
     } catch { issue = .preferenceSaveFailed }
   }
+  /// Reconciles the platform icon after returning to the active scene.
+  public func reloadAppIcon() {
+    guard !stopped else { return }
+    selectedAppIcon = dependencies.appIcon?.current()
+  }
+  /// Coalesces repeated requests while retaining the applied selection until success.
+  public func selectAppIcon(_ icon: SettingsAppIcon) {
+    guard !stopped, appIconTask == nil, let capability = dependencies.appIcon else { return }
+    reloadAppIcon()
+    guard selectedAppIcon != icon else { return }
+    let id = UUID()
+    appIconGeneration = id
+    pendingAppIcon = icon
+    if issue == .appIconChangeFailed { issue = nil }
+    appIconTask = Task {
+      do {
+        try await capability.select(icon)
+        guard !Task.isCancelled, !stopped, appIconGeneration == id else { return }
+        selectedAppIcon = capability.current()
+      } catch {
+        guard !Task.isCancelled, !stopped, appIconGeneration == id else { return }
+        selectedAppIcon = capability.current()
+        issue = .appIconChangeFailed
+      }
+      pendingAppIcon = nil
+      appIconTask = nil
+    }
+  }
   /// Requests location management without opening another feature directly.
   public func manageLocation() {
     guard !stopped else { return }
@@ -152,6 +249,7 @@ public final class SettingsModel {
   public func reload() {
     rates = dependencies.readState()
     preferenceRevision += 1
+    reloadAppIcon()
   }
   /// Refreshes rates; callers coalesce repeated actions and reject superseded results.
   public func refresh() {
@@ -201,6 +299,7 @@ public final class SettingsModel {
   /// Ends this flow operation lifetime and rejects results arriving after teardown.
   public func stop() {
     stopped = true
+    appIconGeneration = UUID(); appIconTask?.cancel(); appIconTask = nil; pendingAppIcon = nil
     generation = UUID(); refreshTask?.cancel(); refreshTask = nil; isRefreshing = false
   }
 }

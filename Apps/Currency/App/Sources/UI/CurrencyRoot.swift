@@ -251,6 +251,8 @@ private struct WidgetLocationPresenter: View {
   let scene: CurrencyScene
   let content: AnyView
   @State private var presenterID = UUID()
+  @State private var appIcon = AppIconPresentation()
+  @Environment(\.scenePhase) private var scenePhase
 
   private var location: Binding<CurrencyScene.Location?> {
     Binding(
@@ -264,6 +266,11 @@ private struct WidgetLocationPresenter: View {
 
   var body: some View {
     content
+      .environment(\.widgetOnboardingAppIcon, appIcon.icon.previewImage)
+      .onAppear { appIcon.reload() }
+      .onChange(of: scenePhase) { _, phase in
+        if phase == .active { appIcon.reload() }
+      }
       .environment(
         \.widgetOnboardingDependencies,
         WidgetOnboardingDependencies { output in

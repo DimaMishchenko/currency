@@ -16,7 +16,17 @@ private struct WidgetOnboardingPresentationKey: EnvironmentKey {
   static let defaultValue: WidgetOnboardingPresentation? = nil
 }
 
+private struct WidgetOnboardingAppIconKey: EnvironmentKey {
+  static let defaultValue: Image? = nil
+}
+
 extension EnvironmentValues {
+  /// Required current app artwork supplied by the host; harnesses provide an explicit placeholder.
+  public var widgetOnboardingAppIcon: Image? {
+    get { self[WidgetOnboardingAppIconKey.self] }
+    set { self[WidgetOnboardingAppIconKey.self] = newValue }
+  }
+
   /// Required app presentation wiring for widget tutorials and collection surfaces.
   public var widgetOnboardingPresentation: WidgetOnboardingPresentation? {
     get { self[WidgetOnboardingPresentationKey.self] }

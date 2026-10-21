@@ -12,3 +12,9 @@ Tuist/Dependencies/
 .validation/
 
 __pycache__/
+
+/output/
+/release-prep/
+/Marketing/AppStore/generator/.local/
+/Marketing/AppStore/.local/
+/Marketing/AppStore/generated/
