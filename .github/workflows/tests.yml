@@ -199,6 +199,8 @@ jobs:
             ${{ runner.temp }}/CurrencyCIPlan.json
             ${{ runner.temp }}/CurrencyUnitTests.xcresult
             ${{ runner.temp }}/CurrencyUnitTests.log
+            ${{ runner.temp }}/CurrencyNativeGenerate-*.log
+            ${{ runner.temp }}/CurrencyNativeBuild-*.log
             ${{ runner.temp }}/CurrencyUnitTests.xcresult.summary.json
             ${{ runner.temp }}/CurrencyUnitTests.xcresult.build.json
             ${{ runner.temp }}/CurrencyNativeIntents.log

@@ -167,6 +167,18 @@ if name == os.environ.get('FAIL_COMMAND'):
                 self.assertIn(scheme, calls[1]['args'])
                 self.assertIn(f'generic/platform={platform} Simulator', calls[1]['args'])
                 self.assertIn(str(self.root / 'CurrencyTestsDerivedData'), calls[1]['args'])
+                self.assertIn('tuist diagnostic output',
+                              (self.root / f'CurrencyNativeGenerate-{phase}.log').read_text())
+                self.assertIn('xcodebuild diagnostic output',
+                              (self.root / f'CurrencyNativeBuild-{phase}.log').read_text())
+
+    def test_app_build_failure_preserves_raw_diagnostics_without_retry(self):
+        result, calls = self.run_phase('app', FAIL_COMMAND='xcodebuild')
+        self.assertEqual(result.returncode, 17)
+        self.assertEqual(len([call for call in calls if call['name'] == 'xcodebuild']), 1)
+        self.assertIn('xcodebuild diagnostic output',
+                      (self.root / 'CurrencyNativeBuild-app.log').read_text())
+        self.assertIn('| 17 |', self.summary.read_text())
 
     def test_full_generation_uses_source_graph(self):
         self.plan['full'] = True

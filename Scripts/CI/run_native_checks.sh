@@ -102,18 +102,18 @@ cache_profile=all-possible
 if [[ "$TUIST_CURRENCY_CI_CACHE" == false ]]; then
   cache_profile=none
 fi
-tuist generate --no-open --cache-profile "$cache_profile" 2>&1 | xcbeautify
+tuist generate --no-open --cache-profile "$cache_profile" 2>&1 | tee "$RUNNER_TEMP/CurrencyNativeGenerate-$phase.log" | xcbeautify
 
 arguments=(-workspace Currency.xcworkspace -configuration Debug -derivedDataPath "$derived_data" CODE_SIGN_IDENTITY=-)
 case "$phase" in
   app)
-    xcodebuild build "${arguments[@]}" -scheme Currency -destination 'generic/platform=iOS Simulator' 2>&1 | xcbeautify
+    xcodebuild build "${arguments[@]}" -scheme Currency -destination 'generic/platform=iOS Simulator' 2>&1 | tee "$RUNNER_TEMP/CurrencyNativeBuild-app.log" | xcbeautify
     ;;
   watch)
-    xcodebuild build "${arguments[@]}" -scheme CurrencyWatch -destination 'generic/platform=watchOS Simulator' 2>&1 | xcbeautify
+    xcodebuild build "${arguments[@]}" -scheme CurrencyWatch -destination 'generic/platform=watchOS Simulator' 2>&1 | tee "$RUNNER_TEMP/CurrencyNativeBuild-watch.log" | xcbeautify
     ;;
   harnesses)
-    xcodebuild build "${arguments[@]}" -scheme CurrencyHarnesses -destination 'generic/platform=iOS Simulator' 2>&1 | xcbeautify
+    xcodebuild build "${arguments[@]}" -scheme CurrencyHarnesses -destination 'generic/platform=iOS Simulator' 2>&1 | tee "$RUNNER_TEMP/CurrencyNativeBuild-harnesses.log" | xcbeautify
     ;;
   intents)
     result_bundle="$RUNNER_TEMP/CurrencyNativeIntents.xcresult"
