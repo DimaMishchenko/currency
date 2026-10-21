@@ -55,7 +55,7 @@ test('minute and hourly history use the local chart zone and local saved timesta
       const history = readHistory(join(directory, `history-v3-BTC-USD-${range.key}.json`));
       assert.equal(history.source.observation, range.observation);
       const rates = JSON.parse(readFileSync(join(directory, 'rates.json'), 'utf8')) as {
-        fetchedAt: number; quotes: { BTC: { observedAt: number } };
+        fetchedAt: number; quotes: { BTC: { observedAt: number; retrievedAt: number } };
       };
       const latest = rates.quotes.BTC.observedAt;
       assert.ok(Number.isFinite(latest));
@@ -70,7 +70,13 @@ test('minute and hourly history use the local chart zone and local saved timesta
       await expect(screen.getByText(new RegExp(
         `^${timestampFragment(history.points[0]!.date, zone.id)} – ${timestampFragment(latest, zone.id)}$`,
       ))).toBeVisible();
+      await agent.act('Scroll in Details until the Observed and Retrieved timestamp rows are visible. Keep the source details expanded.');
+      await expect(screen.getByText(timestampPattern(latest, zone.id, 'Observed '))).toBeVisible();
+      await expect(screen.getByText(timestampPattern(
+        rates.quotes.BTC.retrievedAt, zone.id, 'Retrieved ',
+      ))).toBeVisible();
       await app.screenshot(`history-${range.key}-${zone.id.replaceAll('/', '-')}`);
+      await agent.act('Scroll back until the Coin Metrics source disclosure control is visible. Keep Details open.');
       await source.tap();
       await expect(source).toHaveValue('Collapsed');
     }
