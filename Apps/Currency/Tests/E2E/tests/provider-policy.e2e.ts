@@ -28,7 +28,7 @@ test('crypto reference prices preserve ranges, provenance and credits after rest
     const ranges = screen.getByTestId('currency.details.historyRange');
     const day = ranges.getByRole('tab', 'One day', { exact: true });
     const source = screen.getByTestId('currency.details.sourceDisclosure').filter({ hasText: /Coin Metrics/ });
-    await expect(source.filter({ hasText: /^Coin Metrics \+ Fawaz · GMT$/ })).toBeVisible();
+    await expect(source.filter({ hasText: /^Coin Metrics \+ Fawaz · source sampling: GMT$/ })).toBeVisible();
     assertHistorySource(30, 'dailyReference', { fawaz: {} });
     await expect(day).toBeVisible();
     await day.tap();
@@ -39,7 +39,7 @@ test('crypto reference prices preserve ranges, provenance and credits after rest
     const all = ranges.getByRole('tab', 'All available history', { exact: true });
     await all.tap();
     await expect(all).toBeSelected();
-    await expect(source.filter({ hasText: /^Coin Metrics \+ Fawaz \+ Frankfurter · GMT$/ })).toBeVisible();
+    await expect(source.filter({ hasText: /^Coin Metrics \+ Fawaz \+ Frankfurter · source sampling: GMT$/ })).toBeVisible();
     assertHistorySource(0, 'monthlyReference', { fawaz: {} }, [{ coinMetrics: {} }, { frankfurter: {} }]);
     await app.screenshot(`${capture}-all-reference-history`);
     await day.tap();

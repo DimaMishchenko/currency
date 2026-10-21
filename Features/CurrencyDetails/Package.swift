@@ -32,6 +32,10 @@ let package = Package(
         .product(name: "ExchangeRates", package: "ExchangeRates")
       ], resources: [.process("Resources")]),
     .testTarget(
+      name: "CurrencyDetailsUITests",
+      dependencies: ["CurrencyDetailsUI", .product(name: "ExchangeRates", package: "ExchangeRates")]
+    ),
+    .testTarget(
       name: "CurrencyDetailsTests",
       dependencies: ["CurrencyDetails", .product(name: "ExchangeRates", package: "ExchangeRates")])
   ]

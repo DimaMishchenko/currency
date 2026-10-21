@@ -423,7 +423,10 @@ let project = Project(
       bundleId: "com.dimasike.currency.currencydetailspackagetests",
       deploymentTargets: .iOS("26.0"),
       infoPlist: .default, buildableFolders: ["Features/CurrencyDetails/Tests"],
-      dependencies: [.target(name: "CurrencyDetails"), .target(name: "ExchangeRates")]),
+      dependencies: [
+        .target(name: "CurrencyDetails"), .target(name: "CurrencyDetailsUI"),
+        .target(name: "ExchangeRates")
+      ]),
     .target(
       name: "SettingsPackageTests", destinations: .iOS, product: .unitTests,
       bundleId: "com.dimasike.currency.settingspackagetests", deploymentTargets: .iOS("26.0"),
