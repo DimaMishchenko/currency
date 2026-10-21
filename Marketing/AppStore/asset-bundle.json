@@ -6,5 +6,6 @@
   "locales": 18,
   "uniqueScreenshots": 1512,
   "placements": 3240,
-  "headerSeconds": 15
+  "headerSeconds": 15,
+  "releaseTag": "app-store-assets-v1"
 }

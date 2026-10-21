@@ -8,10 +8,6 @@ on:
         type: choice
         options: [dry-run, apply]
         default: dry-run
-      bundle_sha256:
-        description: SHA-256 of the approved immutable media bundle
-        type: string
-        required: true
       version_id:
         description: Exact editable iOS App Store version resource ID
         type: string
@@ -44,13 +40,9 @@ jobs:
     timeout-minutes: 360
     environment: testflight
     env:
-      ASC_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
-      ASC_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
-      ASC_PRIVATE_KEY_B64: ${{ secrets.ASC_API_CERT }}
       ASC_STRICT_AUTH: 'true'
       ASC_APP_ID: '6816213577'
       REQUEST_MODE: ${{ inputs.mode }}
-      BUNDLE_SHA256: ${{ inputs.bundle_sha256 }}
       TARGET_VERSION_ID: ${{ inputs.version_id }}
       TARGET_VERSION_STRING: ${{ inputs.version_string }}
       TARGET_APP_INFO_ID: ${{ inputs.app_info_id }}
@@ -59,15 +51,6 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - name: Validate request and credentials
-        shell: bash
-        run: |
-          set -euo pipefail
-          [[ "$REQUEST_MODE" == dry-run || "$REQUEST_MODE" == apply ]] || exit 1
-          [[ "$BUNDLE_SHA256" =~ ^[a-f0-9]{64}$ ]] || exit 1
-          for name in ASC_KEY_ID ASC_ISSUER_ID ASC_PRIVATE_KEY_B64 TARGET_VERSION_ID TARGET_VERSION_STRING TARGET_APP_INFO_ID; do
-            [[ -n "${!name}" ]] || { echo "::error::Missing required configuration: $name"; exit 1; }
-          done
       - name: Install pinned verified asc and video inspection
         shell: bash
         run: |
@@ -81,45 +64,34 @@ jobs:
           echo "$RUNNER_TEMP/currency-asc-bin" >> "$GITHUB_PATH"
           sudo apt-get update -qq
           sudo apt-get install -y -qq ffmpeg
-      - name: Fetch approved media bundle privately
+      - name: Fetch and verify the pinned asset release
         env:
-          APP_STORE_ASSET_BUNDLE_URL: ${{ secrets.APP_STORE_ASSET_BUNDLE_URL }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         shell: bash
         run: |
-          python3 - <<'PY'
-          import hashlib, os, pathlib, sys, urllib.parse, urllib.request
-          def allowed(url):
-              parts = urllib.parse.urlsplit(url)
-              return parts.scheme == 'https' and parts.hostname and parts.username is None and parts.password is None
-          class HTTPSRedirects(urllib.request.HTTPRedirectHandler):
-              def redirect_request(self, request, fp, code, msg, headers, newurl):
-                  if not allowed(newurl):
-                      raise ValueError()
-                  return super().redirect_request(request, fp, code, msg, headers, newurl)
-          target = pathlib.Path(os.environ['RUNNER_TEMP']) / 'currency-approved-assets.zip'
-          url = os.environ.get('APP_STORE_ASSET_BUNDLE_URL', '')
-          if not allowed(url):
-              sys.exit('Approved bundle URL must use HTTPS')
-          try:
-              digest = hashlib.sha256()
-              size = 0
-              opener = urllib.request.build_opener(HTTPSRedirects())
-              with opener.open(url, timeout=120) as response, target.open('wb') as output:
-                  if not allowed(response.url):
-                      raise ValueError()
-                  while block := response.read(1024 * 1024):
-                      size += len(block)
-                      if size > 6 * 1024 ** 3:
-                          raise ValueError()
-                      digest.update(block)
-                      output.write(block)
-              if digest.hexdigest() != os.environ['BUNDLE_SHA256']:
-                  raise ValueError()
-          except Exception:
-              target.unlink(missing_ok=True)
-              sys.exit('Approved bundle download or SHA-256 verification failed; URL suppressed')
-          PY
+          python3 Marketing/AppStore/fetch_assets.py \
+            --repo "$GH_REPO" --output "$RUNNER_TEMP/currency-app-store-media"
+      - name: Validate approved media without API access
+        shell: bash
+        run: python3 Marketing/AppStore/upload.py --validate-only --media-dir "$RUNNER_TEMP/currency-app-store-media"
+      - name: Validate request and credentials
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+          ASC_PRIVATE_KEY_B64: ${{ secrets.ASC_API_CERT }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$REQUEST_MODE" == dry-run || "$REQUEST_MODE" == apply ]] || exit 1
+          for name in ASC_KEY_ID ASC_ISSUER_ID ASC_PRIVATE_KEY_B64 TARGET_VERSION_ID TARGET_VERSION_STRING TARGET_APP_INFO_ID; do
+            [[ -n "${!name}" ]] || { echo "::error::Missing required configuration: $name"; exit 1; }
+          done
       - name: Plan or apply draft assets
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+          ASC_PRIVATE_KEY_B64: ${{ secrets.ASC_API_CERT }}
         shell: bash
         run: |
           set -euo pipefail
@@ -127,8 +99,7 @@ jobs:
           if [[ "$REQUEST_MODE" == apply ]]; then mode_args+=(--apply); fi
           python3 Marketing/AppStore/upload.py \
             --metadata Marketing/AppStore/metadata.json \
-            --bundle "$RUNNER_TEMP/currency-approved-assets.zip" \
-            --bundle-sha256 "$BUNDLE_SHA256" \
+            --media-dir "$RUNNER_TEMP/currency-app-store-media" \
             --version-id "$TARGET_VERSION_ID" --version-string "$TARGET_VERSION_STRING" \
             --app-info-id "$TARGET_APP_INFO_ID" --scope "$ASSET_SCOPE" \
             --receipts "$RUNNER_TEMP/currency-app-store-receipts.jsonl" "${mode_args[@]}"
@@ -140,7 +111,7 @@ jobs:
           path: ${{ runner.temp }}/currency-app-store-receipts.jsonl
           if-no-files-found: ignore
           retention-days: 7
-      - name: Remove downloaded private inputs
+      - name: Remove unpacked media
         if: always()
         shell: bash
-        run: rm -f "$RUNNER_TEMP/currency-approved-assets.zip"
+        run: rm -rf "$RUNNER_TEMP/currency-app-store-media"

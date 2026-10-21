@@ -12,7 +12,6 @@ import struct
 import subprocess
 import sys
 import tempfile
-import zipfile
 
 ASC_VERSION = '5.16.0'
 PROFILES = {'iphone': 'APP_IPHONE_61', 'ipad': 'APP_IPAD_PRO_3GEN_129', 'watch': 'APP_WATCH_SERIES_10'}
@@ -38,35 +37,11 @@ def sha256(path):
 
 def confined(root, name):
     if not isinstance(name, str) or not name or '\\' in name or PurePosixPath(name).is_absolute() or any(p in ('', '.', '..') for p in name.split('/')):
-        raise UploadError('Bundle contains an invalid relative path')
+        raise UploadError('Media manifest contains an invalid relative path')
     path = (root / name).resolve()
-    if not path.is_relative_to(root.resolve()) or path.is_symlink():
-        raise UploadError('Bundle path escapes the extracted directory')
+    if not path.is_relative_to(root.resolve()) or any(part.is_symlink() for part in [root / name, *(root / name).parents] if part.is_relative_to(root)):
+        raise UploadError('Media path escapes its root or uses a symlink')
     return path
-
-
-def extract_bundle(archive, expected, output):
-    if not re.fullmatch('[a-f0-9]{64}', expected) or sha256(archive) != expected:
-        raise UploadError('Approved bundle SHA-256 mismatch')
-    with zipfile.ZipFile(archive) as source:
-        names = set()
-        total = 0
-        for item in source.infolist():
-            name = item.filename
-            if name in names or item.is_dir() or (item.external_attr >> 16) & 0o170000 == 0o120000:
-                raise UploadError('Duplicate, directory, or symlink archive member refused')
-            names.add(name)
-            confined(output, name)
-            total += item.file_size
-            if total > 6 * 1024 ** 3 or item.file_size > 600 * 1024 ** 2:
-                raise UploadError('Approved bundle exceeds extraction limits')
-        if 'manifest.json' not in names:
-            raise UploadError('Bundle manifest.json is missing')
-        for item in source.infolist():
-            target = confined(output, item.filename)
-            target.parent.mkdir(parents=True, exist_ok=True)
-            with source.open(item) as src, target.open('wb') as dst:
-                shutil.copyfileobj(src, dst)
 
 
 def validate_media(root, manifest, metadata):
@@ -90,7 +65,7 @@ def validate_media(root, manifest, metadata):
         slots[slot] = dict(item, file=path)
     expected = {(l, p, f, n) for l in metadata['locales'] for p in {*PROFILES, 'duo-inner', 'duo-outer'} for f in FAMILIES for n in range(1, 7)}
     if set(slots) != expected:
-        raise UploadError('Bundle must contain all 3240 screenshot placements')
+        raise UploadError('Media manifest must contain all 3240 screenshot placements')
     header = manifest.get('header', {})
     path = confined(root, header.get('path'))
     if path.suffix.lower() not in {'.mp4', '.m4v', '.mov'} or not path.is_file() or sha256(path) != header.get('sha256'):
@@ -475,40 +450,47 @@ class Planner:
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--metadata', type=Path, default=Path(__file__).with_name('metadata.json'))
-    parser.add_argument('--bundle', type=Path, required=True)
-    parser.add_argument('--bundle-sha256', required=True)
-    parser.add_argument('--version-id', required=True)
-    parser.add_argument('--version-string', required=True)
-    parser.add_argument('--app-info-id', required=True)
+    parser.add_argument('--media-dir', type=Path, default=Path(__file__).with_name('media'))
+    parser.add_argument('--validate-only', action='store_true', help='Validate checked-in media without credentials or App Store requests')
+    parser.add_argument('--version-id')
+    parser.add_argument('--version-string')
+    parser.add_argument('--app-info-id')
     parser.add_argument('--scope', default='metadata,default,cpp,header,duo')
     parser.add_argument('--apply', action='store_true')
-    parser.add_argument('--receipts', type=Path, required=True, help='Private durable JSONL receipt path; contains resource IDs only')
+    parser.add_argument('--receipts', type=Path, help='Private durable JSONL receipt path; required for remote plans and apply')
     args = parser.parse_args()
     scopes = set(args.scope.split(','))
     if not scopes or not scopes <= SCOPES:
         parser.error('--scope must select metadata,default,cpp,header,duo')
-    for identifier in (args.version_id, args.app_info_id):
-        if not re.fullmatch('[A-Za-z0-9-]+', identifier):
-            parser.error('Resource IDs may contain only letters, digits and hyphens')
+    if args.validate_only and args.apply:
+        parser.error('--validate-only cannot be combined with --apply')
+    if not args.validate_only:
+        for key in ('version_id', 'version_string', 'app_info_id', 'receipts'):
+            if not getattr(args, key):
+                parser.error('--' + key.replace('_', '-') + ' is required unless --validate-only is selected')
+        for identifier in (args.version_id, args.app_info_id):
+            if not re.fullmatch('[A-Za-z0-9-]+', identifier):
+                parser.error('Resource IDs may contain only letters, digits and hyphens')
+    root = args.media_dir.resolve()
+    metadata = json.loads(args.metadata.read_text())
+    manifest = json.loads((root / 'manifest.json').read_text())
+    slots, header = validate_media(root, manifest, metadata)
+    if args.validate_only:
+        print(json.dumps({'mode': 'validate-only', 'verifiedPlacements': len(slots), 'verifiedHeader': True, 'appStoreRequests': 0}))
+        return 0
     cli = CLI(apply=args.apply, receipts=args.receipts)
-    with tempfile.TemporaryDirectory(prefix='currency-app-store-') as temporary:
-        root = Path(temporary)
-        extract_bundle(args.bundle, args.bundle_sha256, root)
-        metadata = json.loads(args.metadata.read_text())
-        manifest = json.loads((root / 'manifest.json').read_text())
-        slots, header = validate_media(root, manifest, metadata)
-        plan = Planner(cli, metadata, slots, header, args.version_id, args.version_string, args.app_info_id, scopes).preflight()
-        print(json.dumps({'mode': 'apply' if args.apply else 'dry-run', 'plannedDraftOperations': len(plan.ops), 'scopes': sorted(scopes), 'blockers': plan.blockers, 'notes': plan.notes, 'plan': plan.summary()}, ensure_ascii=False, indent=2))
-        if args.apply:
-            plan.execute()
-        elif plan.blockers:
-            return 2
+    plan = Planner(cli, metadata, slots, header, args.version_id, args.version_string, args.app_info_id, scopes).preflight()
+    print(json.dumps({'mode': 'apply' if args.apply else 'dry-run', 'plannedDraftOperations': len(plan.ops), 'scopes': sorted(scopes), 'blockers': plan.blockers, 'notes': plan.notes, 'plan': plan.summary()}, ensure_ascii=False, indent=2))
+    if args.apply:
+        plan.execute()
+    elif plan.blockers:
+        return 2
     return 0
 
 
 if __name__ == '__main__':
     try:
         sys.exit(main())
-    except (UploadError, OSError, ValueError, KeyError, zipfile.BadZipFile) as error:
-        print('Error: ' + (str(error) if isinstance(error, UploadError) else 'Invalid local input; validate bundle and metadata'), file=sys.stderr)
+    except (UploadError, OSError, ValueError, KeyError) as error:
+        print('Error: ' + (str(error) if isinstance(error, UploadError) else 'Invalid local input; validate checked-in media and metadata'), file=sys.stderr)
         sys.exit(1)

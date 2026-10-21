@@ -2,6 +2,8 @@
 
 Python 3.12, Pillow 12.3.0 and `rsvg-convert` are required for design rendering. Install Python dependencies from `requirements.txt` in your own virtual environment. The validated raster stack is librsvg 2.61.3, cairo 1.18.4, pango 1.57.0, harfbuzz 12.2.0 and fontconfig 2.17.1. The header video additionally requires ffmpeg with libx264. Exact PNG encoding also depends on Pillow's linked PNG/zlib and FreeType versions. Record and pin the complete runner when changing artwork.
 
+Approved media is distributed through the independent GitHub release pinned in `../asset-bundle.json`. Use `python3 Marketing/AppStore/fetch_assets.py --repo OWNER/REPOSITORY --output Marketing/AppStore/generator/.local/media` to fetch and verify it without a custom URL or rendering dependencies. App releases can reuse this media version.
+
 Keep input packs, archives and generated output in ignored `.local/`. The input format and licensing boundary are documented in `../design/README.md`. The input pack is not downloadable from this public repository; a maintainer must supply its licensed frozen captures, frames and fonts. Live rate captures cannot recreate the approved historical pixels.
 
 Run from the repository root:

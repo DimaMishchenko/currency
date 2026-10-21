@@ -4,10 +4,10 @@ import json
 from pathlib import Path
 import subprocess
 import struct
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
-import zipfile
 
 MODULE = Path(__file__).resolve().parents[1] / 'upload.py'
 spec = importlib.util.spec_from_file_location('uploader', MODULE)
@@ -179,17 +179,38 @@ class UploaderTests(unittest.TestCase):
                 u.CLI().api('POST', '/v1/appInfos', {})
             run.assert_not_called()
 
-    def test_archive_integrity_and_path_traversal(self):
+    def test_media_path_traversal_and_symlinks_are_refused(self):
         for name in ('../escape', '/absolute', 'same/../escape'):
             with self.subTest(name=name):
-                archive = self.root / 'bundle.zip'
-                with zipfile.ZipFile(archive, 'w') as out:
-                    out.writestr('manifest.json', '{}')
-                    out.writestr(name, 'bad')
                 with self.assertRaisesRegex(u.UploadError, 'path'):
-                    u.extract_bundle(archive, u.sha256(archive), self.root / 'extract')
-        with self.assertRaisesRegex(u.UploadError, 'SHA-256'):
-            u.extract_bundle(archive, '0' * 64, self.root / 'extract')
+                    u.confined(self.root, name)
+        actual = self.root / 'actual.png'
+        actual.write_bytes(b'image')
+        (self.root / 'link.png').symlink_to(actual)
+        with self.assertRaisesRegex(u.UploadError, 'symlink'):
+            u.confined(self.root, 'link.png')
+
+    def test_validate_only_never_constructs_remote_client(self):
+        metadata = self.root / 'metadata.json'
+        metadata.write_text('{}')
+        (self.root / 'manifest.json').write_text('{}')
+        with patch.object(sys, 'argv', ['upload.py', '--validate-only', '--metadata', str(metadata), '--media-dir', str(self.root)]), patch.object(u, 'validate_media', return_value=({'placement': {}}, {})), patch.object(u, 'CLI') as client:
+            self.assertEqual(u.main(), 0)
+            client.assert_not_called()
+
+    def test_remote_plan_requires_explicit_ids_and_receipts(self):
+        with patch.object(sys, 'argv', ['upload.py']), patch.object(u, 'validate_media') as validate:
+            with self.assertRaises(SystemExit) as error:
+                u.main()
+            self.assertEqual(error.exception.code, 2)
+            validate.assert_not_called()
+
+    def test_validate_only_rejects_apply(self):
+        with patch.object(sys, 'argv', ['upload.py', '--validate-only', '--apply']), patch.object(u, 'CLI') as client:
+            with self.assertRaises(SystemExit) as error:
+                u.main()
+            self.assertEqual(error.exception.code, 2)
+            client.assert_not_called()
 
     def test_failed_first_mutation_stops_plan(self):
         class Failing(FakeCLI):
