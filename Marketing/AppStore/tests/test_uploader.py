@@ -95,6 +95,44 @@ class UploaderTests(unittest.TestCase):
         plan = self.planner(cli, {'metadata'}).preflight()
         self.assertEqual(plan.ops, [])
 
+    def test_apply_reuses_version_locale_that_appears_after_preflight(self):
+        class CoupledLocalizations(FakeCLI):
+            def api(self, method, path, body=None):
+                if method == 'POST' and path == '/v1/appInfoLocalizations':
+                    self.state['/v1/appStoreVersions/version/appStoreVersionLocalizations'] = [row('automatic-locale', locale='en-GB')]
+                if method == 'POST' and path == '/v1/appStoreVersionLocalizations':
+                    raise AssertionError('Duplicate localization creation')
+                return super().api(method, path, body)
+        cli = CoupledLocalizations(self.state, apply=True)
+        plan = self.planner(cli, {'metadata'})
+        plan.queue('POST', '/v1/appInfoLocalizations', u.resource('appInfoLocalizations', {'locale': 'en-GB', 'name': 'Currency'}, {'appInfo': u.relationship('appInfos', 'info')}))
+        target = plan.queue('POST', '/v1/appStoreVersionLocalizations', u.resource('appStoreVersionLocalizations', {'locale': 'en-GB', 'description': 'Approved description'}, {'appStoreVersion': u.relationship('appStoreVersions', 'version')}))
+        plan.queue('PATCH', '/v1/appStoreVersionLocalizations/' + target, u.resource('appStoreVersionLocalizations', {'keywords': 'widget'}, identifier=target))
+        plan.execute()
+        writes = [call for call in cli.calls if call[0] != 'GET']
+        self.assertEqual([call[0] for call in writes], ['POST', 'PATCH', 'PATCH'])
+        self.assertEqual(writes[1][1], '/v1/appStoreVersionLocalizations/automatic-locale')
+        self.assertEqual(writes[1][2]['data']['attributes'], {'description': 'Approved description'})
+        self.assertEqual(writes[2][1], '/v1/appStoreVersionLocalizations/automatic-locale')
+
+    def test_localization_refresh_preserves_unselected_fields_and_rejects_duplicates(self):
+        for path, relation, parent_kind in (
+            ('appInfoLocalizations', 'appInfo', 'appInfos'),
+            ('appStoreVersionLocalizations', 'appStoreVersion', 'appStoreVersions'),
+            ('appCustomProductPageLocalizations', 'appCustomProductPageVersion', 'appCustomProductPageVersions'),
+        ):
+            with self.subTest(path=path):
+                collection = '/v1/' + parent_kind + '/parent/' + path
+                cli = FakeCLI({collection: [row('automatic', locale='en-GB', promotionalText='Keep current text')]}, apply=True)
+                plan = self.planner(cli, set())
+                body = u.resource(path, {'locale': 'en-GB'}, {relation: u.relationship(parent_kind, 'parent')})
+                self.assertEqual(plan.apply_resource('POST', '/v1/' + path, body)['data']['id'], 'automatic')
+                self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+                cli.state[collection].append(row('duplicate', locale='en-GB'))
+                with self.assertRaisesRegex(u.UploadError, 'duplicates'):
+                    plan.apply_resource('POST', '/v1/' + path, body)
+                self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
     def test_complete_matching_screenshots_are_idempotent(self):
         sets = []
         for profile, display in u.PROFILES.items():
@@ -333,6 +371,57 @@ class UploaderTests(unittest.TestCase):
                 self.assertNotIn('HTTP', str(error.exception))
                 self.assertNotIn('PRIVATE_KEY', str(error.exception))
                 self.assertNotIn('https', str(error.exception))
+
+    def test_prefixed_json_error_reports_only_validated_status_code_pointer(self):
+        payload = {'errors': [{'status': '409', 'code': 'ENTITY_ERROR.ATTRIBUTE.INVALID', 'source': {'pointer': '/data/attributes/locale', 'parameter': 'PRIVATE_KEY'}, 'title': 'PRIVATE_KEY', 'detail': 'https://signed.invalid/PRIVATE_KEY', 'privateKey': 'PRIVATE_KEY'}]}
+        for stream in ('stdout', 'stderr'):
+            with self.subTest(stream=stream):
+                text = 'Error: api POST failed PRIVATE_KEY https://signed.invalid/token\n' + json.dumps(payload) + '\nPrivate suffix'
+                result = subprocess.CompletedProcess([], 1, text if stream == 'stdout' else '', text if stream == 'stderr' else '')
+                with patch.object(subprocess, 'run', return_value=result):
+                    with self.assertRaises(u.UploadError) as error:
+                        u.CLI(apply=True).api('POST', '/v1/appStoreVersionLocalizations', {})
+                message = str(error.exception)
+                self.assertIn('HTTP 409', message)
+                self.assertIn('ENTITY_ERROR.ATTRIBUTE.INVALID', message)
+                self.assertIn('/data/attributes/locale', message)
+                for secret in ('PRIVATE_KEY', 'https', 'signed.invalid', 'Private suffix', 'title', 'detail', 'parameter', 'privateKey'):
+                    self.assertNotIn(secret, message)
+
+    def test_invalid_structured_code_and_pointer_are_suppressed(self):
+        payload = {'errors': [{'status': '422', 'code': 'https://PRIVATE_KEY.invalid', 'source': {'pointer': '/data/attributes/https://PRIVATE_KEY.invalid'}, 'detail': 'PRIVATE_KEY'}]}
+        message = u.safe_error_diagnostics('', 'prefix ' + json.dumps(payload))
+        self.assertEqual(message, ' (HTTP 422)')
+        self.assertEqual(u.safe_error_diagnostics('', 'Error: flag provided but not defined: -PRIVATE_KEY'), '')
+        late = 'x' * 262144 + json.dumps({'errors': [{'status': '403'}]})
+        self.assertEqual(u.safe_error_diagnostics('', late), '')
+
+    def test_api_debug_is_captured_and_only_response_status_is_exposed(self):
+        trace = 'level=INFO msg="→ HTTP Request" method=POST url=https://signed.invalid/PRIVATE_KEY authorization="Bearer PRIVATE_KEY"\nlevel=INFO msg="← HTTP Response" status=409 elapsed=1ms content-type=application/json\nError: PRIVATE_KEY https://signed.invalid\n'
+        result = subprocess.CompletedProcess([], 1, '', trace)
+        with patch.object(subprocess, 'run', return_value=result) as process:
+            with self.assertRaises(u.UploadError) as error:
+                u.CLI(apply=True).api('POST', '/v1/appStoreVersionLocalizations', {})
+        self.assertIn('HTTP 409', str(error.exception))
+        self.assertNotIn('PRIVATE_KEY', str(error.exception))
+        self.assertNotIn('signed.invalid', str(error.exception))
+        self.assertEqual(process.call_args.kwargs['env']['ASC_DEBUG'], 'api')
+        self.assertNotIn('ASC_DEBUG_HTTP', process.call_args.kwargs['env'])
+        self.assertTrue(process.call_args.kwargs['capture_output'])
+        self.assertEqual(u.safe_error_diagnostics('', 'prefix level=INFO msg="← HTTP Response" status=403', http_trace=True), '')
+
+    def test_library_and_screenshot_helpers_never_inherit_http_debug(self):
+        trace = 'level=INFO msg="← HTTP Response" status=409 PRIVATE_KEY\n'
+        for command in (['asset-library', 'videos', 'upload'], ['screenshots', 'upload']):
+            with self.subTest(command=command):
+                result = subprocess.CompletedProcess([], 1, '', trace)
+                with patch.dict(u.os.environ, {'ASC_DEBUG': 'api', 'ASC_DEBUG_HTTP': 'true'}), patch.object(subprocess, 'run', return_value=result) as process:
+                    with self.assertRaises(u.UploadError) as error:
+                        u.CLI(apply=True).run(command, mutate=True)
+                self.assertEqual(process.call_args.kwargs['env']['ASC_DEBUG'], 'false')
+                self.assertNotIn('ASC_DEBUG_HTTP', process.call_args.kwargs['env'])
+                self.assertNotIn('HTTP', str(error.exception))
+                self.assertNotIn('PRIVATE_KEY', str(error.exception))
 
     def test_cli_mutation_guard_runs_before_subprocess(self):
         with patch.object(subprocess, 'run') as run:

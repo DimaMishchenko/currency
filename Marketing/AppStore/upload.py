@@ -109,6 +109,49 @@ def validate_video(path):
         raise UploadError('Header must be the approved 15-second 3840x1646 video at 30/60 fps; install ffprobe and verify the export') from None
 
 
+def safe_error_diagnostics(stdout, stderr, http_trace=False):
+    statuses, codes, pointers = set(), set(), set()
+    def status(value):
+        text = str(value)
+        if re.fullmatch('[0-9]{3}', text) and (int(text) in {401, 403, 404, 409, 422, 429} or 500 <= int(text) <= 599):
+            statuses.add(text)
+    decoder = json.JSONDecoder()
+    for output in (stdout, stderr):
+        sample = output[:262144]
+        for index, start in enumerate(re.finditer(r'\{', sample)):
+            if index >= 64:
+                break
+            try:
+                payload, _ = decoder.raw_decode(sample, start.start())
+            except (json.JSONDecodeError, RecursionError):
+                continue
+            errors = payload.get('errors') if isinstance(payload, dict) else None
+            if not isinstance(errors, list):
+                continue
+            for error in errors[:20]:
+                if not isinstance(error, dict):
+                    continue
+                status(error.get('status', ''))
+                code = error.get('code')
+                if isinstance(code, str) and re.fullmatch('[A-Z][A-Z0-9_.-]{0,159}', code):
+                    codes.add(code)
+                source = error.get('source')
+                pointer = source.get('pointer') if isinstance(source, dict) else None
+                if isinstance(pointer, str) and len(pointer) <= 180 and re.fullmatch(r'/(?:data|included)(?:/(?:[A-Za-z][A-Za-z0-9_-]*|[0-9]+))*', pointer):
+                    pointers.add(pointer)
+        if http_trace:
+            for match in re.finditer(r'^level=INFO msg="← HTTP Response" status=([0-9]{3})(?: [^\r\n]*)?$', sample, re.MULTILINE):
+                status(match[1])
+    parts = []
+    if statuses:
+        parts.append('HTTP ' + ', '.join(sorted(statuses)))
+    if codes:
+        parts.append('code ' + ', '.join(sorted(codes)[:10]))
+    if pointers:
+        parts.append('pointer ' + ', '.join(sorted(pointers)[:10]))
+    return ' (' + '; '.join(parts) + ')' if parts else ''
+
+
 class CLI:
     """Capture all CLI output; signed upload URLs/private API errors never reach logs."""
     def __init__(self, executable='asc', apply=False, receipts=None):
@@ -144,6 +187,8 @@ class CLI:
         for key in ('ASC_PROFILE', 'ASC_CONFIG_PATH', 'ASC_BYPASS_KEYCHAIN', 'ASC_PRIVATE_KEY_PATH', 'ASC_PRIVATE_KEY', 'ASC_DEBUG', 'ASC_DEBUG_HTTP'):
             env.pop(key, None)
         env['ASC_STRICT_AUTH'] = 'true'
+        raw_api = len(args) >= 3 and args[0] == 'api' and args[1] in {'GET', 'POST', 'PATCH', 'DELETE'}
+        env['ASC_DEBUG'] = 'api' if raw_api else 'false'
         try:
             if mutate:
                 self.receipt('mutation-started')
@@ -155,20 +200,7 @@ class CLI:
                 self.receipt('mutation-failed-inspect-before-retry', json.loads(result.stdout))
             except json.JSONDecodeError:
                 self.receipt('mutation-failed-no-receipt-inspect-before-retry')
-            statuses = set()
-            for output in (result.stdout, result.stderr):
-                try:
-                    payload = json.loads(output)
-                except json.JSONDecodeError:
-                    continue
-                errors = payload.get('errors') if isinstance(payload, dict) else None
-                if not isinstance(errors, list):
-                    continue
-                for error in errors:
-                    status = str(error.get('status', '')) if isinstance(error, dict) else ''
-                    if re.fullmatch('[0-9]{3}', status) and (int(status) in {401, 403, 404, 409, 422, 429} or 500 <= int(status) <= 599):
-                        statuses.add(status)
-            diagnostic = ' (HTTP ' + ', '.join(sorted(statuses)) + ')' if statuses else ''
+            diagnostic = safe_error_diagnostics(result.stdout, result.stderr, http_trace=raw_api)
             raise UploadError('asc command failed' + diagnostic + '; inspect App Store Connect draft state before retrying (raw output suppressed)')
         try:
             value = json.loads(result.stdout) if result.stdout.strip() else {}
@@ -545,6 +577,33 @@ class Planner:
             raise UploadError('Existing product-page header differs; inspect and remove/swap explicitly in App Store Connect first')
         self.queue('POST', '/v1/appAssetLibraryPlacements', resource('appAssetLibraryPlacements', {'placementType': 'PRODUCT_PAGE_HEADER_ASSET', 'placementGroup': self.header_group}, {'video': relationship('appAssetLibraryVideos', video), 'appStoreVersionLocalization' if family == 'default' else 'appCustomProductPageLocalization': relationship(kind, target)}))
 
+    def apply_resource(self, method, path, body):
+        parents = {
+            '/v1/appInfoLocalizations': ('appInfo', 'appInfos'),
+            '/v1/appStoreVersionLocalizations': ('appStoreVersion', 'appStoreVersions'),
+            '/v1/appCustomProductPageLocalizations': ('appCustomProductPageVersion', 'appCustomProductPageVersions'),
+        }
+        if method == 'POST' and path in parents:
+            relation, parent_kind = parents[path]
+            data = body['data']
+            parent = data['relationships'][relation]['data']['id']
+            rows = self.cli.api('GET', '/v1/' + parent_kind + '/' + parent + path.removeprefix('/v1')).get('data')
+            if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
+                raise UploadError('Localization refresh returned an invalid collection; inspect draft state before retrying')
+            matching = [row for row in rows if row.get('attributes', {}).get('locale') == data['attributes']['locale']]
+            if len(matching) > 1:
+                raise UploadError('Localization refresh found duplicates; inspect draft state before retrying')
+            if matching:
+                existing = matching[0]
+                identifier = existing.get('id')
+                if not isinstance(identifier, str) or not re.fullmatch('[A-Za-z0-9-]+', identifier):
+                    raise UploadError('Localization refresh returned an invalid identity; inspect draft state before retrying')
+                changed = {key: value for key, value in data['attributes'].items() if key != 'locale' and existing.get('attributes', {}).get(key) != value}
+                if changed:
+                    self.cli.api('PATCH', path + '/' + identifier, resource(data['type'], changed, identifier=identifier))
+                return {'data': existing}
+        return self.cli.api(method, path, body)
+
     def execute(self):
         if self.blockers:
             raise UploadError('; '.join(self.blockers))
@@ -582,7 +641,7 @@ class Planner:
                     self.cli.run([*args, '--path', directory, '--device-type', PROFILES[op['profile']], '--output', 'json'], mutate=True)
                 identifier = ''
             else:
-                response = self.cli.api(op['method'], op['path'], op['body'])
+                response = self.apply_resource(op['method'], op['path'], op['body'])
                 identifier = response.get('data', {}).get('id', '')
                 if op['method'] == 'POST' and isinstance(response.get('data'), dict) and not identifier:
                     raise UploadError('Creation response omitted resource identity; inspect before retry')
