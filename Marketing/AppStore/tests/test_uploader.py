@@ -21,6 +21,24 @@ def row(identifier, **attrs):
     return {'id': identifier, 'attributes': attrs}
 
 
+def native_reference(duo_limit=12, cpp_limit=None, header_limit=1, split=False):
+    groups = ['DUO_OUTER_PROFILE', 'DUO_INNER_PROFILE'] if split else ['IPHONE_DUO_PROFILE']
+    attributes = {
+        'features': [{'featureId': feature, 'placementPolicies': [
+            {'placementType': 'APP_SCREENSHOT', 'groupLimits': [{'groupIds': groups, 'maxCount': duo_limit if feature == 'APP_STORE_VERSIONS' or cpp_limit is None else cpp_limit}]},
+            {'placementType': 'PRODUCT_PAGE_HEADER_ASSET', 'groupLimits': [{'groupIds': ['DEFAULT_PROFILE'], 'maxCount': header_limit}]},
+        ]} for feature in ('APP_STORE_VERSIONS', 'CUSTOM_PRODUCT_PAGES')],
+        'placementProfileGroups': [{'placementProfileGroupId': group, 'platform': 'IPHONE_APP_STORE', 'displayClassId': 'IPHONE_DUO'} for group in groups] + [{'placementProfileGroupId': 'DEFAULT_PROFILE', 'platform': 'ANY', 'displayClassId': 'DEFAULT'}],
+        'placementTypes': [
+            {'placementTypeId': 'APP_SCREENSHOT', 'acceptsAssetCategories': ['APP_SCREENSHOTS_AND_PREVIEWS'], 'specMappings': ([{'placementGroupId': groups[0], 'specs': ['outer']}, {'placementGroupId': groups[1], 'specs': ['inner']}] if split else [{'placementGroupId': groups[0], 'specs': ['outer', 'inner']}])},
+            {'placementTypeId': 'PRODUCT_PAGE_HEADER_ASSET', 'acceptsAssetCategories': ['CREATIVE_ASSETS'], 'specMappings': [{'placementGroupId': 'DEFAULT_PROFILE', 'specs': ['header']}]},
+        ],
+        'imageSpecs': [{'specId': name, 'compatiblePlacementTypes': ['APP_SCREENSHOT'], 'dimensions': {'minWidth': width, 'maxWidth': width, 'minHeight': height, 'maxHeight': height}} for name, (width, height) in [('outer', u.DIMENSIONS['duo-outer']), ('inner', u.DIMENSIONS['duo-inner'])]],
+        'videoSpecs': [{'specId': 'header', 'compatiblePlacementTypes': ['PRODUCT_PAGE_HEADER_ASSET'], 'dimensions': {'minWidth': 3840, 'maxWidth': 3840, 'minHeight': 1646, 'maxHeight': 1646}}],
+    }
+    return [{'id': 'reference', 'attributes': attributes}]
+
+
 class FakeCLI:
     def __init__(self, state=None, apply=False):
         self.state, self.apply, self.calls = state or {}, apply, []
@@ -53,6 +71,7 @@ class UploaderTests(unittest.TestCase):
                 file.write_bytes((profile + str(i)).encode())
                 self.slots[('en-US', profile, 'default', i)] = {'file': file}
         self.state = {
+            '/v1/appAssetLibraryRefData': native_reference(),
             '/v1/apps/6816213577/appStoreVersions': [row('version', platform='IOS', versionString='1.2', appStoreState='PREPARE_FOR_SUBMISSION')],
             '/v1/apps/6816213577/appInfos': [row('info', appStoreState='PREPARE_FOR_SUBMISSION')],
             '/v1/appStoreVersions/version/appStoreVersionLocalizations': [row('locale', locale='en-US', description='Convert', promotionalText='Fast')],
@@ -106,6 +125,7 @@ class UploaderTests(unittest.TestCase):
         cli = FakeCLI(self.state)
         plan = self.planner(cli, {'duo'})
         plan.library = 'library'
+        plan.native_policy_preflight()
         for profile in ('duo-outer', 'duo-inner'):
             for order in range(1, 7):
                 file = self.root / (profile + str(order) + '.png')
@@ -121,6 +141,117 @@ class UploaderTests(unittest.TestCase):
         self.assertEqual(ordering['relationships']['orderedPlacements']['data'], [{'type': 'appAssetLibraryPlacements', 'id': op['ref']} for op in placements])
         self.assertNotIn('APP_IPHONE_DUO', json.dumps(plan.summary()))
         self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_native_capacity_insufficient_for_shared_duo_group_stops_before_any_plan(self):
+        self.state['/v1/appAssetLibraryRefData'] = native_reference(duo_limit=10)
+        cli = FakeCLI(self.state, apply=True)
+        plan = self.planner(cli, {'metadata', 'duo', 'header'})
+        with self.assertRaisesRegex(u.UploadError, 'requires 12, maximum 10'):
+            plan.preflight()
+        self.assertEqual(plan.ops, [])
+        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_native_capacity_checks_cpp_feature_independently(self):
+        self.state['/v1/appAssetLibraryRefData'] = native_reference(duo_limit=12, cpp_limit=10)
+        cli = FakeCLI(self.state, apply=True)
+        plan = self.planner(cli, {'duo'})
+        with self.assertRaisesRegex(u.UploadError, 'CUSTOM_PRODUCT_PAGES/APP_SCREENSHOT'):
+            plan.preflight()
+        self.assertEqual(plan.ops, [])
+        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_header_capacity_zero_stops_before_any_metadata_changes(self):
+        self.state['/v1/appAssetLibraryRefData'] = native_reference(header_limit=0)
+        cli = FakeCLI(self.state, apply=True)
+        plan = self.planner(cli, {'metadata', 'header'})
+        with self.assertRaisesRegex(u.UploadError, 'PRODUCT_PAGE_HEADER_ASSET/DEFAULT_PROFILE: requires 1, maximum 0'):
+            plan.preflight()
+        self.assertEqual(plan.ops, [])
+        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_native_unknown_policy_or_spec_fails_closed(self):
+        for missing in ('features', 'placementProfileGroups', 'placementTypes', 'imageSpecs'):
+            with self.subTest(missing=missing):
+                reference = native_reference()
+                reference[0]['attributes'].pop(missing)
+                self.state['/v1/appAssetLibraryRefData'] = reference
+                cli = FakeCLI(self.state, apply=True)
+                plan = self.planner(cli, {'metadata', 'duo'})
+                with self.assertRaises(u.UploadError):
+                    plan.preflight()
+                self.assertEqual(plan.ops, [])
+                self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_split_duo_groups_use_live_limits_and_order_each_group(self):
+        self.state['/v1/appAssetLibraryRefData'] = native_reference(duo_limit=6, split=True)
+        cli = FakeCLI(self.state)
+        plan = self.planner(cli, {'duo', 'header'})
+        plan.library = 'library'
+        plan.native_policy_preflight()
+        self.assertEqual(plan.duo_groups, {'duo-outer': 'DUO_OUTER_PROFILE', 'duo-inner': 'DUO_INNER_PROFILE'})
+        self.assertEqual(plan.header_group, 'DEFAULT_PROFILE')
+        self.assertEqual(len(plan.notes), 6)
+        for profile in ('duo-outer', 'duo-inner'):
+            for order in range(1, 7):
+                file = self.root / (profile + str(order) + '.png')
+                file.write_bytes((profile + str(order)).encode())
+                self.slots[('en-US', profile, 'default', order)] = {'file': file, 'sha256': u.sha256(file)}
+        plan.duo_screenshots('locale', 'default', 'en-US')
+        orders = [op for op in plan.ops if op['path'] == '/v1/appAssetLibraryPlacementOrderingRequests']
+        self.assertEqual(len(orders), 2)
+        self.assertTrue(all(len(op['body']['data']['relationships']['orderedPlacements']['data']) == 6 for op in orders))
+        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_header_uses_runtime_group_and_optional_video_constraints(self):
+        reference = native_reference()
+        attributes = reference[0]['attributes']
+        attributes['placementProfileGroups'][-1]['placementProfileGroupId'] = 'CREATIVE_DEFAULT_V2'
+        attributes['placementTypes'][-1]['specMappings'][0]['placementGroupId'] = 'CREATIVE_DEFAULT_V2'
+        for feature in attributes['features']:
+            feature['placementPolicies'][-1]['groupLimits'][0]['groupIds'] = ['CREATIVE_DEFAULT_V2']
+        attributes['videoSpecs'][0].update(aspectRatio='21:9', frameRates=[{'minFps': 30, 'maxFps': 30}], duration={'min': 'PT5S', 'max': 'PT30S'}, audioRequired=False)
+        self.state['/v1/appAssetLibraryRefData'] = reference
+        plan = self.planner(FakeCLI(self.state), {'header'})
+        plan.header = {'video': {'fps': 30, 'duration': 15, 'audio': False}}
+        plan.native_policy_preflight()
+        plan.place_header('locale', 'default', 'video-id')
+        self.assertEqual(plan.ops[-1]['body']['data']['attributes']['placementGroup'], 'CREATIVE_DEFAULT_V2')
+
+    def test_optional_native_spec_constraints_fail_before_changes(self):
+        for change in ({'aspectRatio': '1:1'}, {'frameRates': [{'minFps': 60, 'maxFps': 60}]}, {'duration': {'min': 'PT5S', 'max': 'PT10S'}}, {'audioRequired': True}):
+            with self.subTest(change=change):
+                reference = native_reference()
+                reference[0]['attributes']['videoSpecs'][0].update(change)
+                self.state['/v1/appAssetLibraryRefData'] = reference
+                cli = FakeCLI(self.state, apply=True)
+                plan = self.planner(cli, {'metadata', 'header'})
+                plan.header = {'video': {'fps': 30, 'duration': 15, 'audio': False}}
+                with self.assertRaisesRegex(u.UploadError, 'specification is missing or ambiguous'):
+                    plan.preflight()
+                self.assertEqual(plan.ops, [])
+                self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_duo_only_cpp_targets_do_not_change_text_or_keywords(self):
+        self.meta['locales']['en-US'].pop('contextualPromotionalText')
+        self.meta['keywordRouting'] = {family: {'en-US': ['travel']} for family in u.FAMILIES[1:]}
+        self.state['/v1/apps/6816213577/appCustomProductPages'] = [row('page-' + family, name='Currency - ' + family) for family in u.FAMILIES[1:]]
+        for family in u.FAMILIES[1:]:
+            self.state['/v1/appCustomProductPages/page-' + family + '/appCustomProductPageVersions'] = [row('version-' + family, state='PREPARE_FOR_SUBMISSION')]
+            self.state['/v1/appCustomProductPageVersions/version-' + family + '/appCustomProductPageLocalizations'] = [row('locale-' + family, locale='en-US', promotionalText='Keep current text')]
+        cli = FakeCLI(self.state, apply=True)
+        plan = self.planner(cli, {'duo'})
+        targets = {}
+        plan.cpp_targets(targets)
+        self.assertEqual(plan.ops, [])
+        self.assertEqual(len(targets), 5)
+        self.assertEqual(plan.notes, [])
+        self.assertTrue(all(call[0] == 'GET' and 'searchKeywords' not in call[1] for call in cli.calls))
+        for family in u.FAMILIES[1:]:
+            self.state['/v1/appCustomProductPageVersions/version-' + family + '/appCustomProductPageLocalizations'] = []
+        missing = self.planner(FakeCLI(self.state, apply=True), {'duo'})
+        missing.cpp_targets({})
+        self.assertEqual(len(missing.ops), 5)
+        self.assertTrue(all(op['method'] == 'POST' and op['body']['data']['type'] == 'appCustomProductPageLocalizations' and op['body']['data']['attributes'] == {'locale': 'en-US'} for op in missing.ops))
 
     def test_profile_mapping_matches_approved_recipe_dimensions(self):
         recipe = json.loads((MODULE.parent / 'design' / 'recipe.json').read_text())

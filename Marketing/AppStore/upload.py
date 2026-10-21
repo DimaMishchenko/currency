@@ -70,8 +70,8 @@ def validate_media(root, manifest, metadata):
     path = confined(root, header.get('path'))
     if path.suffix.lower() not in {'.mp4', '.m4v', '.mov'} or not path.is_file() or sha256(path) != header.get('sha256'):
         raise UploadError('Approved header video is missing or has the wrong hash')
-    validate_video(path)
-    return slots, dict(header, file=path)
+    video = validate_video(path)
+    return slots, dict(header, file=path, video=video)
 
 
 def validate_png(path, dimensions):
@@ -104,6 +104,7 @@ def validate_video(path):
         fps = float(Fraction(video['avg_frame_rate']))
         if len(videos) != 1 or (video['width'], video['height']) != (3840, 1646) or abs(float(info['format']['duration']) - 15) > .1 or min(abs(fps - 30), abs(fps - 60)) > .01:
             raise ValueError()
+        return {'fps': fps, 'duration': float(info['format']['duration']), 'audio': any(s.get('codec_type') == 'audio' for s in info['streams'])}
     except (OSError, subprocess.SubprocessError, ValueError, KeyError, IndexError, ZeroDivisionError):
         raise UploadError('Header must be the approved 15-second 3840x1646 video at 30/60 fps; install ffprobe and verify the export') from None
 
@@ -232,6 +233,8 @@ class Planner:
         self.library = None
         self.library_rows = {}
         self.media = {}
+        self.duo_groups = {}
+        self.header_group = None
 
     def get(self, path):
         if '@pending-' in path:
@@ -272,6 +275,7 @@ class Planner:
         infos = [i for i in self.get('/v1/apps/' + self.app + '/appInfos') if i['id'] == self.info]
         if len(infos) != 1 or infos[0]['attributes'].get('appStoreState') not in EDITABLE:
             raise UploadError('Explicit app-info ID does not belong to an editable Currency draft')
+        self.native_policy_preflight()
         version_locales = self.unique(self.get('/v1/appStoreVersions/' + self.version + '/appStoreVersionLocalizations'), 'locale')
         info_locales = self.unique(self.get('/v1/appInfos/' + self.info + '/appInfoLocalizations'), 'locale')
         targets = {}
@@ -301,13 +305,123 @@ class Planner:
             if 'duo' in self.scopes:
                 self.duo_screenshots(target, family, locale)
         if 'duo' in self.scopes:
-            self.notes.append('Duo uses documented native APP_SCREENSHOT/IPHONE_DUO_PROFILE placements: six outer then six inner, ordered explicitly. Remote capacity/eligibility remains subject to Apple validation; no live upload has verified acceptance.')
+            self.notes.append('Duo uses runtime-validated APP_SCREENSHOT groups and capacities: six outer then six inner, ordered per group. Apple processing and placement eligibility still apply.')
         return self
+
+    def native_policy_preflight(self):
+        if not self.scopes & {'duo', 'header'}:
+            return
+        catalog = self.get('/v1/appAssetLibraryRefData')
+        if len(catalog) != 1:
+            raise UploadError('Native asset reference data is unavailable or ambiguous; no changes applied')
+        attrs = catalog[0].get('attributes', {})
+        if not isinstance(attrs, dict):
+            raise UploadError('Native asset reference data is malformed; no changes applied')
+        def records(value):
+            if not isinstance(value, list) or any(not isinstance(item, dict) for item in value):
+                raise UploadError('Native asset reference data is malformed; no changes applied')
+            return value
+        def identifiers(value):
+            if not isinstance(value, list) or any(not isinstance(item, str) for item in value):
+                raise UploadError('Native asset reference data is malformed; no changes applied')
+            return value
+        def index(name, key):
+            values = records(attrs.get(name, []))
+            if any(not isinstance(value.get(key), str) for value in values):
+                raise UploadError('Native asset reference data is malformed; no changes applied')
+            result = {value[key]: value for value in values}
+            if len(result) != len(values):
+                raise UploadError('Native asset reference data has duplicate identifiers; no changes applied')
+            return result
+        groups = index('placementProfileGroups', 'placementProfileGroupId')
+        types = index('placementTypes', 'placementTypeId')
+        features = index('features', 'featureId')
+
+        def spec_constraints(spec, dimensions, media_type):
+            ratio = spec.get('aspectRatio')
+            if ratio is not None:
+                match = re.fullmatch(r'([0-9]+):([1-9][0-9]*)', ratio) if isinstance(ratio, str) else None
+                if not match or abs(dimensions[0] / dimensions[1] - int(match[1]) / int(match[2])) > .001:
+                    return False
+            if media_type != 'video':
+                return True
+            video = self.header.get('video', {})
+            if 'frameRates' in spec:
+                fps = video.get('fps')
+                rates = records(spec['frameRates'])
+                if not isinstance(fps, (int, float)) or not any(type(rate.get('minFps')) is int and type(rate.get('maxFps')) is int and rate['minFps'] <= fps <= rate['maxFps'] for rate in rates):
+                    return False
+            if 'duration' in spec:
+                bounds = spec['duration']
+                def seconds(value):
+                    match = re.fullmatch(r'PT(?:(\d+(?:\.\d+)?)H)?(?:(\d+(?:\.\d+)?)M)?(?:(\d+(?:\.\d+)?)S)?', value) if isinstance(value, str) else None
+                    return sum(float(part or 0) * scale for part, scale in zip(match.groups(), (3600, 60, 1))) if match and any(match.groups()) else None
+                low = seconds(bounds.get('min')) if isinstance(bounds, dict) else None
+                high = seconds(bounds.get('max')) if isinstance(bounds, dict) else None
+                duration = video.get('duration')
+                if low is None or high is None or not isinstance(duration, (int, float)) or not low <= duration <= high:
+                    return False
+            if spec.get('audioRequired') is True and video.get('audio') is not True:
+                return False
+            return True
+
+        def matching_group(placement_type, dimensions, media_type, display_class, platform, category):
+            placement = types.get(placement_type, {})
+            if category not in identifiers(placement.get('acceptsAssetCategories', [])):
+                raise UploadError('Native asset category is unsupported by current reference data; no changes applied')
+            specs = index(media_type + 'Specs', 'specId')
+            candidates = set()
+            for mapping in records(placement.get('specMappings', [])):
+                group = mapping.get('placementGroupId')
+                profile = groups.get(group, {})
+                if profile.get('displayClassId') != display_class or profile.get('platform') != platform:
+                    continue
+                for spec_id in identifiers(mapping.get('specs', [])):
+                    spec = specs.get(spec_id, {})
+                    bounds = spec.get('dimensions', {})
+                    width, height = dimensions
+                    if isinstance(bounds, dict) and placement_type in identifiers(spec.get('compatiblePlacementTypes', [])) and all(type(bounds.get(k)) is int for k in ('minWidth', 'maxWidth', 'minHeight', 'maxHeight')) and bounds['minWidth'] <= width <= bounds['maxWidth'] and bounds['minHeight'] <= height <= bounds['maxHeight'] and spec_constraints(spec, dimensions, media_type):
+                        candidates.add(group)
+            if len(candidates) != 1:
+                raise UploadError('Native asset group/specification is missing or ambiguous for ' + placement_type + '; no changes applied')
+            group = next(iter(candidates))
+            if not isinstance(group, str) or not re.fullmatch('[A-Za-z0-9_-]{1,120}', group):
+                raise UploadError('Native asset group identifier is invalid; no changes applied')
+            return group
+
+        def capacity(feature_id, placement_type, group, required):
+            feature = features.get(feature_id, {})
+            policies = [p for p in records(feature.get('placementPolicies', [])) if p.get('placementType') == placement_type]
+            limits = [limit.get('maxCount') for policy in policies for limit in records(policy.get('groupLimits', [])) if group in identifiers(limit.get('groupIds', []))]
+            if not limits or any(type(limit) is not int or limit < 0 for limit in limits):
+                raise UploadError('Native placement policy is unavailable for ' + feature_id + '/' + placement_type + '/' + group + '; no changes applied')
+            maximum = min(limits)
+            message = feature_id + '/' + placement_type + '/' + group + ': requires ' + str(required) + ', maximum ' + str(maximum)
+            if required > maximum:
+                raise UploadError('Native placement capacity is insufficient (' + message + '); select a supported scope or approve a revised media mapping; no changes applied')
+            self.notes.append('Native placement capacity ' + message)
+
+        if 'duo' in self.scopes:
+            counts = {}
+            for profile in ('duo-outer', 'duo-inner'):
+                group = matching_group('APP_SCREENSHOT', DIMENSIONS[profile], 'image', 'IPHONE_DUO', 'IPHONE_APP_STORE', 'APP_SCREENSHOTS_AND_PREVIEWS')
+                self.duo_groups[profile] = group
+                counts[group] = counts.get(group, 0) + 6
+            for feature in ('APP_STORE_VERSIONS', 'CUSTOM_PRODUCT_PAGES'):
+                for group, count in counts.items():
+                    capacity(feature, 'APP_SCREENSHOT', group, count)
+        if 'header' in self.scopes:
+            self.header_group = matching_group('PRODUCT_PAGE_HEADER_ASSET', (3840, 1646), 'video', 'DEFAULT', 'ANY', 'CREATIVE_ASSETS')
+            surfaces = ['APP_STORE_VERSIONS']
+            if self.scopes & {'cpp', 'duo'}:
+                surfaces.append('CUSTOM_PRODUCT_PAGES')
+            for feature in surfaces:
+                capacity(feature, 'PRODUCT_PAGE_HEADER_ASSET', self.header_group, 1)
 
     def cpp_targets(self, targets):
         pages = self.unique(self.get('/v1/apps/' + self.app + '/appCustomProductPages'), 'name')
-        routing = self.meta.get('keywordRouting', {})
-        if not routing:
+        routing = self.meta.get('keywordRouting', {}) if 'cpp' in self.scopes else {}
+        if 'cpp' in self.scopes and not routing:
             self.notes.append('CPP keyword associations deferred: choose terms from the latest approved app version and provide keywordRouting; draft uploads remain available.')
         for family in FAMILIES[1:]:
             name = 'Currency - ' + family
@@ -322,10 +436,13 @@ class Planner:
             version = drafts[0]['id'] if drafts else self.queue('POST', '/v1/appCustomProductPageVersions', resource('appCustomProductPageVersions', {}, {'appCustomProductPage': relationship('appCustomProductPages', page_id)}))
             locales = self.unique(self.get('/v1/appCustomProductPageVersions/' + version + '/appCustomProductPageLocalizations'), 'locale')
             for locale, fields in self.meta['locales'].items():
-                text = fields.get('contextualPromotionalText', {}).get(family)
-                if not isinstance(text, str) or not text:
-                    raise UploadError('Every CPP family/locale needs contextualPromotionalText')
-                target = self.upsert('appCustomProductPageLocalizations', locales.get(locale), {'locale': locale, 'promotionalText': text}, {'appCustomProductPageVersion': relationship('appCustomProductPageVersions', version)})
+                attrs = {'locale': locale}
+                if 'cpp' in self.scopes:
+                    text = fields.get('contextualPromotionalText', {}).get(family)
+                    if not isinstance(text, str) or not text:
+                        raise UploadError('Every CPP family/locale needs contextualPromotionalText')
+                    attrs['promotionalText'] = text
+                target = self.upsert('appCustomProductPageLocalizations', locales.get(locale), attrs, {'appCustomProductPageVersion': relationship('appCustomProductPageVersions', version)})
                 targets[(family, locale)] = target
                 if family in routing:
                     terms = routing[family].get(locale)
@@ -383,43 +500,50 @@ class Planner:
         return identifier
 
     def duo_screenshots(self, target, family, locale):
+        if set(self.duo_groups) != {'duo-outer', 'duo-inner'}:
+            raise UploadError('Duo native placement policy preflight is required before planning placements')
         kind = 'appStoreVersionLocalizations' if family == 'default' else 'appCustomProductPageLocalizations'
         rel = 'appStoreVersionLocalization' if family == 'default' else 'appCustomProductPageLocalization'
         placements = self.get('/v1/' + kind + '/' + target + '/placements')
-        existing = [p for p in placements if p.get('attributes', {}).get('placementGroup') == 'IPHONE_DUO_PROFILE']
+        existing = [p for p in placements if p.get('attributes', {}).get('placementGroup') in self.duo_groups.values()]
         if any(p.get('attributes', {}).get('placementType') != 'APP_SCREENSHOT' for p in existing):
             raise UploadError('Duo group contains app previews; reconcile mixed media ordering explicitly first')
-        desired, ordered = [], []
+        desired, ordered = [], {}
         for profile in ('duo-outer', 'duo-inner'):
+            group = self.duo_groups[profile]
+            ordered.setdefault(group, [])
             for order in range(1, 7):
                 image = self.library_media(self.slots[(locale, profile, family, order)], 'image')
-                desired.append(image)
-                matching = [p for p in existing if p.get('relationships', {}).get('image', {}).get('data', {}).get('id') == image]
+                desired.append((image, group))
+                matching = [p for p in existing if p.get('attributes', {}).get('placementGroup') == group and p.get('relationships', {}).get('image', {}).get('data', {}).get('id') == image]
                 if len(matching) > 1:
                     raise UploadError('Duplicate Duo image placements; reconcile in App Store Connect first')
                 if matching:
                     if matching[0].get('attributes', {}).get('state') == 'FAILED':
                         raise UploadError('Existing Duo placement failed; inspect before retry')
-                    ordered.append(matching[0]['id'])
+                    ordered[group].append(matching[0]['id'])
                 else:
-                    ordered.append(self.queue('POST', '/v1/appAssetLibraryPlacements', resource('appAssetLibraryPlacements', {'placementType': 'APP_SCREENSHOT', 'placementGroup': 'IPHONE_DUO_PROFILE'}, {'image': relationship('appAssetLibraryImages', image), rel: relationship(kind, target)})))
-        if len(set(desired)) != 12:
-            raise UploadError('Duo ordered set must contain 12 distinct outer/inner images')
-        if any(p.get('relationships', {}).get('image', {}).get('data', {}).get('id') not in desired for p in existing):
+                    ordered[group].append(self.queue('POST', '/v1/appAssetLibraryPlacements', resource('appAssetLibraryPlacements', {'placementType': 'APP_SCREENSHOT', 'placementGroup': group}, {'image': relationship('appAssetLibraryImages', image), rel: relationship(kind, target)})))
+        if len(set(desired)) != len(desired):
+            raise UploadError('Duo approved mapping contains duplicate image/group pairs')
+        if any((p.get('relationships', {}).get('image', {}).get('data', {}).get('id'), p.get('attributes', {}).get('placementGroup')) not in desired for p in existing):
             raise UploadError('Existing Duo placements differ from the approved set; automatic deletion is disabled')
-        self.queue('POST', '/v1/appAssetLibraryPlacementOrderingRequests', resource('appAssetLibraryPlacementOrderingRequests', {'placementGroup': 'IPHONE_DUO_PROFILE'}, {'orderedPlacements': {'data': [{'type': 'appAssetLibraryPlacements', 'id': p} for p in ordered]}, rel: relationship(kind, target)}))
+        for group, identifiers in ordered.items():
+            self.queue('POST', '/v1/appAssetLibraryPlacementOrderingRequests', resource('appAssetLibraryPlacementOrderingRequests', {'placementGroup': group}, {'orderedPlacements': {'data': [{'type': 'appAssetLibraryPlacements', 'id': p} for p in identifiers]}, rel: relationship(kind, target)}))
 
     def place_header(self, target, family, video):
+        if not self.header_group:
+            raise UploadError('Header native placement policy preflight is required before planning placements')
         kind = 'appStoreVersionLocalizations' if family == 'default' else 'appCustomProductPageLocalizations'
         placements = self.get('/v1/' + kind + '/' + target + '/placements')
         headers = [p for p in placements if p.get('attributes', {}).get('placementType') == 'PRODUCT_PAGE_HEADER_ASSET']
         if headers:
-            if len(headers) == 1 and headers[0].get('relationships', {}).get('video', {}).get('data', {}).get('id') == video:
+            if len(headers) == 1 and headers[0].get('attributes', {}).get('placementGroup') == self.header_group and headers[0].get('relationships', {}).get('video', {}).get('data', {}).get('id') == video:
                 if headers[0].get('attributes', {}).get('state') == 'FAILED':
                     raise UploadError('Existing header placement failed; inspect before retry')
                 return
             raise UploadError('Existing product-page header differs; inspect and remove/swap explicitly in App Store Connect first')
-        self.queue('POST', '/v1/appAssetLibraryPlacements', resource('appAssetLibraryPlacements', {'placementType': 'PRODUCT_PAGE_HEADER_ASSET', 'placementGroup': 'DEFAULT_PROFILE'}, {'video': relationship('appAssetLibraryVideos', video), 'appStoreVersionLocalization' if family == 'default' else 'appCustomProductPageLocalization': relationship(kind, target)}))
+        self.queue('POST', '/v1/appAssetLibraryPlacements', resource('appAssetLibraryPlacements', {'placementType': 'PRODUCT_PAGE_HEADER_ASSET', 'placementGroup': self.header_group}, {'video': relationship('appAssetLibraryVideos', video), 'appStoreVersionLocalization' if family == 'default' else 'appCustomProductPageLocalization': relationship(kind, target)}))
 
     def execute(self):
         if self.blockers:
