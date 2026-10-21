@@ -23,7 +23,7 @@ struct SettingsScreen: View {
   @State private var destination: Destination?
 
   private enum Destination: String, Identifiable {
-    case rates, sources, acknowledgements
+    case rates, sources, acknowledgements, appIcon
     var id: Self { self }
   }
 
@@ -111,6 +111,7 @@ struct SettingsScreen: View {
     .navigationBarTitleDisplayMode(.large)
     .navigationDestination(item: $destination) { destination in
       switch destination {
+      case .appIcon: SettingsAppIconPicker(model: model)
       case .rates: rateInformation
       case .sources:
         List { sourceInformation }
@@ -479,6 +480,11 @@ struct SettingsScreen: View {
     Section {
       themeControl
       accentControl
+      if model.allowsAppIconSelection {
+        navigationRow(.Settings.appIcon, systemImage: "app", destination: .appIcon)
+          .accessibilityValue((model.selectedAppIcon ?? .world).pickerDescription)
+          .accessibilityIdentifier("settings.appIcon")
+      }
       languageControl
     } header: {
       Text(.Settings.personalization)

@@ -7,6 +7,7 @@ import SwiftUI
 
 @MainActor @Observable private final class SettingsHarnessState {
   var preferences = SettingsPreferences(theme: .system, accent: .primary)
+  var appIcon: SettingsAppIcon
   var failing: Bool
   let dated: Bool
   var rates: SettingsRateState {
@@ -14,7 +15,8 @@ import SwiftUI
     let snapshot = dated ? RateSnapshot(fetchedAt: date, checkedAt: date) : RateSnapshot()
     return SettingsRateState(snapshot: snapshot, base: "EUR", codes: ["EUR", "USD"])
   }
-  init(failing: Bool, dated: Bool) {
+  init(failing: Bool, dated: Bool, icon: SettingsAppIcon) {
+    appIcon = icon
     self.failing = failing
     self.dated = dated
   }
@@ -29,7 +31,9 @@ import SwiftUI
     _state = State(
       initialValue: SettingsHarnessState(
         failing: ProcessInfo.processInfo.arguments.contains("failure"),
-        dated: ProcessInfo.processInfo.arguments.contains("dated")))
+        dated: ProcessInfo.processInfo.arguments.contains("dated"),
+        icon: ProcessInfo.processInfo.arguments.first(where: { $0.hasPrefix("icon=") })
+          .flatMap { SettingsAppIcon(rawValue: String($0.dropFirst(5))) } ?? .world))
   }
   var body: some Scene {
     WindowGroup {
@@ -56,6 +60,13 @@ import SwiftUI
               if state.failing { throw CocoaError(.fileReadUnknown) }
               return state.rates
             }, replay: { if state.failing { throw CocoaError(.fileWriteUnknown) } },
+            appIcon: ProcessInfo.processInfo.arguments.contains("icons")
+              ? SettingsAppIconCapability(
+                current: { state.appIcon },
+                select: { icon in
+                  if state.failing { throw CocoaError(.fileWriteUnknown) }
+                  state.appIcon = icon
+                }) : nil,
             output: { _ in }))
     }
   }

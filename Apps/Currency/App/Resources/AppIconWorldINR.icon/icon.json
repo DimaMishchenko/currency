@@ -1,0 +1,116 @@
+{
+  "features": [
+    "refractivity"
+  ],
+  "fill": {
+    "automatic-gradient": "extended-srgb:0.08627,0.45098,1.00000,1.00000"
+  },
+  "groups": [
+    {
+      "layers": [
+        {
+          "fill-specializations": [
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "extended-srgb:0.84000,0.90000,1.00000,0.82000"
+              }
+            }
+          ],
+          "image-name": "02-Yen-disc.png",
+          "name": "Rupee disc"
+        }
+      ],
+      "name": "Rupee · front glass",
+      "refractivity-specializations": [
+        {
+          "value": {
+            "depth": 0.12,
+            "enabled": true,
+            "strength": 0.2
+          }
+        },
+        {
+          "appearance": "dark",
+          "value": {
+            "depth": 0.04,
+            "enabled": true,
+            "strength": 0.08
+          }
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.25
+      },
+      "specular-specializations": [
+        {
+          "appearance": "dark",
+          "value": true
+        }
+      ],
+      "translucency-specializations": [
+        {
+          "value": {
+            "enabled": true,
+            "value": 0.14
+          }
+        },
+        {
+          "appearance": "dark",
+          "value": {
+            "enabled": true,
+            "value": 0.62
+          }
+        }
+      ]
+    },
+    {
+      "layers": [
+        {
+          "fill-specializations": [
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "extended-srgb:0.84000,0.90000,1.00000,0.42000"
+              }
+            }
+          ],
+          "image-name": "01-Dollar-disc.png",
+          "name": "01-Dollar-disc"
+        }
+      ],
+      "name": "Dollar · back glass",
+      "refractivity": {
+        "depth": 0.08,
+        "enabled": true,
+        "strength": 0.23
+      },
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.2
+      },
+      "translucency-specializations": [
+        {
+          "value": {
+            "enabled": true,
+            "value": 0.2
+          }
+        },
+        {
+          "appearance": "dark",
+          "value": {
+            "enabled": true,
+            "value": 0.62
+          }
+        }
+      ]
+    }
+  ],
+  "supported-platforms": {
+    "circles": [
+      "watchOS"
+    ],
+    "squares": "shared"
+  }
+}

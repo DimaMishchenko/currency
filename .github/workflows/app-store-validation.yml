@@ -1,0 +1,33 @@
+name: App Store Source Validation
+
+on:
+  pull_request:
+    paths:
+      - 'Marketing/AppStore/**'
+      - '.github/workflows/app-store-*.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'Marketing/AppStore/**'
+      - '.github/workflows/app-store-*.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install renderer test dependency
+        run: python3 -m pip install -r Marketing/AppStore/generator/requirements.txt
+      - name: Check metadata and upload reconciliation
+        run: python3 -m unittest discover -s Marketing/AppStore/tests -v
+      - name: Check deterministic assembly and input validation
+        run: python3 -m unittest discover -s Marketing/AppStore/generator/tests -v

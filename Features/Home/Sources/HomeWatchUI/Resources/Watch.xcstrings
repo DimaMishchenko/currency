@@ -1431,85 +1431,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Using saved rates. Daily rates could not refresh."
+            "value": "Showing saved rates."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "正在使用已保存的汇率。每日汇率无法刷新。"
+            "value": "正在显示已保存的汇率。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "保存済みレートを使用しています。日次レートを更新できませんでした。"
+            "value": "保存済みのレートを表示しています。"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Se usan tipos guardados. No se pudieron actualizar los tipos diarios."
+            "value": "Se muestran los tipos de cambio guardados."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gespeicherte Kurse werden verwendet. Tageskurse konnten nicht aktualisiert werden."
+            "value": "Gespeicherte Kurse werden angezeigt."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Taux enregistrés utilisés. Les taux quotidiens n’ont pas pu être actualisés."
+            "value": "Affichage des taux enregistrés."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Usando taxas salvas. Não foi possível atualizar as taxas diárias."
+            "value": "Exibindo as taxas salvas."
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "저장된 환율을 사용합니다. 일일 환율을 새로 고치지 못했습니다."
+            "value": "저장된 환율을 표시합니다."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "正在使用已儲存的匯率。每日匯率無法更新。"
+            "value": "正在顯示已儲存的匯率。"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Uso dei tassi salvati. Impossibile aggiornare i tassi giornalieri."
+            "value": "Vengono mostrati i tassi salvati."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kaydedilen kurlar kullanılıyor. Günlük kurlar yenilenemedi."
+            "value": "Kayıtlı kurlar gösteriliyor."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Используются сохранённые курсы. Не удалось обновить дневные курсы."
+            "value": "Показаны сохранённые курсы."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Використовуються збережені курси. Не вдалося оновити денні курси."
+            "value": "Показано збережені курси."
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kasutatakse salvestatud kursse. Päevakursse ei saanud värskendada."
+            "value": "Kuvatakse salvestatud kursid."
           }
         }
       }
@@ -1520,85 +1520,85 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Some crypto rates use daily saved quotes."
+            "value": "Showing saved rates."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "部分加密货币汇率使用已保存的每日报价。"
+            "value": "正在显示已保存的汇率。"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "一部の暗号資産レートには保存済みの日次相場を使用しています。"
+            "value": "保存済みのレートを表示しています。"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Algunos tipos de criptomonedas usan cotizaciones diarias guardadas."
+            "value": "Se muestran los tipos de cambio guardados."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Einige Kryptokurse verwenden gespeicherte Tagesnotierungen."
+            "value": "Gespeicherte Kurse werden angezeigt."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Certains taux crypto utilisent des cotations quotidiennes enregistrées."
+            "value": "Affichage des taux enregistrés."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Algumas taxas de criptomoedas usam cotações diárias salvas."
+            "value": "Exibindo as taxas salvas."
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "일부 암호화폐 환율은 저장된 일일 시세를 사용합니다."
+            "value": "저장된 환율을 표시합니다."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "部分加密貨幣匯率使用已儲存的每日報價。"
+            "value": "正在顯示已儲存的匯率。"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Alcuni tassi crypto usano quotazioni giornaliere salvate."
+            "value": "Vengono mostrati i tassi salvati."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bazı kripto kurları kaydedilmiş günlük fiyatları kullanır."
+            "value": "Kayıtlı kurlar gösteriliyor."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Некоторые криптокурсы используют сохранённые дневные котировки."
+            "value": "Показаны сохранённые курсы."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Деякі криптокурси використовують збережені денні котирування."
+            "value": "Показано збережені курси."
           }
         },
         "et": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mõned krüptokursid kasutavad salvestatud päevanoteeringuid."
+            "value": "Kuvatakse salvestatud kursid."
           }
         }
       }

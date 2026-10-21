@@ -1,0 +1,117 @@
+name: App Store Draft Assets
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Read-only plan or apply draft changes (never submit review)
+        type: choice
+        options: [dry-run, apply]
+        default: dry-run
+      version_id:
+        description: Optional exact editable iOS version ID; blank requires one unique draft
+        type: string
+        required: false
+      version_string:
+        description: Optional exact iOS version string to narrow draft discovery
+        type: string
+        required: false
+      app_info_id:
+        description: Optional editable app-info ID; blank requires one unique draft
+        type: string
+        required: false
+      scope:
+        description: Comma-separated scopes metadata,default,cpp,header,duo
+        type: string
+        default: metadata,default,cpp,header,duo
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: currency-app-store-draft-assets
+  cancel-in-progress: false
+
+jobs:
+  drafts:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    environment: testflight
+    env:
+      ASC_STRICT_AUTH: 'true'
+      ASC_APP_ID: '6816213577'
+      REQUEST_MODE: ${{ inputs.mode }}
+      TARGET_VERSION_ID: ${{ inputs.version_id }}
+      TARGET_VERSION_STRING: ${{ inputs.version_string }}
+      TARGET_APP_INFO_ID: ${{ inputs.app_info_id }}
+      ASSET_SCOPE: ${{ inputs.scope }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Install pinned verified asc and video inspection
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/currency-asc-bin"
+          curl --fail --silent --show-error --location \
+            https://github.com/rorkai/App-Store-Connect-CLI/releases/download/5.16.0/asc_5.16.0_linux_amd64 \
+            --output "$RUNNER_TEMP/currency-asc-bin/asc"
+          echo 'f0be6185b82e300899e2c162bae8975cafb3fcd7c6f990b8e22d637184bcaabc  '"$RUNNER_TEMP/currency-asc-bin/asc" | sha256sum --check --status
+          chmod 755 "$RUNNER_TEMP/currency-asc-bin/asc"
+          echo "$RUNNER_TEMP/currency-asc-bin" >> "$GITHUB_PATH"
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+      - name: Fetch and verify the pinned asset release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          python3 Marketing/AppStore/fetch_assets.py \
+            --repo "$GH_REPO" --output "$RUNNER_TEMP/currency-app-store-media"
+      - name: Validate approved media without API access
+        shell: bash
+        run: python3 Marketing/AppStore/upload.py --validate-only --media-dir "$RUNNER_TEMP/currency-app-store-media"
+      - name: Validate request and credentials
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+          ASC_PRIVATE_KEY_B64: ${{ secrets.ASC_API_CERT }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$REQUEST_MODE" == dry-run || "$REQUEST_MODE" == apply ]] || exit 1
+          for name in ASC_KEY_ID ASC_ISSUER_ID ASC_PRIVATE_KEY_B64; do
+            [[ -n "${!name}" ]] || { echo "::error::Missing required configuration: $name"; exit 1; }
+          done
+      - name: Plan or apply draft assets
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+          ASC_PRIVATE_KEY_B64: ${{ secrets.ASC_API_CERT }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mode_args=()
+          if [[ "$REQUEST_MODE" == apply ]]; then mode_args+=(--apply); fi
+          python3 Marketing/AppStore/upload.py \
+            --metadata Marketing/AppStore/metadata.json \
+            --media-dir "$RUNNER_TEMP/currency-app-store-media" \
+            --version-id "$TARGET_VERSION_ID" --version-string "$TARGET_VERSION_STRING" \
+            --app-info-id "$TARGET_APP_INFO_ID" --scope "$ASSET_SCOPE" \
+            --receipts "$RUNNER_TEMP/currency-app-store-receipts.jsonl" "${mode_args[@]}"
+      - name: Preserve sanitized draft operation receipts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: currency-app-store-draft-receipts
+          path: ${{ runner.temp }}/currency-app-store-receipts.jsonl
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Remove unpacked media
+        if: always()
+        shell: bash
+        run: rm -rf "$RUNNER_TEMP/currency-app-store-media"

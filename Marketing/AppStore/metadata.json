@@ -1,0 +1,266 @@
+{
+  "schemaVersion": 1,
+  "appId": "6816213577",
+  "families": [
+    "default",
+    "offline",
+    "travel",
+    "history",
+    "crypto",
+    "metals"
+  ],
+  "locales": {
+    "en-US": {
+      "name": "Currency: Converter & Widgets",
+      "subtitle": "Offline rates, crypto & metals",
+      "description": "Convert currencies from your Home Screen. Enter an amount in the Calculator widget and compare your chosen currencies without opening the app.\n\nCHOOSE YOUR WIDGETS\n• Calculator: enter an amount and see several conversions at once.\n• Currency Board: keep your selected currencies together.\n• Pocket Rate: keep one currency pair handy.\n• Cash: convert banknote amounts or metal weights.\n• History: see how an exchange rate has changed.\n\nCURRENCIES, CRYPTO AND METALS\nConvert everyday currencies, Bitcoin, Ethereum and other supported crypto. Check gold, silver, platinum and palladium in troy ounces, grams or kilograms.\n\nWORKS OFFLINE\nOpen Currency online to load the rates you need. You can then calculate new amounts using the rates saved on your device. Connect again to refresh.\n\nAPPLE WATCH\nConvert currencies and check rate history on your wrist. Keep a rate on your watch face or add a widget to your Smart Stack.\n\nMade for iPhone, iPad and Apple Watch.\n\nRates are for reference. Banks, card issuers and dealers may use different rates and fees. History availability varies by pair and source.",
+      "keywords": "exchange,calculator,travel,money,history,chart,bitcoin,ethereum,gold,silver,cash,watch,multi,foreign",
+      "promotionalText": "Convert currencies from your Home Screen. Type an amount in the Calculator widget and see your selected currencies together.",
+      "contextualPromotionalText": {
+        "offline": "Keep converting offline with previously downloaded rates. Load the rates you need online, then calculate without a connection.",
+        "travel": "Check prices abroad in currencies you know. Compare several currencies and keep useful conversions on your Home Screen.",
+        "history": "See how exchange rates have changed. Explore available charts in the app, a History widget or on Apple Watch.",
+        "crypto": "Convert crypto. Compare Bitcoin, Ethereum and other supported cryptocurrencies with your chosen currencies.",
+        "metals": "Convert gold, silver and other precious metals. Compare amounts in troy ounces, grams or kilograms."
+      }
+    },
+    "en-GB": {
+      "name": "Currency: Converter & Widgets",
+      "subtitle": "Offline rates, crypto & metals",
+      "description": "Convert currencies from your Home Screen. Enter an amount in the Calculator widget and compare your chosen currencies without opening the app.\n\nCHOOSE YOUR WIDGETS\n• Calculator: enter an amount and see several conversions at once.\n• Currency Board: keep your selected currencies together.\n• Pocket Rate: keep one currency pair handy.\n• Cash: convert banknote amounts or metal weights.\n• History: see how an exchange rate has changed.\n\nCURRENCIES, CRYPTO AND METALS\nConvert everyday currencies, Bitcoin, Ethereum and other supported crypto. Check gold, silver, platinum and palladium in troy ounces, grams or kilograms.\n\nWORKS OFFLINE\nOpen Currency online to load the rates you need. You can then calculate new amounts using the rates saved on your device. Connect again to refresh.\n\nAPPLE WATCH\nConvert currencies and check rate history on your wrist. Keep a rate on your watch face or add a widget to your Smart Stack.\n\nMade for iPhone, iPad and Apple Watch.\n\nRates are for reference. Banks, card issuers and dealers may use different rates and fees. History availability varies by pair and source.",
+      "keywords": "exchange,calculator,travel,money,history,chart,bitcoin,ethereum,gold,silver,cash,watch,multi,holiday",
+      "promotionalText": "Convert currencies from your Home Screen. Type an amount in the Calculator widget and see your selected currencies together.",
+      "contextualPromotionalText": {
+        "offline": "Keep converting offline with previously downloaded rates. Load the rates you need online, then calculate without a connection.",
+        "travel": "Check prices abroad in currencies you know. Compare several currencies and keep useful conversions on your Home Screen.",
+        "history": "See how exchange rates have changed. Explore available charts in the app, a History widget or on Apple Watch.",
+        "crypto": "Convert crypto. Compare Bitcoin, Ethereum and other supported cryptocurrencies with your chosen currencies.",
+        "metals": "Convert gold, silver and other precious metals. Compare amounts in troy ounces, grams or kilograms."
+      }
+    },
+    "en-AU": {
+      "name": "Currency: Converter & Widgets",
+      "subtitle": "Offline rates, crypto & metals",
+      "description": "Convert currencies from your Home Screen. Enter an amount in the Calculator widget and compare your chosen currencies without opening the app.\n\nCHOOSE YOUR WIDGETS\n• Calculator: enter an amount and see several conversions at once.\n• Currency Board: keep your selected currencies together.\n• Pocket Rate: keep one currency pair handy.\n• Cash: convert banknote amounts or metal weights.\n• History: see how an exchange rate has changed.\n\nCURRENCIES, CRYPTO AND METALS\nConvert everyday currencies, Bitcoin, Ethereum and other supported crypto. Check gold, silver, platinum and palladium in troy ounces, grams or kilograms.\n\nWORKS OFFLINE\nOpen Currency online to load the rates you need. You can then calculate new amounts using the rates saved on your device. Connect again to refresh.\n\nAPPLE WATCH\nConvert currencies and check rate history on your wrist. Keep a rate on your watch face or add a widget to your Smart Stack.\n\nMade for iPhone, iPad and Apple Watch.\n\nRates are for reference. Banks, card issuers and dealers may use different rates and fees. History availability varies by pair and source.",
+      "keywords": "exchange,calculator,travel,money,history,chart,bitcoin,ethereum,gold,silver,cash,watch,multi,compare",
+      "promotionalText": "Convert currencies from your Home Screen. Type an amount in the Calculator widget and see your selected currencies together.",
+      "contextualPromotionalText": {
+        "offline": "Keep converting offline with previously downloaded rates. Load the rates you need online, then calculate without a connection.",
+        "travel": "Check prices abroad in currencies you know. Compare several currencies and keep useful conversions on your Home Screen.",
+        "history": "See how exchange rates have changed. Explore available charts in the app, a History widget or on Apple Watch.",
+        "crypto": "Convert crypto. Compare Bitcoin, Ethereum and other supported cryptocurrencies with your chosen currencies.",
+        "metals": "Convert gold, silver and other precious metals. Compare amounts in troy ounces, grams or kilograms."
+      }
+    },
+    "en-CA": {
+      "name": "Currency: Converter & Widgets",
+      "subtitle": "Offline rates, crypto & metals",
+      "description": "Convert currencies from your Home Screen. Enter an amount in the Calculator widget and compare your chosen currencies without opening the app.\n\nCHOOSE YOUR WIDGETS\n• Calculator: enter an amount and see several conversions at once.\n• Currency Board: keep your selected currencies together.\n• Pocket Rate: keep one currency pair handy.\n• Cash: convert banknote amounts or metal weights.\n• History: see how an exchange rate has changed.\n\nCURRENCIES, CRYPTO AND METALS\nConvert everyday currencies, Bitcoin, Ethereum and other supported crypto. Check gold, silver, platinum and palladium in troy ounces, grams or kilograms.\n\nWORKS OFFLINE\nOpen Currency online to load the rates you need. You can then calculate new amounts using the rates saved on your device. Connect again to refresh.\n\nAPPLE WATCH\nConvert currencies and check rate history on your wrist. Keep a rate on your watch face or add a widget to your Smart Stack.\n\nMade for iPhone, iPad and Apple Watch.\n\nRates are for reference. Banks, card issuers and dealers may use different rates and fees. History availability varies by pair and source.",
+      "keywords": "exchange,calculator,travel,money,history,chart,bitcoin,ethereum,gold,silver,watch,multi,historical",
+      "promotionalText": "Convert currencies from your Home Screen. Type an amount in the Calculator widget and see your selected currencies together.",
+      "contextualPromotionalText": {
+        "offline": "Keep converting offline with previously downloaded rates. Load the rates you need online, then calculate without a connection.",
+        "travel": "Check prices abroad in currencies you know. Compare several currencies and keep useful conversions on your Home Screen.",
+        "history": "See how exchange rates have changed. Explore available charts in the app, a History widget or on Apple Watch.",
+        "crypto": "Convert crypto. Compare Bitcoin, Ethereum and other supported cryptocurrencies with your chosen currencies.",
+        "metals": "Convert gold, silver and other precious metals. Compare amounts in troy ounces, grams or kilograms."
+      }
+    },
+    "de-DE": {
+      "name": "Currency: Währungsrechner",
+      "subtitle": "Offline, Krypto & Edelmetalle",
+      "description": "Rechne Währungen direkt auf deinem Home-Bildschirm um. Gib im Rechner-Widget einen Betrag ein und vergleiche deine ausgewählten Währungen, ohne die App zu öffnen.\n\nWÄHLE DEINE WIDGETS\n• Währungsrechner: Gib einen Betrag ein und sieh mehrere Umrechnungen gleichzeitig.\n• Währungsübersicht: Behalte deine ausgewählten Währungen zusammen im Blick.\n• Kurs für unterwegs: Halte ein Währungspaar griffbereit.\n• Bargeld verstehen: Rechne Banknotenbeträge oder Metallgewichte um.\n• Verlauf: Sieh, wie sich ein Wechselkurs verändert hat.\n\nWÄHRUNGEN, KRYPTO UND EDELMETALLE\nRechne Alltagswährungen, Bitcoin, Ethereum und weitere unterstützte Kryptowährungen um. Vergleiche Gold, Silber, Platin und Palladium in Feinunzen, Gramm oder Kilogramm.\n\nAUCH OFFLINE\nÖffne Currency mit Internetverbindung, um die benötigten Kurse zu laden. Danach kannst du neue Beträge mit den auf deinem Gerät gespeicherten Kursen berechnen. Verbinde dich erneut, um sie zu aktualisieren.\n\nAPPLE WATCH\nRechne Währungen um und sieh den Kursverlauf am Handgelenk. Behalte einen Kurs auf deinem Zifferblatt oder füge ein Widget zum Smart-Stapel hinzu.\n\nFür iPhone, iPad und Apple Watch.\n\nDie Kurse dienen zur Orientierung. Banken, Kartenanbieter und Händler können andere Kurse und Gebühren verwenden. Die Verfügbarkeit des Kursverlaufs hängt vom Währungspaar und der Quelle ab.",
+      "keywords": "wechselkurs,reisen,rechner,verlauf,diagramm,bitcoin,ethereum,gold,silber,bargeld,widgets,umrechnen",
+      "promotionalText": "Rechne Währungen auf deinem Home-Bildschirm um. Gib einen Betrag im Rechner-Widget ein und sieh deine ausgewählten Währungen zusammen.",
+      "contextualPromotionalText": {
+        "offline": "Rechne offline mit zuvor geladenen Kursen weiter. Lade die benötigten Kurse online und berechne danach Beträge ohne Verbindung.",
+        "travel": "Vergleiche Preise im Ausland in vertrauten Währungen. Behalte hilfreiche Umrechnungen auf deinem Home-Bildschirm.",
+        "history": "Sieh, wie sich Wechselkurse verändert haben: mit verfügbaren Diagrammen in der App, im Verlauf-Widget oder auf der Apple Watch.",
+        "crypto": "Rechne Kryptowährungen um. Vergleiche Bitcoin, Ethereum und weitere unterstützte Kryptowährungen mit deinen ausgewählten Währungen.",
+        "metals": "Rechne Gold, Silber und weitere Edelmetalle um. Vergleiche Mengen in Feinunzen, Gramm oder Kilogramm."
+      }
+    },
+    "fr-FR": {
+      "name": "Currency: Devises & widgets",
+      "subtitle": "Hors ligne, crypto et métaux",
+      "description": "Convertissez des devises depuis votre écran d’accueil. Saisissez un montant dans le widget Calculatrice et comparez les devises choisies sans ouvrir l’app.\n\nCHOISISSEZ VOS WIDGETS\n• Calculatrice de devises: saisissez un montant pour voir plusieurs conversions à la fois.\n• Tableau de devises: regroupez les devises de votre choix.\n• Taux de poche: gardez une paire de devises à portée de main.\n• La valeur de tes billets: convertissez des montants en billets ou des poids de métaux.\n• Historique: découvrez l’évolution d’un taux de change.\n\nDEVISES, CRYPTOS ET MÉTAUX\nConvertissez les monnaies du quotidien, le Bitcoin, l’Ethereum et les autres cryptomonnaies prises en charge. Comparez l’or, l’argent, le platine et le palladium en onces troy, grammes ou kilogrammes.\n\nFONCTIONNE HORS LIGNE\nOuvrez Currency avec une connexion Internet pour charger les taux nécessaires. Calculez ensuite de nouveaux montants avec les taux enregistrés sur votre appareil. Reconnectez-vous pour les actualiser.\n\nAPPLE WATCH\nConvertissez des devises et consultez l’historique des taux au poignet. Gardez un taux sur votre cadran ou ajoutez un widget à votre pile intelligente.\n\nPour iPhone, iPad et Apple Watch.\n\nLes taux sont indicatifs. Les banques, les émetteurs de cartes et les négociants peuvent appliquer d’autres taux et frais. L’historique disponible varie selon la paire et la source.",
+      "keywords": "change,convertisseur,voyage,calculatrice,historique,graphique,bitcoin,ethereum,or,argent,monnaie",
+      "promotionalText": "Convertissez des devises depuis votre écran d’accueil. Saisissez un montant dans le widget Calculatrice et comparez vos devises.",
+      "contextualPromotionalText": {
+        "offline": "Convertissez hors ligne avec les taux déjà téléchargés. Chargez les taux nécessaires en ligne, puis calculez sans connexion.",
+        "travel": "Comprenez les prix à l’étranger dans vos devises habituelles. Comparez plusieurs devises et gardez vos conversions sur l’écran d’accueil.",
+        "history": "Consultez l’évolution des taux avec les graphiques disponibles dans l’app, le widget Historique ou sur Apple Watch.",
+        "crypto": "Convertissez des cryptos. Comparez le Bitcoin, l’Ethereum et les autres cryptomonnaies prises en charge avec les devises de votre choix.",
+        "metals": "Convertissez l’or, l’argent et d’autres métaux précieux. Comparez les quantités en onces troy, grammes ou kilogrammes."
+      }
+    },
+    "fr-CA": {
+      "name": "Currency: Devises & widgets",
+      "subtitle": "Hors ligne, crypto et métaux",
+      "description": "Convertissez des devises depuis votre écran d’accueil. Saisissez un montant dans le widget Calculatrice et comparez les devises choisies sans ouvrir l’app.\n\nCHOISISSEZ VOS WIDGETS\n• Calculatrice de devises: saisissez un montant pour voir plusieurs conversions à la fois.\n• Tableau de devises: regroupez les devises de votre choix.\n• Taux de poche: gardez une paire de devises à portée de main.\n• La valeur de tes billets: convertissez des montants en billets ou des poids de métaux.\n• Historique: découvrez l’évolution d’un taux de change.\n\nDEVISES, CRYPTOS ET MÉTAUX\nConvertissez les monnaies du quotidien, le Bitcoin, l’Ethereum et les autres cryptomonnaies prises en charge. Comparez l’or, l’argent, le platine et le palladium en onces troy, grammes ou kilogrammes.\n\nFONCTIONNE HORS LIGNE\nOuvrez Currency avec une connexion Internet pour charger les taux nécessaires. Calculez ensuite de nouveaux montants avec les taux enregistrés sur votre appareil. Reconnectez-vous pour les actualiser.\n\nAPPLE WATCH\nConvertissez des devises et consultez l’historique des taux au poignet. Gardez un taux sur votre cadran ou ajoutez un widget à votre pile intelligente.\n\nPour iPhone, iPad et Apple Watch.\n\nLes taux sont indicatifs. Les banques, les émetteurs de cartes de crédit et les négociants peuvent appliquer d’autres taux et frais. L’historique disponible varie selon la paire et la source.",
+      "keywords": "change,convertisseur,voyage,calculatrice,historique,graphique,bitcoin,ethereum,dollar,or,argent",
+      "promotionalText": "Convertissez des devises depuis votre écran d’accueil. Saisissez un montant dans le widget Calculatrice et comparez vos devises.",
+      "contextualPromotionalText": {
+        "offline": "Convertissez hors ligne avec les taux déjà téléchargés. Chargez les taux nécessaires en ligne, puis calculez sans connexion.",
+        "travel": "Comprenez les prix à l’étranger dans vos devises habituelles. Comparez plusieurs devises et gardez vos conversions sur l’écran d’accueil.",
+        "history": "Consultez l’évolution des taux avec les graphiques disponibles dans l’app, le widget Historique ou sur Apple Watch.",
+        "crypto": "Convertissez des cryptos. Comparez le Bitcoin, l’Ethereum et les autres cryptomonnaies prises en charge avec les devises de votre choix.",
+        "metals": "Convertissez l’or, l’argent et d’autres métaux précieux. Comparez les quantités en onces troy, grammes ou kilogrammes."
+      }
+    },
+    "es-ES": {
+      "name": "Currency: Conversor y widgets",
+      "subtitle": "Sin conexión, cripto y metales",
+      "description": "Convierte divisas desde la pantalla de inicio. Introduce un importe en el widget Calculadora y compara las monedas elegidas sin abrir la app.\n\nELIGE TUS WIDGETS\n• Calculadora de monedas: introduce un importe y consulta varias conversiones a la vez.\n• Panel de monedas: reúne las monedas que elijas.\n• Cambio de bolsillo: ten a mano un par de divisas.\n• Conoce tu efectivo: convierte importes en billetes o pesos de metales.\n• Historial: consulta cómo ha cambiado un tipo de cambio.\n\nDIVISAS, CRIPTOMONEDAS Y METALES\nConvierte monedas de uso diario, Bitcoin, Ethereum y otras criptomonedas compatibles. Compara oro, plata, platino y paladio en onzas troy, gramos o kilogramos.\n\nFUNCIONA SIN CONEXIÓN\nAbre Currency con conexión a internet para cargar los tipos de cambio que necesitas. Después podrás calcular nuevos importes con los tipos guardados en tu dispositivo. Vuelve a conectarte para actualizarlos.\n\nAPPLE WATCH\nConvierte divisas y consulta el historial de tipos de cambio desde la muñeca. Mantén un tipo de cambio en la esfera o añade un widget al Grupo Inteligente.\n\nPara iPhone, iPad y Apple Watch.\n\nLos tipos de cambio son orientativos. Los bancos, los emisores de tarjetas y los comerciantes pueden aplicar otros tipos y comisiones. La disponibilidad del historial depende del par y de la fuente.",
+      "keywords": "divisas,cambio,calculadora,viaje,historial,gráfico,bitcoin,ethereum,oro,plata,dinero,monedas",
+      "promotionalText": "Convierte divisas desde la pantalla de inicio. Introduce un importe en el widget Calculadora y compara las monedas que elijas.",
+      "contextualPromotionalText": {
+        "offline": "Sigue convirtiendo sin conexión con tipos de cambio ya descargados. Cárgalos con internet y calcula después sin conexión.",
+        "travel": "Consulta precios en el extranjero en monedas que conoces. Compara varias divisas y guarda conversiones útiles en la pantalla de inicio.",
+        "history": "Consulta cómo han cambiado los tipos de cambio con los gráficos disponibles en la app, el widget Historial o el Apple Watch.",
+        "crypto": "Convierte criptomonedas. Compara Bitcoin, Ethereum y otras criptomonedas compatibles con las monedas que elijas.",
+        "metals": "Convierte oro, plata y otros metales preciosos. Compara cantidades en onzas troy, gramos o kilogramos."
+      }
+    },
+    "es-MX": {
+      "name": "Currency: Conversor y widgets",
+      "subtitle": "Sin conexión, cripto y metales",
+      "description": "Convierte divisas desde la pantalla de inicio. Ingresa un monto en el widget Calculadora y compara las monedas elegidas sin abrir la app.\n\nELIGE TUS WIDGETS\n• Calculadora de monedas: ingresa un monto y consulta varias conversiones a la vez.\n• Panel de monedas: reúne las monedas que elijas.\n• Cambio de bolsillo: ten a mano un par de divisas.\n• Conoce tu efectivo: convierte montos en billetes o pesos de metales.\n• Historial: consulta cómo ha cambiado un tipo de cambio.\n\nDIVISAS, CRIPTOMONEDAS Y METALES\nConvierte monedas de uso diario, Bitcoin, Ethereum y otras criptomonedas compatibles. Compara oro, plata, platino y paladio en onzas troy, gramos o kilogramos.\n\nFUNCIONA SIN CONEXIÓN\nAbre Currency con conexión a internet para cargar los tipos de cambio que necesitas. Después podrás calcular nuevos montos con los tipos guardados en tu dispositivo. Vuelve a conectarte para actualizarlos.\n\nAPPLE WATCH\nConvierte divisas y consulta el historial de tipos de cambio desde la muñeca. Mantén un tipo de cambio en la carátula o agrega un widget a la Pila Inteligente.\n\nPara iPhone, iPad y Apple Watch.\n\nLos tipos de cambio son orientativos. Los bancos, los emisores de tarjetas y los comerciantes pueden aplicar otros tipos y comisiones. La disponibilidad del historial depende del par y de la fuente.",
+      "keywords": "divisas,tipo,cambio,calculadora,viaje,historial,gráfica,bitcoin,ethereum,oro,plata,peso,dólar",
+      "promotionalText": "Convierte divisas desde la pantalla de inicio. Ingresa un monto en el widget Calculadora y compara las monedas que elijas.",
+      "contextualPromotionalText": {
+        "offline": "Sigue convirtiendo sin conexión con tipos de cambio ya descargados. Cárgalos con internet y calcula después sin conexión.",
+        "travel": "Consulta precios en el extranjero en monedas que conoces. Compara varias divisas y guarda conversiones útiles en la pantalla de inicio.",
+        "history": "Consulta cómo han cambiado los tipos de cambio con las gráficas disponibles en la app, el widget Historial o el Apple Watch.",
+        "crypto": "Convierte criptomonedas. Compara Bitcoin, Ethereum y otras criptomonedas compatibles con las monedas que elijas.",
+        "metals": "Convierte oro, plata y otros metales preciosos. Compara cantidades en onzas troy, gramos o kilogramos."
+      }
+    },
+    "it": {
+      "name": "Currency: Cambio e widget",
+      "subtitle": "Offline, cripto e metalli",
+      "description": "Converti valute dalla schermata Home. Inserisci un importo nel widget Calcolatrice e confronta le valute scelte senza aprire l’app.\n\nSCEGLI I TUOI WIDGET\n• Calcolatrice valutaria: inserisci un importo e visualizza più conversioni insieme.\n• Tabellone valute: riunisci le valute che hai scelto.\n• Cambio tascabile: tieni una coppia di valute a portata di mano.\n• Il valore dei contanti: converti importi in banconote o pesi di metalli.\n• Cronologia: scopri come è cambiato un tasso di cambio.\n\nVALUTE, CRIPTOVALUTE E METALLI\nConverti le valute di tutti i giorni, Bitcoin, Ethereum e altre criptovalute supportate. Confronta oro, argento, platino e palladio in once troy, grammi o chilogrammi.\n\nFUNZIONA OFFLINE\nApri Currency con una connessione a internet per caricare i tassi necessari. Poi calcola nuovi importi con i tassi salvati sul dispositivo. Collegati di nuovo per aggiornarli.\n\nAPPLE WATCH\nConverti valute e consulta lo storico dei tassi dal polso. Tieni un tasso sul quadrante o aggiungi un widget alla Raccolta smart.\n\nPer iPhone, iPad e Apple Watch.\n\nI tassi sono indicativi. Banche, emittenti di carte e operatori possono applicare tassi e commissioni diversi. La disponibilità dello storico varia in base alla coppia e alla fonte.",
+      "keywords": "valute,convertitore,calcolatrice,viaggi,storico,grafico,bitcoin,ethereum,oro,argento,contanti",
+      "promotionalText": "Converti valute dalla schermata Home. Inserisci un importo nel widget Calcolatrice e visualizza insieme le valute scelte.",
+      "contextualPromotionalText": {
+        "offline": "Continua a convertire offline con i tassi già scaricati. Carica i tassi necessari online, poi calcola senza connessione.",
+        "travel": "Leggi i prezzi all’estero nelle valute che conosci. Confronta più valute e tieni le conversioni utili sulla schermata Home.",
+        "history": "Scopri come sono cambiati i tassi di cambio con i grafici disponibili nell’app, nel widget Cronologia o su Apple Watch.",
+        "crypto": "Converti criptovalute. Confronta Bitcoin, Ethereum e altre criptovalute supportate con le valute che scegli.",
+        "metals": "Converti oro, argento e altri metalli preziosi. Confronta quantità in once troy, grammi o chilogrammi."
+      }
+    },
+    "pt-BR": {
+      "name": "Currency: Conversor e widgets",
+      "subtitle": "Offline, cripto e metais",
+      "description": "Converta moedas pela Tela de Início. Digite um valor no widget Calculadora e compare as moedas escolhidas sem abrir o app.\n\nESCOLHA SEUS WIDGETS\n• Calculadora de moedas: digite um valor e veja várias conversões de uma vez.\n• Painel de moedas: reúna as moedas que você escolher.\n• Câmbio de bolso: tenha um par de moedas sempre à mão.\n• Conheça seu dinheiro: converta valores em cédulas ou pesos de metais.\n• Histórico: veja como uma taxa de câmbio mudou.\n\nMOEDAS, CRIPTOMOEDAS E METAIS\nConverta moedas do dia a dia, Bitcoin, Ethereum e outras criptomoedas compatíveis. Compare ouro, prata, platina e paládio em onças troy, gramas ou quilogramas.\n\nFUNCIONA OFFLINE\nAbra o Currency com conexão à internet para carregar as taxas necessárias. Depois, calcule novos valores com as taxas salvas no seu dispositivo. Conecte-se novamente para atualizá-las.\n\nAPPLE WATCH\nConverta moedas e consulte o histórico de taxas no pulso. Mantenha uma taxa no mostrador ou adicione um widget ao Conjunto Inteligente.\n\nPara iPhone, iPad e Apple Watch.\n\nAs taxas são indicativas. Bancos, emissores de cartões e negociantes podem usar taxas e tarifas diferentes. A disponibilidade do histórico varia conforme o par e a fonte.",
+      "keywords": "moedas,câmbio,calculadora,viagem,histórico,gráfico,bitcoin,ethereum,ouro,prata,dinheiro,dólar",
+      "promotionalText": "Converta moedas pela Tela de Início. Digite um valor no widget Calculadora e veja as moedas escolhidas juntas.",
+      "contextualPromotionalText": {
+        "offline": "Continue convertendo offline com taxas já baixadas. Carregue as taxas necessárias com internet e depois calcule sem conexão.",
+        "travel": "Confira preços no exterior em moedas que você conhece. Compare várias moedas e mantenha conversões úteis na Tela de Início.",
+        "history": "Veja como as taxas de câmbio mudaram com os gráficos disponíveis no app, no widget Histórico ou no Apple Watch.",
+        "crypto": "Converta criptomoedas. Compare Bitcoin, Ethereum e outras criptomoedas compatíveis com as moedas que você escolher.",
+        "metals": "Converta ouro, prata e outros metais preciosos. Compare quantidades em onças troy, gramas ou quilogramas."
+      }
+    },
+    "ja": {
+      "name": "Currency：通貨換算とウィジェット",
+      "subtitle": "保存レートでオフライン、暗号資産・貴金属",
+      "description": "ホーム画面から通貨を換算。計算機ウィジェットに金額を入力すると、アプリを開かずに選んだ複数の通貨を比較できます。\n\nウィジェットを選ぶ\n• 通貨計算機：金額を入力し、複数の換算結果をまとめて確認。\n• 通貨ボード：選んだ通貨を一覧に。\n• ポケットレート：よく使う通貨ペアを手元に。\n• 現金の価値：紙幣の金額や金属の重さを換算。\n• 履歴：為替レートの変化を確認。\n\n通貨・暗号資産・貴金属\n日常の通貨に加え、ビットコイン、イーサリアムなど対応する暗号資産を換算。金・銀・プラチナ・パラジウムは、トロイオンス、グラム、キログラムで確認できます。\n\nオフラインでも\nまずオンラインでCurrencyを開き、必要なレートを読み込みます。その後は端末に保存されたレートで、新しい金額を計算できます。レートの更新には再接続が必要です。\n\nAPPLE WATCH\n手首で通貨換算とレート履歴を確認。文字盤にレートを表示したり、スマートスタックにウィジェットを追加したりできます。\n\niPhone、iPad、Apple Watchに対応。\n\nレートは参考値です。銀行、カード発行会社、販売業者のレートや手数料とは異なる場合があります。履歴の提供範囲は通貨ペアと情報源によって異なります。",
+      "keywords": "為替,両替,電卓,海外旅行,ドル円,チャート,金価格,銀,ビットコイン,通販",
+      "promotionalText": "ホーム画面から通貨を換算。計算機ウィジェットに金額を入力して、選んだ通貨の換算結果をまとめて確認。",
+      "contextualPromotionalText": {
+        "offline": "オンラインで必要なレートを読み込んでおけば、保存したレートでオフラインでも金額を計算できます。",
+        "travel": "海外の値段を、なじみのある通貨で確認。複数の通貨を比較し、便利な換算をホーム画面に。",
+        "history": "為替レートの変化を確認。アプリ、履歴ウィジェット、Apple Watchで、利用できるチャートを表示。",
+        "crypto": "暗号資産を換算。ビットコイン、イーサリアムなど対応する暗号資産を、選んだ通貨と比較できます。",
+        "metals": "金・銀などの貴金属を換算。トロイオンス、グラム、キログラムで金額を比較できます。"
+      }
+    },
+    "ko": {
+      "name": "Currency: 환전 계산과 위젯",
+      "subtitle": "오프라인 환율, 암호화폐, 귀금속",
+      "description": "홈 화면에서 통화를 환산하세요. 계산기 위젯에 금액을 입력하면 앱을 열지 않고도 선택한 여러 통화를 비교할 수 있습니다.\n\n원하는 위젯 선택\n• 통화 계산기: 금액을 입력하고 여러 환산 결과를 한 번에 확인하세요.\n• 통화 보드: 선택한 통화를 한곳에 모아 보세요.\n• 포켓 환율: 자주 보는 통화쌍을 가까이 두세요.\n• 현금 가치: 지폐 금액이나 금속 무게를 환산하세요.\n• 환율 추이: 환율이 어떻게 변했는지 확인하세요.\n\n통화, 암호화폐, 귀금속\n일상에서 쓰는 통화와 비트코인, 이더리움 등 지원되는 암호화폐를 환산하세요. 금, 은, 백금, 팔라듐은 트로이온스, 그램, 킬로그램 단위로 확인할 수 있습니다.\n\n오프라인에서도 사용\n먼저 온라인에서 Currency를 열어 필요한 환율을 불러오세요. 이후에는 기기에 저장된 환율로 새로운 금액을 계산할 수 있습니다. 환율을 갱신하려면 다시 연결하세요.\n\nAPPLE WATCH\n손목에서 통화를 환산하고 환율 기록을 확인하세요. 시계 페이스에 환율을 표시하거나 스마트 스택에 위젯을 추가할 수 있습니다.\n\niPhone, iPad, Apple Watch용.\n\n환율은 참고용입니다. 은행, 카드 발급사, 판매업체의 환율과 수수료는 다를 수 있습니다. 제공되는 기록은 통화쌍과 데이터 출처에 따라 다릅니다.",
+      "keywords": "외화,해외여행,달러,유로,엔화,시세,차트,금값,은,비트코인,원화,백금,온스",
+      "promotionalText": "홈 화면에서 통화를 환산하세요. 계산기 위젯에 금액을 입력하고 선택한 통화를 한 번에 확인하세요.",
+      "contextualPromotionalText": {
+        "offline": "온라인에서 필요한 환율을 미리 불러오세요. 연결이 없어도 저장된 환율로 새로운 금액을 계산할 수 있습니다.",
+        "travel": "해외 가격을 익숙한 통화로 확인하세요. 여러 통화를 비교하고 자주 쓰는 환산 결과를 홈 화면에 두세요.",
+        "history": "환율의 변화를 확인하세요. 앱, 환율 추이 위젯, Apple Watch에서 제공되는 차트를 살펴보세요.",
+        "crypto": "암호화폐를 환산하세요. 비트코인, 이더리움 등 지원되는 암호화폐를 선택한 통화와 비교하세요.",
+        "metals": "금, 은 등 귀금속을 환산하세요. 트로이온스, 그램, 킬로그램 단위로 금액을 비교하세요."
+      }
+    },
+    "tr": {
+      "name": "Currency: Döviz ve Widget",
+      "subtitle": "Çevrimdışı, kripto ve metaller",
+      "description": "Ana Ekranınızdan döviz çevirin. Hesap Makinesi widget'ına bir tutar girin ve uygulamayı açmadan seçtiğiniz para birimlerini karşılaştırın.\n\nWIDGET'INIZI SEÇİN\n• Para Birimi Hesaplayıcı: bir tutar girip birden fazla sonucu aynı anda görün.\n• Para Birimi Panosu: seçtiğiniz para birimlerini bir arada tutun.\n• Cep Kuru: bir döviz çiftine kolayca erişin.\n• Nakit Değerini Bil: banknot tutarlarını veya metal ağırlıklarını çevirin.\n• Geçmiş: döviz kurunun zaman içindeki değişimini görün.\n\nDÖVİZ, KRİPTO VE METALLER\nGünlük para birimlerini, Bitcoin, Ethereum ve desteklenen diğer kripto paraları çevirin. Altın, gümüş, platin ve paladyumu troy ons, gram veya kilogram cinsinden inceleyin.\n\nÇEVRİMDIŞI KULLANIM\nGerekli kurları yüklemek için Currency'yi internete bağlıyken açın. Ardından cihazınıza kaydedilen kurlarla yeni tutarlar hesaplayabilirsiniz. Kurları yenilemek için tekrar bağlanın.\n\nAPPLE WATCH\nBileğinizden döviz çevirin ve kur geçmişini inceleyin. Saat kadranınıza bir kur veya Akıllı Gruplama'ya bir widget ekleyin.\n\niPhone, iPad ve Apple Watch için.\n\nKurlar referans amaçlıdır. Bankalar, kart kuruluşları ve satıcılar farklı kurlar ve ücretler uygulayabilir. Geçmiş verilerin kapsamı döviz çiftine ve kaynağa göre değişir.",
+      "keywords": "kur,çevirici,hesap,seyahat,dolar,euro,altın,gümüş,grafik,bitcoin,para,saat,geçmiş,gram,ons",
+      "promotionalText": "Ana Ekranınızdan döviz çevirin. Hesap Makinesi widget'ına bir tutar girip seçtiğiniz para birimlerini bir arada görün.",
+      "contextualPromotionalText": {
+        "offline": "Gerekli kurları çevrimiçiyken yükleyin. Ardından kaydedilmiş kurlarla internete bağlanmadan yeni tutarlar hesaplayın.",
+        "travel": "Yurt dışındaki fiyatları bildiğiniz para birimlerinde görün. Birden fazla dövizi karşılaştırın, sık kullandığınız dönüşümleri Ana Ekranınıza ekleyin.",
+        "history": "Kurların değişimini görün. Uygulamada, Geçmiş widget'ında veya Apple Watch'ta mevcut grafikleri inceleyin.",
+        "crypto": "Kripto para çevirin. Bitcoin, Ethereum ve desteklenen diğer kripto paraları seçtiğiniz para birimleriyle karşılaştırın.",
+        "metals": "Altın, gümüş ve diğer değerli metalleri çevirin. Tutarları troy ons, gram veya kilogram cinsinden karşılaştırın."
+      }
+    },
+    "ru": {
+      "name": "Currency: Конвертер и виджеты",
+      "subtitle": "Офлайн-курсы, крипто и металлы",
+      "description": "Конвертируйте валюты с экрана «Домой». Введите сумму в виджете «Калькулятор» и сравните выбранные валюты, не открывая приложение.\n\nВЫБЕРИТЕ ВИДЖЕТЫ\n• Валютный калькулятор: введите сумму и получите несколько результатов сразу.\n• Табло валют: выбранные валюты в одном месте.\n• Курс в кармане: нужная валютная пара всегда рядом.\n• Ваши наличные: пересчитывайте суммы в банкнотах или вес металлов.\n• История: смотрите, как менялся курс.\n\nВАЛЮТЫ, КРИПТОВАЛЮТЫ И МЕТАЛЛЫ\nКонвертируйте обычные валюты, биткоин, эфириум и другие поддерживаемые криптовалюты. Смотрите стоимость золота, серебра, платины и палладия в тройских унциях, граммах и килограммах.\n\nРАБОТА БЕЗ ИНТЕРНЕТА\nОткройте Currency с подключением к интернету и загрузите нужные курсы. Затем рассчитывайте новые суммы по курсам, сохранённым на устройстве. Для обновления подключитесь снова.\n\nAPPLE WATCH\nКонвертируйте валюты и просматривайте историю курса на запястье. Добавьте курс на циферблат или виджет в Смарт-стопку.\n\nДля iPhone, iPad и Apple Watch.\n\nКурсы приведены для справки. Банки, эмитенты карт и продавцы могут использовать другие курсы и комиссии. Доступность истории зависит от валютной пары и источника.",
+      "keywords": "обмен,калькулятор,доллар,валют,график,золото,серебро",
+      "promotionalText": "Конвертируйте валюты с экрана «Домой». Введите сумму в виджете «Калькулятор» и сравните выбранные валюты.",
+      "contextualPromotionalText": {
+        "offline": "Загрузите нужные курсы через интернет. Затем рассчитывайте новые суммы без подключения, используя сохранённые курсы.",
+        "travel": "Узнавайте цены за границей в привычных валютах. Сравнивайте несколько валют и держите нужные расчёты на экране «Домой».",
+        "history": "Смотрите, как менялись курсы. Открывайте доступные графики в приложении, виджете «История» или на Apple Watch.",
+        "crypto": "Конвертируйте криптовалюты. Сравнивайте биткоин, эфириум и другие поддерживаемые криптовалюты с выбранными валютами.",
+        "metals": "Пересчитывайте стоимость золота, серебра и других драгоценных металлов в тройских унциях, граммах или килограммах."
+      }
+    },
+    "uk": {
+      "name": "Currency: Конвертер і віджети",
+      "subtitle": "Офлайн, криптовалюти й метали",
+      "description": "Конвертуйте валюти з Початкового екрана. Введіть суму у віджеті «Калькулятор» і порівняйте вибрані валюти, не відкриваючи застосунок.\n\nВИБЕРІТЬ ВІДЖЕТИ\n• Валютний калькулятор: введіть суму й отримайте кілька результатів одночасно.\n• Табло валют: вибрані валюти в одному місці.\n• Курс у кишені: потрібна валютна пара завжди поруч.\n• Ваша готівка: перераховуйте суми в банкнотах або вагу металів.\n• Історія: дивіться, як змінювався курс.\n\nВАЛЮТИ, КРИПТОВАЛЮТИ Й МЕТАЛИ\nКонвертуйте звичайні валюти, біткоїн, ефіріум та інші підтримувані криптовалюти. Переглядайте вартість золота, срібла, платини й паладію в тройських унціях, грамах або кілограмах.\n\nРОБОТА БЕЗ ІНТЕРНЕТУ\nВідкрийте Currency з підключенням до інтернету та завантажте потрібні курси. Потім розраховуйте нові суми за курсами, збереженими на пристрої. Щоб оновити курси, підключіться знову.\n\nAPPLE WATCH\nКонвертуйте валюти й переглядайте історію курсу на зап’ястку. Додайте курс на циферблат або віджет у Динамічний стос.\n\nДля iPhone, iPad та Apple Watch.\n\nКурси наведено для довідки. Банки, емітенти карток і продавці можуть застосовувати інші курси й комісії. Доступність історії залежить від валютної пари та джерела.",
+      "keywords": "курс,калькулятор,долар,графік,золото,срібло,валют",
+      "promotionalText": "Конвертуйте валюти з Початкового екрана. Введіть суму у віджеті «Калькулятор» і порівняйте вибрані валюти.",
+      "contextualPromotionalText": {
+        "offline": "Завантажте потрібні курси через інтернет. Потім розраховуйте нові суми без підключення за збереженими курсами.",
+        "travel": "Переглядайте ціни за кордоном у звичних валютах. Порівнюйте кілька валют і тримайте потрібні розрахунки на Початковому екрані.",
+        "history": "Дивіться, як змінювалися курси. Відкривайте доступні графіки в застосунку, віджеті «Історія» або на Apple Watch.",
+        "crypto": "Конвертуйте криптовалюти. Порівнюйте біткоїн, ефіріум та інші підтримувані криптовалюти з вибраними валютами.",
+        "metals": "Перераховуйте вартість золота, срібла та інших дорогоцінних металів у тройських унціях, грамах або кілограмах."
+      }
+    },
+    "zh-Hans": {
+      "name": "Currency：货币换算与小组件",
+      "subtitle": "离线汇率、加密货币与贵金属",
+      "description": "在主屏幕上换算货币。在计算器小组件中输入金额，无需打开 App，即可比较所选的多种货币。\n\n选择你的小组件\n• 货币计算器：输入金额，同时查看多种换算结果。\n• 货币看板：将所选货币集中显示。\n• 口袋汇率：随手查看一个货币对。\n• 现金价值：换算纸币金额或金属重量。\n• 历史：查看汇率如何变化。\n\n货币、加密货币与贵金属\n换算日常货币、比特币、以太坊及其他受支持的加密货币。查看黄金、白银、铂金和钯金按金衡盎司、克或千克计算的价格。\n\n支持离线使用\n请先联网打开 Currency，加载所需汇率。之后，即可使用设备上保存的汇率计算新的金额。更新汇率时需重新联网。\n\nAPPLE WATCH\n在手腕上换算货币、查看汇率历史。将汇率添加到表盘，或在智能叠放中添加小组件。\n\n适用于 iPhone、iPad 和 Apple Watch。\n\n汇率仅供参考。银行、发卡机构和经销商可能采用不同的汇率与费用。历史数据的可用范围因货币对和数据来源而异。",
+      "keywords": "计算器,旅行,外币,美元,日元,港币,走势,黄金,白银,比特币,价格,欧元,韩元",
+      "promotionalText": "在主屏幕上换算货币。在计算器小组件中输入金额，一起查看所选的多种货币。",
+      "contextualPromotionalText": {
+        "offline": "先联网加载所需汇率，之后即可离线使用已保存的汇率计算新的金额。",
+        "travel": "用熟悉的货币查看海外价格。比较多种货币，将常用换算放在主屏幕上。",
+        "history": "查看汇率如何变化。在 App、历史小组件或 Apple Watch 上浏览可用的图表。",
+        "crypto": "换算加密货币。将比特币、以太坊及其他受支持的加密货币与所选货币进行比较。",
+        "metals": "换算黄金、白银及其他贵金属。按金衡盎司、克或千克比较金额。"
+      }
+    },
+    "zh-Hant": {
+      "name": "Currency：貨幣換算與小工具",
+      "subtitle": "離線匯率、加密貨幣與貴金屬",
+      "description": "在主畫面上換算貨幣。在計算機小工具中輸入金額，不必開啟 App，就能比較所選的多種貨幣。\n\n選擇你的小工具\n• 貨幣計算機：輸入金額，同時查看多種換算結果。\n• 貨幣看板：集中顯示所選的貨幣。\n• 口袋匯率：隨手查看一組貨幣配對。\n• 現金價值：換算紙鈔金額或金屬重量。\n• 歷史：查看匯率如何變化。\n\n貨幣、加密貨幣與貴金屬\n換算日常貨幣、比特幣、以太幣及其他支援的加密貨幣。查看黃金、白銀、鉑金和鈀金按金衡盎司、公克或公斤計算的價格。\n\n支援離線使用\n請先連上網路開啟 Currency，載入所需匯率。之後就能使用裝置上儲存的匯率計算新的金額。更新匯率時需重新連線。\n\nAPPLE WATCH\n在手腕上換算貨幣、查看匯率歷史。將匯率加入錶面，或在智慧型堆疊中加入小工具。\n\n適用於 iPhone、iPad 和 Apple Watch。\n\n匯率僅供參考。銀行、發卡機構和經銷商可能採用不同的匯率與費用。歷史資料的可用範圍依貨幣配對和資料來源而異。",
+      "keywords": "計算機,旅遊,外幣,美金,日圓,港幣,走勢,黃金,白銀,比特幣,歐元,韓元,公克",
+      "promotionalText": "在主畫面上換算貨幣。在計算機小工具中輸入金額，一起查看所選的多種貨幣。",
+      "contextualPromotionalText": {
+        "offline": "先連線載入所需匯率，之後就能離線使用已儲存的匯率計算新的金額。",
+        "travel": "用熟悉的貨幣查看海外價格。比較多種貨幣，將常用換算放在主畫面上。",
+        "history": "查看匯率如何變化。在 App、歷史小工具或 Apple Watch 上瀏覽可用的圖表。",
+        "crypto": "換算加密貨幣。將比特幣、以太幣及其他支援的加密貨幣與所選貨幣比較。",
+        "metals": "換算黃金、白銀及其他貴金屬。按金衡盎司、公克或公斤比較金額。"
+      }
+    }
+  }
+}

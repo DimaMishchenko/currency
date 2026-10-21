@@ -1,0 +1,93 @@
+{
+  "features": [
+    "refractivity"
+  ],
+  "fill": {
+    "automatic-gradient": "extended-srgb:0.08627,0.45098,1.00000,1.00000"
+  },
+  "groups": [
+    {
+      "name": "Four currency tiles",
+      "layers": [
+        {
+          "image-name": "01-Dollar-tile.png",
+          "name": "01-Dollar-tile",
+          "fill-specializations": [
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "extended-srgb:0.84000,0.90000,1.00000,0.72000"
+              }
+            }
+          ]
+        },
+        {
+          "image-name": "02-Quiet-top.png",
+          "name": "02-Quiet-top",
+          "fill-specializations": [
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "extended-srgb:0.84000,0.90000,1.00000,0.24000"
+              }
+            }
+          ]
+        },
+        {
+          "image-name": "03-Quiet-bottom.png",
+          "name": "03-Quiet-bottom",
+          "fill-specializations": [
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "extended-srgb:0.84000,0.90000,1.00000,0.38000"
+              }
+            }
+          ]
+        },
+        {
+          "image-name": "04-Yen-tile.png",
+          "name": "Pound tile",
+          "fill-specializations": [
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "extended-srgb:0.84000,0.90000,1.00000,0.88000"
+              }
+            }
+          ]
+        }
+      ],
+      "refractivity": {
+        "depth": 0.06,
+        "enabled": true,
+        "strength": 0.16
+      },
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.24
+      },
+      "translucency-specializations": [
+        {
+          "value": {
+            "enabled": true,
+            "value": 0.16
+          }
+        },
+        {
+          "appearance": "dark",
+          "value": {
+            "enabled": true,
+            "value": 0.62
+          }
+        }
+      ]
+    }
+  ],
+  "supported-platforms": {
+    "circles": [
+      "watchOS"
+    ],
+    "squares": "shared"
+  }
+}

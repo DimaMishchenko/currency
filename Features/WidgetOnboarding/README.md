@@ -2,7 +2,7 @@
 
 Widget discovery, installation guidance, and interactive demonstrations.
 
-`WidgetOnboarding` owns flow state and behavior; `WidgetOnboardingUI` owns presentation and resources. Demonstrations use production layouts with isolated preview state. The host supplies action handlers and location presentation; previews do not change installed widgets.
+`WidgetOnboarding` owns flow state and behavior; `WidgetOnboardingUI` owns presentation and resources. Demonstrations use production layouts with isolated preview state. The host supplies action handlers, location presentation and the current app icon image through the tutorial presentation environment. The app reads the native icon when a tutorial opens and on foreground return. SettingsUI owns the reused light/dark preview resources; WidgetOnboarding does not depend on Settings. Harnesses explicitly supply an inert app-symbol placeholder. Previews do not change installed widgets.
 
 ## Harness
 

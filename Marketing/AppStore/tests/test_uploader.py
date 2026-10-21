@@ -1,0 +1,448 @@
+import hashlib
+import io
+import importlib.util
+import json
+from pathlib import Path
+import subprocess
+import struct
+import sys
+import tempfile
+from types import SimpleNamespace
+import unittest
+from unittest.mock import patch
+
+MODULE = Path(__file__).resolve().parents[1] / 'upload.py'
+spec = importlib.util.spec_from_file_location('uploader', MODULE)
+u = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(u)
+
+
+def row(identifier, **attrs):
+    return {'id': identifier, 'attributes': attrs}
+
+
+def native_reference(duo_limit=12, cpp_limit=None, header_limit=1, split=False):
+    groups = ['DUO_OUTER_PROFILE', 'DUO_INNER_PROFILE'] if split else ['IPHONE_DUO_PROFILE']
+    attributes = {
+        'features': [{'featureId': feature, 'placementPolicies': [
+            {'placementType': 'APP_SCREENSHOT', 'groupLimits': [{'groupIds': groups, 'maxCount': duo_limit if feature == 'APP_STORE_VERSIONS' or cpp_limit is None else cpp_limit}]},
+            {'placementType': 'PRODUCT_PAGE_HEADER_ASSET', 'groupLimits': [{'groupIds': ['DEFAULT_PROFILE'], 'maxCount': header_limit}]},
+        ]} for feature in ('APP_STORE_VERSIONS', 'CUSTOM_PRODUCT_PAGES')],
+        'placementProfileGroups': [{'placementProfileGroupId': group, 'platform': 'IPHONE_APP_STORE', 'displayClassId': 'IPHONE_DUO'} for group in groups] + [{'placementProfileGroupId': 'DEFAULT_PROFILE', 'platform': 'ANY', 'displayClassId': 'DEFAULT'}],
+        'placementTypes': [
+            {'placementTypeId': 'APP_SCREENSHOT', 'acceptsAssetCategories': ['APP_SCREENSHOTS_AND_PREVIEWS'], 'specMappings': ([{'placementGroupId': groups[0], 'specs': ['outer']}, {'placementGroupId': groups[1], 'specs': ['inner']}] if split else [{'placementGroupId': groups[0], 'specs': ['outer', 'inner']}])},
+            {'placementTypeId': 'PRODUCT_PAGE_HEADER_ASSET', 'acceptsAssetCategories': ['CREATIVE_ASSETS'], 'specMappings': [{'placementGroupId': 'DEFAULT_PROFILE', 'specs': ['header']}]},
+        ],
+        'imageSpecs': [{'specId': name, 'compatiblePlacementTypes': ['APP_SCREENSHOT'], 'dimensions': {'minWidth': width, 'maxWidth': width, 'minHeight': height, 'maxHeight': height}} for name, (width, height) in [('outer', u.DIMENSIONS['duo-outer']), ('inner', u.DIMENSIONS['duo-inner'])]],
+        'videoSpecs': [{'specId': 'header', 'compatiblePlacementTypes': ['PRODUCT_PAGE_HEADER_ASSET'], 'dimensions': {'minWidth': 3840, 'maxWidth': 3840, 'minHeight': 1646, 'maxHeight': 1646}}],
+    }
+    return [{'id': 'reference', 'attributes': attributes}]
+
+
+class FakeCLI:
+    def __init__(self, state=None, apply=False):
+        self.state, self.apply, self.calls = state or {}, apply, []
+
+    def api(self, method, path, body=None):
+        self.calls.append((method, path, body))
+        if method != 'GET':
+            if not self.apply:
+                raise AssertionError('Dry-run attempted mutation')
+            return {'data': {'id': 'created-' + str(len(self.calls))}}
+        return {'data': self.state.get(path, [])}
+
+    def run(self, args, body=None, mutate=False):
+        if mutate and not self.apply:
+            raise AssertionError('Dry-run attempted command mutation')
+        self.calls.append(('COMMAND', args, body))
+        return {'videoId': 'uploaded-video'}
+
+
+class UploaderTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+        self.addCleanup(self.tmp.cleanup)
+        self.meta = {'appId': '6816213577', 'locales': {'en-US': {'name': 'Currency', 'description': 'Convert', 'promotionalText': 'Fast', 'contextualPromotionalText': {f: 'About ' + f for f in u.FAMILIES[1:]}}}}
+        self.slots = {}
+        for profile in u.PROFILES:
+            for i in range(1, 7):
+                file = self.root / (profile + str(i) + '.png')
+                file.write_bytes((profile + str(i)).encode())
+                self.slots[('en-US', profile, 'default', i)] = {'file': file}
+        self.state = {
+            '/v1/appAssetLibraryRefData': native_reference(),
+            '/v1/apps/6816213577/appStoreVersions': [row('version', platform='IOS', versionString='1.2', appStoreState='PREPARE_FOR_SUBMISSION')],
+            '/v1/apps/6816213577/appInfos': [row('info', appStoreState='PREPARE_FOR_SUBMISSION')],
+            '/v1/appStoreVersions/version/appStoreVersionLocalizations': [row('locale', locale='en-US', description='Convert', promotionalText='Fast')],
+            '/v1/appInfos/info/appInfoLocalizations': [row('info-locale', locale='en-US', name='Currency')],
+        }
+
+    def planner(self, cli, scopes):
+        return u.Planner(cli, self.meta, self.slots, {}, 'version', '1.2', 'info', scopes)
+
+    def test_dry_run_only_reads_and_plans_uploads(self):
+        cli = FakeCLI(self.state)
+        plan = self.planner(cli, {'default'}).preflight()
+        self.assertEqual([o['method'] for o in plan.ops], ['SCREENSHOTS'] * 3)
+        self.assertTrue(all(c[0] == 'GET' for c in cli.calls))
+        with self.assertRaisesRegex(u.UploadError, 'Apply mode'):
+            plan.execute()
+        self.assertTrue(all(c[0] == 'GET' for c in cli.calls))
+
+    def test_unchanged_metadata_is_idempotent(self):
+        cli = FakeCLI(self.state)
+        plan = self.planner(cli, {'metadata'}).preflight()
+        self.assertEqual(plan.ops, [])
+
+    def test_complete_matching_screenshots_are_idempotent(self):
+        sets = []
+        for profile, display in u.PROFILES.items():
+            sets.append(row(profile, screenshotDisplayType=display))
+            self.state['/v1/appScreenshotSets/' + profile + '/appScreenshots'] = [row(str(i), sourceFileChecksum=hashlib.md5(self.slots[('en-US', profile, 'default', i)]['file'].read_bytes()).hexdigest(), assetDeliveryState={'state': 'COMPLETE'}) for i in range(1, 7)]
+        self.state['/v1/appStoreVersionLocalizations/locale/appScreenshotSets'] = sets
+        plan = self.planner(FakeCLI(self.state), {'default'}).preflight()
+        self.assertEqual(plan.ops, [])
+
+    def test_conflicting_screenshot_refuses_before_writes(self):
+        self.state['/v1/appStoreVersionLocalizations/locale/appScreenshotSets'] = [row('set', screenshotDisplayType='APP_IPHONE_61')]
+        self.state['/v1/appScreenshotSets/set/appScreenshots'] = [row('old', sourceFileChecksum='different')]
+        cli = FakeCLI(self.state, apply=True)
+        with self.assertRaisesRegex(u.UploadError, 'differs'):
+            self.planner(cli, {'metadata', 'default'}).preflight()
+        self.assertTrue(all(c[0] == 'GET' for c in cli.calls))
+
+    def test_live_or_wrong_version_refuses_before_mutation(self):
+        for field, value in [('appStoreState', 'READY_FOR_SALE'), ('versionString', '8.0')]:
+            with self.subTest(field=field):
+                self.state['/v1/apps/6816213577/appStoreVersions'][0]['attributes'][field] = value
+                cli = FakeCLI(self.state, apply=True)
+                with self.assertRaises(u.UploadError):
+                    self.planner(cli, {'metadata'}).preflight()
+                self.assertTrue(all(c[0] == 'GET' for c in cli.calls))
+
+    def test_duo_queues_native_images_and_exact_order_without_legacy_enum(self):
+        cli = FakeCLI(self.state)
+        plan = self.planner(cli, {'duo'})
+        plan.library = 'library'
+        plan.native_policy_preflight()
+        for profile in ('duo-outer', 'duo-inner'):
+            for order in range(1, 7):
+                file = self.root / (profile + str(order) + '.png')
+                file.write_bytes((profile + str(order)).encode())
+                self.slots[('en-US', profile, 'default', order)] = {'file': file, 'sha256': u.sha256(file)}
+        plan.duo_screenshots('locale', 'default', 'en-US')
+        uploads = [op for op in plan.ops if op['method'] == 'LIBRARY']
+        placements = [op for op in plan.ops if op['path'] == '/v1/appAssetLibraryPlacements']
+        self.assertEqual(len(uploads), 12)
+        self.assertEqual(len(placements), 12)
+        self.assertTrue(all(op['body']['data']['attributes']['placementGroup'] == 'IPHONE_DUO_PROFILE' for op in placements))
+        ordering = plan.ops[-1]['body']['data']
+        self.assertEqual(ordering['relationships']['orderedPlacements']['data'], [{'type': 'appAssetLibraryPlacements', 'id': op['ref']} for op in placements])
+        self.assertNotIn('APP_IPHONE_DUO', json.dumps(plan.summary()))
+        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_native_capacity_insufficient_for_shared_duo_group_stops_before_any_plan(self):
+        self.state['/v1/appAssetLibraryRefData'] = native_reference(duo_limit=10)
+        cli = FakeCLI(self.state, apply=True)
+        plan = self.planner(cli, {'metadata', 'duo', 'header'})
+        with self.assertRaisesRegex(u.UploadError, 'requires 12, maximum 10'):
+            plan.preflight()
+        self.assertEqual(plan.ops, [])
+        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_native_capacity_checks_cpp_feature_independently(self):
+        self.state['/v1/appAssetLibraryRefData'] = native_reference(duo_limit=12, cpp_limit=10)
+        cli = FakeCLI(self.state, apply=True)
+        plan = self.planner(cli, {'duo'})
+        with self.assertRaisesRegex(u.UploadError, 'CUSTOM_PRODUCT_PAGES/APP_SCREENSHOT'):
+            plan.preflight()
+        self.assertEqual(plan.ops, [])
+        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_header_capacity_zero_stops_before_any_metadata_changes(self):
+        self.state['/v1/appAssetLibraryRefData'] = native_reference(header_limit=0)
+        cli = FakeCLI(self.state, apply=True)
+        plan = self.planner(cli, {'metadata', 'header'})
+        with self.assertRaisesRegex(u.UploadError, 'PRODUCT_PAGE_HEADER_ASSET/DEFAULT_PROFILE: requires 1, maximum 0'):
+            plan.preflight()
+        self.assertEqual(plan.ops, [])
+        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_native_unknown_policy_or_spec_fails_closed(self):
+        for missing in ('features', 'placementProfileGroups', 'placementTypes', 'imageSpecs'):
+            with self.subTest(missing=missing):
+                reference = native_reference()
+                reference[0]['attributes'].pop(missing)
+                self.state['/v1/appAssetLibraryRefData'] = reference
+                cli = FakeCLI(self.state, apply=True)
+                plan = self.planner(cli, {'metadata', 'duo'})
+                with self.assertRaises(u.UploadError):
+                    plan.preflight()
+                self.assertEqual(plan.ops, [])
+                self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_split_duo_groups_use_live_limits_and_order_each_group(self):
+        self.state['/v1/appAssetLibraryRefData'] = native_reference(duo_limit=6, split=True)
+        cli = FakeCLI(self.state)
+        plan = self.planner(cli, {'duo', 'header'})
+        plan.library = 'library'
+        plan.native_policy_preflight()
+        self.assertEqual(plan.duo_groups, {'duo-outer': 'DUO_OUTER_PROFILE', 'duo-inner': 'DUO_INNER_PROFILE'})
+        self.assertEqual(plan.header_group, 'DEFAULT_PROFILE')
+        self.assertEqual(len(plan.notes), 6)
+        for profile in ('duo-outer', 'duo-inner'):
+            for order in range(1, 7):
+                file = self.root / (profile + str(order) + '.png')
+                file.write_bytes((profile + str(order)).encode())
+                self.slots[('en-US', profile, 'default', order)] = {'file': file, 'sha256': u.sha256(file)}
+        plan.duo_screenshots('locale', 'default', 'en-US')
+        orders = [op for op in plan.ops if op['path'] == '/v1/appAssetLibraryPlacementOrderingRequests']
+        self.assertEqual(len(orders), 2)
+        self.assertTrue(all(len(op['body']['data']['relationships']['orderedPlacements']['data']) == 6 for op in orders))
+        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_header_uses_runtime_group_and_optional_video_constraints(self):
+        reference = native_reference()
+        attributes = reference[0]['attributes']
+        attributes['placementProfileGroups'][-1]['placementProfileGroupId'] = 'CREATIVE_DEFAULT_V2'
+        attributes['placementTypes'][-1]['specMappings'][0]['placementGroupId'] = 'CREATIVE_DEFAULT_V2'
+        for feature in attributes['features']:
+            feature['placementPolicies'][-1]['groupLimits'][0]['groupIds'] = ['CREATIVE_DEFAULT_V2']
+        attributes['videoSpecs'][0].update(aspectRatio='21:9', frameRates=[{'minFps': 30, 'maxFps': 30}], duration={'min': 'PT5S', 'max': 'PT30S'}, audioRequired=False)
+        self.state['/v1/appAssetLibraryRefData'] = reference
+        plan = self.planner(FakeCLI(self.state), {'header'})
+        plan.header = {'video': {'fps': 30, 'duration': 15, 'audio': False}}
+        plan.native_policy_preflight()
+        plan.place_header('locale', 'default', 'video-id')
+        self.assertEqual(plan.ops[-1]['body']['data']['attributes']['placementGroup'], 'CREATIVE_DEFAULT_V2')
+
+    def test_optional_native_spec_constraints_fail_before_changes(self):
+        for change in ({'aspectRatio': '1:1'}, {'frameRates': [{'minFps': 60, 'maxFps': 60}]}, {'duration': {'min': 'PT5S', 'max': 'PT10S'}}, {'audioRequired': True}):
+            with self.subTest(change=change):
+                reference = native_reference()
+                reference[0]['attributes']['videoSpecs'][0].update(change)
+                self.state['/v1/appAssetLibraryRefData'] = reference
+                cli = FakeCLI(self.state, apply=True)
+                plan = self.planner(cli, {'metadata', 'header'})
+                plan.header = {'video': {'fps': 30, 'duration': 15, 'audio': False}}
+                with self.assertRaisesRegex(u.UploadError, 'specification is missing or ambiguous'):
+                    plan.preflight()
+                self.assertEqual(plan.ops, [])
+                self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_duo_only_cpp_targets_do_not_change_text_or_keywords(self):
+        self.meta['locales']['en-US'].pop('contextualPromotionalText')
+        self.meta['keywordRouting'] = {family: {'en-US': ['travel']} for family in u.FAMILIES[1:]}
+        self.state['/v1/apps/6816213577/appCustomProductPages'] = [row('page-' + family, name='Currency - ' + family) for family in u.FAMILIES[1:]]
+        for family in u.FAMILIES[1:]:
+            self.state['/v1/appCustomProductPages/page-' + family + '/appCustomProductPageVersions'] = [row('version-' + family, state='PREPARE_FOR_SUBMISSION')]
+            self.state['/v1/appCustomProductPageVersions/version-' + family + '/appCustomProductPageLocalizations'] = [row('locale-' + family, locale='en-US', promotionalText='Keep current text')]
+        cli = FakeCLI(self.state, apply=True)
+        plan = self.planner(cli, {'duo'})
+        targets = {}
+        plan.cpp_targets(targets)
+        self.assertEqual(plan.ops, [])
+        self.assertEqual(len(targets), 5)
+        self.assertEqual(plan.notes, [])
+        self.assertTrue(all(call[0] == 'GET' and 'searchKeywords' not in call[1] for call in cli.calls))
+        for family in u.FAMILIES[1:]:
+            self.state['/v1/appCustomProductPageVersions/version-' + family + '/appCustomProductPageLocalizations'] = []
+        missing = self.planner(FakeCLI(self.state, apply=True), {'duo'})
+        missing.cpp_targets({})
+        self.assertEqual(len(missing.ops), 5)
+        self.assertTrue(all(op['method'] == 'POST' and op['body']['data']['type'] == 'appCustomProductPageLocalizations' and op['body']['data']['attributes'] == {'locale': 'en-US'} for op in missing.ops))
+
+    def test_profile_mapping_matches_approved_recipe_dimensions(self):
+        recipe = json.loads((MODULE.parent / 'design' / 'recipe.json').read_text())
+        for placement in recipe['placements']:
+            self.assertEqual(u.DIMENSIONS[placement['profile']], (placement['width'], placement['height']))
+        self.assertEqual(u.PROFILES['watch'], 'APP_WATCH_SERIES_10')
+
+    def test_png_preflight_rejects_alpha_transparency_and_wrong_size(self):
+        def png(color=2, extra=b''):
+            return b'\x89PNG\r\n\x1a\n' + struct.pack('>I4sIIBBBBBI', 13, b'IHDR', 2, 3, 8, color, 0, 0, 0, 0) + extra + struct.pack('>I4sI', 0, b'IEND', 0)
+        image = self.root / 'test.png'
+        image.write_bytes(png())
+        u.validate_png(image, (2, 3))
+        with self.assertRaisesRegex(u.UploadError, 'dimensions'):
+            u.validate_png(image, (3, 2))
+        image.write_bytes(png(color=6))
+        with self.assertRaisesRegex(u.UploadError, 'alpha'):
+            u.validate_png(image, (2, 3))
+        image.write_bytes(png(extra=struct.pack('>I4sI', 0, b'tRNS', 0)))
+        with self.assertRaisesRegex(u.UploadError, 'transparency'):
+            u.validate_png(image, (2, 3))
+
+    def test_partial_failure_receipt_contains_ids_without_urls(self):
+        receipt = self.root / 'receipts.jsonl'
+        cli = u.CLI(apply=True, receipts=receipt)
+        response = subprocess.CompletedProcess([], 1, json.dumps({'videoId': 'reserved-video', 'uploadOperations': [{'url': 'https://private.invalid/signed-token'}]}), 'private')
+        with patch.object(subprocess, 'run', return_value=response):
+            with self.assertRaises(u.UploadError):
+                cli.run(['asset-library', 'videos', 'upload'], mutate=True)
+        text = receipt.read_text()
+        self.assertIn('reserved-video', text)
+        self.assertNotIn('https', text)
+        self.assertNotIn('signed-token', text)
+        self.assertEqual(receipt.stat().st_mode & 0o777, 0o600)
+
+    def test_pending_ids_resolve_in_order(self):
+        cli = FakeCLI(apply=True)
+        plan = self.planner(cli, set())
+        parent = plan.queue('POST', '/v1/appCustomProductPages', u.resource('appCustomProductPages', {'name': 'offline'}))
+        plan.queue('POST', '/v1/appCustomProductPageVersions', u.resource('appCustomProductPageVersions', {}, {'appCustomProductPage': u.relationship('appCustomProductPages', parent)}))
+        plan.execute()
+        self.assertEqual(cli.calls[1][2]['data']['relationships']['appCustomProductPage']['data']['id'], 'created-1')
+
+    def test_cli_suppresses_sensitive_failure_output(self):
+        cli = u.CLI(apply=True)
+        result = subprocess.CompletedProcess([], 1, 'https://private-upload.invalid/token', 'PRIVATE_KEY_AND_URL')
+        with patch.object(subprocess, 'run', return_value=result) as run:
+            with self.assertRaises(u.UploadError) as error:
+                cli.api('POST', '/v1/appInfos', {'data': {}})
+        self.assertNotIn('PRIVATE', str(error.exception))
+        self.assertNotIn('private-upload', str(error.exception))
+        self.assertEqual(run.call_args.kwargs['input'], '{"data": {}}')
+        self.assertNotIn('shell', run.call_args.kwargs)
+
+    def test_cli_reports_only_allowlisted_structured_http_status(self):
+        for stream in ('stdout', 'stderr'):
+            for status in ('401', '403', '404', '409', '422', '429', '500', 503):
+                with self.subTest(stream=stream, status=status):
+                    payload = json.dumps({'errors': [{'status': status, 'title': 'PRIVATE_KEY', 'detail': 'https://private.invalid/signed-token'}]})
+                    output = {'stdout': '', 'stderr': ''}
+                    output[stream] = payload
+                    result = subprocess.CompletedProcess([], 1, output['stdout'], output['stderr'])
+                    with patch.object(subprocess, 'run', return_value=result):
+                        with self.assertRaises(u.UploadError) as error:
+                            u.CLI().api('GET', '/v1/apps')
+                    message = str(error.exception)
+                    self.assertIn('HTTP ' + str(status), message)
+                    self.assertNotIn('PRIVATE_KEY', message)
+                    self.assertNotIn('https', message)
+                    self.assertNotIn('signed-token', message)
+
+    def test_cli_keeps_unknown_or_missing_error_status_generic(self):
+        for payload in ({'errors': [{'title': 'PRIVATE_KEY', 'detail': 'https://private.invalid'}]}, {'errors': [{'status': '403 https://private.invalid'}]}, {'errors': [{'status': '400'}]}, {'errors': 'PRIVATE_KEY'}, ['PRIVATE_KEY']):
+            with self.subTest(payload=payload):
+                result = subprocess.CompletedProcess([], 1, json.dumps(payload), 'PRIVATE_KEY')
+                with patch.object(subprocess, 'run', return_value=result):
+                    with self.assertRaises(u.UploadError) as error:
+                        u.CLI().api('GET', '/v1/apps')
+                self.assertNotIn('HTTP', str(error.exception))
+                self.assertNotIn('PRIVATE_KEY', str(error.exception))
+                self.assertNotIn('https', str(error.exception))
+
+    def test_cli_mutation_guard_runs_before_subprocess(self):
+        with patch.object(subprocess, 'run') as run:
+            with self.assertRaisesRegex(u.UploadError, 'dry-run'):
+                u.CLI().api('POST', '/v1/appInfos', {})
+            run.assert_not_called()
+
+    def test_media_path_traversal_and_symlinks_are_refused(self):
+        for name in ('../escape', '/absolute', 'same/../escape'):
+            with self.subTest(name=name):
+                with self.assertRaisesRegex(u.UploadError, 'path'):
+                    u.confined(self.root, name)
+        actual = self.root / 'actual.png'
+        actual.write_bytes(b'image')
+        (self.root / 'link.png').symlink_to(actual)
+        with self.assertRaisesRegex(u.UploadError, 'symlink'):
+            u.confined(self.root, 'link.png')
+
+    def test_validate_only_never_constructs_remote_client(self):
+        metadata = self.root / 'metadata.json'
+        metadata.write_text('{}')
+        (self.root / 'manifest.json').write_text('{}')
+        with patch.object(sys, 'argv', ['upload.py', '--validate-only', '--metadata', str(metadata), '--media-dir', str(self.root)]), patch.object(u, 'validate_media', return_value=({'placement': {}}, {})), patch.object(u, 'CLI') as client:
+            self.assertEqual(u.main(), 0)
+            client.assert_not_called()
+
+    def test_remote_plan_requires_receipts(self):
+        with patch.object(sys, 'argv', ['upload.py']), patch.object(u, 'validate_media') as validate:
+            with self.assertRaises(SystemExit) as error:
+                u.main()
+            self.assertEqual(error.exception.code, 2)
+            validate.assert_not_called()
+
+    def test_validate_only_rejects_apply(self):
+        with patch.object(sys, 'argv', ['upload.py', '--validate-only', '--apply']), patch.object(u, 'CLI') as client:
+            with self.assertRaises(SystemExit) as error:
+                u.main()
+            self.assertEqual(error.exception.code, 2)
+            client.assert_not_called()
+
+    def test_target_discovery_selects_only_unique_editable_ios_and_info(self):
+        self.state['/v1/apps/6816213577/appStoreVersions'] += [row('live', platform='IOS', versionString='1.0', appStoreState='READY_FOR_SALE'), row('mac', platform='MAC_OS', versionString='1.2', appStoreState='PREPARE_FOR_SUBMISSION')]
+        self.state['/v1/apps/6816213577/appInfos'].append(row('live-info', appStoreState='READY_FOR_SALE'))
+        cli = FakeCLI(self.state, apply=True)
+        target = u.resolve_targets(cli, '6816213577')
+        self.assertEqual(target, {'versionId': 'version', 'versionString': '1.2', 'appInfoId': 'info'})
+        self.assertEqual([call[0] for call in cli.calls], ['GET', 'GET'])
+
+    def test_target_discovery_rejects_ambiguous_version_without_mutation(self):
+        self.state['/v1/apps/6816213577/appStoreVersions'].append(row('another', platform='IOS', versionString='1.3', appStoreState='PREPARE_FOR_SUBMISSION'))
+        cli = FakeCLI(self.state, apply=True)
+        with self.assertRaisesRegex(u.UploadError, 'Multiple editable iOS'):
+            u.resolve_targets(cli, '6816213577')
+        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+        self.assertEqual(u.resolve_targets(cli, '6816213577', version_string='1.3')['versionId'], 'another')
+        self.assertEqual(u.resolve_targets(cli, '6816213577', version_id='version')['versionString'], '1.2')
+
+    def test_target_discovery_filters_never_fall_back_to_another_draft(self):
+        for filters in ({'version_id': 'wrong'}, {'version_string': '9.0'}, {'version_id': 'version', 'version_string': '9.0'}, {'info_id': 'wrong'}):
+            with self.subTest(filters=filters):
+                cli = FakeCLI(self.state, apply=True)
+                with self.assertRaisesRegex(u.UploadError, 'No editable'):
+                    u.resolve_targets(cli, '6816213577', **filters)
+                self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_target_discovery_rejects_zero_or_live_only_candidates(self):
+        for collection, replacement in [('appStoreVersions', []), ('appStoreVersions', [row('live', platform='IOS', versionString='1.0', appStoreState='READY_FOR_SALE')]), ('appInfos', []), ('appInfos', [row('live', appStoreState='READY_FOR_SALE')])]:
+            with self.subTest(collection=collection, replacement=replacement):
+                state = dict(self.state)
+                state['/v1/apps/6816213577/' + collection] = replacement
+                cli = FakeCLI(state, apply=True)
+                with self.assertRaisesRegex(u.UploadError, 'No editable'):
+                    u.resolve_targets(cli, '6816213577')
+                self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_target_discovery_ambiguous_info_requires_exact_filter(self):
+        self.state['/v1/apps/6816213577/appInfos'].append(row('second-info', appStoreState='REJECTED'))
+        cli = FakeCLI(self.state, apply=True)
+        with self.assertRaisesRegex(u.UploadError, 'Multiple editable app-info'):
+            u.resolve_targets(cli, '6816213577')
+        self.assertEqual(u.resolve_targets(cli, '6816213577', info_id='second-info')['appInfoId'], 'second-info')
+        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_main_blank_filters_resolve_then_pass_exact_target_to_planner(self):
+        metadata = self.root / 'metadata.json'
+        metadata.write_text(json.dumps(self.meta))
+        (self.root / 'manifest.json').write_text('{}')
+        cli = FakeCLI(self.state)
+        args = ['upload.py', '--metadata', str(metadata), '--media-dir', str(self.root), '--receipts', str(self.root / 'receipt.jsonl'), '--version-id', '', '--version-string', '', '--app-info-id', '']
+        with patch.object(sys, 'argv', args), patch.object(u, 'validate_media', return_value=({}, {})), patch.object(u, 'CLI', return_value=cli), patch.object(u, 'Planner') as planner, patch.object(sys, 'stdout', new_callable=io.StringIO) as output:
+            planner.return_value.preflight.return_value = SimpleNamespace(ops=[], blockers=[], notes=[], summary=lambda: [])
+            self.assertEqual(u.main(), 0)
+            self.assertEqual(planner.call_args.args[4:7], ('version', '1.2', 'info'))
+            resolved = json.loads(output.getvalue().splitlines()[0])
+            self.assertEqual(resolved, {'resolvedTarget': {'versionId': 'version', 'versionString': '1.2', 'appInfoId': 'info'}})
+        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_failed_first_mutation_stops_plan(self):
+        class Failing(FakeCLI):
+            def api(self, method, path, body=None):
+                self.calls.append((method, path, body))
+                raise u.UploadError('asc command failed')
+        cli = Failing(apply=True)
+        plan = self.planner(cli, set())
+        plan.queue('POST', '/v1/appInfos', {})
+        plan.queue('POST', '/v1/appInfos', {})
+        with self.assertRaises(u.UploadError):
+            plan.execute()
+        self.assertEqual(len(cli.calls), 1)
+
+
+if __name__ == '__main__':
+    unittest.main()
