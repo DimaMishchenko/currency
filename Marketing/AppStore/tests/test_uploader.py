@@ -1,4 +1,5 @@
 import hashlib
+import io
 import importlib.util
 import json
 from pathlib import Path
@@ -6,6 +7,7 @@ import subprocess
 import struct
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -173,6 +175,34 @@ class UploaderTests(unittest.TestCase):
         self.assertEqual(run.call_args.kwargs['input'], '{"data": {}}')
         self.assertNotIn('shell', run.call_args.kwargs)
 
+    def test_cli_reports_only_allowlisted_structured_http_status(self):
+        for stream in ('stdout', 'stderr'):
+            for status in ('401', '403', '404', '409', '422', '429', '500', 503):
+                with self.subTest(stream=stream, status=status):
+                    payload = json.dumps({'errors': [{'status': status, 'title': 'PRIVATE_KEY', 'detail': 'https://private.invalid/signed-token'}]})
+                    output = {'stdout': '', 'stderr': ''}
+                    output[stream] = payload
+                    result = subprocess.CompletedProcess([], 1, output['stdout'], output['stderr'])
+                    with patch.object(subprocess, 'run', return_value=result):
+                        with self.assertRaises(u.UploadError) as error:
+                            u.CLI().api('GET', '/v1/apps')
+                    message = str(error.exception)
+                    self.assertIn('HTTP ' + str(status), message)
+                    self.assertNotIn('PRIVATE_KEY', message)
+                    self.assertNotIn('https', message)
+                    self.assertNotIn('signed-token', message)
+
+    def test_cli_keeps_unknown_or_missing_error_status_generic(self):
+        for payload in ({'errors': [{'title': 'PRIVATE_KEY', 'detail': 'https://private.invalid'}]}, {'errors': [{'status': '403 https://private.invalid'}]}, {'errors': [{'status': '400'}]}, {'errors': 'PRIVATE_KEY'}, ['PRIVATE_KEY']):
+            with self.subTest(payload=payload):
+                result = subprocess.CompletedProcess([], 1, json.dumps(payload), 'PRIVATE_KEY')
+                with patch.object(subprocess, 'run', return_value=result):
+                    with self.assertRaises(u.UploadError) as error:
+                        u.CLI().api('GET', '/v1/apps')
+                self.assertNotIn('HTTP', str(error.exception))
+                self.assertNotIn('PRIVATE_KEY', str(error.exception))
+                self.assertNotIn('https', str(error.exception))
+
     def test_cli_mutation_guard_runs_before_subprocess(self):
         with patch.object(subprocess, 'run') as run:
             with self.assertRaisesRegex(u.UploadError, 'dry-run'):
@@ -198,7 +228,7 @@ class UploaderTests(unittest.TestCase):
             self.assertEqual(u.main(), 0)
             client.assert_not_called()
 
-    def test_remote_plan_requires_explicit_ids_and_receipts(self):
+    def test_remote_plan_requires_receipts(self):
         with patch.object(sys, 'argv', ['upload.py']), patch.object(u, 'validate_media') as validate:
             with self.assertRaises(SystemExit) as error:
                 u.main()
@@ -211,6 +241,63 @@ class UploaderTests(unittest.TestCase):
                 u.main()
             self.assertEqual(error.exception.code, 2)
             client.assert_not_called()
+
+    def test_target_discovery_selects_only_unique_editable_ios_and_info(self):
+        self.state['/v1/apps/6816213577/appStoreVersions'] += [row('live', platform='IOS', versionString='1.0', appStoreState='READY_FOR_SALE'), row('mac', platform='MAC_OS', versionString='1.2', appStoreState='PREPARE_FOR_SUBMISSION')]
+        self.state['/v1/apps/6816213577/appInfos'].append(row('live-info', appStoreState='READY_FOR_SALE'))
+        cli = FakeCLI(self.state, apply=True)
+        target = u.resolve_targets(cli, '6816213577')
+        self.assertEqual(target, {'versionId': 'version', 'versionString': '1.2', 'appInfoId': 'info'})
+        self.assertEqual([call[0] for call in cli.calls], ['GET', 'GET'])
+
+    def test_target_discovery_rejects_ambiguous_version_without_mutation(self):
+        self.state['/v1/apps/6816213577/appStoreVersions'].append(row('another', platform='IOS', versionString='1.3', appStoreState='PREPARE_FOR_SUBMISSION'))
+        cli = FakeCLI(self.state, apply=True)
+        with self.assertRaisesRegex(u.UploadError, 'Multiple editable iOS'):
+            u.resolve_targets(cli, '6816213577')
+        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+        self.assertEqual(u.resolve_targets(cli, '6816213577', version_string='1.3')['versionId'], 'another')
+        self.assertEqual(u.resolve_targets(cli, '6816213577', version_id='version')['versionString'], '1.2')
+
+    def test_target_discovery_filters_never_fall_back_to_another_draft(self):
+        for filters in ({'version_id': 'wrong'}, {'version_string': '9.0'}, {'version_id': 'version', 'version_string': '9.0'}, {'info_id': 'wrong'}):
+            with self.subTest(filters=filters):
+                cli = FakeCLI(self.state, apply=True)
+                with self.assertRaisesRegex(u.UploadError, 'No editable'):
+                    u.resolve_targets(cli, '6816213577', **filters)
+                self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_target_discovery_rejects_zero_or_live_only_candidates(self):
+        for collection, replacement in [('appStoreVersions', []), ('appStoreVersions', [row('live', platform='IOS', versionString='1.0', appStoreState='READY_FOR_SALE')]), ('appInfos', []), ('appInfos', [row('live', appStoreState='READY_FOR_SALE')])]:
+            with self.subTest(collection=collection, replacement=replacement):
+                state = dict(self.state)
+                state['/v1/apps/6816213577/' + collection] = replacement
+                cli = FakeCLI(state, apply=True)
+                with self.assertRaisesRegex(u.UploadError, 'No editable'):
+                    u.resolve_targets(cli, '6816213577')
+                self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_target_discovery_ambiguous_info_requires_exact_filter(self):
+        self.state['/v1/apps/6816213577/appInfos'].append(row('second-info', appStoreState='REJECTED'))
+        cli = FakeCLI(self.state, apply=True)
+        with self.assertRaisesRegex(u.UploadError, 'Multiple editable app-info'):
+            u.resolve_targets(cli, '6816213577')
+        self.assertEqual(u.resolve_targets(cli, '6816213577', info_id='second-info')['appInfoId'], 'second-info')
+        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_main_blank_filters_resolve_then_pass_exact_target_to_planner(self):
+        metadata = self.root / 'metadata.json'
+        metadata.write_text(json.dumps(self.meta))
+        (self.root / 'manifest.json').write_text('{}')
+        cli = FakeCLI(self.state)
+        args = ['upload.py', '--metadata', str(metadata), '--media-dir', str(self.root), '--receipts', str(self.root / 'receipt.jsonl'), '--version-id', '', '--version-string', '', '--app-info-id', '']
+        with patch.object(sys, 'argv', args), patch.object(u, 'validate_media', return_value=({}, {})), patch.object(u, 'CLI', return_value=cli), patch.object(u, 'Planner') as planner, patch.object(sys, 'stdout', new_callable=io.StringIO) as output:
+            planner.return_value.preflight.return_value = SimpleNamespace(ops=[], blockers=[], notes=[], summary=lambda: [])
+            self.assertEqual(u.main(), 0)
+            self.assertEqual(planner.call_args.args[4:7], ('version', '1.2', 'info'))
+            resolved = json.loads(output.getvalue().splitlines()[0])
+            self.assertEqual(resolved, {'resolvedTarget': {'versionId': 'version', 'versionString': '1.2', 'appInfoId': 'info'}})
+        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
 
     def test_failed_first_mutation_stops_plan(self):
         class Failing(FakeCLI):

@@ -51,7 +51,7 @@ The manually dispatched **App Store Draft Assets** workflow prepares drafts; it 
 | `ASC_API_ISSUER_ID` | API issuer ID |
 | `ASC_API_CERT` | Base64-encoded API private key |
 
-The existing API key must have access to this app and permission to edit metadata and assets. Select the exact editable iOS version ID, version string and corresponding editable app-info ID. First run the dry-run plan, review the sanitized operations, then explicitly select apply. Existing privacy/support/marketing links and release notes remain account-owned unless supplied in metadata.
+The existing API key must have access to this app and permission to edit metadata and assets. Leave target fields blank to discover the unique editable iOS app version and unique editable app-info draft. Discovery stops when either target is missing or ambiguous; it never creates an app version or guesses a version number. Optionally supply a version ID, version string or app-info ID to narrow the candidates. First run the dry-run plan, review the resolved target IDs and sanitized operations, then explicitly select apply. Existing privacy/support/marketing links and release notes remain account-owned unless supplied in metadata.
 
 Inspect IDs locally with pinned asc 5.16.0 and the same environment authentication:
 
@@ -60,17 +60,16 @@ asc api GET /v1/apps/6816213577/appStoreVersions --output json --paginate
 asc api GET /v1/apps/6816213577/appInfos --output json --paginate
 ```
 
-Run a local read-only plan with those IDs:
+Run a local read-only plan using unique-target discovery:
 
 ```sh
 python3 Marketing/AppStore/upload.py \
-  --version-id VERSION_ID --version-string VERSION --app-info-id APP_INFO_ID \
   --media-dir Marketing/AppStore/generator/.local/media \
   --scope metadata,default,cpp,duo,header \
   --receipts Marketing/AppStore/.local/receipts.jsonl
 ```
 
-Add `--apply` only after reviewing the plan. `--media-dir` selects a verified unpacked asset directory; `--metadata` defaults to the sibling JSON file. Remote plans and apply require explicit IDs and a receipt path; `--validate-only` requires neither and cannot be combined with apply.
+Add `--apply` only after reviewing the plan. `--media-dir` selects a verified unpacked asset directory; `--metadata` defaults to the sibling JSON file. Remote plans and apply require a receipt path. Optional `--version-id`, `--version-string` and `--app-info-id` filters must match the selected editable targets; wrong or live-only filters fail without falling back to another draft. The selected IDs and version string are printed without raw API responses, then checked again during complete preflight before changes. `--validate-only` requires no target inputs, credentials or receipt path and cannot be combined with apply.
 
 The workflow uploads localized text, default device screenshot sets, contextual custom product page drafts, native Duo placements and the H09 product page header. It refuses conflicting existing assets rather than deleting unrecognized screenshots. Interrupted uploads can leave draft resources: inspect remote state and the sanitized resource-ID receipt before retrying. The workflow preserves these receipts for seven days and suppresses raw API responses and signed upload URLs.
 

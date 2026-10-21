@@ -9,17 +9,17 @@ on:
         options: [dry-run, apply]
         default: dry-run
       version_id:
-        description: Exact editable iOS App Store version resource ID
+        description: Optional exact editable iOS version ID; blank requires one unique draft
         type: string
-        required: true
+        required: false
       version_string:
-        description: Exact version string matching the resource ID
+        description: Optional exact iOS version string to narrow draft discovery
         type: string
-        required: true
+        required: false
       app_info_id:
-        description: Exact editable app-info resource ID
+        description: Optional editable app-info ID; blank requires one unique draft
         type: string
-        required: true
+        required: false
       scope:
         description: Comma-separated scopes metadata,default,cpp,header,duo
         type: string
@@ -84,7 +84,7 @@ jobs:
         run: |
           set -euo pipefail
           [[ "$REQUEST_MODE" == dry-run || "$REQUEST_MODE" == apply ]] || exit 1
-          for name in ASC_KEY_ID ASC_ISSUER_ID ASC_PRIVATE_KEY_B64 TARGET_VERSION_ID TARGET_VERSION_STRING TARGET_APP_INFO_ID; do
+          for name in ASC_KEY_ID ASC_ISSUER_ID ASC_PRIVATE_KEY_B64; do
             [[ -n "${!name}" ]] || { echo "::error::Missing required configuration: $name"; exit 1; }
           done
       - name: Plan or apply draft assets

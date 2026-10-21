@@ -154,7 +154,21 @@ class CLI:
                 self.receipt('mutation-failed-inspect-before-retry', json.loads(result.stdout))
             except json.JSONDecodeError:
                 self.receipt('mutation-failed-no-receipt-inspect-before-retry')
-            raise UploadError('asc command failed; inspect App Store Connect draft state before retrying (raw output suppressed)')
+            statuses = set()
+            for output in (result.stdout, result.stderr):
+                try:
+                    payload = json.loads(output)
+                except json.JSONDecodeError:
+                    continue
+                errors = payload.get('errors') if isinstance(payload, dict) else None
+                if not isinstance(errors, list):
+                    continue
+                for error in errors:
+                    status = str(error.get('status', '')) if isinstance(error, dict) else ''
+                    if re.fullmatch('[0-9]{3}', status) and (int(status) in {401, 403, 404, 409, 422, 429} or 500 <= int(status) <= 599):
+                        statuses.add(status)
+            diagnostic = ' (HTTP ' + ', '.join(sorted(statuses)) + ')' if statuses else ''
+            raise UploadError('asc command failed' + diagnostic + '; inspect App Store Connect draft state before retrying (raw output suppressed)')
         try:
             value = json.loads(result.stdout) if result.stdout.strip() else {}
             if mutate:
@@ -183,6 +197,30 @@ def resource(kind, attrs, relations=None, identifier=None):
     if relations:
         data['relationships'] = relations
     return {'data': data}
+
+
+def resolve_targets(cli, app_id, version_id=None, version_string=None, info_id=None):
+    """Resolve only unique editable targets using optional restrictive filters."""
+    def rows(relationship):
+        values = cli.api('GET', '/v1/apps/' + app_id + '/' + relationship).get('data', [])
+        if not isinstance(values, list):
+            raise UploadError('Target discovery returned an invalid collection; inspect App Store Connect before retrying')
+        return values
+
+    versions = [v for v in rows('appStoreVersions') if v.get('attributes', {}).get('platform') == 'IOS' and v.get('attributes', {}).get('appStoreState') in EDITABLE and (not version_id or v.get('id') == version_id) and (not version_string or v.get('attributes', {}).get('versionString') == version_string)]
+    if not versions:
+        raise UploadError('No editable iOS version matches the requested filters. Inspect App Store Connect and create or select an editable draft; no version was created automatically.')
+    if len(versions) != 1:
+        raise UploadError('Multiple editable iOS versions match. Supply --version-id or --version-string to select one exact draft.')
+    infos = [i for i in rows('appInfos') if i.get('attributes', {}).get('appStoreState') in EDITABLE and (not info_id or i.get('id') == info_id)]
+    if not infos:
+        raise UploadError('No editable app-info matches the requested filter. Inspect App Store Connect and select an editable app-info draft; no draft was created automatically.')
+    if len(infos) != 1:
+        raise UploadError('Multiple editable app-info resources match. Supply --app-info-id to select one exact draft.')
+    target = {'versionId': versions[0].get('id'), 'versionString': versions[0].get('attributes', {}).get('versionString'), 'appInfoId': infos[0].get('id')}
+    if any(not isinstance(target[k], str) or not re.fullmatch('[A-Za-z0-9-]+', target[k]) for k in ('versionId', 'appInfoId')) or not isinstance(target['versionString'], str) or not target['versionString'] or len(target['versionString']) > 100:
+        raise UploadError('Target discovery returned invalid resource identifiers or version text; inspect App Store Connect before retrying')
+    return target
 
 
 class Planner:
@@ -451,10 +489,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--metadata', type=Path, default=Path(__file__).with_name('metadata.json'))
     parser.add_argument('--media-dir', type=Path, default=Path(__file__).with_name('media'))
-    parser.add_argument('--validate-only', action='store_true', help='Validate checked-in media without credentials or App Store requests')
-    parser.add_argument('--version-id')
-    parser.add_argument('--version-string')
-    parser.add_argument('--app-info-id')
+    parser.add_argument('--validate-only', action='store_true', help='Validate approved media without credentials or App Store requests')
+    parser.add_argument('--version-id', help='Optional exact editable iOS version filter; otherwise require one unique candidate')
+    parser.add_argument('--version-string', help='Optional exact iOS version-string filter')
+    parser.add_argument('--app-info-id', help='Optional exact editable app-info filter; otherwise require one unique candidate')
     parser.add_argument('--scope', default='metadata,default,cpp,header,duo')
     parser.add_argument('--apply', action='store_true')
     parser.add_argument('--receipts', type=Path, help='Private durable JSONL receipt path; required for remote plans and apply')
@@ -464,12 +502,14 @@ def main():
         parser.error('--scope must select metadata,default,cpp,header,duo')
     if args.validate_only and args.apply:
         parser.error('--validate-only cannot be combined with --apply')
+    args.version_id = args.version_id.strip() if args.version_id else None
+    args.version_string = args.version_string.strip() if args.version_string else None
+    args.app_info_id = args.app_info_id.strip() if args.app_info_id else None
     if not args.validate_only:
-        for key in ('version_id', 'version_string', 'app_info_id', 'receipts'):
-            if not getattr(args, key):
-                parser.error('--' + key.replace('_', '-') + ' is required unless --validate-only is selected')
+        if not args.receipts:
+            parser.error('--receipts is required unless --validate-only is selected')
         for identifier in (args.version_id, args.app_info_id):
-            if not re.fullmatch('[A-Za-z0-9-]+', identifier):
+            if identifier and not re.fullmatch('[A-Za-z0-9-]+', identifier):
                 parser.error('Resource IDs may contain only letters, digits and hyphens')
     root = args.media_dir.resolve()
     metadata = json.loads(args.metadata.read_text())
@@ -479,7 +519,9 @@ def main():
         print(json.dumps({'mode': 'validate-only', 'verifiedPlacements': len(slots), 'verifiedHeader': True, 'appStoreRequests': 0}))
         return 0
     cli = CLI(apply=args.apply, receipts=args.receipts)
-    plan = Planner(cli, metadata, slots, header, args.version_id, args.version_string, args.app_info_id, scopes).preflight()
+    target = resolve_targets(cli, metadata['appId'], args.version_id, args.version_string, args.app_info_id)
+    print(json.dumps({'resolvedTarget': target}))
+    plan = Planner(cli, metadata, slots, header, target['versionId'], target['versionString'], target['appInfoId'], scopes).preflight()
     print(json.dumps({'mode': 'apply' if args.apply else 'dry-run', 'plannedDraftOperations': len(plan.ops), 'scopes': sorted(scopes), 'blockers': plan.blockers, 'notes': plan.notes, 'plan': plan.summary()}, ensure_ascii=False, indent=2))
     if args.apply:
         plan.execute()
