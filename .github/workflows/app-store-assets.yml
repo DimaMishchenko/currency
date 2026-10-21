@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: Read-only plan or apply draft changes (never submit review)
+        description: Inspect native policy, plan, or apply draft changes (never submit review)
         type: choice
-        options: [dry-run, apply]
+        options: [dry-run, apply, inspect-native-policy]
         default: dry-run
       version_id:
         description: Optional exact editable iOS version ID; blank requires one unique draft
@@ -62,9 +62,12 @@ jobs:
           echo 'f0be6185b82e300899e2c162bae8975cafb3fcd7c6f990b8e22d637184bcaabc  '"$RUNNER_TEMP/currency-asc-bin/asc" | sha256sum --check --status
           chmod 755 "$RUNNER_TEMP/currency-asc-bin/asc"
           echo "$RUNNER_TEMP/currency-asc-bin" >> "$GITHUB_PATH"
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq ffmpeg
+          if [[ "$REQUEST_MODE" != inspect-native-policy ]]; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq ffmpeg
+          fi
       - name: Fetch and verify the pinned asset release
+        if: inputs.mode != 'inspect-native-policy'
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -73,6 +76,7 @@ jobs:
           python3 Marketing/AppStore/fetch_assets.py \
             --repo "$GH_REPO" --output "$RUNNER_TEMP/currency-app-store-media"
       - name: Validate approved media without API access
+        if: inputs.mode != 'inspect-native-policy'
         shell: bash
         run: python3 Marketing/AppStore/upload.py --validate-only --media-dir "$RUNNER_TEMP/currency-app-store-media"
       - name: Validate request and credentials
@@ -83,11 +87,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          [[ "$REQUEST_MODE" == dry-run || "$REQUEST_MODE" == apply ]] || exit 1
+          [[ "$REQUEST_MODE" == dry-run || "$REQUEST_MODE" == apply || "$REQUEST_MODE" == inspect-native-policy ]] || exit 1
           for name in ASC_KEY_ID ASC_ISSUER_ID ASC_PRIVATE_KEY_B64; do
             [[ -n "${!name}" ]] || { echo "::error::Missing required configuration: $name"; exit 1; }
           done
-      - name: Plan or apply draft assets
+      - name: Inspect policy or plan/apply draft assets
         env:
           ASC_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
@@ -95,6 +99,60 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          if [[ "$REQUEST_MODE" == inspect-native-policy ]]; then
+            python3 - <<'PY'
+          import importlib.util
+          import json
+          import re
+          import sys
+          spec = importlib.util.spec_from_file_location('app_store_upload', 'Marketing/AppStore/upload.py')
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          UploadError = module.UploadError
+
+          def inspect_native_policy(cli):
+              identifier = 'identifier'
+              integer = 'integer'
+              boolean = 'boolean'
+              ratio = 'ratio'
+              duration = 'duration'
+              dimensions = {key: integer for key in ('minWidth', 'maxWidth', 'minHeight', 'maxHeight')}
+              specification = {'specId': identifier, 'dimensions': dimensions, 'aspectRatio': ratio, 'compatiblePlacementTypes': [identifier]}
+              schema = {
+                  'features': [{'featureId': identifier, 'placementPolicies': [{'placementType': identifier, 'groupLimits': [{'groupIds': [identifier], 'maxCount': integer}]}]}],
+                  'placementProfileGroups': [{'placementProfileGroupId': identifier, 'platform': identifier, 'displayClassId': identifier}],
+                  'placementTypes': [{'placementTypeId': identifier, 'acceptsAssetCategories': [identifier], 'specMappings': [{'placementGroupId': identifier, 'specs': [identifier]}]}],
+                  'imageSpecs': [specification],
+                  'videoSpecs': [{**specification, 'frameRates': [{'minFps': integer, 'maxFps': integer}], 'duration': {'min': duration, 'max': duration}, 'audioRequired': boolean}],
+              }
+
+              def project(value, expected):
+                  if isinstance(expected, dict):
+                      return {key: filtered for key, kind in expected.items() if isinstance(value, dict) and key in value and (filtered := project(value[key], kind)) is not None} if isinstance(value, dict) else None
+                  if isinstance(expected, list):
+                      return [filtered for item in value if (filtered := project(item, expected[0])) is not None] if isinstance(value, list) else None
+                  if expected == integer:
+                      return value if type(value) is int else None
+                  if expected == boolean:
+                      return value if type(value) is bool else None
+                  if expected == ratio and type(value) in (int, float):
+                      return value if 0 < value < 1000 else None
+                  patterns = {identifier: r'[A-Za-z0-9_.-]{1,160}', ratio: r'[0-9]+(?:\.[0-9]+)?(?:[:/][0-9]+(?:\.[0-9]+)?)?', duration: r'P(?:[0-9]+D)?T?(?:[0-9]+(?:\.[0-9]+)?H)?(?:[0-9]+(?:\.[0-9]+)?M)?(?:[0-9]+(?:\.[0-9]+)?S)?'}
+                  return value if isinstance(value, str) and len(value) <= 160 and re.fullmatch(patterns[expected], value) else None
+
+              response = cli.api('GET', '/v1/appAssetLibraryRefData')
+              rows = response.get('data')
+              if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
+                  raise UploadError('Native policy inspection returned an invalid collection (raw output suppressed)')
+              return {'mode': 'inspect-native-policy', 'referenceData': [project(row.get('attributes', {}), schema) for row in rows]}
+
+          try:
+              print(json.dumps(inspect_native_policy(module.CLI(apply=False)), indent=2))
+          except UploadError as error:
+              sys.exit(str(error))
+          PY
+            exit 0
+          fi
           mode_args=()
           if [[ "$REQUEST_MODE" == apply ]]; then mode_args+=(--apply); fi
           python3 Marketing/AppStore/upload.py \
