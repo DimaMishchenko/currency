@@ -1,6 +1,6 @@
 # Currency icons
 
-The twelve editable Icon Composer documents live in `Apps/Currency/App/Resources/*.icon`. World Yen / Yuan is the primary icon; the Watch uses the same default artwork. Settings offers six currency variants in each World and Grid family. Native icon documents own their glass materials and platform appearances.
+The twelve editable Icon Composer documents live in `Apps/Currency/App/Resources/*.icon`. World Yen / Yuan is the primary icon; the Watch uses the same default artwork. Settings on iPhone and iPad offers six currency variants in each World and Grid family. The Watch has no icon picker or alternate icons; it keeps the fixed World Yen / Yuan icon. Native icon documents own their glass materials and platform appearances.
 
 `Layers/` contains the vector cutouts, including the custom Bitcoin outline. Ordinary symbols use the bundled Nunito font under the SIL Open Font License in `Fonts/OFL.txt`. The dollar artwork stays fixed across each family. No SF Symbols artwork is embedded in the icons.
 

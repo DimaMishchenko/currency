@@ -14,9 +14,9 @@ A frozen input pack is required: native app captures and licensed Apple resource
 
 ## Delivery setup
 
-The manually dispatched **App Store Draft Assets** workflow prepares drafts; it does not submit for review or release an app. Configure a protected GitHub environment named `app-store` with required reviewers and restrict deployment branches to `main`.
+The manually dispatched **App Store Draft Assets** workflow prepares drafts; it does not submit for review or release an app. It uses the existing `testflight` GitHub environment and its App Store Connect API secrets. No duplicate API key or second environment is needed. The workflow remains manually dispatched, restricted to `main`, and defaults to dry-run.
 
-Use these environment secrets, matching the existing TestFlight authentication convention:
+Reuse the three existing API secrets below. Add only the asset bundle URL to the same `testflight` environment:
 
 | Secret | Value |
 | --- | --- |
@@ -27,7 +27,7 @@ Use these environment secrets, matching the existing TestFlight authentication c
 
 The current sanitized bundle is **858,144,096 bytes**, containing 1,512 unique screenshots referenced by 3,240 placements plus one header video. Its identity is recorded in `asset-bundle.json`.
 
-Use an API key with access to this app and permission to edit its metadata and assets. Store the immutable media bundle outside the public repository. Its SHA-256 belongs in the workflow dispatch inputs; verify it against the local generation receipt. URLs granting access to private storage are credentials and belong only in secrets. This is a one-time storage/setup step, not a per-screenshot upload.
+The existing API key must have access to this app and permission to edit its metadata and assets; upload-only permissions may need to be expanded. Store the immutable media bundle outside the public repository. Its SHA-256 belongs in the workflow dispatch inputs; verify it against the local generation receipt. URLs granting access to private storage are credentials and belong only in secrets. This is a one-time storage/setup step, not a per-screenshot upload.
 
 Select the exact editable app version, corresponding editable app-info ID, and approved media checksum from `asset-bundle.json`. First run the dry-run plan. Review the sanitized plan, then explicitly select apply. Do not reuse IDs from a different version or guess them. Existing privacy/support/marketing links and release notes remain account-owned unless explicitly supplied in metadata.
 
