@@ -9,6 +9,7 @@ struct RateDetailsScreen: View {
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(\.locale) private var locale
+  @Environment(\.timeZone) private var timeZone
   @Environment(\.layoutDirection) private var layoutDirection
   @ScaledMetric(relativeTo: .largeTitle) private var amountSize = 48
   @ScaledMetric(relativeTo: .caption2) private var scaledAxisWidth = 44
@@ -21,6 +22,10 @@ struct RateDetailsScreen: View {
   @Environment(\.dismiss) private var dismiss
   private var range: HistoryRange { model.range }
   private var series: HistorySeries? { model.series }
+  private var dates: HistoryDatePresentation {
+    HistoryDatePresentation(
+      range: range, observation: series?.source.observation, locale: locale, timeZone: timeZone)
+  }
   private var message: LocalizedStringResource? { RateMessages.history(model.issue) }
   private var loading: Bool { model.phase != .loaded }
   @State private var reveal: CGFloat = 0
@@ -240,7 +245,7 @@ struct RateDetailsScreen: View {
         VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
           Text(verbatim: "0.000000 \(quoteLabel)").font(AppStyle.font(.title3))
             .lineLimit(1).minimumScaleFactor(0.25)
-          Text(dayLabel(Date())).font(AppStyle.font(.caption))
+          Text(dates.pointLabel(Date())).font(AppStyle.font(.caption))
         }
         .hidden().accessibilityHidden(true)
         if let selected, !loading {
@@ -248,8 +253,13 @@ struct RateDetailsScreen: View {
             Text(verbatim: "\(rateLabel(Decimal(selected.value))) \(quoteLabel)")
               .font(AppStyle.font(.title3).monospacedDigit())
               .lineLimit(1).minimumScaleFactor(0.25)
-            Text(dayLabel(selected.date))
+            Text(dates.pointLabel(selected.date))
               .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
+            if dates.showsTime {
+              Text(.Details.chartTimeZone(dates.chartTimeZone))
+                .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
+                .accessibilityIdentifier("currency.details.chartTimeZone")
+            }
           }
         } else if loading {
           VStack(alignment: .leading, spacing: AppStyle.Space.small) {
@@ -372,22 +382,10 @@ struct RateDetailsScreen: View {
     AxisGridLine()
     AxisValueLabel {
       if let date = value.as(Date.self) {
-        Text(date.formatted(historyAxisFormat))
+        Text(date.formatted(dates.axisFormat))
           .font(AppStyle.font(.caption2)).fixedSize()
       }
     }
-  }
-
-  private var historyAxisFormat: Date.FormatStyle {
-    var format: Date.FormatStyle =
-      switch range {
-      case .day: .dateTime.hour().minute()
-      case .all: .dateTime.year()
-      default: .dateTime.day().month(.abbreviated)
-      }
-    format.locale = locale
-    format.timeZone = .gmt
-    return format
   }
 
   private var detailsFooter: some View {
@@ -409,12 +407,11 @@ struct RateDetailsScreen: View {
             }
             VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
               if let first = series.points.first, let last = series.points.last {
-                Text(verbatim: "\(dayLabel(first.date)) – \(dayLabel(last.date))")
+                Text(verbatim: "\(dates.pointLabel(first.date)) – \(dates.pointLabel(last.date))")
               }
               Text(
                 .Details.savedAt(
-                  series.fetchedAt.formatted(
-                    .dateTime.day().month().year().hour().minute().locale(locale))))
+                  series.fetchedAt.formatted(dates.timestampFormat)))
             }
           }
           VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
@@ -424,13 +421,13 @@ struct RateDetailsScreen: View {
             if let observed = snapshot.quotes[code]?.observedAt {
               Text(
                 .Details.lastTrade(
-                  observed.formatted(.dateTime.day().month().year().hour().minute().locale(locale)))
+                  observed.formatted(dates.timestampFormat))
               )
             }
             if let retrieved = snapshot.quotes[code]?.retrievedAt {
               Text(
                 .Details.rateRetrieved(
-                  retrieved.formatted(.dateTime.day().month().year().hour().minute().locale(locale))
+                  retrieved.formatted(dates.timestampFormat)
                 )
               )
             }
@@ -446,7 +443,7 @@ struct RateDetailsScreen: View {
       } label: {
         Group {
           if let series, !series.points.isEmpty {
-            Text(RateMessages.providerDescription(series.source, locale: locale))
+            Text(historyProviderDescription(series.source))
           } else {
             Text(CurrencyDisplay.details(snapshot, from: code, to: quote, locale: locale))
           }
@@ -464,13 +461,18 @@ struct RateDetailsScreen: View {
       value, from: code, to: quote, locale: locale, metalUnit: model.input.metalUnit)
   }
 
-  private func dayLabel(_ date: Date) -> String {
-    let formatter = DateFormatter()
-    formatter.locale = locale
-    formatter.dateStyle = .medium
-    formatter.timeStyle = range == .day ? .short : .none
-    formatter.timeZone = TimeZone(secondsFromGMT: 0)
-    return formatter.string(from: date)
+  private func historyProviderDescription(_ source: RateSource) -> String {
+    guard let samplingTimeZone = source.timeZone else {
+      return RateMessages.providerDescription(source, locale: locale)
+    }
+    let withoutTimeZone = RateSource(
+      provider: source.provider, observation: source.observation,
+      conversion: source.conversion, contributingProviders: source.contributingProviders)
+    var resource = LocalizedStringResource.Details.sourceSamplingTimeZone(
+      RateMessages.providerDescription(withoutTimeZone, locale: locale),
+      samplingTimeZone.identifier)
+    resource.locale = locale
+    return String(localized: resource)
   }
 }
 
