@@ -30,7 +30,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: currency-app-store-draft-assets
+  group: currency-app-store-${{ inputs.mode == 'inspect-native-policy' && 'native-policy-inspection' || 'draft-assets' }}
   cancel-in-progress: false
 
 jobs:
