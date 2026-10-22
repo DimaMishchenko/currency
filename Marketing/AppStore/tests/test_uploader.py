@@ -1638,6 +1638,12 @@ class UploaderTests(unittest.TestCase):
         for output in ('PRIVATE_ERROR', json.dumps({'actions': 'PRIVATE'}), json.dumps({'actions': [{'scope': {}}]}), json.dumps({'actions': [{}] * 201}), 'x' * 1048577, json.dumps({'actions': [{'scope': 'version', 'locale': 'en-US', 'action': 'update', 'status': 'PRIVATE'}]})):
             self.assertEqual(u.safe_metadata_failure_summary(output), '')
 
+    def test_long_http_trace_preserves_late_failure_without_private_output(self):
+        output = 'level=INFO msg="← HTTP Response" status=429\n' + 'PRIVATE_BODY https://signed.invalid/TOKEN\n' * 10000
+        output += 'level=INFO msg="← HTTP Response" status=503 private=PRIVATE_BODY\n'
+        self.assertEqual(u.safe_error_diagnostics('', output, http_trace=True), ' (HTTP 429, 503)')
+        self.assertEqual(u.safe_error_diagnostics('', output), '')
+
     def test_cpp_screenshot_upload_captures_trace_and_reports_only_allowed_http_status(self):
         command = ['product-pages', 'custom-pages', 'localizations', 'screenshot-sets', 'upload', '--localization-id', 'locale', '--path', '/private/approved']
         trace = 'level=INFO msg="→ HTTP Request" url=https://signed.invalid/PRIVATE_KEY authorization="Bearer PRIVATE_KEY"\nlevel=INFO msg="← HTTP Response" status=409 elapsed=1ms private=PRIVATE_BODY\nlevel=INFO msg="← HTTP Response" status=400\nprefix level=INFO msg="← HTTP Response" status=503\nError: PRIVATE_ERROR https://signed.invalid/TOKEN\n'

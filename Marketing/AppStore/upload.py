@@ -151,7 +151,8 @@ def safe_error_diagnostics(stdout, stderr, http_trace=False):
                 if isinstance(pointer, str) and len(pointer) <= 180 and re.fullmatch(r'/(?:data|included)(?:/(?:[A-Za-z][A-Za-z0-9_-]*|[0-9]+))*', pointer):
                     pointers.add(pointer)
         if http_trace:
-            for match in re.finditer(r'^level=INFO msg="← HTTP Response" status=([0-9]{3})(?: [^\r\n]*)?$', sample, re.MULTILINE):
+            trace_sample = sample if len(output) <= 262144 else sample + '\n' + output[-262144:]
+            for match in re.finditer(r'^level=INFO msg="← HTTP Response" status=([0-9]{3})(?: [^\r\n]*)?$', trace_sample, re.MULTILINE):
                 status(match[1])
     parts = []
     if statuses:
