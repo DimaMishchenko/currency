@@ -69,6 +69,11 @@ class FakeCLI:
         if method != 'GET':
             if not self.apply:
                 raise AssertionError('Dry-run attempted mutation')
+            if method == 'DELETE' and path.startswith('/v1/appScreenshots/'):
+                for collection, assets in self.state.items():
+                    if collection.endswith('/appScreenshots') and isinstance(assets, list):
+                        assets[:] = [asset for asset in assets if asset['id'] != path.rsplit('/', 1)[1]]
+                return {}
             if method == 'PATCH' and path.endswith('/relationships/appScreenshots'):
                 self.state[path] = body['data']
                 collection = path.replace('/relationships/appScreenshots', '/appScreenshots')
@@ -134,8 +139,8 @@ class UploaderTests(unittest.TestCase):
             '/v1/appInfos/info/appInfoLocalizations': [row('info-locale', locale='en-US', name='Currency')],
         }
 
-    def planner(self, cli, scopes):
-        return u.Planner(cli, self.meta, self.slots, {}, 'version', '1.2', 'info', scopes)
+    def planner(self, cli, scopes, remove_approved_duplicate=None):
+        return u.Planner(cli, self.meta, self.slots, {}, 'version', '1.2', 'info', scopes, remove_approved_duplicate=remove_approved_duplicate)
 
     def screenshot_assets(self, orders):
         return [row('shot-' + str(order), sourceFileChecksum=hashlib.md5(self.slots[('en-US', 'iphone', 'default', order)]['file'].read_bytes()).hexdigest(), assetDeliveryState={'state': 'COMPLETE'}) for order in orders]
@@ -149,6 +154,24 @@ class UploaderTests(unittest.TestCase):
         plan = self.planner(cli, {'cpp'})
         plan.screenshots('locale', 'travel', 'en-US', 'iphone')
         return plan
+
+    def duplicate_screenshot_plan(self, cli, remove='redundant-copy', scopes=None):
+        sets = []
+        for profile, display in u.PROFILES.items():
+            set_id = 'set' if profile == 'iphone' else 'set-' + profile
+            sets.append(row(set_id, screenshotDisplayType=display))
+            self.state['/v1/appScreenshotSets/' + set_id + '/appScreenshots'] = [dict(row(profile + '-' + str(order), sourceFileChecksum=hashlib.md5(self.slots[('en-US', profile, 'default', order)]['file'].read_bytes()).hexdigest(), fileSize=self.slots[('en-US', profile, 'default', order)]['file'].stat().st_size, assetDeliveryState={'state': 'COMPLETE'}), type='appScreenshots') for order in range(1, 7)]
+        self.state['/v1/appStoreVersionLocalizations/locale/appScreenshotSets'] = sets
+        assets = self.state['/v1/appScreenshotSets/set/appScreenshots']
+        duplicate = json.loads(json.dumps(assets[0]))
+        duplicate['id'] = 'redundant-copy'
+        assets.append(duplicate)
+        self.state['/v1/appScreenshotSets/set/relationships/appScreenshots'] = [{'type': 'appScreenshots', 'id': asset['id']} for asset in list(reversed(assets[:6])) + [duplicate]]
+        direct = json.loads(json.dumps(duplicate))
+        direct['relationships'] = {'appScreenshotSet': u.relationship('appScreenshotSets', 'set')}
+        self.state['/v1/appScreenshots/redundant-copy?include=appScreenshotSet'] = direct
+        self.state['/v1/appScreenshots/iphone-1?include=appScreenshotSet'] = dict(direct, id='iphone-1')
+        return self.planner(cli, {'default'} if scopes is None else scopes, remove_approved_duplicate=remove)
 
     def test_canonical_metadata_exports_all_18_locales_and_selected_fields_only(self):
         metadata = json.loads((MODULE.parent / 'metadata.json').read_text())
@@ -297,6 +320,156 @@ class UploaderTests(unittest.TestCase):
         self.state['/v1/appStoreVersionLocalizations/locale/appScreenshotSets'] = sets
         plan = self.planner(FakeCLI(self.state), {'default'}).preflight()
         self.assertEqual(plan.ops, [])
+
+    def test_explicit_duplicate_repair_has_readonly_proof_then_one_delete_and_verified_order(self):
+        cli = FakeCLI(self.state)
+        receipts = []
+        cli.receipt = lambda event, result=None: receipts.append((event, result))
+        plan = self.duplicate_screenshot_plan(cli).preflight()
+        self.assertEqual([operation['method'] for operation in plan.ops], ['DELETE_APPROVED_DUPLICATE', 'SCREENSHOTS'])
+        summary = plan.summary()[0]
+        self.assertEqual({key: summary[key] for key in ('removeId', 'keepId', 'setId', 'family', 'locale', 'profile')}, {'removeId': 'redundant-copy', 'keepId': 'iphone-1', 'setId': 'set', 'family': 'default', 'locale': 'en-US', 'profile': 'iphone'})
+        self.assertEqual(summary['bytes'], self.slots[('en-US', 'iphone', 'default', 1)]['file'].stat().st_size)
+        self.assertEqual(summary['checksum'], hashlib.md5(self.slots[('en-US', 'iphone', 'default', 1)]['file'].read_bytes()).hexdigest())
+        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+        with self.assertRaisesRegex(u.UploadError, 'Apply mode'):
+            plan.execute()
+        cli.apply = True
+        with patch.object(sys, 'stdout', new=io.StringIO()):
+            plan.execute()
+        writes = [call for call in cli.calls if call[0] != 'GET']
+        self.assertEqual([call[0] for call in writes], ['DELETE', 'PATCH'])
+        self.assertEqual(writes[0], ('DELETE', '/v1/appScreenshots/redundant-copy', None))
+        self.assertEqual(writes[1][2], {'data': [{'type': 'appScreenshots', 'id': 'iphone-' + str(order)} for order in range(1, 7)]})
+        self.assertEqual([asset['id'] for asset in self.state['/v1/appScreenshotSets/set/appScreenshots']], ['iphone-' + str(order) for order in range(1, 7)])
+        self.assertEqual(cli.calls[-1][1], '/v1/appScreenshotSets/set/relationships/appScreenshots')
+        verified = next(result for event, result in receipts if event == 'approved-duplicate-delete-verified')
+        self.assertEqual(verified['screenshotId'], 'redundant-copy')
+        self.assertEqual({item['assetId'] for item in verified['retained']}, {'iphone-' + str(order) for order in range(1, 7)})
+
+    def test_explicit_duplicate_repair_supports_selected_cpp_gallery(self):
+        cli = FakeCLI(self.state, apply=True)
+        plan = self.duplicate_screenshot_plan(cli, scopes={'cpp'})
+        for order in range(1, 7):
+            self.slots[('en-US', 'iphone', 'travel', order)] = self.slots[('en-US', 'iphone', 'default', order)]
+        plan.cpp_profiles = ['iphone', 'ipad']
+        self.state['/v1/appCustomProductPageLocalizations/locale/appScreenshotSets'] = [row('set', screenshotDisplayType='APP_IPHONE_61')]
+        plan.screenshots('locale', 'travel', 'en-US', 'iphone')
+        self.assertEqual(plan.summary()[0]['family'], 'travel')
+        with patch.object(sys, 'stdout', new=io.StringIO()):
+            plan.execute()
+        self.assertEqual(sum(call[0] == 'DELETE' for call in cli.calls), 1)
+        self.assertFalse(any(call[0] == 'COMMAND' for call in cli.calls))
+
+    def test_explicit_duplicate_id_in_multiple_galleries_refuses_before_mutations(self):
+        cli = FakeCLI(self.state, apply=True)
+        plan = self.duplicate_screenshot_plan(cli)
+        self.state['/v1/appScreenshotSets/set-ipad/appScreenshots'].append(dict(self.state['/v1/appScreenshotSets/set/appScreenshots'][-1]))
+        with self.assertRaisesRegex(u.UploadError, 'multiple galleries'):
+            plan.preflight()
+        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_duplicate_repair_requires_explicit_id_and_full_approved_proof(self):
+        for case in ('no-flag', 'absent', 'first-copy', 'nonduplicate', 'partial', 'foreign', 'failed-target', 'failed-keep', 'size-target', 'size-keep', 'wrong-parent', 'missing-parent', 'wrong-direct-id', 'wrong-direct-type', 'wrong-resource-type', 'unknown-checksum', 'canonical-missing', 'canonical-foreign', 'scope'):
+            with self.subTest(case=case):
+                cli = FakeCLI(self.state, apply=True)
+                remove = None if case == 'no-flag' else 'missing' if case == 'absent' else 'iphone-1' if case == 'first-copy' else 'iphone-2' if case == 'nonduplicate' else 'redundant-copy'
+                plan = self.duplicate_screenshot_plan(cli, remove=remove, scopes={'metadata'} if case == 'scope' else None)
+                assets = self.state['/v1/appScreenshotSets/set/appScreenshots']
+                direct = self.state['/v1/appScreenshots/redundant-copy?include=appScreenshotSet']
+                if case == 'partial':
+                    assets.pop(2)
+                elif case == 'foreign':
+                    assets[2]['attributes']['sourceFileChecksum'] = 'f' * 32
+                elif case.startswith('failed-'):
+                    assets[-1 if case == 'failed-target' else 0]['attributes']['assetDeliveryState']['state'] = 'FAILED'
+                elif case.startswith('size-'):
+                    assets[-1 if case == 'size-target' else 0]['attributes']['fileSize'] += 1
+                elif case == 'wrong-parent':
+                    direct['relationships']['appScreenshotSet']['data']['id'] = 'foreign-set'
+                elif case == 'missing-parent':
+                    direct['relationships'] = None
+                elif case == 'wrong-direct-id':
+                    direct['id'] = 'foreign-id'
+                elif case == 'wrong-direct-type':
+                    direct['type'] = 'appAssetLibraryImages'
+                elif case == 'wrong-resource-type':
+                    assets[2]['type'] = 'appAssetLibraryImages'
+                elif case == 'unknown-checksum':
+                    assets[-1]['attributes']['sourceFileChecksum'] = None
+                elif case == 'canonical-missing':
+                    self.state['/v1/appScreenshotSets/set/relationships/appScreenshots'].pop()
+                elif case == 'canonical-foreign':
+                    self.state['/v1/appScreenshotSets/set/relationships/appScreenshots'][0]['id'] = 'foreign'
+                with self.assertRaises(u.UploadError):
+                    plan.preflight()
+                self.assertTrue(all(call[0] in {'GET', 'COMMAND'} for call in cli.calls))
+                self.assertFalse(any(cli.command_mutations))
+
+    def test_duplicate_repair_revalidates_proof_before_any_mutation(self):
+        for race in ('extra', 'missing', 'changed-keep-id', 'failed', 'size', 'parent', 'order'):
+            with self.subTest(race=race):
+                cli = FakeCLI(self.state, apply=True)
+                plan = self.duplicate_screenshot_plan(cli).preflight()
+                assets = self.state['/v1/appScreenshotSets/set/appScreenshots']
+                if race == 'extra':
+                    assets.append(dict(assets[2], id='unexpected'))
+                elif race == 'missing':
+                    assets.pop()
+                elif race == 'changed-keep-id':
+                    assets[0]['id'] = 'changed-keep'
+                elif race == 'failed':
+                    assets[-1]['attributes']['assetDeliveryState']['state'] = 'FAILED'
+                elif race == 'size':
+                    assets[-1]['attributes']['fileSize'] += 1
+                elif race == 'parent':
+                    self.state['/v1/appScreenshots/redundant-copy?include=appScreenshotSet']['relationships']['appScreenshotSet']['data']['id'] = 'foreign'
+                else:
+                    ordered = self.state['/v1/appScreenshotSets/set/relationships/appScreenshots']
+                    ordered[0], ordered[1] = ordered[1], ordered[0]
+                cli.calls.clear()
+                with self.assertRaises(u.UploadError):
+                    plan.execute()
+                self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_duplicate_repair_ambiguous_delete_failure_stops_without_retry_or_reordering(self):
+        for removed in (False, True):
+            with self.subTest(removed=removed):
+                cli = FakeCLI(self.state, apply=True)
+                plan = self.duplicate_screenshot_plan(cli).preflight()
+                original = cli.api
+                attempts = []
+                def failing(method, path, body=None):
+                    if method == 'DELETE':
+                        attempts.append(path)
+                        if removed:
+                            original(method, path, body)
+                        raise u.UploadError('asc command failed; inspect state')
+                    return original(method, path, body)
+                with patch.object(cli, 'api', side_effect=failing):
+                    with self.assertRaises(u.UploadError):
+                        plan.execute()
+                self.assertEqual(attempts, ['/v1/appScreenshots/redundant-copy'])
+                self.assertFalse(any(call[0] in {'PATCH', 'POST', 'COMMAND'} for call in cli.calls))
+
+    def test_duplicate_repair_requires_all_six_retained_identities_after_delete(self):
+        cli = FakeCLI(self.state, apply=True)
+        plan = self.duplicate_screenshot_plan(cli).preflight()
+        original = cli.api
+        def changed(method, path, body=None):
+            result = original(method, path, body)
+            if method == 'DELETE':
+                self.state['/v1/appScreenshotSets/set/appScreenshots'][0]['id'] = 'replacement'
+            return result
+        with patch.object(cli, 'api', side_effect=changed):
+            with self.assertRaisesRegex(u.UploadError, 'preserve every retained'):
+                plan.execute()
+        self.assertEqual(sum(call[0] == 'DELETE' for call in cli.calls), 1)
+        self.assertFalse(any(call[0] in {'PATCH', 'POST', 'COMMAND'} for call in cli.calls))
+
+    def test_duplicate_repair_rejects_invalid_explicit_id(self):
+        with self.assertRaisesRegex(u.UploadError, 'ID is invalid'):
+            self.planner(FakeCLI(self.state), {'default'}, remove_approved_duplicate='https://private.invalid/PRIVATE')
 
     def test_screenshot_preflight_uses_canonical_order_and_membership(self):
         for family in ('default', 'travel'):
@@ -1068,6 +1241,7 @@ class UploaderTests(unittest.TestCase):
             ('/v1/apps/app/appStoreVersions', True),
             ('/v1/apps/app/assetLibrary', False),
             ('/v1/apps/app/assetLibrary?fields%5BappAssetLibraries%5D=images', False),
+            ('/v1/appScreenshots/screenshot?include=appScreenshotSet', False),
         ]
         cli = u.CLI()
         for path, paginated in paths:
@@ -1075,6 +1249,12 @@ class UploaderTests(unittest.TestCase):
                 cli.api('GET', path)
                 expected = ['api', 'GET', path, '--output', 'json'] + (['--paginate'] if paginated else [])
                 run.assert_called_once_with(expected, None, mutate=False)
+
+    def test_cli_delete_without_body_omits_body_file(self):
+        cli = u.CLI(apply=True)
+        with patch.object(cli, 'run', return_value={}) as run:
+            cli.api('DELETE', '/v1/appScreenshots/screenshot')
+            run.assert_called_once_with(['api', 'DELETE', '/v1/appScreenshots/screenshot', '--output', 'json', '--confirm'], None, mutate=True)
 
     def test_cli_suppresses_sensitive_failure_output(self):
         cli = u.CLI(apply=True)

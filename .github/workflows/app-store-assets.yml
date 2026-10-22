@@ -25,6 +25,10 @@ on:
         type: string
         default: metadata,default,cpp,header,duo
         required: true
+      duplicate_screenshot_id:
+        description: Optional exact screenshot ID; remove only a verified extra copy of an approved image
+        type: string
+        required: false
 
 permissions:
   contents: read
@@ -48,6 +52,7 @@ jobs:
       TARGET_VERSION_STRING: ${{ inputs.version_string }}
       TARGET_APP_INFO_ID: ${{ inputs.app_info_id }}
       ASSET_SCOPE: ${{ inputs.scope }}
+      DUPLICATE_SCREENSHOT_ID: ${{ inputs.duplicate_screenshot_id }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -89,6 +94,10 @@ jobs:
         run: |
           set -euo pipefail
           [[ "$REQUEST_MODE" == dry-run || "$REQUEST_MODE" == apply || "$REQUEST_MODE" == inspect-native-policy ]] || exit 1
+          if [[ "$REQUEST_MODE" == inspect-native-policy && -n "$DUPLICATE_SCREENSHOT_ID" ]]; then
+            echo '::error::Duplicate repair is available only with a reviewed dry-run or apply request'
+            exit 1
+          fi
           for name in ASC_KEY_ID ASC_ISSUER_ID ASC_PRIVATE_KEY_B64; do
             [[ -n "${!name}" ]] || { echo "::error::Missing required configuration: $name"; exit 1; }
           done
@@ -176,6 +185,7 @@ jobs:
           fi
           mode_args=()
           if [[ "$REQUEST_MODE" == apply ]]; then mode_args+=(--apply); fi
+          if [[ -n "$DUPLICATE_SCREENSHOT_ID" ]]; then mode_args+=(--remove-approved-duplicate "$DUPLICATE_SCREENSHOT_ID"); fi
           python3 Marketing/AppStore/upload.py \
             --metadata Marketing/AppStore/metadata.json \
             --media-dir "$RUNNER_TEMP/currency-app-store-media" \

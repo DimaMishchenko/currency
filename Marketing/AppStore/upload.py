@@ -311,9 +311,12 @@ class CLI:
     def api(self, method, path, body=None):
         args = ['api', method, path, '--output', 'json']
         if method == 'GET':
-            args += ['--paginate'] if not path.partition('?')[0].endswith('/assetLibrary') else []
+            single = path.partition('?')[0].endswith('/assetLibrary') or re.fullmatch('/v1/appScreenshots/[A-Za-z0-9-]+', path.partition('?')[0])
+            args += [] if single else ['--paginate']
         else:
-            args += ['--confirm', '--body-file', '-']
+            args += ['--confirm']
+            if body is not None:
+                args += ['--body-file', '-']
         return self.run(args, body, mutate=method != 'GET')
 
 
@@ -373,7 +376,7 @@ def resolve_targets(cli, app_id, version_id=None, version_string=None, info_id=N
 
 
 class Planner:
-    def __init__(self, cli, metadata, slots, header, version_id, version_string, info_id, scopes):
+    def __init__(self, cli, metadata, slots, header, version_id, version_string, info_id, scopes, remove_approved_duplicate=None):
         self.cli, self.meta, self.slots, self.header = cli, metadata, slots, header
         self.version, self.version_string, self.info = version_id, version_string, info_id
         self.scopes, self.ops, self.blockers, self.notes = scopes, [], [], []
@@ -385,6 +388,10 @@ class Planner:
         self.cpp_profiles = []
         self.cpp_status = None
         self.header_group = None
+        if remove_approved_duplicate is not None and (not isinstance(remove_approved_duplicate, str) or not re.fullmatch('[A-Za-z0-9-]{1,180}', remove_approved_duplicate)):
+            raise UploadError('Explicit duplicate screenshot ID is invalid')
+        self.remove_approved_duplicate = remove_approved_duplicate
+        self.duplicate_repair = None
 
     def get(self, path):
         if '@pending-' in path:
@@ -465,6 +472,8 @@ class Planner:
                 self.duo_screenshots(target, family, locale)
         if 'duo' in self.scopes:
             self.notes.append('Duo uses six ordered screenshots per page, mixing inner and outer displays through the approved presentation. Runtime group capacities and Apple processing still apply.')
+        if self.remove_approved_duplicate and self.duplicate_repair is None:
+            raise UploadError('Explicit duplicate screenshot ID was not found in one selected approved gallery; no repair is permitted')
         return self
 
     def sync_metadata(self, dry_run):
@@ -679,6 +688,15 @@ class Planner:
         items = [self.slots[(locale, profile, family, i)] for i in range(1, 7)]
         identifier, actual = self.screenshot_set(target, family, profile)
         expected = [hashlib.md5(i['file'].read_bytes()).hexdigest() for i in items]
+        if self.remove_approved_duplicate and any(row.get('id') == self.remove_approved_duplicate for row in actual):
+            if self.duplicate_repair is not None:
+                raise UploadError('Explicit duplicate screenshot ID appears in multiple galleries; no repair is permitted')
+            proof = self.approved_duplicate(target, family, locale, profile, identifier, actual, [str(item['file']) for item in items])
+            self.duplicate_repair = proof
+            self.queue('DELETE_APPROVED_DUPLICATE', '/v1/appScreenshots/' + self.remove_approved_duplicate, proof=proof)
+            self.queue('SCREENSHOTS', target, family=family, locale=locale, profile=profile, files=[str(item['file']) for item in items], set_id=identifier, skip_existing=True)
+            self.ops[:] = self.ops[-2:] + self.ops[:-2]
+            return
         validate_screenshot_set(identifier, actual, expected, locale, profile, read_linkages=self.screenshot_linkages)
         if identifier:
             current = self.screenshot_order(identifier, actual)
@@ -696,6 +714,57 @@ class Planner:
         if len(identifiers) != len(actual) or any(not isinstance(row, dict) or row.get('type') != 'appScreenshots' for row in current) or any(not isinstance(value, str) for value in identifiers) or set(identifiers) != {row['id'] for row in actual}:
             raise UploadError('Screenshot ordering membership changed; inspect draft state before retrying')
         return identifiers
+
+    def approved_duplicate(self, target, family, locale, profile, identifier, actual, files):
+        if self.app != '6816213577' or family not in FAMILIES or locale not in self.meta['locales'] or profile not in PROFILES or (family == 'default' and 'default' not in self.scopes) or (family != 'default' and ('cpp' not in self.scopes or profile not in self.cpp_profiles)):
+            raise UploadError('Explicit duplicate repair is outside the selected approved screenshot galleries')
+        expected = [hashlib.md5(Path(name).read_bytes()).hexdigest() for name in files]
+        identifiers = [row.get('id') for row in actual]
+        if len(actual) != 7 or len(set(expected)) != 6 or any(not isinstance(value, str) or not re.fullmatch('[A-Za-z0-9-]{1,180}', value) for value in identifiers) or len(set(identifiers)) != 7 or identifiers.count(self.remove_approved_duplicate) != 1 or any(row.get('type') != 'appScreenshots' for row in actual):
+            raise UploadError('Explicit duplicate repair requires exactly seven identified screenshot assets')
+        remaining = [row for row in actual if row['id'] != self.remove_approved_duplicate]
+        validate_screenshot_set(identifier, remaining, expected, locale, profile, require_full=True)
+        sizes = {checksum: Path(name).stat().st_size for checksum, name in zip(expected, files)}
+        for row in actual:
+            attrs = row.get('attributes', {})
+            delivery = attrs.get('assetDeliveryState')
+            checksum, size = attrs.get('sourceFileChecksum'), attrs.get('fileSize')
+            if not isinstance(checksum, str) or checksum not in sizes or type(size) is not int or size != sizes[checksum] or not isinstance(delivery, dict) or delivery.get('state') != 'COMPLETE':
+                raise UploadError('Explicit duplicate repair requires complete approved screenshots with matching byte sizes')
+        ordered = self.screenshot_order(identifier, actual)
+        selected = next(row for row in actual if row['id'] == self.remove_approved_duplicate)
+        checksum = selected['attributes']['sourceFileChecksum']
+        duplicates = [row['id'] for row in actual if row['attributes']['sourceFileChecksum'] == checksum]
+        if len(duplicates) != 2:
+            raise UploadError('Explicit screenshot ID does not identify one redundant approved copy')
+        keep = next(value for value in ordered if value in duplicates)
+        if keep == self.remove_approved_duplicate:
+            raise UploadError('Explicit duplicate repair must retain the first ordered approved copy')
+        direct = self.cli.api('GET', '/v1/appScreenshots/' + self.remove_approved_duplicate + '?include=appScreenshotSet').get('data')
+        relations = direct.get('relationships') if isinstance(direct, dict) else None
+        parent = relations.get('appScreenshotSet') if isinstance(relations, dict) else None
+        if not isinstance(direct, dict) or direct.get('type') != 'appScreenshots' or direct.get('id') != self.remove_approved_duplicate or not isinstance(parent, dict) or parent.get('data') != {'type': 'appScreenshotSets', 'id': identifier}:
+            raise UploadError('Explicit duplicate screenshot identity or parent does not match its approved gallery')
+        attrs = direct.get('attributes', {})
+        delivery = attrs.get('assetDeliveryState') if isinstance(attrs, dict) else None
+        if not isinstance(attrs, dict) or attrs.get('sourceFileChecksum') != checksum or type(attrs.get('fileSize')) is not int or attrs['fileSize'] != sizes[checksum] or not isinstance(delivery, dict) or delivery.get('state') != 'COMPLETE':
+            raise UploadError('Explicit duplicate screenshot changed during verification')
+        return {'target': target, 'family': family, 'locale': locale, 'profile': profile, 'setId': identifier, 'removeId': self.remove_approved_duplicate, 'keepId': keep, 'checksum': checksum, 'bytes': sizes[checksum], 'files': files, 'orderedIds': ordered, 'assets': sorted([{'id': row['id'], 'checksum': row['attributes']['sourceFileChecksum'], 'bytes': row['attributes']['fileSize']} for row in actual], key=lambda row: row['id'])}
+
+    def delete_approved_duplicate(self, proof):
+        identifier, actual = self.screenshot_set(proof['target'], proof['family'], proof['profile'], proof['setId'])
+        current = self.approved_duplicate(proof['target'], proof['family'], proof['locale'], proof['profile'], identifier, actual, proof['files'])
+        if current != proof:
+            raise UploadError('Explicit duplicate repair evidence changed after planning; no deletion is permitted')
+        if hasattr(self.cli, 'receipt'):
+            self.cli.receipt('approved-duplicate-delete-verified', {'setId': identifier, 'screenshotId': proof['removeId'], 'retained': [{'assetId': value} for value in proof['orderedIds'] if value != proof['removeId']]})
+        self.cli.api('DELETE', '/v1/appScreenshots/' + proof['removeId'])
+        identifier, remaining = self.screenshot_set(proof['target'], proof['family'], proof['profile'], proof['setId'])
+        expected = [hashlib.md5(Path(name).read_bytes()).hexdigest() for name in proof['files']]
+        validate_screenshot_set(identifier, remaining, expected, proof['locale'], proof['profile'], require_full=True, read_linkages=self.screenshot_linkages)
+        if {row['id'] for row in remaining} != set(proof['orderedIds']) - {proof['removeId']}:
+            raise UploadError('Explicit duplicate repair did not preserve every retained screenshot identity; inspect before retrying')
+        self.screenshot_order(identifier, remaining)
 
     def upload_screenshots(self, op):
         expected = [hashlib.md5(Path(name).read_bytes()).hexdigest() for name in op['files']]
@@ -830,6 +899,8 @@ class Planner:
             raise UploadError('; '.join(self.blockers))
         if not self.cli.apply:
             raise UploadError('Apply mode is required to execute a plan')
+        if self.remove_approved_duplicate and (self.duplicate_repair is None or not self.ops or self.ops[0]['method'] != 'DELETE_APPROVED_DUPLICATE' or self.ops[0]['proof'] != self.duplicate_repair):
+            raise UploadError('Explicit duplicate repair was not uniquely verified before execution')
         resolved = {}
         def substitute(value):
             if isinstance(value, str):
@@ -847,7 +918,10 @@ class Planner:
             op = substitute({k: v for k, v in operation.items() if k != 'ref'})
             if hasattr(self.cli, 'receipt'):
                 self.cli.receipt('operation-%d-started' % index)
-            if op['method'] == 'METADATA':
+            if op['method'] == 'DELETE_APPROVED_DUPLICATE':
+                self.delete_approved_duplicate(op['proof'])
+                identifier = ''
+            elif op['method'] == 'METADATA':
                 self.sync_metadata(dry_run=False)
                 identifier = ''
             elif op['method'] == 'CPP_CREATE':
@@ -897,6 +971,8 @@ class Planner:
                 entry['locale'] = data['attributes']['locale']
             if operation['method'] == 'SCREENSHOTS':
                 entry.update(family=operation['family'], profile=operation['profile'], screenshotCount=len(operation['files']), resumeExisting=operation.get('skip_existing', False))
+            if operation['method'] == 'DELETE_APPROVED_DUPLICATE':
+                entry.update({key: operation['proof'][key] for key in ('setId', 'removeId', 'keepId', 'checksum', 'bytes', 'family', 'locale', 'profile')})
             if operation['method'] == 'LIBRARY':
                 entry.update(mediaType=operation['media_type'], approvedReference=operation['reference'])
             if operation['method'] == 'METADATA':
@@ -921,6 +997,7 @@ def main():
     parser.add_argument('--app-info-id', help='Optional exact editable app-info filter; otherwise require one unique candidate')
     parser.add_argument('--scope', default='metadata,default,cpp,header,duo')
     parser.add_argument('--apply', action='store_true')
+    parser.add_argument('--remove-approved-duplicate', help='Explicit exact screenshot ID to remove only after proving one redundant approved copy')
     parser.add_argument('--receipts', type=Path, help='Private durable JSONL receipt path; required for remote plans and apply')
     args = parser.parse_args()
     scopes = set(args.scope.split(','))
@@ -928,13 +1005,15 @@ def main():
         parser.error('--scope must select metadata,default,cpp,header,duo')
     if args.validate_only and args.apply:
         parser.error('--validate-only cannot be combined with --apply')
+    if args.validate_only and args.remove_approved_duplicate:
+        parser.error('--validate-only cannot repair a remote duplicate')
     args.version_id = args.version_id.strip() if args.version_id else None
     args.version_string = args.version_string.strip() if args.version_string else None
     args.app_info_id = args.app_info_id.strip() if args.app_info_id else None
     if not args.validate_only:
         if not args.receipts:
             parser.error('--receipts is required unless --validate-only is selected')
-        for identifier in (args.version_id, args.app_info_id):
+        for identifier in (args.version_id, args.app_info_id, args.remove_approved_duplicate):
             if identifier and not re.fullmatch('[A-Za-z0-9-]+', identifier):
                 parser.error('Resource IDs may contain only letters, digits and hyphens')
     root = args.media_dir.resolve()
@@ -947,7 +1026,7 @@ def main():
     cli = CLI(apply=args.apply, receipts=args.receipts)
     target = resolve_targets(cli, metadata['appId'], args.version_id, args.version_string, args.app_info_id)
     print(json.dumps({'resolvedTarget': target}))
-    plan = Planner(cli, metadata, slots, header, target['versionId'], target['versionString'], target['appInfoId'], scopes).preflight()
+    plan = Planner(cli, metadata, slots, header, target['versionId'], target['versionString'], target['appInfoId'], scopes, remove_approved_duplicate=args.remove_approved_duplicate).preflight()
     print(json.dumps({'mode': 'apply' if args.apply else 'dry-run', 'plannedDraftOperations': len(plan.ops), 'scopes': sorted(scopes), 'blockers': plan.blockers, 'notes': plan.notes, 'cppStatus': plan.cpp_status, 'plan': plan.summary()}, ensure_ascii=False, indent=2))
     if args.apply:
         plan.execute()
