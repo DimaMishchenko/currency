@@ -1638,9 +1638,29 @@ class UploaderTests(unittest.TestCase):
         for output in ('PRIVATE_ERROR', json.dumps({'actions': 'PRIVATE'}), json.dumps({'actions': [{'scope': {}}]}), json.dumps({'actions': [{}] * 201}), 'x' * 1048577, json.dumps({'actions': [{'scope': 'version', 'locale': 'en-US', 'action': 'update', 'status': 'PRIVATE'}]})):
             self.assertEqual(u.safe_metadata_failure_summary(output), '')
 
-    def test_library_and_screenshot_helpers_never_inherit_http_debug(self):
+    def test_cpp_screenshot_upload_captures_trace_and_reports_only_allowed_http_status(self):
+        command = ['product-pages', 'custom-pages', 'localizations', 'screenshot-sets', 'upload', '--localization-id', 'locale', '--path', '/private/approved']
+        trace = 'level=INFO msg="→ HTTP Request" url=https://signed.invalid/PRIVATE_KEY authorization="Bearer PRIVATE_KEY"\nlevel=INFO msg="← HTTP Response" status=409 elapsed=1ms private=PRIVATE_BODY\nlevel=INFO msg="← HTTP Response" status=400\nprefix level=INFO msg="← HTTP Response" status=503\nError: PRIVATE_ERROR https://signed.invalid/TOKEN\n'
+        result = subprocess.CompletedProcess([], 1, 'PRIVATE_BODY https://signed.invalid/TOKEN', trace)
+        with patch.dict(u.os.environ, {'ASC_DEBUG_HTTP': 'true'}), patch.object(subprocess, 'run', return_value=result) as process:
+            with self.assertRaises(u.UploadError) as error:
+                u.CLI(apply=True).run(command, mutate=True)
+        self.assertEqual(str(error.exception), 'asc command failed (HTTP 409); inspect App Store Connect draft state before retrying (raw output suppressed)')
+        self.assertEqual(process.call_args.kwargs['env']['ASC_DEBUG'], 'api')
+        self.assertNotIn('ASC_DEBUG_HTTP', process.call_args.kwargs['env'])
+        self.assertTrue(process.call_args.kwargs['capture_output'])
+        self.assertEqual(process.call_args.args[0][1:], command)
+
+    def test_library_and_other_screenshot_helpers_never_inherit_http_debug(self):
         trace = 'level=INFO msg="← HTTP Response" status=409 PRIVATE_KEY\n'
-        for command in (['asset-library', 'videos', 'upload'], ['screenshots', 'upload']):
+        for command in (
+            ['asset-library', 'videos', 'upload'],
+            ['screenshots', 'upload'],
+            ['product-pages', 'custom-pages', 'localizations', 'screenshot-sets'],
+            ['product-pages', 'custom-pages', 'localizations', 'screenshot-sets', 'uploads'],
+            ['product-pages', 'custom-pages', 'localizations', 'screenshots', 'upload'],
+            ['product-pages', 'custom-pages', 'screenshot-sets', 'localizations', 'upload'],
+        ):
             with self.subTest(command=command):
                 result = subprocess.CompletedProcess([], 1, '', trace)
                 with patch.dict(u.os.environ, {'ASC_DEBUG': 'api', 'ASC_DEBUG_HTTP': 'true'}), patch.object(subprocess, 'run', return_value=result) as process:

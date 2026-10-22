@@ -71,8 +71,10 @@ jobs:
           chmod 755 "$RUNNER_TEMP/currency-asc-bin/asc"
           echo "$RUNNER_TEMP/currency-asc-bin" >> "$GITHUB_PATH"
           if [[ "$REQUEST_MODE" != inspect-native-policy ]] && ! command -v ffprobe >/dev/null 2>&1; then
-            sudo timeout 120s apt-get -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 -o Acquire::Retries=2 update -qq
-            sudo timeout 180s apt-get -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 -o Acquire::Retries=2 install -y -qq ffmpeg
+            echo 'Refreshing package index for video inspection'
+            sudo apt-get -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 -o Acquire::Retries=2 update -qq
+            echo 'Installing video inspection dependency'
+            sudo apt-get -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 -o Acquire::Retries=2 install -y -qq ffmpeg
           fi
       - name: Fetch and verify the pinned asset release
         if: inputs.mode != 'inspect-native-policy'

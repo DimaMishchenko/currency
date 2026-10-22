@@ -283,7 +283,8 @@ class CLI:
         env['ASC_STRICT_AUTH'] = 'true'
         raw_api = len(args) >= 3 and args[0] == 'api' and args[1] in {'GET', 'POST', 'PATCH', 'DELETE'}
         metadata_apply = args[:2] == ['metadata', 'apply']
-        http_trace = raw_api or metadata_apply
+        cpp_screenshot_upload = args[:5] == ['product-pages', 'custom-pages', 'localizations', 'screenshot-sets', 'upload']
+        http_trace = raw_api or metadata_apply or cpp_screenshot_upload
         env['ASC_DEBUG'] = 'api' if http_trace else 'false'
         try:
             if mutate:
