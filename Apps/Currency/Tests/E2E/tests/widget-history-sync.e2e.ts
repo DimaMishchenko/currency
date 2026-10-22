@@ -83,12 +83,9 @@ test('simultaneous Bitcoin History ranges converge after one widget refreshes wi
       try {
         writeRates(JSON.stringify(newer));
         await configureWidget('History', 'Small', parameters => {
-          parameters.range = { identifier: 'day', value: 'day', title: { key: '1 day' } };
+          parameters.range = { identifier: 'month', value: 'month', title: { key: '1 month' } };
         });
-        for (const configuration of configurations) {
-          const isDay = configuration.range === 'day';
-          const widget = device.locator('id=Currency value=Widget')
-            .filter({ has: screen.getByLabel(isDay ? 'One day' : 'One week', { exact: true }) });
+        const revealInstalled = async (widget: ReturnType<typeof device.locator>) => {
           const bounds = await device.locator('role=Application').boundingBox();
           assert.ok(bounds, 'Home Screen navigation requires the simulator viewport.');
           for (const direction of [1, 1, 1, -1, -1, -1, -1, -1, -1]) {
@@ -99,6 +96,18 @@ test('simultaneous Bitcoin History ranges converge after one widget refreshes wi
             });
           }
           await expect(widget).toBeVisible({ timeout: 30_000 });
+        };
+        const month = device.locator('id=Currency value=Widget')
+          .filter({ has: screen.getByLabel('One month', { exact: true }) });
+        await revealInstalled(month);
+        await configureWidget('History', 'Small', parameters => {
+          parameters.range = { identifier: 'day', value: 'day', title: { key: '1 day' } };
+        });
+        for (const configuration of configurations) {
+          const isDay = configuration.range === 'day';
+          const widget = device.locator('id=Currency value=Widget')
+            .filter({ has: screen.getByLabel(isDay ? 'One day' : 'One week', { exact: true }) });
+          await revealInstalled(widget);
           await expect(widget.getByLabel('Rate change over the selected range', { exact: true }))
             .toHaveValue(isDay ? /^\+10[.,]00%$/ : /^\+37[.,]50%$/, { timeout: 30_000 });
           await agent.waitFor(`The visible ${configuration.family.toLowerCase()} Currency History widget shows BTC 1 and USD exactly 55,000 (55 000 with a space grouping separator is equivalent), ${isDay ? '1D and +10.00%' : '1W and +37.50%'} (decimal comma is equivalent), with its line chart visible and no placeholders or missing values.`, { vision: 'only', timeout: 30_000 });
