@@ -196,7 +196,7 @@ def safe_metadata_failure_summary(stdout):
     return ' metadataActions=' + json.dumps({'counts': counts, 'failures': failures}, separators=(',', ':'))
 
 
-def safe_screenshot_conflict(set_id, actual, expected):
+def safe_screenshot_conflict(set_id, actual, expected, linkages=None):
     def identifier(value):
         return value if isinstance(value, str) and re.fullmatch('[A-Za-z0-9-]{1,180}', value) else None
     assets = []
@@ -215,11 +215,35 @@ def safe_screenshot_conflict(set_id, actual, expected):
         })
     identifiers = {identifier(row.get('id')) for row in actual} - {None}
     states = [row.get('attributes', {}).get('assetDeliveryState') for row in actual]
+    ordered = None
+    if linkages is not None:
+        rows = [row if isinstance(row, dict) else {} for row in linkages]
+        ordered = {
+            'rowCount': len(rows), 'uniqueIdCount': len({identifier(row.get('id')) for row in rows} - {None}),
+            'assets': [{'id': identifier(row.get('id')), 'type': 'appScreenshots' if row.get('type') == 'appScreenshots' else None} for row in rows[:20]],
+        }
     return {
         'setId': identifier(set_id), 'assetCount': len(actual), 'uniqueIdCount': len(identifiers),
         'completeCount': sum(isinstance(state, dict) and state.get('state') == 'COMPLETE' for state in states),
         'assets': assets, 'approvedChecksums': [{'order': order, 'checksum': checksum} for order, checksum in enumerate(expected, 1)],
+        'orderedLinkages': ordered,
     }
+
+
+def validate_screenshot_set(set_id, actual, expected, locale, profile, require_full=False, read_linkages=None):
+    received = [row.get('attributes', {}).get('sourceFileChecksum') for row in actual]
+    identifiers = [row.get('id') for row in actual]
+    states = [row.get('attributes', {}).get('assetDeliveryState') for row in actual]
+    complete_count = sum(isinstance(state, dict) and state.get('state') == 'COMPLETE' for state in states)
+    complete = complete_count == len(actual) and all(isinstance(identifier, str) and re.fullmatch('[A-Za-z0-9-]{1,180}', identifier) for identifier in identifiers) and len(set(identifiers)) == len(actual)
+    conflict = actual and not (received == expected and complete) and (not complete or len(set(expected)) != len(expected) or any(not isinstance(checksum, str) or checksum not in expected for checksum in received) or len(set(received)) != len(actual))
+    if conflict or require_full and len(actual) != len(expected):
+        try:
+            linkages = read_linkages(set_id) if set_id and read_linkages else None
+        except UploadError:
+            linkages = None
+        diagnostic = json.dumps(safe_screenshot_conflict(set_id, actual, expected, linkages), separators=(',', ':'))
+        raise UploadError('Existing screenshot set differs or is incomplete for %s/%s (%d assets, %d complete); reconcile it manually before apply. Automatic deletion is disabled. screenshotConflict=%s' % (locale, profile, len(actual), complete_count, diagnostic))
 
 
 class CLI:
@@ -638,30 +662,71 @@ class Planner:
                     if missing:
                         self.queue('POST', '/v1/appCustomProductPageLocalizations/' + target + '/relationships/searchKeywords', {'data': [{'type': 'appKeywords', 'id': t} for t in missing]})
 
-    def screenshots(self, target, family, locale, profile):
-        items = [self.slots[(locale, profile, family, i)] for i in range(1, 7)]
-        resume = False
+    def screenshot_set(self, target, family, profile, expected_id=None):
         kind = 'appStoreVersionLocalizations' if family == 'default' else 'appCustomProductPageLocalizations'
         sets = self.get('/v1/' + kind + '/' + target + '/appScreenshotSets')
         matching = [s for s in sets if s.get('attributes', {}).get('screenshotDisplayType') == PROFILES[profile]]
         if len(matching) > 1:
             raise UploadError('Duplicate remote screenshot sets')
-        if matching:
-            actual = self.get('/v1/appScreenshotSets/' + matching[0]['id'] + '/appScreenshots')
-            expected = [hashlib.md5(i['file'].read_bytes()).hexdigest() for i in items]
-            received = [r.get('attributes', {}).get('sourceFileChecksum') for r in actual]
-            identifiers = [r.get('id') for r in actual]
-            states = [r.get('attributes', {}).get('assetDeliveryState') for r in actual]
-            complete_count = sum(isinstance(state, dict) and state.get('state') == 'COMPLETE' for state in states)
-            complete = complete_count == len(actual) and all(isinstance(identifier, str) and re.fullmatch('[A-Za-z0-9-]{1,180}', identifier) for identifier in identifiers) and len(set(identifiers)) == len(actual)
-            if received == expected and complete:
+        identifier = matching[0].get('id') if matching else None
+        if matching and (not isinstance(identifier, str) or not re.fullmatch('[A-Za-z0-9-]{1,180}', identifier)):
+            raise UploadError('Screenshot set returned an invalid identity; inspect draft state before retrying')
+        if expected_id and identifier != expected_id:
+            raise UploadError('Screenshot set identity changed after planning; inspect draft state before retrying')
+        return identifier, self.get('/v1/appScreenshotSets/' + identifier + '/appScreenshots') if identifier else []
+
+    def screenshots(self, target, family, locale, profile):
+        items = [self.slots[(locale, profile, family, i)] for i in range(1, 7)]
+        identifier, actual = self.screenshot_set(target, family, profile)
+        expected = [hashlib.md5(i['file'].read_bytes()).hexdigest() for i in items]
+        validate_screenshot_set(identifier, actual, expected, locale, profile, read_linkages=self.screenshot_linkages)
+        if identifier:
+            current = self.screenshot_order(identifier, actual)
+            by_checksum = {row['attributes']['sourceFileChecksum']: row['id'] for row in actual}
+            if len(actual) == len(expected) and current == [by_checksum[checksum] for checksum in expected]:
                 return
-            if actual:
-                if not complete or len(set(expected)) != len(expected) or any(not isinstance(checksum, str) or checksum not in expected for checksum in received) or len(set(received)) != len(actual):
-                    diagnostic = json.dumps(safe_screenshot_conflict(matching[0]['id'], actual, expected), separators=(',', ':'))
-                    raise UploadError('Existing screenshot set differs or is incomplete for %s/%s (%d assets, %d complete); reconcile it manually before apply. Automatic deletion is disabled. screenshotConflict=%s' % (locale, profile, len(actual), complete_count, diagnostic))
-                resume = True
-        self.queue('SCREENSHOTS', target, family=family, profile=profile, files=[str(i['file']) for i in items], skip_existing=resume)
+        self.queue('SCREENSHOTS', target, family=family, locale=locale, profile=profile, files=[str(i['file']) for i in items], set_id=identifier, skip_existing=bool(actual))
+
+    def screenshot_linkages(self, identifier):
+        return self.get('/v1/appScreenshotSets/' + identifier + '/relationships/appScreenshots')
+
+    def screenshot_order(self, identifier, actual):
+        current = self.screenshot_linkages(identifier)
+        identifiers = [row.get('id') if isinstance(row, dict) else None for row in current]
+        if len(identifiers) != len(actual) or any(not isinstance(row, dict) or row.get('type') != 'appScreenshots' for row in current) or any(not isinstance(value, str) for value in identifiers) or set(identifiers) != {row['id'] for row in actual}:
+            raise UploadError('Screenshot ordering membership changed; inspect draft state before retrying')
+        return identifiers
+
+    def upload_screenshots(self, op):
+        expected = [hashlib.md5(Path(name).read_bytes()).hexdigest() for name in op['files']]
+        identifier, actual = self.screenshot_set(op['path'], op['family'], op['profile'], op.get('set_id'))
+        validate_screenshot_set(identifier, actual, expected, op['locale'], op['profile'], read_linkages=self.screenshot_linkages)
+        if identifier:
+            self.screenshot_order(identifier, actual)
+        existing_ids = {row['id'] for row in actual}
+        received = [row['attributes']['sourceFileChecksum'] for row in actual]
+        files = [(order, name) for order, name in enumerate(op['files'], 1) if expected[order - 1] not in received]
+        if op['family'] == 'default' and received != expected:
+            files = list(enumerate(op['files'], 1))
+        if files:
+            with tempfile.TemporaryDirectory(prefix='currency-shots-') as directory:
+                for order, name in files:
+                    shutil.copyfile(name, Path(directory) / ('%02d.png' % order))
+                args = ['screenshots', 'upload', '--version-localization', op['path']] if op['family'] == 'default' else ['product-pages', 'custom-pages', 'localizations', 'screenshot-sets', 'upload', '--localization-id', op['path']]
+                if op['family'] == 'default' and actual:
+                    args.append('--skip-existing')
+                self.cli.run([*args, '--path', directory, '--device-type', PROFILES[op['profile']], '--output', 'json'], mutate=True)
+        identifier, actual = self.screenshot_set(op['path'], op['family'], op['profile'], identifier)
+        validate_screenshot_set(identifier, actual, expected, op['locale'], op['profile'], require_full=True, read_linkages=self.screenshot_linkages)
+        if not existing_ids <= {row['id'] for row in actual}:
+            raise UploadError('Existing screenshot identities changed during upload; inspect draft state before retrying')
+        by_checksum = {row['attributes']['sourceFileChecksum']: row['id'] for row in actual}
+        desired = [by_checksum[checksum] for checksum in expected]
+        path = '/v1/appScreenshotSets/' + identifier + '/relationships/appScreenshots'
+        if self.screenshot_order(identifier, actual) != desired:
+            self.cli.api('PATCH', path, {'data': [{'type': 'appScreenshots', 'id': value} for value in desired]})
+            if self.screenshot_order(identifier, actual) != desired:
+                raise UploadError('Screenshot order was not saved; inspect draft state before retrying')
 
     def library_media(self, item, media_type):
         reference = 'currency-approved-' + item['sha256']
@@ -810,11 +875,7 @@ class Planner:
                 if not identifier:
                     raise UploadError('Library upload returned no asset ID; inspect remote library before retry')
             elif op['method'] == 'SCREENSHOTS':
-                with tempfile.TemporaryDirectory(prefix='currency-shots-') as directory:
-                    for order, name in enumerate(op['files'], 1):
-                        shutil.copyfile(name, Path(directory) / ('%02d.png' % order))
-                    args = ['screenshots', 'upload', '--version-localization', op['path']] if op['family'] == 'default' else ['product-pages', 'custom-pages', 'localizations', 'screenshot-sets', 'upload', '--localization-id', op['path']]
-                    self.cli.run([*args, '--path', directory, '--device-type', PROFILES[op['profile']], '--output', 'json', *(['--skip-existing'] if op.get('skip_existing') else [])], mutate=True)
+                self.upload_screenshots(op)
                 identifier = ''
             else:
                 response = self.apply_resource(op['method'], op['path'], op['body'])

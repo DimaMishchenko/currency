@@ -69,7 +69,14 @@ class FakeCLI:
         if method != 'GET':
             if not self.apply:
                 raise AssertionError('Dry-run attempted mutation')
+            if method == 'PATCH' and path.endswith('/relationships/appScreenshots'):
+                self.state[path] = body['data']
+                collection = path.replace('/relationships/appScreenshots', '/appScreenshots')
+                by_id = {asset['id']: asset for asset in self.state[collection]}
+                self.state[collection] = [by_id[asset['id']] for asset in body['data']]
             return {'data': {'id': 'created-' + str(len(self.calls))}}
+        if path.endswith('/relationships/appScreenshots') and path not in self.state:
+            return {'data': [{'type': 'appScreenshots', 'id': asset['id']} for asset in self.state.get(path.replace('/relationships/appScreenshots', '/appScreenshots'), [])]}
         return {'data': self.state.get(path, [])}
 
     def run(self, args, body=None, mutate=False, cwd=None):
@@ -79,6 +86,30 @@ class FakeCLI:
         self.command_mutations.append(mutate)
         if args[:2] == ['metadata', 'apply']:
             return {'appId': args[args.index('--app') + 1], 'appInfoId': args[args.index('--app-info') + 1], 'version': args[args.index('--version') + 1], 'versionId': 'version', 'adds': [], 'updates': [], 'deletes': []}
+        default = args[:2] == ['screenshots', 'upload']
+        if default or args[:5] == ['product-pages', 'custom-pages', 'localizations', 'screenshot-sets', 'upload']:
+            allowed = {'--path', '--device-type', '--output', '--version-localization', '--skip-existing'} if default else {'--path', '--device-type', '--output', '--localization-id'}
+            if any(value.startswith('--') and value not in allowed for value in args):
+                raise AssertionError('Unsupported pinned screenshot upload flag')
+            localization = args[args.index('--version-localization' if default else '--localization-id') + 1]
+            kind = 'appStoreVersionLocalizations' if default else 'appCustomProductPageLocalizations'
+            display = args[args.index('--device-type') + 1]
+            sets = self.state.setdefault('/v1/' + kind + '/' + localization + '/appScreenshotSets', [])
+            matching = [item for item in sets if item['attributes']['screenshotDisplayType'] == display]
+            if not matching:
+                matching = [row('set-' + str(len(self.calls)), screenshotDisplayType=display)]
+                sets.extend(matching)
+            set_id = matching[0]['id']
+            actual = self.state.setdefault('/v1/appScreenshotSets/' + set_id + '/appScreenshots', [])
+            staged = [(file.name, hashlib.md5(file.read_bytes()).hexdigest()) for file in sorted(Path(args[args.index('--path') + 1]).glob('*.png'))]
+            self.staged_screenshots = staged
+            for index, (_, checksum) in enumerate(staged):
+                if '--skip-existing' not in args or not any(asset['attributes']['sourceFileChecksum'] == checksum for asset in actual):
+                    actual.append(row('uploaded-%d-%d' % (len(self.calls), index), sourceFileChecksum=checksum, assetDeliveryState={'state': 'COMPLETE'}))
+            if '--skip-existing' in args:
+                order = {checksum: index for index, (_, checksum) in enumerate(staged)}
+                actual.sort(key=lambda asset: order[asset['attributes']['sourceFileChecksum']])
+            return {'setId': set_id, 'results': [{'assetId': asset['id']} for asset in actual]}
         return {'videoId': 'uploaded-video'}
 
 
@@ -105,6 +136,19 @@ class UploaderTests(unittest.TestCase):
 
     def planner(self, cli, scopes):
         return u.Planner(cli, self.meta, self.slots, {}, 'version', '1.2', 'info', scopes)
+
+    def screenshot_assets(self, orders):
+        return [row('shot-' + str(order), sourceFileChecksum=hashlib.md5(self.slots[('en-US', 'iphone', 'default', order)]['file'].read_bytes()).hexdigest(), assetDeliveryState={'state': 'COMPLETE'}) for order in orders]
+
+    def cpp_screenshot_plan(self, cli, orders):
+        for order in range(1, 7):
+            self.slots[('en-US', 'iphone', 'travel', order)] = self.slots[('en-US', 'iphone', 'default', order)]
+        self.state['/v1/appCustomProductPageLocalizations/locale/appScreenshotSets'] = [row('set', screenshotDisplayType='APP_IPHONE_61')]
+        self.state['/v1/appScreenshotSets/set/appScreenshots'] = self.screenshot_assets(orders)
+        self.state.pop('/v1/appScreenshotSets/set/relationships/appScreenshots', None)
+        plan = self.planner(cli, {'cpp'})
+        plan.screenshots('locale', 'travel', 'en-US', 'iphone')
+        return plan
 
     def test_canonical_metadata_exports_all_18_locales_and_selected_fields_only(self):
         metadata = json.loads((MODULE.parent / 'metadata.json').read_text())
@@ -254,6 +298,71 @@ class UploaderTests(unittest.TestCase):
         plan = self.planner(FakeCLI(self.state), {'default'}).preflight()
         self.assertEqual(plan.ops, [])
 
+    def test_screenshot_preflight_uses_canonical_order_and_membership(self):
+        for family in ('default', 'travel'):
+            for case in ('ordered', 'reversed', 'collection-reversed', 'foreign', 'missing', 'duplicate', 'wrong-type'):
+                with self.subTest(family=family, case=case):
+                    for order in range(1, 7):
+                        self.slots[('en-US', 'iphone', family, order)] = self.slots[('en-US', 'iphone', 'default', order)]
+                    kind = 'appStoreVersionLocalizations' if family == 'default' else 'appCustomProductPageLocalizations'
+                    self.state['/v1/' + kind + '/locale/appScreenshotSets'] = [row('set', screenshotDisplayType='APP_IPHONE_61')]
+                    assets = self.screenshot_assets(range(1, 7))
+                    self.state['/v1/appScreenshotSets/set/appScreenshots'] = list(reversed(assets)) if case == 'collection-reversed' else assets
+                    ordered = [{'type': 'appScreenshots', 'id': asset['id']} for asset in assets]
+                    current = [dict(item) for item in ordered]
+                    if case == 'reversed':
+                        current.reverse()
+                    elif case == 'foreign':
+                        current[0]['id'] = 'foreign'
+                    elif case == 'missing':
+                        current.pop()
+                    elif case == 'duplicate':
+                        current[0]['id'] = current[1]['id']
+                    elif case == 'wrong-type':
+                        current[0]['type'] = 'appAssetLibraryPlacements'
+                    self.state['/v1/appScreenshotSets/set/relationships/appScreenshots'] = current
+                    cli = FakeCLI(self.state, apply=True)
+                    plan = self.planner(cli, {'default'})
+                    if case in {'foreign', 'missing', 'duplicate', 'wrong-type'}:
+                        with self.assertRaisesRegex(u.UploadError, 'membership changed'):
+                            plan.screenshots('locale', family, 'en-US', 'iphone')
+                        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+                        self.assertEqual(plan.ops, [])
+                    else:
+                        plan.screenshots('locale', family, 'en-US', 'iphone')
+                        self.assertEqual(len(plan.ops), 1 if case == 'reversed' else 0)
+                        if plan.ops:
+                            with patch.object(sys, 'stdout', new=io.StringIO()):
+                                plan.execute()
+                            self.assertFalse(any(call[0] == 'COMMAND' for call in cli.calls))
+                            patches = [call for call in cli.calls if call[0] == 'PATCH']
+                            self.assertEqual(len(patches), 1)
+                            self.assertEqual(patches[0][2], {'data': ordered})
+                            self.assertEqual(self.state['/v1/appScreenshotSets/set/relationships/appScreenshots'], ordered)
+
+    def test_screenshot_execution_rechecks_canonical_membership_before_upload(self):
+        cli = FakeCLI(self.state, apply=True)
+        plan = self.cpp_screenshot_plan(cli, [3])
+        self.state['/v1/appScreenshotSets/set/relationships/appScreenshots'] = [{'type': 'appScreenshots', 'id': 'foreign'}]
+        with self.assertRaisesRegex(u.UploadError, 'membership changed'):
+            plan.execute()
+        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_screenshot_order_patch_acknowledgment_requires_saved_order_readback(self):
+        class UnsavedCLI(FakeCLI):
+            def api(self, method, path, body=None):
+                if method == 'PATCH':
+                    self.calls.append((method, path, body))
+                    return {}
+                return super().api(method, path, body)
+        cli = UnsavedCLI(self.state, apply=True)
+        plan = self.cpp_screenshot_plan(cli, [6, 5, 4, 3, 2, 1])
+        with self.assertRaisesRegex(u.UploadError, 'order was not saved'):
+            plan.execute()
+        self.assertFalse(any(call[0] == 'COMMAND' for call in cli.calls))
+        self.assertEqual(sum(call[0] == 'PATCH' for call in cli.calls), 1)
+        self.assertEqual(cli.calls[-1], ('GET', '/v1/appScreenshotSets/set/relationships/appScreenshots', None))
+
     def test_approved_partial_or_unordered_screenshots_resume_in_full_approved_order(self):
         for family in ('default', 'travel'):
             for orders in ([1, 3, 5], [6, 2], [4, 3, 2, 1, 5, 6]):
@@ -263,6 +372,7 @@ class UploaderTests(unittest.TestCase):
                     kind = 'appStoreVersionLocalizations' if family == 'default' else 'appCustomProductPageLocalizations'
                     self.state['/v1/' + kind + '/locale/appScreenshotSets'] = [row('set', screenshotDisplayType='APP_IPHONE_61')]
                     self.state['/v1/appScreenshotSets/set/appScreenshots'] = [row('shot-' + str(order), sourceFileChecksum=hashlib.md5(self.slots[('en-US', 'iphone', family, order)]['file'].read_bytes()).hexdigest(), assetDeliveryState={'state': 'COMPLETE'}) for order in orders]
+                    self.state.pop('/v1/appScreenshotSets/set/relationships/appScreenshots', None)
                     cli = FakeCLI(self.state, apply=True)
                     plan = self.planner(cli, {'default'})
                     plan.screenshots('locale', family, 'en-US', 'iphone')
@@ -273,11 +383,20 @@ class UploaderTests(unittest.TestCase):
                     with patch.object(sys, 'stdout', new=io.StringIO()):
                         plan.execute()
                     commands = [call[1] for call in cli.calls if call[0] == 'COMMAND']
-                    self.assertEqual(len(commands), 1)
-                    self.assertIn('--skip-existing', commands[0])
-                    self.assertNotIn('--replace', commands[0])
-                    self.assertNotIn('--confirm', commands[0])
-                    self.assertEqual(commands[0][:2], ['screenshots', 'upload'] if family == 'default' else ['product-pages', 'custom-pages'])
+                    self.assertEqual(len(commands), 0 if family != 'default' and len(orders) == 6 else 1)
+                    for command in commands:
+                        self.assertEqual('--skip-existing' in command, family == 'default')
+                        self.assertNotIn('--replace', command)
+                        self.assertNotIn('--confirm', command)
+                        self.assertEqual(command[:2], ['screenshots', 'upload'] if family == 'default' else ['product-pages', 'custom-pages'])
+                    if commands:
+                        selected = range(1, 7) if family == 'default' else [order for order in range(1, 7) if order not in orders]
+                        self.assertEqual(cli.staged_screenshots, [('%02d.png' % order, hashlib.md5(self.slots[('en-US', 'iphone', family, order)]['file'].read_bytes()).hexdigest()) for order in selected])
+                    if family != 'default':
+                        ordering = [call for call in cli.calls if call[0] == 'PATCH']
+                        self.assertEqual(len(ordering), 1)
+                        self.assertEqual(ordering[0][1], '/v1/appScreenshotSets/set/relationships/appScreenshots')
+                        self.assertEqual([item['id'] for item in ordering[0][2]['data']], [asset['id'] for asset in self.state['/v1/appScreenshotSets/set/appScreenshots']])
 
     def test_fresh_screenshots_do_not_enable_skip_existing(self):
         for existing_set in (False, True):
@@ -292,6 +411,108 @@ class UploaderTests(unittest.TestCase):
                     plan.execute()
                 command = next(call[1] for call in cli.calls if call[0] == 'COMMAND')
                 self.assertNotIn('--skip-existing', command)
+
+    def test_screenshot_execution_rechecks_fresh_plans_before_upload(self):
+        for family in ('default', 'travel'):
+            for race in ('approved-subset', 'approved-full', 'foreign', 'duplicate', 'failed', 'duplicate-sets'):
+                with self.subTest(family=family, race=race):
+                    for order in range(1, 7):
+                        self.slots[('en-US', 'iphone', family, order)] = self.slots[('en-US', 'iphone', 'default', order)]
+                    kind = 'appStoreVersionLocalizations' if family == 'default' else 'appCustomProductPageLocalizations'
+                    collection = '/v1/' + kind + '/locale/appScreenshotSets'
+                    self.state[collection] = []
+                    self.state.pop('/v1/appScreenshotSets/set/relationships/appScreenshots', None)
+                    cli = FakeCLI(self.state, apply=True)
+                    plan = self.planner(cli, {family})
+                    plan.screenshots('locale', family, 'en-US', 'iphone')
+                    self.assertFalse(plan.ops[0]['skip_existing'])
+                    self.state[collection] = [row('set', screenshotDisplayType='APP_IPHONE_61')]
+                    assets = self.screenshot_assets(range(1, 7) if race == 'approved-full' else [1, 3])
+                    if race == 'foreign':
+                        assets[0]['attributes']['sourceFileChecksum'] = 'f' * 32
+                    elif race == 'duplicate':
+                        assets.append(dict(assets[0], id='duplicate'))
+                    elif race == 'failed':
+                        assets[0]['attributes']['assetDeliveryState']['state'] = 'FAILED'
+                    elif race == 'duplicate-sets':
+                        self.state[collection].append(row('duplicate-set', screenshotDisplayType='APP_IPHONE_61'))
+                    self.state['/v1/appScreenshotSets/set/appScreenshots'] = assets
+                    if race.startswith('approved'):
+                        with patch.object(sys, 'stdout', new=io.StringIO()):
+                            plan.execute()
+                        commands = [call[1] for call in cli.calls if call[0] == 'COMMAND']
+                        self.assertEqual(len(commands), 0 if race == 'approved-full' else 1)
+                        if commands:
+                            self.assertEqual('--skip-existing' in commands[0], family == 'default')
+                            self.assertEqual([name for name, _ in cli.staged_screenshots], ['%02d.png' % order for order in (range(1, 7) if family == 'default' else [2, 4, 5, 6])])
+                    else:
+                        with self.assertRaises(u.UploadError):
+                            plan.execute()
+                        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_cpp_resume_refuses_changed_set_identity_before_upload(self):
+        cli = FakeCLI(self.state, apply=True)
+        plan = self.cpp_screenshot_plan(cli, [1])
+        self.state['/v1/appCustomProductPageLocalizations/locale/appScreenshotSets'] = [row('replacement', screenshotDisplayType='APP_IPHONE_61')]
+        with self.assertRaisesRegex(u.UploadError, 'identity changed'):
+            plan.execute()
+        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_cpp_resume_requires_complete_approved_assets_and_exact_relationship_membership_after_upload(self):
+        for race in ('foreign', 'duplicate', 'failed', 'missing', 'changed-existing-id', 'foreign-relationship', 'duplicate-relationship', 'wrong-relationship-type'):
+            with self.subTest(race=race):
+                cli = FakeCLI(self.state, apply=True)
+                plan = self.cpp_screenshot_plan(cli, [3])
+                self.state.pop('/v1/appScreenshotSets/set/relationships/appScreenshots', None)
+                upload = cli.run
+                def changed(args, body=None, mutate=False, cwd=None):
+                    result = upload(args, body, mutate, cwd)
+                    assets = self.state['/v1/appScreenshotSets/set/appScreenshots']
+                    if race == 'foreign':
+                        assets[1]['attributes']['sourceFileChecksum'] = 'f' * 32
+                    elif race == 'duplicate':
+                        assets.append(dict(assets[1], id='duplicate'))
+                    elif race == 'failed':
+                        assets[1]['attributes']['assetDeliveryState']['state'] = 'FAILED'
+                    elif race == 'missing':
+                        assets.pop()
+                    elif race == 'changed-existing-id':
+                        assets[0]['id'] = 'replacement'
+                    else:
+                        relations = [{'type': 'appScreenshots', 'id': asset['id']} for asset in assets]
+                        if race == 'foreign-relationship':
+                            relations[0]['id'] = 'foreign'
+                        elif race == 'duplicate-relationship':
+                            relations[0]['id'] = relations[1]['id']
+                        else:
+                            relations[0]['type'] = 'appAssetLibraryPlacements'
+                        self.state['/v1/appScreenshotSets/set/relationships/appScreenshots'] = relations
+                    return result
+                with patch.object(cli, 'run', side_effect=changed):
+                    with self.assertRaises(u.UploadError):
+                        plan.execute()
+                self.assertFalse(any(call[0] in {'PATCH', 'POST', 'DELETE'} for call in cli.calls))
+
+    def test_cpp_interrupted_upload_recovers_only_remaining_missing_files(self):
+        cli = FakeCLI(self.state, apply=True)
+        plan = self.cpp_screenshot_plan(cli, [3])
+        def interrupted(args, body=None, mutate=False, cwd=None):
+            self.assertNotIn('--skip-existing', args)
+            files = sorted(Path(args[args.index('--path') + 1]).glob('*.png'))
+            self.assertEqual(files[0].name, '01.png')
+            self.state['/v1/appScreenshotSets/set/appScreenshots'].append(row('owned-first-upload', sourceFileChecksum=hashlib.md5(files[0].read_bytes()).hexdigest(), assetDeliveryState={'state': 'COMPLETE'}))
+            raise u.UploadError('asc command failed; inspect draft state')
+        with patch.object(cli, 'run', side_effect=interrupted):
+            with self.assertRaises(u.UploadError):
+                plan.execute()
+        resumed = self.planner(cli, {'cpp'})
+        resumed.screenshots('locale', 'travel', 'en-US', 'iphone')
+        with patch.object(sys, 'stdout', new=io.StringIO()):
+            resumed.execute()
+        self.assertEqual([name for name, _ in cli.staged_screenshots], ['02.png', '04.png', '05.png', '06.png'])
+        self.assertEqual(len(self.state['/v1/appScreenshotSets/set/appScreenshots']), 6)
+        self.assertEqual(sum(asset['id'] == 'owned-first-upload' for asset in self.state['/v1/appScreenshotSets/set/appScreenshots']), 1)
+        self.assertEqual(self.state['/v1/appScreenshotSets/set/appScreenshots'][0]['id'], 'owned-first-upload')
 
     def test_unsafe_partial_screenshot_sets_refuse_before_upload(self):
         checksum = hashlib.md5(self.slots[('en-US', 'iphone', 'default', 1)]['file'].read_bytes()).hexdigest()
@@ -337,6 +558,8 @@ class UploaderTests(unittest.TestCase):
             (approved + [dict(row('foreign', sourceFileChecksum='f' * 32, fileSize=999, assetDeliveryState={'state': 'COMPLETE'}), type='appScreenshots')], 7),
         ]
         self.state['/v1/appStoreVersionLocalizations/locale/appScreenshotSets'] = [row('set', screenshotDisplayType='APP_IPHONE_61')]
+        ordered = [{'id': asset['id'], 'type': 'appScreenshots'} for asset in approved]
+        self.state['/v1/appScreenshotSets/set/relationships/appScreenshots'] = ordered
         for actual, unique_count in cases:
             with self.subTest(unique_count=unique_count, last_id=actual[-1]['id']):
                 for asset in actual:
@@ -352,10 +575,41 @@ class UploaderTests(unittest.TestCase):
                 self.assertEqual({key: diagnostic[key] for key in ('setId', 'assetCount', 'uniqueIdCount', 'completeCount')}, {'setId': 'set', 'assetCount': 7, 'uniqueIdCount': unique_count, 'completeCount': 7})
                 self.assertEqual(diagnostic['approvedChecksums'], [{'order': order, 'checksum': checksum} for order, checksum in enumerate(expected, 1)])
                 self.assertEqual(diagnostic['assets'], [{'id': asset['id'], 'type': 'appScreenshots', 'checksum': asset['attributes']['sourceFileChecksum'], 'fileSize': asset['attributes']['fileSize'], 'state': 'COMPLETE'} for asset in actual])
+                self.assertEqual(diagnostic['orderedLinkages'], {'rowCount': 6, 'uniqueIdCount': 6, 'assets': ordered})
                 for private in ('PRIVATE', 'https', 'assetToken', 'imageAsset', 'uploadOperations', 'fileName', 'errors'):
                     self.assertNotIn(private, message)
                 self.assertEqual(plan.ops, [])
                 self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_screenshot_conflict_reads_bounded_sanitized_ordered_linkages(self):
+        path = '/v1/appScreenshotSets/set/relationships/appScreenshots'
+        self.state['/v1/appStoreVersionLocalizations/locale/appScreenshotSets'] = [row('set', screenshotDisplayType='APP_IPHONE_61')]
+        self.state['/v1/appScreenshotSets/set/appScreenshots'] = [row('foreign', sourceFileChecksum='f' * 32, assetDeliveryState={'state': 'COMPLETE'})]
+        self.state[path] = [
+            {'id': 'known', 'type': 'appScreenshots', 'url': 'https://private.invalid/PRIVATE_TOKEN'},
+            {'id': 'https://private.invalid/PRIVATE_ID', 'type': 'PRIVATE_TYPE'},
+            {'id': {'private': 'PRIVATE_ID'}, 'type': ['PRIVATE_TYPE']},
+            'PRIVATE_ROW',
+        ] * 6
+        cli = FakeCLI(self.state, apply=True)
+        plan = self.planner(cli, {'default'})
+        with self.assertRaises(u.UploadError) as error:
+            plan.screenshots('locale', 'default', 'en-US', 'iphone')
+        message = str(error.exception)
+        diagnostic = json.loads(message.split('screenshotConflict=', 1)[1])
+        self.assertEqual(diagnostic['orderedLinkages']['rowCount'], 24)
+        self.assertEqual(diagnostic['orderedLinkages']['uniqueIdCount'], 1)
+        self.assertEqual(diagnostic['orderedLinkages']['assets'], [{'id': 'known', 'type': 'appScreenshots'}, {'id': None, 'type': None}, {'id': None, 'type': None}, {'id': None, 'type': None}] * 5)
+        self.assertNotIn('PRIVATE', message)
+        self.assertNotIn('https', message)
+        self.assertEqual(plan.ops, [])
+        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+        self.assertIn(('GET', path, None), cli.calls)
+        with patch.object(plan, 'screenshot_linkages', side_effect=u.UploadError('PRIVATE_PROVIDER_ERROR')):
+            with self.assertRaises(u.UploadError) as unavailable:
+                plan.screenshots('locale', 'default', 'en-US', 'iphone')
+        self.assertNotIn('PRIVATE', str(unavailable.exception))
+        self.assertIsNone(json.loads(str(unavailable.exception).split('screenshotConflict=', 1)[1])['orderedLinkages'])
 
     def test_screenshot_conflict_diagnostics_bound_rows_and_sanitize_invalid_fields(self):
         invalid = dict(row('https://private.invalid/PRIVATE_ID', sourceFileChecksum='PRIVATE_CHECKSUM', fileSize=True, assetDeliveryState={'state': 'PRIVATE_STATE', 'errors': ['PRIVATE_ERROR']}), type='https://private.invalid/PRIVATE_TYPE')
