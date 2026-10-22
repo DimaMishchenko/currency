@@ -1370,6 +1370,70 @@ class UploaderTests(unittest.TestCase):
         plan.execute()
         self.assertEqual(cli.calls[1][2]['data']['relationships']['appCustomProductPage']['data']['id'], 'created-1')
 
+    def test_library_upload_rejects_malformed_responses_and_preserves_valid_asset_identity(self):
+        for media_type in ('image', 'video'):
+            key = media_type + 'Id'
+            for response in (None, [], 'PRIVATE_RESPONSE', 7, {}, {key: None}, {key: []}, {key: {'private': 'PRIVATE_ID'}}, {key: 'https://private.invalid/PRIVATE_ID'}):
+                with self.subTest(media_type=media_type, response=response):
+                    cli = FakeCLI(self.state, apply=True)
+                    plan = self.planner(cli, set())
+                    plan.queue('LIBRARY', '', media_type=media_type, library='library', file='approved-file', reference='approved-reference')
+                    plan.queue('POST', '/next', u.resource('appAssetLibraryPlacements', {}))
+                    with patch.object(cli, 'run', return_value=response) as upload:
+                        with self.assertRaisesRegex(u.UploadError, 'inspect remote library') as error:
+                            plan.execute()
+                    self.assertEqual(upload.call_count, 1)
+                    self.assertTrue(upload.call_args.kwargs['mutate'])
+                    self.assertEqual(cli.calls, [])
+                    self.assertNotIn('PRIVATE', str(error.exception))
+                    self.assertNotIn('https', str(error.exception))
+            cli = FakeCLI(self.state, apply=True)
+            plan = self.planner(cli, set())
+            asset = plan.queue('LIBRARY', '', media_type=media_type, library='library', file='approved-file', reference='approved-reference')
+            plan.queue('POST', '/v1/appAssetLibraryPlacements', u.resource('appAssetLibraryPlacements', {}, {media_type: u.relationship('appAssetLibraryImages' if media_type == 'image' else 'appAssetLibraryVideos', asset)}))
+            with patch.object(cli, 'run', return_value={key: 'uploaded-' + media_type}), patch.object(sys, 'stdout', new=io.StringIO()):
+                plan.execute()
+            self.assertEqual(cli.calls[0][2]['data']['relationships'][media_type]['data']['id'], 'uploaded-' + media_type)
+
+    def test_generic_resource_mutations_reject_malformed_response_envelopes_and_identities(self):
+        for method in ('POST', 'PATCH'):
+            responses = [None, [], 'PRIVATE_RESPONSE', {'data': None}, {'data': []}, {'data': 'PRIVATE_DATA'}, {'data': {'id': None}}, {'data': {'id': []}}, {'data': {'id': 'https://private.invalid/PRIVATE_ID'}}]
+            if method == 'POST':
+                responses.extend([{}, {'data': {}}])
+            for response in responses:
+                with self.subTest(method=method, response=response):
+                    plan = self.planner(FakeCLI(self.state, apply=True), set())
+                    body = u.resource('appAssetLibraryPlacements', {'placementType': 'APP_SCREENSHOT'})
+                    plan.queue(method, '/mutation', body)
+                    plan.queue('POST', '/next', u.resource('appAssetLibraryPlacements', {}))
+                    with patch.object(plan, 'apply_resource', return_value=response) as mutation:
+                        with self.assertRaisesRegex(u.UploadError, 'inspect') as error:
+                            plan.execute()
+                    mutation.assert_called_once_with(method, '/mutation', body)
+                    self.assertNotIn('PRIVATE', str(error.exception))
+                    self.assertNotIn('https', str(error.exception))
+
+    def test_generic_mutations_preserve_empty_patch_and_relationship_success_responses(self):
+        resource_body = u.resource('appAssetLibraryPlacements', {'placementType': 'APP_SCREENSHOT'})
+        relationship_body = {'data': [{'type': 'appScreenshots', 'id': 'screenshot'}]}
+        cases = [('PATCH', resource_body, {}), ('PATCH', resource_body, {'data': {}})]
+        cases.extend((method, relationship_body, response) for method in ('POST', 'PATCH') for response in ({}, {'data': []}))
+        for method, body, response in cases:
+            with self.subTest(method=method, body=body, response=response):
+                plan = self.planner(FakeCLI(self.state, apply=True), set())
+                plan.queue(method, '/mutation', body)
+                with patch.object(plan, 'apply_resource', return_value=response) as mutation, patch.object(sys, 'stdout', new=io.StringIO()):
+                    plan.execute()
+                mutation.assert_called_once_with(method, '/mutation', body)
+
+    def test_target_discovery_rejects_non_mapping_read_envelopes(self):
+        for response in (None, [], 'PRIVATE_RESPONSE'):
+            with patch.object(FakeCLI, 'api', return_value=response) as api:
+                with self.assertRaisesRegex(u.UploadError, 'invalid collection; inspect App Store Connect') as error:
+                    u.resolve_targets(FakeCLI(self.state), '6816213577')
+            self.assertEqual(api.call_count, 1)
+            self.assertNotIn('PRIVATE', str(error.exception))
+
     def test_cli_paginates_placement_includes_but_not_single_asset_library(self):
         paths = [
             ('/v1/appStoreVersionLocalizations/locale/placements?include=video', True),

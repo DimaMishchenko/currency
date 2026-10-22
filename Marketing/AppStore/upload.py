@@ -353,7 +353,8 @@ def write_canonical_metadata(root, metadata, version):
 def resolve_targets(cli, app_id, version_id=None, version_string=None, info_id=None):
     """Resolve only unique editable targets using optional restrictive filters."""
     def rows(relationship):
-        values = cli.api('GET', '/v1/apps/' + app_id + '/' + relationship).get('data', [])
+        response = cli.api('GET', '/v1/apps/' + app_id + '/' + relationship)
+        values = response.get('data', []) if isinstance(response, dict) else None
         if not isinstance(values, list):
             raise UploadError('Target discovery returned an invalid collection; inspect App Store Connect before retrying')
         return values
@@ -959,16 +960,22 @@ class Planner:
                 plural = 'videos' if op['media_type'] == 'video' else 'images'
                 category = 'APP_SCREENSHOTS_AND_PREVIEWS' if op['media_type'] == 'image' else 'CREATIVE_ASSETS'
                 response = self.cli.run(['asset-library', plural, 'upload', '--library-id', op['library'], '--file', op['file'], '--reference-name', op['reference'], '--category', category, '--output', 'json'], mutate=True)
-                identifier = response.get(op['media_type'] + 'Id')
-                if not identifier:
-                    raise UploadError('Library upload returned no asset ID; inspect remote library before retry')
+                identifier = response.get(op['media_type'] + 'Id') if isinstance(response, dict) else None
+                if not isinstance(identifier, str) or not re.fullmatch('[A-Za-z0-9-]+', identifier):
+                    raise UploadError('Library upload returned no valid asset ID; inspect remote library before retry')
             elif op['method'] == 'SCREENSHOTS':
                 self.upload_screenshots(op)
                 identifier = ''
             else:
                 response = self.apply_resource(op['method'], op['path'], op['body'])
-                identifier = response.get('data', {}).get('id', '')
-                if op['method'] == 'POST' and isinstance(response.get('data'), dict) and not identifier:
+                data = response.get('data') if isinstance(response, dict) else None
+                linkages = isinstance((op['body'] or {}).get('data'), list)
+                if not isinstance(response, dict) or 'data' in response and not isinstance(data, dict) and not (linkages and isinstance(data, list)):
+                    raise UploadError('Resource mutation returned an invalid response; inspect draft state before retrying')
+                identifier = data.get('id', '') if isinstance(data, dict) else ''
+                if not isinstance(identifier, str) or identifier and not re.fullmatch('[A-Za-z0-9-]+', identifier):
+                    raise UploadError('Resource mutation returned an invalid identity; inspect draft state before retrying')
+                if op['method'] == 'POST' and not linkages and not identifier:
                     raise UploadError('Creation response omitted resource identity; inspect before retry')
             resolved[operation['ref']] = identifier
             if hasattr(self.cli, 'receipt'):
