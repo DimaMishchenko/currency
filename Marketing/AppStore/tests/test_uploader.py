@@ -36,17 +36,26 @@ def native_reference(duo_limit=12, cpp_limit=None, header_limit=1, split=False):
         'imageSpecs': [{'specId': name, 'compatiblePlacementTypes': ['APP_SCREENSHOT'], 'dimensions': {'minWidth': width, 'maxWidth': width, 'minHeight': height, 'maxHeight': height}} for name, (width, height) in [('outer', u.DIMENSIONS['duo-outer']), ('inner', u.DIMENSIONS['duo-inner'])]],
         'videoSpecs': [{'specId': 'header', 'compatiblePlacementTypes': ['PRODUCT_PAGE_HEADER_ASSET'], 'dimensions': {'minWidth': 3840, 'maxWidth': 3840, 'minHeight': 1646, 'maxHeight': 1646}}],
     }
+    legacy = [('iphone', 'IPHONE_DYNAMIC_ISLAND_MEDIUM_PROFILE', 'IPHONE_DYNAMIC_ISLAND_MEDIUM_DISPLAY', 'IPHONE_APP_STORE'), ('ipad', 'IPAD_13_PROFILE', 'IPAD_13_DISPLAY', 'IPAD_APP_STORE'), ('watch', 'WATCH_SERIES_10_PROFILE', 'WATCH_SERIES_10', 'WATCH_APP_STORE')]
+    for profile, group, display_class, platform in legacy:
+        width, height = u.DIMENSIONS[profile]
+        attributes['placementProfileGroups'].append({'placementProfileGroupId': group, 'displayClassId': display_class, 'platform': platform})
+        attributes['placementTypes'][0]['specMappings'].append({'placementGroupId': group, 'specs': [profile]})
+        attributes['imageSpecs'].append({'specId': profile, 'compatiblePlacementTypes': ['APP_SCREENSHOT'], 'dimensions': {'minWidth': width, 'maxWidth': width, 'minHeight': height, 'maxHeight': height}})
+    for feature in attributes['features']:
+        feature['placementPolicies'][0]['groupLimits'].append({'groupIds': [group for profile, group, _, _ in legacy if profile != 'watch' or feature['featureId'] == 'APP_STORE_VERSIONS'], 'maxCount': 10})
     return [{'id': 'reference', 'attributes': attributes}]
 
 
 def live_duo_reference(limit=10):
     reference = native_reference(duo_limit=limit)
     attributes = reference[0]['attributes']
-    attributes['imageSpecs'] = [
+    duo_specs = [
         {'specId': '205e7ab6-a23a-4ee2-b327-0a99ec2a2520', 'dimensions': {'minWidth': 1398, 'maxWidth': 1398, 'minHeight': 2034, 'maxHeight': 2034}, 'aspectRatio': '2:3', 'compatiblePlacementTypes': ['APP_SCREENSHOT', 'IMESSAGE_APP_SCREENSHOT']},
         {'specId': 'b83915b8-5b87-4e63-bba5-ab3a0c439862', 'dimensions': {'minWidth': 2853, 'maxWidth': 2853, 'minHeight': 2007, 'maxHeight': 2007}, 'aspectRatio': '3:2', 'compatiblePlacementTypes': ['APP_SCREENSHOT', 'IMESSAGE_APP_SCREENSHOT']},
     ]
-    attributes['placementTypes'][0]['specMappings'][0]['specs'] = [spec['specId'] for spec in attributes['imageSpecs']]
+    attributes['imageSpecs'] = [spec for spec in attributes['imageSpecs'] if spec['specId'] not in {'outer', 'inner'}] + duo_specs
+    attributes['placementTypes'][0]['specMappings'][0]['specs'] = [spec['specId'] for spec in duo_specs]
     return reference
 
 
@@ -263,6 +272,52 @@ class UploaderTests(unittest.TestCase):
                     self.planner(cli, {'metadata'}).preflight()
                 self.assertTrue(all(c[0] == 'GET' for c in cli.calls))
 
+    def test_cpp_policy_excludes_watch_without_losing_default_watch_sets(self):
+        locales = json.loads((MODULE.parent / 'metadata.json').read_text())['locales']
+        self.meta['locales'] = locales
+        source = dict(self.slots)
+        for locale in locales:
+            for family in u.FAMILIES:
+                for profile in u.PROFILES:
+                    for order in range(1, 7):
+                        self.slots[(locale, profile, family, order)] = source[('en-US', profile, 'default', order)]
+        self.state['/v1/appStoreVersions/version/appStoreVersionLocalizations'] = [row('locale-' + locale, locale=locale) for locale in locales]
+        cli = FakeCLI(self.state, apply=True)
+        plan = self.planner(cli, {'default', 'cpp'}).preflight()
+        screenshots = [operation for operation in plan.ops if operation['method'] == 'SCREENSHOTS']
+        self.assertEqual(plan.cpp_profiles, ['iphone', 'ipad'])
+        self.assertEqual(len(screenshots), 234)
+        self.assertEqual(sum(len(operation['files']) for operation in screenshots), 1404)
+        self.assertEqual(len([operation for operation in screenshots if operation['profile'] == 'watch']), 18)
+        self.assertTrue(all(operation['family'] == 'default' for operation in screenshots if operation['profile'] == 'watch'))
+        self.assertTrue(any('Watch screenshots omitted' in note for note in plan.notes))
+        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_cpp_core_profile_missing_or_insufficient_policy_fails_before_planning(self):
+        for group, maximum in [('IPHONE_DYNAMIC_ISLAND_MEDIUM_PROFILE', None), ('IPAD_13_PROFILE', None), ('IPAD_13_PROFILE', 5)]:
+            with self.subTest(group=group, maximum=maximum):
+                reference = native_reference()
+                policy = reference[0]['attributes']['features'][1]['placementPolicies'][0]
+                policy['groupLimits'][1]['groupIds'].remove(group)
+                if maximum is not None:
+                    policy['groupLimits'].append({'groupIds': [group], 'maxCount': maximum})
+                self.state['/v1/appAssetLibraryRefData'] = reference
+                cli = FakeCLI(self.state, apply=True)
+                plan = self.planner(cli, {'metadata', 'cpp'})
+                with self.assertRaises(u.UploadError):
+                    plan.preflight()
+                self.assertEqual(plan.ops, [])
+                self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_cpp_missing_placement_policy_does_not_treat_watch_as_optional(self):
+        reference = native_reference()
+        reference[0]['attributes']['features'][1]['placementPolicies'] = []
+        self.state['/v1/appAssetLibraryRefData'] = reference
+        plan = self.planner(FakeCLI(self.state), {'cpp'})
+        with self.assertRaisesRegex(u.UploadError, 'policy is unavailable'):
+            plan.native_policy_preflight()
+        self.assertEqual(plan.ops, [])
+
     def test_duo_queues_native_images_and_exact_order_without_legacy_enum(self):
         cli = FakeCLI(self.state)
         plan = self.planner(cli, {'duo'})
@@ -380,7 +435,7 @@ class UploaderTests(unittest.TestCase):
     def test_header_uses_runtime_group_and_optional_video_constraints(self):
         reference = native_reference()
         attributes = reference[0]['attributes']
-        attributes['placementProfileGroups'][-1]['placementProfileGroupId'] = 'CREATIVE_DEFAULT_V2'
+        next(group for group in attributes['placementProfileGroups'] if group['placementProfileGroupId'] == 'DEFAULT_PROFILE')['placementProfileGroupId'] = 'CREATIVE_DEFAULT_V2'
         attributes['placementTypes'][-1]['specMappings'][0]['placementGroupId'] = 'CREATIVE_DEFAULT_V2'
         for feature in attributes['features']:
             feature['placementPolicies'][-1]['groupLimits'][0]['groupIds'] = ['CREATIVE_DEFAULT_V2']

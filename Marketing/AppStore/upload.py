@@ -295,6 +295,7 @@ class Planner:
         self.library_rows = {}
         self.media = {}
         self.duo_groups = {}
+        self.cpp_profiles = []
         self.header_group = None
 
     def get(self, path):
@@ -370,7 +371,7 @@ class Planner:
                 self.place_header(target, family, video)
         for (family, locale), target in targets.items():
             if (family == 'default' and 'default' in self.scopes) or (family != 'default' and 'cpp' in self.scopes):
-                for profile in PROFILES:
+                for profile in (PROFILES if family == 'default' else self.cpp_profiles):
                     self.screenshots(target, family, locale, profile)
             if 'duo' in self.scopes:
                 self.duo_screenshots(target, family, locale)
@@ -394,7 +395,7 @@ class Planner:
             return result
 
     def native_policy_preflight(self):
-        if not self.scopes & {'duo', 'header'}:
+        if not self.scopes & {'cpp', 'duo', 'header'}:
             return
         catalog = self.get('/v1/appAssetLibraryRefData')
         if len(catalog) != 1:
@@ -476,10 +477,12 @@ class Planner:
                 raise UploadError('Native asset group identifier is invalid; no changes applied')
             return group
 
-        def capacity(feature_id, placement_type, group, required):
+        def capacity(feature_id, placement_type, group, required, allow_unlisted=False):
             feature = features.get(feature_id, {})
             policies = [p for p in records(feature.get('placementPolicies', [])) if p.get('placementType') == placement_type]
             limits = [limit.get('maxCount') for policy in policies for limit in records(policy.get('groupLimits', [])) if group in identifiers(limit.get('groupIds', []))]
+            if policies and not limits and allow_unlisted:
+                return False
             if not limits or any(type(limit) is not int or limit < 0 for limit in limits):
                 raise UploadError('Native placement policy is unavailable for ' + feature_id + '/' + placement_type + '/' + group + '; no changes applied')
             maximum = min(limits)
@@ -487,6 +490,21 @@ class Planner:
             if required > maximum:
                 raise UploadError('Native placement capacity is insufficient (' + message + '); select a supported scope or approve a revised media mapping; no changes applied')
             self.notes.append('Native placement capacity ' + message)
+            return True
+
+        if 'cpp' in self.scopes:
+            self.cpp_profiles = []
+            profiles = {
+                'iphone': ('IPHONE_DYNAMIC_ISLAND_MEDIUM_DISPLAY', 'IPHONE_APP_STORE'),
+                'ipad': ('IPAD_13_DISPLAY', 'IPAD_APP_STORE'),
+                'watch': ('WATCH_SERIES_10', 'WATCH_APP_STORE'),
+            }
+            for profile, (display_class, platform) in profiles.items():
+                group = matching_group('APP_SCREENSHOT', DIMENSIONS[profile], 'image', display_class, platform, 'APP_SCREENSHOTS_AND_PREVIEWS')
+                if capacity('CUSTOM_PRODUCT_PAGES', 'APP_SCREENSHOT', group, 6, allow_unlisted=profile == 'watch'):
+                    self.cpp_profiles.append(profile)
+                else:
+                    self.notes.append('Watch screenshots omitted from custom product pages: current Apple CUSTOM_PRODUCT_PAGES policy does not list ' + group + '; default-page Watch screenshots remain included when default scope is selected.')
 
         if 'duo' in self.scopes:
             presentation = duo_presentation(self.meta)
