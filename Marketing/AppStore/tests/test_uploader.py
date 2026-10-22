@@ -1599,6 +1599,25 @@ class UploaderTests(unittest.TestCase):
         self.assertTrue(process.call_args.kwargs['capture_output'])
         self.assertEqual(u.safe_error_diagnostics('', 'prefix level=INFO msg="← HTTP Response" status=403', http_trace=True), '')
 
+    def test_api_failure_reports_bounded_route_without_ids_query_or_provider_text(self):
+        trace = 'level=INFO msg="← HTTP Response" status=500 private=PRIVATE_BODY\nError: https://signed.invalid/PRIVATE_TOKEN\n'
+        result = subprocess.CompletedProcess([], 1, 'PRIVATE_BODY', trace)
+        path = '/v1/appScreenshotSets/PRIVATE_SET_ID/appScreenshots?url=https://signed.invalid/PRIVATE_TOKEN'
+        with patch.object(subprocess, 'run', return_value=result) as process:
+            with self.assertRaises(u.UploadError) as error:
+                u.CLI().api('GET', path)
+        self.assertEqual(str(error.exception), 'asc command failed (HTTP 500) (API GET /v1/appScreenshotSets/:id/appScreenshots); inspect App Store Connect draft state before retrying (raw output suppressed)')
+        self.assertIn(path, process.call_args.args[0])
+        for private in ('PRIVATE', 'signed.invalid', 'https', '?', 'url='):
+            self.assertNotIn(private, str(error.exception))
+
+    def test_api_route_redacts_unknown_segments_and_ids_matching_resource_names(self):
+        self.assertEqual(u.safe_api_route('PATCH', '/v1/appScreenshotSets/apps/relationships/appScreenshots'), ' (API PATCH /v1/appScreenshotSets/:id/relationships/appScreenshots)')
+        path = '/v1/PRIVATE_RESOURCE/PRIVATE_ID/PRIVATE_CHILD/' + '/'.join(['PRIVATE_' + 'x' * 1000] * 100) + '?PRIVATE_QUERY'
+        label = u.safe_api_route('GET', path)
+        self.assertEqual(label, ' (API GET /v1/:id/:id/:id/:id/:id)')
+        self.assertLess(len(label), 300)
+
     def test_metadata_failure_reports_only_validated_action_summary_and_http_status(self):
         actions = [{'scope': 'app-info', 'locale': 'en-US', 'action': 'update', 'status': 'succeeded', 'localizationId': 'id'} for _ in range(31)]
         actions.append({'scope': 'version', 'locale': 'fr-FR', 'action': 'create', 'status': 'failed', 'desiredFields': {'description': 'PRIVATE_COPY', 'keywords': 'PRIVATE_TERMS', 'privateKey': 'PRIVATE_KEY', 'supportUrl': 'https://signed.invalid/TOKEN'}, 'error': 'PRIVATE_ERROR https://signed.invalid/TOKEN', 'version': 'PRIVATE_VERSION'})

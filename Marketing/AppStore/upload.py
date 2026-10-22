@@ -120,6 +120,16 @@ def validate_video(path):
         raise UploadError('Header must be the approved 15-second 3840x1646 video at 30/60 fps; install ffprobe and verify the export') from None
 
 
+def safe_api_route(method, path):
+    names = {'apps', 'appInfos', 'appStoreVersions', 'appStoreVersionLocalizations', 'appCustomProductPages', 'appCustomProductPageVersions', 'appCustomProductPageLocalizations', 'appScreenshotSets', 'appScreenshots', 'appAssetLibraryRefData', 'appAssetLibraries', 'appAssetLibraryPlacements', 'appAssetLibraryPlacementOrderingRequests', 'assetLibrary', 'images', 'videos', 'placements', 'relationships', 'searchKeywords'}
+    segments = path.partition('?')[0].split('/', 6)[1:]
+    route = []
+    for index, segment in enumerate(segments):
+        static = index in {1, 3} or (index == 4 and segments[3] == 'relationships')
+        route.append(segment if (index == 0 and segment == 'v1') or (static and segment in names) else ':id')
+    return ' (API ' + method + ' /' + '/'.join(route) + ')'
+
+
 def safe_error_diagnostics(stdout, stderr, http_trace=False):
     statuses, codes, pointers = set(), set(), set()
     def status(value):
@@ -299,6 +309,8 @@ class CLI:
             except json.JSONDecodeError:
                 self.receipt('mutation-failed-no-receipt-inspect-before-retry')
             diagnostic = safe_error_diagnostics(result.stdout, result.stderr, http_trace=http_trace)
+            if raw_api:
+                diagnostic += safe_api_route(args[1], args[2])
             if metadata_apply:
                 diagnostic += safe_metadata_failure_summary(result.stdout)
             raise UploadError('asc command failed' + diagnostic + '; inspect App Store Connect draft state before retrying (raw output suppressed)')
