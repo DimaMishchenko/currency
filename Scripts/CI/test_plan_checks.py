@@ -109,6 +109,20 @@ class PlannerTests(unittest.TestCase):
             plan = self.plan([path], full=True)
             self.assertFalse(any(plan[key] for key in planner.FLAGS), path)
 
+    def test_app_store_only_updates_do_not_build_or_publish_app_binaries(self):
+        paths = ['Marketing/AppStore/metadata.json', 'Marketing/AppStore/upload.py',
+                 'Marketing/AppStore/design/recipe.json', 'Marketing/AppStore/generator/generate.py']
+        for force_full in (False, True):
+            plan = self.plan(paths, full=force_full)
+            self.assertFalse(any(plan[key] for key in planner.FLAGS))
+        workflow = (SCRIPT.resolve().parents[2] / '.github/workflows/app-store-validation.yml').read_text()
+        self.assertIn("'Marketing/AppStore/**'", workflow)
+
+    def test_app_store_edits_do_not_suppress_accompanying_native_changes(self):
+        plan = self.plan(['Marketing/AppStore/metadata.json', 'Features/UI/Sources/UI/Existing.swift'])
+        for key in ('unit_tests', 'app', 'intents', 'harnesses', 'publish'):
+            self.assertTrue(plan[key], key)
+
     def test_unknown_history_toolchain_manifests_full(self):
         for path in ('unknown/file', 'Project.swift', '.mise.toml', 'Tuist/Package.resolved'):
             with self.subTest(path=path):

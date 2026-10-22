@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: Read-only plan or apply draft changes (never submit review)
+        description: Inspect native policy, plan, or apply draft changes (never submit review)
         type: choice
-        options: [dry-run, apply]
+        options: [dry-run, apply, inspect-native-policy]
         default: dry-run
       version_id:
         description: Optional exact editable iOS version ID; blank requires one unique draft
@@ -25,12 +25,16 @@ on:
         type: string
         default: metadata,default,cpp,header,duo
         required: true
+      duplicate_screenshot_id:
+        description: Optional exact screenshot ID; remove only a verified extra copy of an approved image
+        type: string
+        required: false
 
 permissions:
   contents: read
 
 concurrency:
-  group: currency-app-store-draft-assets
+  group: currency-app-store-${{ inputs.mode == 'inspect-native-policy' && 'native-policy-inspection' || 'draft-assets' }}
   cancel-in-progress: false
 
 jobs:
@@ -42,29 +46,38 @@ jobs:
     env:
       ASC_STRICT_AUTH: 'true'
       ASC_APP_ID: '6816213577'
+      ASC_UPLOAD_TIMEOUT: '30m'
       REQUEST_MODE: ${{ inputs.mode }}
       TARGET_VERSION_ID: ${{ inputs.version_id }}
       TARGET_VERSION_STRING: ${{ inputs.version_string }}
       TARGET_APP_INFO_ID: ${{ inputs.app_info_id }}
       ASSET_SCOPE: ${{ inputs.scope }}
+      DUPLICATE_SCREENSHOT_ID: ${{ inputs.duplicate_screenshot_id }}
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Install pinned verified asc and video inspection
+        timeout-minutes: 10
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/currency-asc-bin"
           curl --fail --silent --show-error --location \
+            --connect-timeout 15 --max-time 120 --retry 2 --retry-max-time 120 \
             https://github.com/rorkai/App-Store-Connect-CLI/releases/download/5.16.0/asc_5.16.0_linux_amd64 \
             --output "$RUNNER_TEMP/currency-asc-bin/asc"
           echo 'f0be6185b82e300899e2c162bae8975cafb3fcd7c6f990b8e22d637184bcaabc  '"$RUNNER_TEMP/currency-asc-bin/asc" | sha256sum --check --status
           chmod 755 "$RUNNER_TEMP/currency-asc-bin/asc"
           echo "$RUNNER_TEMP/currency-asc-bin" >> "$GITHUB_PATH"
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq ffmpeg
+          if [[ "$REQUEST_MODE" != inspect-native-policy && ",$ASSET_SCOPE," == *,header,* ]] && ! command -v ffprobe >/dev/null 2>&1; then
+            echo 'Refreshing package index for video inspection'
+            sudo apt-get -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 -o Acquire::Retries=2 update -qq
+            echo 'Installing video inspection dependency'
+            sudo apt-get -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 -o Acquire::Retries=2 install -y -qq ffmpeg
+          fi
       - name: Fetch and verify the pinned asset release
+        if: inputs.mode != 'inspect-native-policy'
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -73,8 +86,9 @@ jobs:
           python3 Marketing/AppStore/fetch_assets.py \
             --repo "$GH_REPO" --output "$RUNNER_TEMP/currency-app-store-media"
       - name: Validate approved media without API access
+        if: inputs.mode != 'inspect-native-policy'
         shell: bash
-        run: python3 Marketing/AppStore/upload.py --validate-only --media-dir "$RUNNER_TEMP/currency-app-store-media"
+        run: python3 Marketing/AppStore/upload.py --validate-only --scope "$ASSET_SCOPE" --media-dir "$RUNNER_TEMP/currency-app-store-media"
       - name: Validate request and credentials
         env:
           ASC_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
@@ -83,11 +97,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          [[ "$REQUEST_MODE" == dry-run || "$REQUEST_MODE" == apply ]] || exit 1
+          [[ "$REQUEST_MODE" == dry-run || "$REQUEST_MODE" == apply || "$REQUEST_MODE" == inspect-native-policy ]] || exit 1
+          if [[ "$REQUEST_MODE" == inspect-native-policy && -n "$DUPLICATE_SCREENSHOT_ID" ]]; then
+            echo '::error::Duplicate repair is available only with a reviewed dry-run or apply request'
+            exit 1
+          fi
           for name in ASC_KEY_ID ASC_ISSUER_ID ASC_PRIVATE_KEY_B64; do
             [[ -n "${!name}" ]] || { echo "::error::Missing required configuration: $name"; exit 1; }
           done
-      - name: Plan or apply draft assets
+      - name: Inspect policy or plan/apply draft assets
         env:
           ASC_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
@@ -95,8 +113,83 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          if [[ "$REQUEST_MODE" == inspect-native-policy ]]; then
+            python3 - <<'PY'
+          import importlib.util
+          import json
+          import math
+          import re
+          import sys
+          spec = importlib.util.spec_from_file_location('app_store_upload', 'Marketing/AppStore/upload.py')
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          UploadError = module.UploadError
+
+          def inspect_native_policy(cli):
+              identifier = 'identifier'
+              integer = 'integer'
+              boolean = 'boolean'
+              ratio = 'ratio'
+              duration = 'duration'
+              dimensions = {key: integer for key in ('minWidth', 'maxWidth', 'minHeight', 'maxHeight')}
+              specification = {'specId': identifier, 'dimensions': dimensions, 'aspectRatio': ratio, 'compatiblePlacementTypes': [identifier]}
+              schema = {
+                  'features': [{'featureId': identifier, 'placementPolicies': [{'placementType': identifier, 'groupLimits': [{'groupIds': [identifier], 'maxCount': integer}]}]}],
+                  'placementProfileGroups': [{'placementProfileGroupId': identifier, 'platform': identifier, 'displayClassId': identifier}],
+                  'placementTypes': [{'placementTypeId': identifier, 'acceptsAssetCategories': [identifier], 'specMappings': [{'placementGroupId': identifier, 'specs': [identifier]}]}],
+                  'imageSpecs': [specification],
+                  'videoSpecs': [{**specification, 'frameRates': [{'minFps': integer, 'maxFps': integer}], 'duration': {'min': duration, 'max': duration}, 'audioRequired': boolean}],
+              }
+
+              def invalid():
+                  raise UploadError('Native policy inspection returned invalid reference data (raw output suppressed)')
+
+              def project(value, expected):
+                  if isinstance(expected, dict):
+                      if not isinstance(value, dict):
+                          invalid()
+                      return {key: project(value[key], kind) for key, kind in expected.items() if key in value}
+                  if isinstance(expected, list):
+                      if not isinstance(value, list):
+                          invalid()
+                      return [project(item, expected[0]) for item in value]
+                  if expected == integer:
+                      valid = type(value) is int and value >= 0
+                  elif expected == boolean:
+                      valid = type(value) is bool
+                  elif expected == ratio and type(value) in (int, float):
+                      valid = 0 < value < 1000 and math.isfinite(value)
+                  elif isinstance(value, str) and len(value) <= 160:
+                      patterns = {identifier: r'[A-Za-z0-9_.-]{1,160}', ratio: r'[0-9]+(?:\.[0-9]+)?(?:[:/][0-9]+(?:\.[0-9]+)?)?', duration: r'P(?:[0-9]+D)?(?:T(?=[0-9])(?:[0-9]+(?:\.[0-9]+)?H)?(?:[0-9]+(?:\.[0-9]+)?M)?(?:[0-9]+(?:\.[0-9]+)?S)?)?'}
+                      valid = re.fullmatch(patterns[expected], value) is not None
+                      if expected == ratio:
+                          valid = valid and all(0 < float(part) < 1000 for part in re.split('[:/]', value))
+                      if expected == duration:
+                          valid = valid and any(character.isdigit() for character in value)
+                  else:
+                      valid = False
+                  if not valid:
+                      invalid()
+                  return value
+
+              response = cli.api('GET', '/v1/appAssetLibraryRefData')
+              if not isinstance(response, dict):
+                  invalid()
+              rows = response.get('data')
+              if not isinstance(rows, list) or len(rows) != 1 or not isinstance(rows[0], dict):
+                  invalid()
+              return {'mode': 'inspect-native-policy', 'referenceData': [project(rows[0].get('attributes', {}), schema)]}
+
+          try:
+              print(json.dumps(inspect_native_policy(module.CLI(apply=False)), indent=2))
+          except UploadError as error:
+              sys.exit(str(error))
+          PY
+            exit 0
+          fi
           mode_args=()
           if [[ "$REQUEST_MODE" == apply ]]; then mode_args+=(--apply); fi
+          if [[ -n "$DUPLICATE_SCREENSHOT_ID" ]]; then mode_args+=(--remove-approved-duplicate "$DUPLICATE_SCREENSHOT_ID"); fi
           python3 Marketing/AppStore/upload.py \
             --metadata Marketing/AppStore/metadata.json \
             --media-dir "$RUNNER_TEMP/currency-app-store-media" \
