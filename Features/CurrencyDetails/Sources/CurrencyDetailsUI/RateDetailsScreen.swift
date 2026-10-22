@@ -414,24 +414,6 @@ struct RateDetailsScreen: View {
                   series.fetchedAt.formatted(dates.timestampFormat)))
             }
           }
-          VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
-            if series?.points.isEmpty == false {
-              Text(CurrencyDisplay.details(snapshot, from: code, to: quote, locale: locale))
-            }
-            if let observed = snapshot.quotes[code]?.observedAt {
-              Text(
-                .Details.lastTrade(
-                  observed.formatted(dates.timestampFormat))
-              )
-            }
-            if let retrieved = snapshot.quotes[code]?.retrievedAt {
-              Text(
-                .Details.rateRetrieved(
-                  retrieved.formatted(dates.timestampFormat)
-                )
-              )
-            }
-          }
           VStack(alignment: .leading, spacing: AppStyle.Space.small) {
             if range == .all { Text(.Details.maxExplanation) }
             Text(
@@ -443,9 +425,13 @@ struct RateDetailsScreen: View {
       } label: {
         Group {
           if let series, !series.points.isEmpty {
-            Text(historyProviderDescription(series.source))
+            Text(
+              RateMessages.providerDescription(
+                series.source, locale: locale, includesTimeZone: false))
           } else {
-            Text(CurrencyDisplay.details(snapshot, from: code, to: quote, locale: locale))
+            Text(
+              CurrencyDisplay.details(
+                snapshot, from: code, to: quote, locale: locale, includesTimeZone: false))
           }
         }
       }
@@ -459,20 +445,6 @@ struct RateDetailsScreen: View {
   private func rateLabel(_ value: Decimal?) -> String {
     CurrencyDisplay.referenceRate(
       value, from: code, to: quote, locale: locale, metalUnit: model.input.metalUnit)
-  }
-
-  private func historyProviderDescription(_ source: RateSource) -> String {
-    guard let samplingTimeZone = source.timeZone else {
-      return RateMessages.providerDescription(source, locale: locale)
-    }
-    let withoutTimeZone = RateSource(
-      provider: source.provider, observation: source.observation,
-      conversion: source.conversion, contributingProviders: source.contributingProviders)
-    var resource = LocalizedStringResource.Details.sourceSamplingTimeZone(
-      RateMessages.providerDescription(withoutTimeZone, locale: locale),
-      samplingTimeZone.identifier)
-    resource.locale = locale
-    return String(localized: resource)
   }
 }
 

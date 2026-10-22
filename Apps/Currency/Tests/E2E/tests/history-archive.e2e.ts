@@ -7,16 +7,20 @@ import { test } from '../fixtures.js';
 
 test('All history renders the actual bundled Bitcoin archive from 2010', { tags: ['core', 'providers'] }, async ({ start, screen, agent, app }) => {
   await start('ready-crypto');
+  const bitcoin = screen.getByRole('button', /^Bitcoin,/i);
+  await expect(bitcoin).toHaveAccessibleName('Bitcoin, 0.00002');
   const udid = process.env.CURRENCY_E2E_UDID!;
   const directory = execFileSync('xcrun', ['simctl', 'get_app_container', udid, 'com.dimasike.currency', 'group.com.dimasike.currency.shared'], { encoding: 'utf8' }).trim();
   const cache = join(directory, 'history-v3-BTC-USD-0.json');
   if (existsSync(cache)) unlinkSync(cache);
-  await agent.act('Open Details & history for the Bitcoin destination currency, then select All in the history range control. Finish with All available history selected.');
+  await bitcoin.tap();
+  await screen.getByTestId('converter.history').tap();
   await expect(screen.getByTestId('currency.details.BTC')).toBeVisible();
   const all = screen.getByTestId('currency.details.historyRange').getByRole('tab', 'All available history', { exact: true });
+  await all.tap();
   await expect(all).toBeSelected();
   const source = screen.getByTestId('currency.details.sourceDisclosure').filter({ hasText: /Coin Metrics/ });
-  await expect(source).toHaveAccessibleName('Coin Metrics + Fawaz · source sampling: GMT');
+  await expect(source).toHaveAccessibleName('Coin Metrics + Fawaz');
   await expect(source).toBeVisible();
   assert.ok(existsSync(cache));
   const saved = JSON.parse(readFileSync(cache, 'utf8')) as { points: { date: number; value: number }[]; source: { provider: object; observation: string; contributingProviders?: object[] } };

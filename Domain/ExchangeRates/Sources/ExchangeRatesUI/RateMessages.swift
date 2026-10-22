@@ -25,8 +25,9 @@ public enum RateMessages {
   }
 
   /// Formats structured provider context using the app's catalog and the requested locale.
-  public static func providerDescription(_ source: RateSource, locale: Locale = .current) -> String
-  {
+  public static func providerDescription(
+    _ source: RateSource, locale: Locale = .current, includesTimeZone: Bool = true
+  ) -> String {
     let provider: String
     switch source.provider {
     case .ecb: provider = "ECB"
@@ -47,7 +48,7 @@ public enum RateMessages {
       approximate.locale = locale
       description = String(localized: approximate)
     }
-    guard let timeZone = source.timeZone else { return description }
+    guard includesTimeZone, let timeZone = source.timeZone else { return description }
     var withZone = LocalizedStringResource.Support.sourceWithTimeZone(
       description, timeZone.identifier)
     withZone.locale = locale

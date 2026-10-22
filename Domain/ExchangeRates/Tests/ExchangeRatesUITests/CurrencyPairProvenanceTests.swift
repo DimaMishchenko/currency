@@ -67,6 +67,17 @@ import Testing
     #expect(text.contains("Approximate conversion: 1 EUR = 2 USD"))
   }
 
+  @Test func compactCurrentQuoteProvenanceOmitsSourceZoneWithoutLosingFXDetails() {
+    let value = snapshot()
+    let text = CurrencyDisplay.details(
+      value, from: "BTC", to: "GBP", locale: locale, includesTimeZone: false)
+    #expect(text.contains("Coin Metrics · minute reference prices · approximate conversion"))
+    #expect(text.contains("approximate conversion · Oct 14, 2026"))
+    #expect(text.contains("Approximate conversion: 1 EUR = 2 USD"))
+    #expect(!text.contains("GMT"))
+    #expect(value.quotes["BTC"]?.source.timeZone == .gmt)
+  }
+
   @Test func quoteRowsUseExplicitBaseRatherThanDisplayOrder() throws {
     let value = snapshot()
     let source = try #require(

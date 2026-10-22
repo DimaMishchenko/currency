@@ -90,9 +90,6 @@ import Testing
     #expect(
       RateMessages.providerDescription(.init(provider: .coinMetrics, observation: .minuteReference))
         == "Coin Metrics · minute reference prices")
-    #expect(
-      String(localized: .Details.rateRetrieved("today"))
-        == "Retrieved today")
     let daily = RateSource(provider: .coinMetrics, observation: .dailyReference, timeZone: .gmt)
     #expect(
       RateMessages.providerDescription(daily).hasPrefix("Coin Metrics · daily reference rates · "))
