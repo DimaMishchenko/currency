@@ -54,7 +54,7 @@ def confined(root, name):
     return path
 
 
-def validate_media(root, manifest, metadata):
+def validate_media(root, manifest, metadata, probe_header=True):
     if manifest.get('schemaVersion') != 1 or metadata.get('schemaVersion') != 1 or metadata.get('families') != FAMILIES:
         raise UploadError('Unsupported manifest or metadata schema/families')
     if metadata.get('appId') != '6816213577' or len(metadata.get('locales', {})) != 18:
@@ -81,7 +81,7 @@ def validate_media(root, manifest, metadata):
     path = confined(root, header.get('path'))
     if path.suffix.lower() not in {'.mp4', '.m4v', '.mov'} or not path.is_file() or sha256(path) != header.get('sha256'):
         raise UploadError('Approved header video is missing or has the wrong hash')
-    video = validate_video(path)
+    video = validate_video(path) if probe_header else {}
     return slots, dict(header, file=path, video=video)
 
 
@@ -1057,9 +1057,9 @@ def main():
     root = args.media_dir.resolve()
     metadata = json.loads(args.metadata.read_text())
     manifest = json.loads((root / 'manifest.json').read_text())
-    slots, header = validate_media(root, manifest, metadata)
+    slots, header = validate_media(root, manifest, metadata, probe_header='header' in scopes)
     if args.validate_only:
-        print(json.dumps({'mode': 'validate-only', 'verifiedPlacements': len(slots), 'verifiedHeader': True, 'appStoreRequests': 0}))
+        print(json.dumps({'mode': 'validate-only', 'verifiedPlacements': len(slots), 'verifiedHeader': bool(header.get('video')), 'verifiedHeaderHash': True, 'appStoreRequests': 0}))
         return 0
     cli = CLI(apply=args.apply, receipts=args.receipts)
     target = resolve_targets(cli, metadata['appId'], args.version_id, args.version_string, args.app_info_id)

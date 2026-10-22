@@ -1721,6 +1721,64 @@ class UploaderTests(unittest.TestCase):
             self.assertEqual(u.main(), 0)
             client.assert_not_called()
 
+    def approved_media_fixture(self):
+        metadata = json.loads((MODULE.parent / 'metadata.json').read_text())
+        placements = []
+        for profile, (width, height) in u.DIMENSIONS.items():
+            path = self.root / (profile + '.png')
+            path.write_bytes(b'\x89PNG\r\n\x1a\n' + struct.pack('>I4sIIBBBBBI', 13, b'IHDR', width, height, 8, 2, 0, 0, 0, 0) + struct.pack('>I4sI', 0, b'IEND', 0))
+            placements.extend({'locale': locale, 'profile': profile, 'family': family, 'order': order, 'path': path.name, 'sha256': u.sha256(path)} for locale in metadata['locales'] for family in u.FAMILIES for order in range(1, 7))
+        header = self.root / 'header.mp4'
+        header.write_bytes(b'PRIVATE_APPROVED_VIDEO')
+        manifest = {'schemaVersion': 1, 'placements': placements, 'header': {'path': header.name, 'sha256': u.sha256(header)}}
+        metadata_path = self.root / 'metadata.json'
+        metadata_path.write_text(json.dumps(metadata))
+        (self.root / 'manifest.json').write_text(json.dumps(manifest))
+        return metadata, manifest, metadata_path
+
+    def test_cpp_validation_checks_all_media_hashes_without_video_dependency(self):
+        metadata, manifest, metadata_path = self.approved_media_fixture()
+        arguments = ['upload.py', '--validate-only', '--scope', 'cpp', '--metadata', str(metadata_path), '--media-dir', str(self.root)]
+        with patch.object(sys, 'argv', arguments), patch.object(subprocess, 'run') as process, patch.object(u, 'CLI') as client, patch.object(sys, 'stdout', new_callable=io.StringIO) as output:
+            self.assertEqual(u.main(), 0)
+            process.assert_not_called()
+            client.assert_not_called()
+        self.assertEqual(json.loads(output.getvalue()), {'mode': 'validate-only', 'verifiedPlacements': 3240, 'verifiedHeader': False, 'verifiedHeaderHash': True, 'appStoreRequests': 0})
+        with patch.object(subprocess, 'run') as process:
+            (self.root / 'header.mp4').write_bytes(b'PRIVATE_CHANGED_VIDEO')
+            with self.assertRaisesRegex(u.UploadError, '^Approved header video is missing or has the wrong hash$'):
+                u.validate_media(self.root, manifest, metadata, probe_header=False)
+            process.assert_not_called()
+
+    def test_cpp_validation_still_rejects_changed_png(self):
+        metadata, manifest, _ = self.approved_media_fixture()
+        (self.root / manifest['placements'][0]['path']).write_bytes(b'PRIVATE_CHANGED_PNG')
+        with patch.object(subprocess, 'run') as process:
+            with self.assertRaisesRegex(u.UploadError, '^Screenshot PNG dimensions do not match its device profile$'):
+                u.validate_media(self.root, manifest, metadata, probe_header=False)
+            process.assert_not_called()
+
+    def test_header_and_default_validation_require_probe_and_reject_invalid_format(self):
+        metadata, manifest, metadata_path = self.approved_media_fixture()
+        with patch.object(subprocess, 'run', side_effect=FileNotFoundError()) as process:
+            with self.assertRaisesRegex(u.UploadError, 'install ffprobe'):
+                u.validate_media(self.root, manifest, metadata)
+            self.assertEqual(process.call_args.args[0][0], 'ffprobe')
+        for scope in ([], ['--scope', 'header']):
+            with self.subTest(scope=scope):
+                arguments = ['upload.py', '--validate-only', '--metadata', str(metadata_path), '--media-dir', str(self.root), *scope]
+                result = subprocess.CompletedProcess([], 0, json.dumps({'streams': [], 'format': {'duration': '15'}}), '')
+                with patch.object(sys, 'argv', arguments), patch.object(subprocess, 'run', return_value=result) as process, patch.object(u, 'CLI') as client:
+                    with self.assertRaisesRegex(u.UploadError, 'Header must be the approved'):
+                        u.main()
+                    self.assertEqual(process.call_args.args[0][0], 'ffprobe')
+                    client.assert_not_called()
+        result = subprocess.CompletedProcess([], 0, json.dumps({'streams': [{'codec_type': 'video', 'width': 3840, 'height': 1646, 'avg_frame_rate': '30/1'}], 'format': {'duration': '15'}}), '')
+        arguments = ['upload.py', '--validate-only', '--metadata', str(metadata_path), '--media-dir', str(self.root)]
+        with patch.object(sys, 'argv', arguments), patch.object(subprocess, 'run', return_value=result), patch.object(sys, 'stdout', new_callable=io.StringIO) as output:
+            self.assertEqual(u.main(), 0)
+        self.assertEqual(json.loads(output.getvalue()), {'mode': 'validate-only', 'verifiedPlacements': 3240, 'verifiedHeader': True, 'verifiedHeaderHash': True, 'appStoreRequests': 0})
+
     def test_remote_plan_requires_receipts(self):
         with patch.object(sys, 'argv', ['upload.py']), patch.object(u, 'validate_media') as validate:
             with self.assertRaises(SystemExit) as error:

@@ -70,7 +70,7 @@ jobs:
           echo 'f0be6185b82e300899e2c162bae8975cafb3fcd7c6f990b8e22d637184bcaabc  '"$RUNNER_TEMP/currency-asc-bin/asc" | sha256sum --check --status
           chmod 755 "$RUNNER_TEMP/currency-asc-bin/asc"
           echo "$RUNNER_TEMP/currency-asc-bin" >> "$GITHUB_PATH"
-          if [[ "$REQUEST_MODE" != inspect-native-policy ]] && ! command -v ffprobe >/dev/null 2>&1; then
+          if [[ "$REQUEST_MODE" != inspect-native-policy && ",$ASSET_SCOPE," == *,header,* ]] && ! command -v ffprobe >/dev/null 2>&1; then
             echo 'Refreshing package index for video inspection'
             sudo apt-get -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 -o Acquire::Retries=2 update -qq
             echo 'Installing video inspection dependency'
@@ -88,7 +88,7 @@ jobs:
       - name: Validate approved media without API access
         if: inputs.mode != 'inspect-native-policy'
         shell: bash
-        run: python3 Marketing/AppStore/upload.py --validate-only --media-dir "$RUNNER_TEMP/currency-app-store-media"
+        run: python3 Marketing/AppStore/upload.py --validate-only --scope "$ASSET_SCOPE" --media-dir "$RUNNER_TEMP/currency-app-store-media"
       - name: Validate request and credentials
         env:
           ASC_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}

@@ -23,7 +23,7 @@ python3 Marketing/AppStore/upload.py --validate-only \
 
 The fetch helper uses `gh release download` with the explicit repository, tag and exact filename from `asset-bundle.json`. It checks that the configuration SHA-256 matches `design/recipe.json` before download, checks size and checksum before unpacking, and only promotes a verified extraction to the output directory. It refuses nonempty output and removes partial candidates on failure. An existing verified directory can be reused directly for validation or uploading.
 
-Validation requires `ffprobe` from FFmpeg. It makes no App Store requests and checks every file's SHA-256, PNG dimensions and alpha/transparency, placement completeness, and the approved fifteen-second 3840×1646 header at 30/60 fps. The same validation runs before any remote planning or applying.
+Validation makes no App Store requests and always checks every file's SHA-256, PNG dimensions and alpha/transparency, and placement completeness. The default scope includes `header` and requires `ffprobe` from FFmpeg to verify the fifteen-second 3840×1646 video at 30/60 fps. Scopes without `header` verify its hash and report `verifiedHeader: false`. The same scope-aware validation runs before remote planning or applying; finish with a full-scope audit.
 
 ## Independent asset versions
 
