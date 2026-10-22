@@ -103,6 +103,7 @@ jobs:
             python3 - <<'PY'
           import importlib.util
           import json
+          import math
           import re
           import sys
           spec = importlib.util.spec_from_file_location('app_store_upload', 'Marketing/AppStore/upload.py')
@@ -126,25 +127,44 @@ jobs:
                   'videoSpecs': [{**specification, 'frameRates': [{'minFps': integer, 'maxFps': integer}], 'duration': {'min': duration, 'max': duration}, 'audioRequired': boolean}],
               }
 
+              def invalid():
+                  raise UploadError('Native policy inspection returned invalid reference data (raw output suppressed)')
+
               def project(value, expected):
                   if isinstance(expected, dict):
-                      return {key: filtered for key, kind in expected.items() if isinstance(value, dict) and key in value and (filtered := project(value[key], kind)) is not None} if isinstance(value, dict) else None
+                      if not isinstance(value, dict):
+                          invalid()
+                      return {key: project(value[key], kind) for key, kind in expected.items() if key in value}
                   if isinstance(expected, list):
-                      return [filtered for item in value if (filtered := project(item, expected[0])) is not None] if isinstance(value, list) else None
+                      if not isinstance(value, list):
+                          invalid()
+                      return [project(item, expected[0]) for item in value]
                   if expected == integer:
-                      return value if type(value) is int else None
-                  if expected == boolean:
-                      return value if type(value) is bool else None
-                  if expected == ratio and type(value) in (int, float):
-                      return value if 0 < value < 1000 else None
-                  patterns = {identifier: r'[A-Za-z0-9_.-]{1,160}', ratio: r'[0-9]+(?:\.[0-9]+)?(?:[:/][0-9]+(?:\.[0-9]+)?)?', duration: r'P(?:[0-9]+D)?T?(?:[0-9]+(?:\.[0-9]+)?H)?(?:[0-9]+(?:\.[0-9]+)?M)?(?:[0-9]+(?:\.[0-9]+)?S)?'}
-                  return value if isinstance(value, str) and len(value) <= 160 and re.fullmatch(patterns[expected], value) else None
+                      valid = type(value) is int and value >= 0
+                  elif expected == boolean:
+                      valid = type(value) is bool
+                  elif expected == ratio and type(value) in (int, float):
+                      valid = 0 < value < 1000 and math.isfinite(value)
+                  elif isinstance(value, str) and len(value) <= 160:
+                      patterns = {identifier: r'[A-Za-z0-9_.-]{1,160}', ratio: r'[0-9]+(?:\.[0-9]+)?(?:[:/][0-9]+(?:\.[0-9]+)?)?', duration: r'P(?:[0-9]+D)?(?:T(?=[0-9])(?:[0-9]+(?:\.[0-9]+)?H)?(?:[0-9]+(?:\.[0-9]+)?M)?(?:[0-9]+(?:\.[0-9]+)?S)?)?'}
+                      valid = re.fullmatch(patterns[expected], value) is not None
+                      if expected == ratio:
+                          valid = valid and all(0 < float(part) < 1000 for part in re.split('[:/]', value))
+                      if expected == duration:
+                          valid = valid and any(character.isdigit() for character in value)
+                  else:
+                      valid = False
+                  if not valid:
+                      invalid()
+                  return value
 
               response = cli.api('GET', '/v1/appAssetLibraryRefData')
+              if not isinstance(response, dict):
+                  invalid()
               rows = response.get('data')
-              if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
-                  raise UploadError('Native policy inspection returned an invalid collection (raw output suppressed)')
-              return {'mode': 'inspect-native-policy', 'referenceData': [project(row.get('attributes', {}), schema) for row in rows]}
+              if not isinstance(rows, list) or len(rows) != 1 or not isinstance(rows[0], dict):
+                  invalid()
+              return {'mode': 'inspect-native-policy', 'referenceData': [project(rows[0].get('attributes', {}), schema)]}
 
           try:
               print(json.dumps(inspect_native_policy(module.CLI(apply=False)), indent=2))

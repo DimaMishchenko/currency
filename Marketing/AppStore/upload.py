@@ -163,6 +163,36 @@ def safe_error_diagnostics(stdout, stderr, http_trace=False):
     return ' (' + '; '.join(parts) + ')' if parts else ''
 
 
+def safe_metadata_failure_summary(stdout):
+    if len(stdout) > 1048576:
+        return ''
+    try:
+        payload = json.loads(stdout)
+    except (json.JSONDecodeError, RecursionError):
+        return ''
+    actions = payload.get('actions') if isinstance(payload, dict) else None
+    if not isinstance(actions, list) or len(actions) > 200:
+        return ''
+    locales = {'de-DE', 'en-AU', 'en-CA', 'en-GB', 'en-US', 'es-ES', 'es-MX', 'fr-CA', 'fr-FR', 'it', 'ja', 'ko', 'pt-BR', 'ru', 'tr', 'uk', 'zh-Hans', 'zh-Hant'}
+    scopes = {'app-info': INFO_FIELDS, 'version': VERSION_FIELDS}
+    counts = {'succeeded': 0, 'failed': 0, 'skipped': 0}
+    failures = []
+    for action in actions:
+        if not isinstance(action, dict) or any(not isinstance(action.get(key), str) for key in ('scope', 'locale', 'action', 'status')) or action.get('scope') not in scopes or action.get('locale') not in locales or action.get('action') not in {'create', 'update', 'delete', 'reconcile'} or action.get('status') not in counts:
+            continue
+        status = action['status']
+        counts[status] += 1
+        if status == 'failed':
+            entry = {key: action[key] for key in ('scope', 'locale', 'action', 'status')}
+            fields = action.get('desiredFields')
+            if isinstance(fields, dict):
+                entry['attemptedFields'] = sorted(set(fields) & scopes[action['scope']])
+            failures.append(entry)
+    if not any(counts.values()):
+        return ''
+    return ' metadataActions=' + json.dumps({'counts': counts, 'failures': failures}, separators=(',', ':'))
+
+
 class CLI:
     """Capture all CLI output; signed upload URLs/private API errors never reach logs."""
     def __init__(self, executable='asc', apply=False, receipts=None):
@@ -199,7 +229,9 @@ class CLI:
             env.pop(key, None)
         env['ASC_STRICT_AUTH'] = 'true'
         raw_api = len(args) >= 3 and args[0] == 'api' and args[1] in {'GET', 'POST', 'PATCH', 'DELETE'}
-        env['ASC_DEBUG'] = 'api' if raw_api else 'false'
+        metadata_apply = args[:2] == ['metadata', 'apply']
+        http_trace = raw_api or metadata_apply
+        env['ASC_DEBUG'] = 'api' if http_trace else 'false'
         try:
             if mutate:
                 self.receipt('mutation-started')
@@ -211,7 +243,9 @@ class CLI:
                 self.receipt('mutation-failed-inspect-before-retry', json.loads(result.stdout))
             except json.JSONDecodeError:
                 self.receipt('mutation-failed-no-receipt-inspect-before-retry')
-            diagnostic = safe_error_diagnostics(result.stdout, result.stderr, http_trace=raw_api)
+            diagnostic = safe_error_diagnostics(result.stdout, result.stderr, http_trace=http_trace)
+            if metadata_apply:
+                diagnostic += safe_metadata_failure_summary(result.stdout)
             raise UploadError('asc command failed' + diagnostic + '; inspect App Store Connect draft state before retrying (raw output suppressed)')
         try:
             value = json.loads(result.stdout) if result.stdout.strip() else {}
@@ -244,7 +278,6 @@ def resource(kind, attrs, relations=None, identifier=None):
 
 
 def write_canonical_metadata(root, metadata, version):
-    """Write only explicitly selected nonempty localization text fields."""
     if not re.fullmatch('[A-Za-z0-9][A-Za-z0-9._-]{0,99}', version):
         raise UploadError('Metadata version is not a safe canonical directory name')
     for locale, values in metadata['locales'].items():

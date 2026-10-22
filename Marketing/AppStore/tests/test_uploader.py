@@ -668,6 +668,30 @@ class UploaderTests(unittest.TestCase):
         self.assertTrue(process.call_args.kwargs['capture_output'])
         self.assertEqual(u.safe_error_diagnostics('', 'prefix level=INFO msg="← HTTP Response" status=403', http_trace=True), '')
 
+    def test_metadata_failure_reports_only_validated_action_summary_and_http_status(self):
+        actions = [{'scope': 'app-info', 'locale': 'en-US', 'action': 'update', 'status': 'succeeded', 'localizationId': 'id'} for _ in range(31)]
+        actions.append({'scope': 'version', 'locale': 'fr-FR', 'action': 'create', 'status': 'failed', 'desiredFields': {'description': 'PRIVATE_COPY', 'keywords': 'PRIVATE_TERMS', 'privateKey': 'PRIVATE_KEY', 'supportUrl': 'https://signed.invalid/TOKEN'}, 'error': 'PRIVATE_ERROR https://signed.invalid/TOKEN', 'version': 'PRIVATE_VERSION'})
+        actions.extend([{'scope': 'PRIVATE_SCOPE', 'locale': 'en-US', 'action': 'update', 'status': 'failed'}, {'scope': 'version', 'locale': 'PRIVATE_LOCALE', 'action': 'update', 'status': 'failed'}, {'scope': 'version', 'locale': 'en-US', 'action': 'PRIVATE_ACTION', 'status': 'failed'}, {'scope': 'version', 'locale': 'en-US', 'action': 'update', 'status': 'PRIVATE_STATUS'}])
+        output = json.dumps({'actions': actions, 'failed': 999, 'failureArtifactPath': 'PRIVATE_PATH', 'dir': 'PRIVATE_DIR'})
+        trace = 'level=INFO msg="→ HTTP Request" url=https://signed.invalid/TOKEN authorization="Bearer PRIVATE_KEY"\nlevel=INFO msg="← HTTP Response" status=409 elapsed=1ms\n'
+        result = subprocess.CompletedProcess([], 1, output, trace)
+        with patch.object(subprocess, 'run', return_value=result) as process:
+            with self.assertRaises(u.UploadError) as error:
+                u.CLI(apply=True).run(['metadata', 'apply', '--output', 'json'], mutate=True)
+        message = str(error.exception)
+        self.assertIn('HTTP 409', message)
+        self.assertIn('"counts":{"succeeded":31,"failed":1,"skipped":0}', message)
+        self.assertIn('"locale":"fr-FR"', message)
+        self.assertIn('"attemptedFields":["description","keywords","supportUrl"]', message)
+        for secret in ('PRIVATE', 'https', 'signed.invalid', 'TOKEN', '999', 'localizationId'):
+            self.assertNotIn(secret, message)
+        self.assertEqual(process.call_args.kwargs['env']['ASC_DEBUG'], 'api')
+        self.assertTrue(process.call_args.kwargs['capture_output'])
+
+    def test_metadata_failure_summary_rejects_invalid_unbounded_or_non_json_results(self):
+        for output in ('PRIVATE_ERROR', json.dumps({'actions': 'PRIVATE'}), json.dumps({'actions': [{'scope': {}}]}), json.dumps({'actions': [{}] * 201}), 'x' * 1048577, json.dumps({'actions': [{'scope': 'version', 'locale': 'en-US', 'action': 'update', 'status': 'PRIVATE'}]})):
+            self.assertEqual(u.safe_metadata_failure_summary(output), '')
+
     def test_library_and_screenshot_helpers_never_inherit_http_debug(self):
         trace = 'level=INFO msg="← HTTP Response" status=409 PRIVATE_KEY\n'
         for command in (['asset-library', 'videos', 'upload'], ['screenshots', 'upload']):
