@@ -10,6 +10,132 @@ import Widgets
 
 @Suite struct HistoryWidgetAdapterTests {
   private let now = Date(timeIntervalSince1970: 1_790_035_200)
+
+  @Test func ratesAdvancingDuringHistoryLoadDriveBothRenderedEndpointAndSavedContext() async throws
+  {
+    let now = now
+    let rates = Mutex(historyRates(price: 50_000, observedAt: now.addingTimeInterval(-300)))
+    let updated = historyRates(price: 53_000, observedAt: now.addingTimeInterval(-60))
+    let saved = Mutex<RateSnapshot?>(nil)
+    let url = URL(string: "currency://widget?v=1&context=rendered")!
+    let provider = HistoryTimeline(
+      dependencies: .init(
+        input: { ConverterState() },
+        load: { _, _, _, _ in
+          rates.withLock { $0 = updated }
+          return Self.historyResult(now: now)
+        }, now: { now }, rates: { rates.withLock { $0 } },
+        saveContext: { snapshot, pair, _ in
+          #expect(pair.base == "BTC")
+          #expect(pair.quote == "USD")
+          saved.withLock { $0 = snapshot }
+          return url
+        }))
+    let settings = HistorySettings()
+    settings.base = HistoryCurrency("BTC")
+    settings.comparison = HistoryCurrency("USD")
+    settings.range = .day
+    let timeline = await provider.loadTimeline(settings)
+    let entry = try #require(timeline.entries.first)
+    #expect(abs(try #require(entry.snapshot.latest?.value) - 53_000) < 0.000001)
+    #expect(entry.snapshot.latest?.date == now.addingTimeInterval(-60))
+    let context = try #require(saved.withLock { $0 })
+    #expect(context.quotes["BTC"] == updated.quotes["BTC"])
+    #expect(entry.openURL == url)
+  }
+
+  @Test func staggeredRangesReloadSiblingsOncePerSharedQuoteAdvance() async throws {
+    let now = now
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let rates = Mutex(historyRates(price: 50_000, observedAt: now.addingTimeInterval(-300)))
+    let reloads = Mutex(0)
+    let provider = HistoryTimeline(
+      dependencies: .init(
+        input: { ConverterState() },
+        load: { _, _, _, _ in Self.historyResult(now: now) }, now: { now },
+        rates: { rates.withLock { $0 } },
+        synchronizeQuote: { base, quote, point in
+          if (try? WidgetStore(directory: directory)
+            .claimHistoryQuoteRefresh(base: base, quote: quote, point: point)) == true
+          {
+            reloads.withLock { $0 += 1 }
+          }
+        }))
+    let settings = HistorySettings()
+    settings.base = HistoryCurrency("BTC")
+    settings.comparison = HistoryCurrency("USD")
+    settings.range = .day
+    _ = await provider.entry(settings)
+    #expect(reloads.withLock { $0 } == 0)
+    _ = await provider.loadTimeline(settings)
+    #expect(reloads.withLock { $0 } == 1)
+    settings.range = .week
+    _ = await provider.loadTimeline(settings)
+    #expect(reloads.withLock { $0 } == 1)
+    let updated = historyRates(price: 53_000, observedAt: now.addingTimeInterval(-60))
+    rates.withLock { $0 = updated }
+    settings.range = .day
+    let day = await provider.loadTimeline(settings)
+    #expect(reloads.withLock { $0 } == 2)
+    settings.range = .week
+    let week = await provider.loadTimeline(settings)
+    #expect(reloads.withLock { $0 } == 2)
+    #expect(day.entries.first?.snapshot.latest == week.entries.first?.snapshot.latest)
+    #expect(abs(try #require(week.entries.first?.snapshot.latest?.value) - 53_000) < 0.000001)
+    rates.withLock {
+      $0 = RateSnapshot(quotes: updated.quotes, fetchedAt: now.addingTimeInterval(1))
+    }
+    _ = await provider.loadTimeline(settings)
+    #expect(reloads.withLock { $0 } == 2)
+    settings.base = HistoryCurrency("USD")
+    settings.comparison = HistoryCurrency("BTC")
+    _ = await provider.loadTimeline(settings)
+    #expect(reloads.withLock { $0 } == 2)
+  }
+
+  @Test func missingHistoryOrSharedQuoteNeverRequestsSiblingReload() async {
+    let now = now
+    let reloads = Mutex(0)
+    for hasHistory in [false, true] {
+      for hasQuote in [false, true] where !hasHistory || !hasQuote {
+        let rates = hasQuote ? historyRates(price: 53_000, observedAt: now) : RateSnapshot()
+        let provider = HistoryTimeline(
+          dependencies: .init(
+            input: { ConverterState() },
+            load: { _, _, _, _ in
+              hasHistory
+                ? Self.historyResult(now: now)
+                : HistoryResult(series: nil, issue: .unavailable)
+            }, now: { now }, rates: { rates },
+            synchronizeQuote: { _, _, _ in reloads.withLock { $0 += 1 } }))
+        let settings = HistorySettings()
+        settings.base = HistoryCurrency("BTC")
+        settings.comparison = HistoryCurrency("USD")
+        _ = await provider.loadTimeline(settings)
+      }
+    }
+    #expect(reloads.withLock { $0 } == 0)
+  }
+
+  private func historyRates(price: Decimal, observedAt: Date) -> RateSnapshot {
+    RateSnapshot(
+      quotes: [
+        "BTC": ExchangeRate(
+          1 / price, published: "2026-10-16", source: .init(provider: .coinMetrics),
+          observedAt: observedAt),
+        "USD": ExchangeRate(1, published: "2026-10-16", source: .init(provider: .frankfurter))
+      ], fetchedAt: now)
+  }
+
+  private static func historyResult(now: Date) -> HistoryResult {
+    HistoryResult(
+      series: HistorySeries(
+        points: [
+          HistoryPoint(date: now.addingTimeInterval(-604800), value: 40_000),
+          HistoryPoint(date: now.addingTimeInterval(-86400), value: 48_000)
+        ], source: .init(provider: .coinMetrics), fetchedAt: now), issue: nil)
+  }
   @Test func liveBuildPolicyControlsSavedDayRangeAndTimeline() async {
     let now = now
     let requests = Mutex<[HistoryRange]>([])

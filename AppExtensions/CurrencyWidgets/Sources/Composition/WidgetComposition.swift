@@ -83,6 +83,13 @@ enum WidgetComposition {
       saveContext: { snapshot, pair, now in
         try? WidgetQuoteContextStore(directory: directory)
           .save(snapshot, base: pair.base, quote: pair.quote, now: now)
+      },
+      synchronizeQuote: { base, quote, point in
+        if (try? WidgetStore(directory: directory)
+          .claimHistoryQuoteRefresh(base: base, quote: quote, point: point)) == true
+        {
+          WidgetCenter.shared.reloadTimelines(ofKind: "CurrencyHistory")
+        }
       }, localSnapshot: local.snapshot)
   }
 
