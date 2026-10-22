@@ -429,7 +429,9 @@ struct RateDetailsScreen: View {
               RateMessages.providerDescription(
                 series.source, locale: locale, includesTimeZone: false))
           } else {
-            Text(CurrencyDisplay.details(snapshot, from: code, to: quote, locale: locale))
+            Text(
+              CurrencyDisplay.details(
+                snapshot, from: code, to: quote, locale: locale, includesTimeZone: false))
           }
         }
       }

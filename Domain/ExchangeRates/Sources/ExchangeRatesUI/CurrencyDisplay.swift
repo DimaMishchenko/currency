@@ -176,13 +176,15 @@ extension CurrencyDisplay {
 
   /// Describes the distinct providers and publication days involved in a conversion.
   public static func details(
-    _ snapshot: RateSnapshot, from: String, to: String, locale: Locale = .current
+    _ snapshot: RateSnapshot, from: String, to: String, locale: Locale = .current,
+    includesTimeZone: Bool = true
   ) -> String {
     let descriptions = [snapshot.quotes[from], snapshot.quotes[to]].compactMap { $0 }
       .map { rate in
         let source = presentationSource(rate.source, snapshot: snapshot, from: from, to: to)
         let detail =
-          RateMessages.providerDescription(source, locale: locale) + " · "
+          RateMessages.providerDescription(
+            source, locale: locale, includesTimeZone: includesTimeZone) + " · "
           + publicationDate(rate.published, locale: locale)
         return [detail, RateMessages.conversionDescription(source, locale: locale)]
           .compactMap { $0 }.joined(separator: "\n")
