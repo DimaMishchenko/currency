@@ -2,6 +2,7 @@ import ast
 import contextlib
 import io
 import json
+import os
 from pathlib import Path
 import unittest
 import textwrap
@@ -11,6 +12,11 @@ body = workflow.read_text().split("python3 - <<'PY'\n", 1)[1].split('\n         
 program = ast.parse(textwrap.dedent(body))
 
 class NativeInspectionTests(unittest.TestCase):
+    def setUp(self):
+        previous = os.getcwd()
+        self.addCleanup(os.chdir, previous)
+        os.chdir(workflow.parents[2])
+
     def run_inspector(self, response):
         namespace = {}
         exec(compile(ast.Module(body=program.body[:-1], type_ignores=[]), '<workflow-inspector>', 'exec'), namespace)
