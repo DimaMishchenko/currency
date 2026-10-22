@@ -58,19 +58,21 @@ jobs:
         with:
           persist-credentials: false
       - name: Install pinned verified asc and video inspection
+        timeout-minutes: 10
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/currency-asc-bin"
           curl --fail --silent --show-error --location \
+            --connect-timeout 15 --max-time 120 --retry 2 --retry-max-time 120 \
             https://github.com/rorkai/App-Store-Connect-CLI/releases/download/5.16.0/asc_5.16.0_linux_amd64 \
             --output "$RUNNER_TEMP/currency-asc-bin/asc"
           echo 'f0be6185b82e300899e2c162bae8975cafb3fcd7c6f990b8e22d637184bcaabc  '"$RUNNER_TEMP/currency-asc-bin/asc" | sha256sum --check --status
           chmod 755 "$RUNNER_TEMP/currency-asc-bin/asc"
           echo "$RUNNER_TEMP/currency-asc-bin" >> "$GITHUB_PATH"
-          if [[ "$REQUEST_MODE" != inspect-native-policy ]]; then
-            sudo apt-get update -qq
-            sudo apt-get install -y -qq ffmpeg
+          if [[ "$REQUEST_MODE" != inspect-native-policy ]] && ! command -v ffprobe >/dev/null 2>&1; then
+            sudo timeout 120s apt-get -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 -o Acquire::Retries=2 update -qq
+            sudo timeout 180s apt-get -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 -o Acquire::Retries=2 install -y -qq ffmpeg
           fi
       - name: Fetch and verify the pinned asset release
         if: inputs.mode != 'inspect-native-policy'
