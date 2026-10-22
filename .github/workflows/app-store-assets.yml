@@ -42,6 +42,7 @@ jobs:
     env:
       ASC_STRICT_AUTH: 'true'
       ASC_APP_ID: '6816213577'
+      ASC_UPLOAD_TIMEOUT: '30m'
       REQUEST_MODE: ${{ inputs.mode }}
       TARGET_VERSION_ID: ${{ inputs.version_id }}
       TARGET_VERSION_STRING: ${{ inputs.version_string }}
