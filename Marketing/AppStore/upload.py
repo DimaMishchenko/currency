@@ -224,7 +224,7 @@ class CLI:
     def api(self, method, path, body=None):
         args = ['api', method, path, '--output', 'json']
         if method == 'GET':
-            args += ['--paginate'] if '?' not in path and not path.endswith('/assetLibrary') else []
+            args += ['--paginate'] if not path.partition('?')[0].endswith('/assetLibrary') else []
         else:
             args += ['--confirm', '--body-file', '-']
         return self.run(args, body, mutate=method != 'GET')
@@ -616,7 +616,7 @@ class Planner:
             raise UploadError('Duo native placement policy preflight is required before planning placements')
         kind = 'appStoreVersionLocalizations' if family == 'default' else 'appCustomProductPageLocalizations'
         rel = 'appStoreVersionLocalization' if family == 'default' else 'appCustomProductPageLocalization'
-        placements = self.get('/v1/' + kind + '/' + target + '/placements')
+        placements = self.get('/v1/' + kind + '/' + target + '/placements' + '?include=image')
         existing = [p for p in placements if p.get('attributes', {}).get('placementGroup') in self.duo_groups.values()]
         if any(p.get('attributes', {}).get('placementType') != 'APP_SCREENSHOT' for p in existing):
             raise UploadError('Duo group contains app previews; reconcile mixed media ordering explicitly first')
@@ -646,7 +646,7 @@ class Planner:
         if not self.header_group:
             raise UploadError('Header native placement policy preflight is required before planning placements')
         kind = 'appStoreVersionLocalizations' if family == 'default' else 'appCustomProductPageLocalizations'
-        placements = self.get('/v1/' + kind + '/' + target + '/placements')
+        placements = self.get('/v1/' + kind + '/' + target + '/placements' + '?include=video')
         headers = [p for p in placements if p.get('attributes', {}).get('placementType') == 'PRODUCT_PAGE_HEADER_ASSET']
         if headers:
             if len(headers) == 1 and headers[0].get('attributes', {}).get('placementGroup') == self.header_group and headers[0].get('relationships', {}).get('video', {}).get('data', {}).get('id') == video:

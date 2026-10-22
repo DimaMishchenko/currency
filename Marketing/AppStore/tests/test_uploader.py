@@ -432,6 +432,55 @@ class UploaderTests(unittest.TestCase):
         self.assertTrue(all(len(op['body']['data']['relationships']['orderedPlacements']['data']) == 3 for op in orders))
         self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
 
+    def test_header_reconciliation_requests_video_linkage_for_default_and_cpp(self):
+        for family in ('default', 'travel'):
+            with self.subTest(family=family):
+                kind = 'appStoreVersionLocalizations' if family == 'default' else 'appCustomProductPageLocalizations'
+                path = '/v1/' + kind + '/locale/placements'
+                bare = row('header', placementType='PRODUCT_PAGE_HEADER_ASSET', placementGroup='DEFAULT_PROFILE', state='PARENT_PREPARE_FOR_SUBMISSION')
+                linked = dict(bare, relationships={'video': u.relationship('appAssetLibraryVideos', 'approved-video')})
+                self.state[path] = [bare]
+                self.state[path + '?include=video'] = [linked]
+                cli = FakeCLI(self.state)
+                plan = self.planner(cli, {'header'})
+                plan.header_group = 'DEFAULT_PROFILE'
+                plan.place_header('locale', family, 'approved-video')
+                self.assertEqual(plan.ops, [])
+                self.assertEqual(cli.calls, [('GET', path + '?include=video', None)])
+                for video in ('different-video', None):
+                    self.state[path + '?include=video'] = [dict(bare, relationships={'video': u.relationship('appAssetLibraryVideos', video)}) if video else bare]
+                    with self.assertRaisesRegex(u.UploadError, 'header differs'):
+                        plan.place_header('locale', family, 'approved-video')
+                    self.assertEqual(plan.ops, [])
+
+    def test_duo_reconciliation_requests_image_linkage_and_retains_approved_placements(self):
+        for family in ('default', 'travel'):
+            with self.subTest(family=family):
+                kind = 'appStoreVersionLocalizations' if family == 'default' else 'appCustomProductPageLocalizations'
+                path = '/v1/' + kind + '/locale/placements'
+                linked = []
+                for order, profile in enumerate(self.meta['duoPresentation'][family], 1):
+                    self.slots[('en-US', profile, family, order)] = {'image': 'approved-' + str(order)}
+                    placement = row('placement-' + str(order), placementType='APP_SCREENSHOT', placementGroup='IPHONE_DUO_PROFILE', state='PARENT_PREPARE_FOR_SUBMISSION')
+                    linked.append(dict(placement, relationships={'image': u.relationship('appAssetLibraryImages', 'approved-' + str(order))}))
+                self.state[path] = [{key: value for key, value in placement.items() if key != 'relationships'} for placement in linked]
+                self.state[path + '?include=image'] = linked
+                cli = FakeCLI(self.state)
+                plan = self.planner(cli, {'duo'})
+                plan.duo_groups = {profile: 'IPHONE_DUO_PROFILE' for profile in ('duo-outer', 'duo-inner')}
+                with patch.object(plan, 'library_media', side_effect=lambda item, media_type: item['image']):
+                    plan.duo_screenshots('locale', family, 'en-US')
+                self.assertEqual(len(plan.ops), 1)
+                self.assertEqual(plan.ops[0]['path'], '/v1/appAssetLibraryPlacementOrderingRequests')
+                self.assertEqual(plan.ops[0]['body']['data']['relationships']['orderedPlacements']['data'], [{'type': 'appAssetLibraryPlacements', 'id': placement['id']} for placement in linked])
+                self.assertEqual(cli.calls, [('GET', path + '?include=image', None)])
+                for image in ('different-image', None):
+                    self.state[path + '?include=image'] = [dict(linked[0], relationships={'image': u.relationship('appAssetLibraryImages', image)}) if image else self.state[path][0]] + linked[1:]
+                    with patch.object(plan, 'library_media', side_effect=lambda item, media_type: item['image']):
+                        with self.assertRaisesRegex(u.UploadError, 'placements differ'):
+                            plan.duo_screenshots('locale', family, 'en-US')
+                    self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
     def test_header_uses_runtime_group_and_optional_video_constraints(self):
         reference = native_reference()
         attributes = reference[0]['attributes']
@@ -526,6 +575,21 @@ class UploaderTests(unittest.TestCase):
         plan.queue('POST', '/v1/appCustomProductPageVersions', u.resource('appCustomProductPageVersions', {}, {'appCustomProductPage': u.relationship('appCustomProductPages', parent)}))
         plan.execute()
         self.assertEqual(cli.calls[1][2]['data']['relationships']['appCustomProductPage']['data']['id'], 'created-1')
+
+    def test_cli_paginates_placement_includes_but_not_single_asset_library(self):
+        paths = [
+            ('/v1/appStoreVersionLocalizations/locale/placements?include=video', True),
+            ('/v1/appCustomProductPageLocalizations/locale/placements?include=image', True),
+            ('/v1/apps/app/appStoreVersions', True),
+            ('/v1/apps/app/assetLibrary', False),
+            ('/v1/apps/app/assetLibrary?fields%5BappAssetLibraries%5D=images', False),
+        ]
+        cli = u.CLI()
+        for path, paginated in paths:
+            with self.subTest(path=path), patch.object(cli, 'run', return_value={}) as run:
+                cli.api('GET', path)
+                expected = ['api', 'GET', path, '--output', 'json'] + (['--paginate'] if paginated else [])
+                run.assert_called_once_with(expected, None, mutate=False)
 
     def test_cli_suppresses_sensitive_failure_output(self):
         cli = u.CLI(apply=True)
