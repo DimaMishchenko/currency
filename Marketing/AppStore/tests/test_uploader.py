@@ -530,22 +530,62 @@ class UploaderTests(unittest.TestCase):
                     placement = row('placement-' + str(order), placementType='APP_SCREENSHOT', placementGroup='IPHONE_DUO_PROFILE', state='PARENT_PREPARE_FOR_SUBMISSION')
                     linked.append(dict(placement, relationships={'image': u.relationship('appAssetLibraryImages', 'approved-' + str(order))}))
                 self.state[path] = [{key: value for key, value in placement.items() if key != 'relationships'} for placement in linked]
-                self.state[path + '?include=image'] = linked
+                self.state[path + '?include=image'] = list(reversed(linked))
+                self.state[path + '?include=image&sort=placementGroupPosition'] = linked
                 cli = FakeCLI(self.state)
                 plan = self.planner(cli, {'duo'})
                 plan.duo_groups = {profile: 'IPHONE_DUO_PROFILE' for profile in ('duo-outer', 'duo-inner')}
                 with patch.object(plan, 'library_media', side_effect=lambda item, media_type: item['image']):
                     plan.duo_screenshots('locale', family, 'en-US')
-                self.assertEqual(len(plan.ops), 1)
-                self.assertEqual(plan.ops[0]['path'], '/v1/appAssetLibraryPlacementOrderingRequests')
-                self.assertEqual(plan.ops[0]['body']['data']['relationships']['orderedPlacements']['data'], [{'type': 'appAssetLibraryPlacements', 'id': placement['id']} for placement in linked])
-                self.assertEqual(cli.calls, [('GET', path + '?include=image', None)])
+                self.assertEqual(plan.ops, [])
+                self.assertEqual(cli.calls, [('GET', path + '?include=image&sort=placementGroupPosition', None)])
                 for image in ('different-image', None):
-                    self.state[path + '?include=image'] = [dict(linked[0], relationships={'image': u.relationship('appAssetLibraryImages', image)}) if image else self.state[path][0]] + linked[1:]
+                    self.state[path + '?include=image&sort=placementGroupPosition'] = [dict(linked[0], relationships={'image': u.relationship('appAssetLibraryImages', image)}) if image else self.state[path][0]] + linked[1:]
                     with patch.object(plan, 'library_media', side_effect=lambda item, media_type: item['image']):
                         with self.assertRaisesRegex(u.UploadError, 'placements differ'):
                             plan.duo_screenshots('locale', family, 'en-US')
                     self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+                for actual, message in (
+                    (linked + [linked[0]], 'Duplicate Duo image placements'),
+                    ([dict(linked[0], attributes=dict(linked[0]['attributes'], state='FAILED'))] + linked[1:], 'Existing Duo placement failed'),
+                    ([dict(linked[0], attributes=dict(linked[0]['attributes'], placementType='APP_PREVIEW'))] + linked[1:], 'app previews'),
+                ):
+                    self.state[path + '?include=image&sort=placementGroupPosition'] = actual
+                    guarded = self.planner(cli, {'duo'})
+                    guarded.duo_groups = plan.duo_groups
+                    with patch.object(guarded, 'library_media', side_effect=lambda item, media_type: item['image']):
+                        with self.assertRaisesRegex(u.UploadError, message):
+                            guarded.duo_screenshots('locale', family, 'en-US')
+                    self.assertEqual(guarded.ops, [])
+
+    def test_duo_reorders_only_groups_with_mismatched_display_order(self):
+        for family in ('default', 'travel'):
+            for split in (False, True):
+                with self.subTest(family=family, split=split):
+                    kind = 'appStoreVersionLocalizations' if family == 'default' else 'appCustomProductPageLocalizations'
+                    relation = 'appStoreVersionLocalization' if family == 'default' else 'appCustomProductPageLocalization'
+                    path = '/v1/' + kind + '/locale/placements?include=image&sort=placementGroupPosition'
+                    groups = {profile: profile if split else 'IPHONE_DUO_PROFILE' for profile in ('duo-outer', 'duo-inner')}
+                    linked = []
+                    for order, profile in enumerate(self.meta['duoPresentation'][family], 1):
+                        self.slots[('en-US', profile, family, order)] = {'image': 'approved-' + str(order)}
+                        placement = row('placement-' + str(order), placementType='APP_SCREENSHOT', placementGroup=groups[profile], state='PARENT_PREPARE_FOR_SUBMISSION')
+                        linked.append(dict(placement, relationships={'image': u.relationship('appAssetLibraryImages', 'approved-' + str(order))}))
+                    changed_group = groups['duo-outer']
+                    reversed_group = iter(reversed([placement for placement in linked if placement['attributes']['placementGroup'] == changed_group]))
+                    self.state[path] = [next(reversed_group) if placement['attributes']['placementGroup'] == changed_group else placement for placement in linked]
+                    cli = FakeCLI(self.state)
+                    plan = self.planner(cli, {'duo'})
+                    plan.duo_groups = groups
+                    with patch.object(plan, 'library_media', side_effect=lambda item, media_type: item['image']):
+                        plan.duo_screenshots('locale', family, 'en-US')
+                    self.assertEqual(len(plan.ops), 1)
+                    operation = plan.ops[0]
+                    self.assertEqual(operation['path'], '/v1/appAssetLibraryPlacementOrderingRequests')
+                    self.assertEqual(operation['body']['data']['attributes'], {'placementGroup': changed_group})
+                    self.assertEqual(operation['body']['data']['relationships'][relation], u.relationship(kind, 'locale'))
+                    self.assertEqual(operation['body']['data']['relationships']['orderedPlacements']['data'], [{'type': 'appAssetLibraryPlacements', 'id': placement['id']} for placement in linked if placement['attributes']['placementGroup'] == changed_group])
+                    self.assertEqual(cli.calls, [('GET', path, None)])
 
     def test_header_uses_runtime_group_and_optional_video_constraints(self):
         reference = native_reference()
@@ -727,6 +767,8 @@ class UploaderTests(unittest.TestCase):
         paths = [
             ('/v1/appStoreVersionLocalizations/locale/placements?include=video', True),
             ('/v1/appCustomProductPageLocalizations/locale/placements?include=image', True),
+            ('/v1/appStoreVersionLocalizations/locale/placements?include=image&sort=placementGroupPosition', True),
+            ('/v1/appCustomProductPageLocalizations/locale/placements?include=image&sort=placementGroupPosition', True),
             ('/v1/apps/app/appStoreVersions', True),
             ('/v1/apps/app/assetLibrary', False),
             ('/v1/apps/app/assetLibrary?fields%5BappAssetLibraries%5D=images', False),

@@ -665,7 +665,7 @@ class Planner:
             raise UploadError('Duo native placement policy preflight is required before planning placements')
         kind = 'appStoreVersionLocalizations' if family == 'default' else 'appCustomProductPageLocalizations'
         rel = 'appStoreVersionLocalization' if family == 'default' else 'appCustomProductPageLocalization'
-        placements = self.get('/v1/' + kind + '/' + target + '/placements' + '?include=image')
+        placements = self.get('/v1/' + kind + '/' + target + '/placements' + '?include=image&sort=placementGroupPosition')
         existing = [p for p in placements if p.get('attributes', {}).get('placementGroup') in self.duo_groups.values()]
         if any(p.get('attributes', {}).get('placementType') != 'APP_SCREENSHOT' for p in existing):
             raise UploadError('Duo group contains app previews; reconcile mixed media ordering explicitly first')
@@ -689,7 +689,9 @@ class Planner:
         if any((p.get('relationships', {}).get('image', {}).get('data', {}).get('id'), p.get('attributes', {}).get('placementGroup')) not in desired for p in existing):
             raise UploadError('Existing Duo placements differ from the approved set; automatic deletion is disabled')
         for group, identifiers in ordered.items():
-            self.queue('POST', '/v1/appAssetLibraryPlacementOrderingRequests', resource('appAssetLibraryPlacementOrderingRequests', {'placementGroup': group}, {'orderedPlacements': {'data': [{'type': 'appAssetLibraryPlacements', 'id': p} for p in identifiers]}, rel: relationship(kind, target)}))
+            current = [p['id'] for p in existing if p.get('attributes', {}).get('placementGroup') == group]
+            if current != identifiers:
+                self.queue('POST', '/v1/appAssetLibraryPlacementOrderingRequests', resource('appAssetLibraryPlacementOrderingRequests', {'placementGroup': group}, {'orderedPlacements': {'data': [{'type': 'appAssetLibraryPlacements', 'id': p} for p in identifiers]}, rel: relationship(kind, target)}))
 
     def place_header(self, target, family, video):
         if not self.header_group:
