@@ -39,9 +39,21 @@ def native_reference(duo_limit=12, cpp_limit=None, header_limit=1, split=False):
     return [{'id': 'reference', 'attributes': attributes}]
 
 
+def live_duo_reference(limit=10):
+    reference = native_reference(duo_limit=limit)
+    attributes = reference[0]['attributes']
+    attributes['imageSpecs'] = [
+        {'specId': '205e7ab6-a23a-4ee2-b327-0a99ec2a2520', 'dimensions': {'minWidth': 1398, 'maxWidth': 1398, 'minHeight': 2034, 'maxHeight': 2034}, 'aspectRatio': '2:3', 'compatiblePlacementTypes': ['APP_SCREENSHOT', 'IMESSAGE_APP_SCREENSHOT']},
+        {'specId': 'b83915b8-5b87-4e63-bba5-ab3a0c439862', 'dimensions': {'minWidth': 2853, 'maxWidth': 2853, 'minHeight': 2007, 'maxHeight': 2007}, 'aspectRatio': '3:2', 'compatiblePlacementTypes': ['APP_SCREENSHOT', 'IMESSAGE_APP_SCREENSHOT']},
+    ]
+    attributes['placementTypes'][0]['specMappings'][0]['specs'] = [spec['specId'] for spec in attributes['imageSpecs']]
+    return reference
+
+
 class FakeCLI:
     def __init__(self, state=None, apply=False):
         self.state, self.apply, self.calls = state or {}, apply, []
+        self.command_mutations = []
 
     def api(self, method, path, body=None):
         self.calls.append((method, path, body))
@@ -51,10 +63,13 @@ class FakeCLI:
             return {'data': {'id': 'created-' + str(len(self.calls))}}
         return {'data': self.state.get(path, [])}
 
-    def run(self, args, body=None, mutate=False):
+    def run(self, args, body=None, mutate=False, cwd=None):
         if mutate and not self.apply:
             raise AssertionError('Dry-run attempted command mutation')
         self.calls.append(('COMMAND', args, body))
+        self.command_mutations.append(mutate)
+        if args[:2] == ['metadata', 'apply']:
+            return {'appId': args[args.index('--app') + 1], 'appInfoId': args[args.index('--app-info') + 1], 'version': args[args.index('--version') + 1], 'versionId': 'version', 'adds': [], 'updates': [], 'deletes': []}
         return {'videoId': 'uploaded-video'}
 
 
@@ -64,6 +79,7 @@ class UploaderTests(unittest.TestCase):
         self.root = Path(self.tmp.name)
         self.addCleanup(self.tmp.cleanup)
         self.meta = {'appId': '6816213577', 'locales': {'en-US': {'name': 'Currency', 'description': 'Convert', 'promotionalText': 'Fast', 'contextualPromotionalText': {f: 'About ' + f for f in u.FAMILIES[1:]}}}}
+        self.meta['duoPresentation'] = {family: ['duo-outer', 'duo-inner', 'duo-inner', 'duo-outer', 'duo-inner', 'duo-outer'] for family in u.FAMILIES}
         self.slots = {}
         for profile in u.PROFILES:
             for i in range(1, 7):
@@ -81,6 +97,101 @@ class UploaderTests(unittest.TestCase):
     def planner(self, cli, scopes):
         return u.Planner(cli, self.meta, self.slots, {}, 'version', '1.2', 'info', scopes)
 
+    def test_canonical_metadata_exports_all_18_locales_and_selected_fields_only(self):
+        metadata = json.loads((MODULE.parent / 'metadata.json').read_text())
+        metadata['locales']['en-US']['privateTransportUrl'] = 'https://signed.invalid/PRIVATE_KEY'
+        directory = self.root / 'canonical'
+        directory.mkdir()
+        u.write_canonical_metadata(directory, metadata, '1.0')
+        paths = sorted(directory.rglob('*.json'))
+        self.assertEqual(len(paths), 36)
+        self.assertFalse(any(path.name == 'default.json' for path in paths))
+        for locale, fields in metadata['locales'].items():
+            info = json.loads((directory / 'app-info' / (locale + '.json')).read_text())
+            version = json.loads((directory / 'version' / '1.0' / (locale + '.json')).read_text())
+            self.assertEqual(info, {key: value for key, value in fields.items() if key in u.INFO_FIELDS})
+            self.assertEqual(version, {key: value for key, value in fields.items() if key in u.VERSION_FIELDS})
+            self.assertNotIn('locale', info)
+            self.assertNotIn('contextualPromotionalText', version)
+            self.assertNotIn('supportUrl', version)
+        self.assertNotIn('PRIVATE_KEY', ''.join(path.read_text() for path in paths))
+
+    def test_canonical_metadata_rejects_null_empty_and_default_fallback(self):
+        for metadata in ({'locales': {'en-US': {'name': None}}}, {'locales': {'en-US': {'promotionalText': ''}}}, {'locales': {'default': {'name': 'Currency'}}}):
+            with self.subTest(metadata=metadata):
+                with self.assertRaises(u.UploadError):
+                    u.write_canonical_metadata(self.root, metadata, '1.0')
+
+    def test_metadata_cli_uses_exact_selectors_and_safe_dryrun_apply_protocol(self):
+        class InspectCLI(FakeCLI):
+            def run(self, args, body=None, mutate=False, cwd=None):
+                directory = Path(args[args.index('--dir') + 1])
+                self.snapshots.append((list(args), mutate, Path(cwd), {str(path.relative_to(directory)): json.loads(path.read_text()) for path in directory.rglob('*.json')}))
+                return super().run(args, body, mutate, cwd)
+        cli = InspectCLI(self.state, apply=True)
+        cli.snapshots = []
+        plan = self.planner(cli, {'metadata'})
+        plan.sync_metadata(dry_run=True)
+        plan.sync_metadata(dry_run=False)
+        for index, (args, mutate, directory, files) in enumerate(cli.snapshots):
+            self.assertEqual(args[:2], ['metadata', 'apply'])
+            self.assertEqual(args[args.index('--app') + 1], '6816213577')
+            self.assertEqual(args[args.index('--app-info') + 1], 'info')
+            self.assertEqual(args[args.index('--version') + 1], '1.2')
+            self.assertEqual(args[args.index('--platform') + 1], 'IOS')
+            self.assertEqual(args[args.index('--include') + 1], 'localizations')
+            self.assertEqual(args[args.index('--if-exists') + 1], 'update')
+            self.assertEqual('--dry-run' in args, index == 0)
+            self.assertEqual(mutate, index == 1)
+            self.assertNotIn('--allow-deletes', args)
+            self.assertNotIn('--confirm', args)
+            self.assertEqual(set(files), {'app-info/en-US.json', 'version/1.2/en-US.json'})
+            self.assertNotIn('supportUrl', files['version/1.2/en-US.json'])
+            self.assertFalse(directory.exists())
+
+    def test_metadata_sync_then_lookup_drives_new_default_screenshot_targets(self):
+        self.meta['locales']['en-GB'] = dict(self.meta['locales']['en-US'])
+        for profile in u.PROFILES:
+            for index in range(1, 7):
+                self.slots[('en-GB', profile, 'default', index)] = self.slots[('en-US', profile, 'default', index)]
+        class CreatingCLI(FakeCLI):
+            def run(self, args, body=None, mutate=False, cwd=None):
+                result = super().run(args, body, mutate, cwd)
+                if args[:2] == ['metadata', 'apply']:
+                    result['adds'] = [{'locale': 'en-GB'}]
+                    if mutate:
+                        self.state['/v1/appStoreVersions/version/appStoreVersionLocalizations'].append(row('gb-created', locale='en-GB'))
+                return result
+        cli = CreatingCLI(self.state, apply=True)
+        plan = self.planner(cli, {'metadata', 'default'}).preflight()
+        self.assertEqual([operation['method'] for operation in plan.ops[:2]], ['METADATA', 'LOOKUP'])
+        self.assertFalse(any(cli.command_mutations))
+        self.assertFalse(any(operation['method'] in {'POST', 'PATCH'} for operation in plan.ops))
+        plan.execute()
+        screenshot_commands = [call[1] for call in cli.calls if call[0] == 'COMMAND' and call[1][:2] == ['screenshots', 'upload']]
+        self.assertEqual(len(screenshot_commands), 6)
+        self.assertEqual(sum(command[command.index('--version-localization') + 1] == 'gb-created' for command in screenshot_commands), 3)
+        self.assertTrue(all(call[0] in {'GET', 'COMMAND'} for call in cli.calls))
+        metadata_commands = [call[1] for call in cli.calls if call[0] == 'COMMAND' and call[1][:2] == ['metadata', 'apply']]
+        self.assertEqual(len(metadata_commands), 2)
+        self.assertIn('--dry-run', metadata_commands[0])
+        self.assertNotIn('--dry-run', metadata_commands[1])
+
+    def test_metadata_plan_rejects_deletes_and_wrong_resolved_targets(self):
+        for override in ({'deletes': [{'locale': 'fr-FR'}]}, {'versionId': 'another-version'}, {'appInfoId': 'another-info'}):
+            with self.subTest(override=override):
+                class InvalidCLI(FakeCLI):
+                    def run(self, args, body=None, mutate=False, cwd=None):
+                        result = super().run(args, body, mutate, cwd)
+                        result.update(override)
+                        return result
+                cli = InvalidCLI(self.state, apply=True)
+                plan = self.planner(cli, {'metadata'})
+                with self.assertRaises(u.UploadError):
+                    plan.preflight()
+                self.assertEqual(plan.ops, [])
+                self.assertFalse(any(cli.command_mutations))
+
     def test_dry_run_only_reads_and_plans_uploads(self):
         cli = FakeCLI(self.state)
         plan = self.planner(cli, {'default'}).preflight()
@@ -96,28 +207,20 @@ class UploaderTests(unittest.TestCase):
         self.assertEqual(plan.ops, [])
 
     def test_apply_reuses_version_locale_that_appears_after_preflight(self):
-        class CoupledLocalizations(FakeCLI):
-            def api(self, method, path, body=None):
-                if method == 'POST' and path == '/v1/appInfoLocalizations':
-                    self.state['/v1/appStoreVersions/version/appStoreVersionLocalizations'] = [row('automatic-locale', locale='en-GB')]
-                if method == 'POST' and path == '/v1/appStoreVersionLocalizations':
-                    raise AssertionError('Duplicate localization creation')
-                return super().api(method, path, body)
-        cli = CoupledLocalizations(self.state, apply=True)
-        plan = self.planner(cli, {'metadata'})
-        plan.queue('POST', '/v1/appInfoLocalizations', u.resource('appInfoLocalizations', {'locale': 'en-GB', 'name': 'Currency'}, {'appInfo': u.relationship('appInfos', 'info')}))
+        cli = FakeCLI(self.state, apply=True)
+        plan = self.planner(cli, {'default'})
         target = plan.queue('POST', '/v1/appStoreVersionLocalizations', u.resource('appStoreVersionLocalizations', {'locale': 'en-GB', 'description': 'Approved description'}, {'appStoreVersion': u.relationship('appStoreVersions', 'version')}))
         plan.queue('PATCH', '/v1/appStoreVersionLocalizations/' + target, u.resource('appStoreVersionLocalizations', {'keywords': 'widget'}, identifier=target))
+        cli.state['/v1/appStoreVersions/version/appStoreVersionLocalizations'] = [row('automatic-locale', locale='en-GB')]
         plan.execute()
         writes = [call for call in cli.calls if call[0] != 'GET']
-        self.assertEqual([call[0] for call in writes], ['POST', 'PATCH', 'PATCH'])
+        self.assertEqual([call[0] for call in writes], ['PATCH', 'PATCH'])
+        self.assertEqual(writes[0][1], '/v1/appStoreVersionLocalizations/automatic-locale')
+        self.assertEqual(writes[0][2]['data']['attributes'], {'description': 'Approved description'})
         self.assertEqual(writes[1][1], '/v1/appStoreVersionLocalizations/automatic-locale')
-        self.assertEqual(writes[1][2]['data']['attributes'], {'description': 'Approved description'})
-        self.assertEqual(writes[2][1], '/v1/appStoreVersionLocalizations/automatic-locale')
 
     def test_localization_refresh_preserves_unselected_fields_and_rejects_duplicates(self):
         for path, relation, parent_kind in (
-            ('appInfoLocalizations', 'appInfo', 'appInfos'),
             ('appStoreVersionLocalizations', 'appStoreVersion', 'appStoreVersions'),
             ('appCustomProductPageLocalizations', 'appCustomProductPageVersion', 'appCustomProductPageVersions'),
         ):
@@ -148,7 +251,8 @@ class UploaderTests(unittest.TestCase):
         cli = FakeCLI(self.state, apply=True)
         with self.assertRaisesRegex(u.UploadError, 'differs'):
             self.planner(cli, {'metadata', 'default'}).preflight()
-        self.assertTrue(all(c[0] == 'GET' for c in cli.calls))
+        self.assertTrue(all(c[0] in {'GET', 'COMMAND'} for c in cli.calls))
+        self.assertFalse(any(cli.command_mutations))
 
     def test_live_or_wrong_version_refuses_before_mutation(self):
         for field, value in [('appStoreState', 'READY_FOR_SALE'), ('versionString', '8.0')]:
@@ -172,8 +276,10 @@ class UploaderTests(unittest.TestCase):
         plan.duo_screenshots('locale', 'default', 'en-US')
         uploads = [op for op in plan.ops if op['method'] == 'LIBRARY']
         placements = [op for op in plan.ops if op['path'] == '/v1/appAssetLibraryPlacements']
-        self.assertEqual(len(uploads), 12)
-        self.assertEqual(len(placements), 12)
+        self.assertEqual(len(uploads), 6)
+        self.assertEqual(len(placements), 6)
+        expected_files = [str(self.slots[('en-US', profile, 'default', order)]['file']) for order, profile in enumerate(self.meta['duoPresentation']['default'], 1)]
+        self.assertEqual([operation['file'] for operation in uploads], expected_files)
         self.assertTrue(all(op['body']['data']['attributes']['placementGroup'] == 'IPHONE_DUO_PROFILE' for op in placements))
         ordering = plan.ops[-1]['body']['data']
         self.assertEqual(ordering['relationships']['orderedPlacements']['data'], [{'type': 'appAssetLibraryPlacements', 'id': op['ref']} for op in placements])
@@ -181,16 +287,47 @@ class UploaderTests(unittest.TestCase):
         self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
 
     def test_native_capacity_insufficient_for_shared_duo_group_stops_before_any_plan(self):
-        self.state['/v1/appAssetLibraryRefData'] = native_reference(duo_limit=10)
+        self.state['/v1/appAssetLibraryRefData'] = native_reference(duo_limit=5)
         cli = FakeCLI(self.state, apply=True)
         plan = self.planner(cli, {'metadata', 'duo', 'header'})
-        with self.assertRaisesRegex(u.UploadError, 'requires 12, maximum 10'):
+        with self.assertRaisesRegex(u.UploadError, 'requires 6, maximum 5'):
             plan.preflight()
         self.assertEqual(plan.ops, [])
         self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
 
+    def test_invalid_duo_selection_cannot_plan_placements(self):
+        for profiles in (None, [], ['duo-inner'] * 6, ['duo-outer', 'duo-inner'] * 2, [{}] * 6):
+            with self.subTest(profiles=profiles):
+                self.meta['duoPresentation']['default'] = profiles
+                cli = FakeCLI(self.state, apply=True)
+                plan = self.planner(cli, {'duo'})
+                with self.assertRaisesRegex(u.UploadError, 'Duo presentation'):
+                    plan.native_policy_preflight()
+                self.assertEqual(plan.ops, [])
+                self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_live_exact_duo_dimensions_accept_approved_six_image_mix(self):
+        self.state['/v1/appAssetLibraryRefData'] = live_duo_reference()
+        cli = FakeCLI(self.state, apply=True)
+        plan = self.planner(cli, {'metadata', 'duo'})
+        plan.native_policy_preflight()
+        self.assertEqual(plan.duo_groups, {'duo-outer': 'IPHONE_DUO_PROFILE', 'duo-inner': 'IPHONE_DUO_PROFILE'})
+        self.assertTrue(all('requires 6, maximum 10' in note for note in plan.notes))
+        self.assertEqual(plan.ops, [])
+        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_live_exact_duo_dimensions_pass_nominal_ratio_with_sufficient_capacity(self):
+        self.state['/v1/appAssetLibraryRefData'] = live_duo_reference(limit=12)
+        cli = FakeCLI(self.state)
+        plan = self.planner(cli, {'duo'})
+        plan.native_policy_preflight()
+        self.assertEqual(plan.duo_groups, {'duo-outer': 'IPHONE_DUO_PROFILE', 'duo-inner': 'IPHONE_DUO_PROFILE'})
+        self.assertEqual(len(plan.notes), 2)
+        self.assertTrue(all('requires 6, maximum 12' in note for note in plan.notes))
+        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
     def test_native_capacity_checks_cpp_feature_independently(self):
-        self.state['/v1/appAssetLibraryRefData'] = native_reference(duo_limit=12, cpp_limit=10)
+        self.state['/v1/appAssetLibraryRefData'] = native_reference(duo_limit=10, cpp_limit=5)
         cli = FakeCLI(self.state, apply=True)
         plan = self.planner(cli, {'duo'})
         with self.assertRaisesRegex(u.UploadError, 'CUSTOM_PRODUCT_PAGES/APP_SCREENSHOT'):
@@ -237,7 +374,7 @@ class UploaderTests(unittest.TestCase):
         plan.duo_screenshots('locale', 'default', 'en-US')
         orders = [op for op in plan.ops if op['path'] == '/v1/appAssetLibraryPlacementOrderingRequests']
         self.assertEqual(len(orders), 2)
-        self.assertTrue(all(len(op['body']['data']['relationships']['orderedPlacements']['data']) == 6 for op in orders))
+        self.assertTrue(all(len(op['body']['data']['relationships']['orderedPlacements']['data']) == 3 for op in orders))
         self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
 
     def test_header_uses_runtime_group_and_optional_video_constraints(self):
@@ -260,6 +397,8 @@ class UploaderTests(unittest.TestCase):
             with self.subTest(change=change):
                 reference = native_reference()
                 reference[0]['attributes']['videoSpecs'][0].update(change)
+                if 'aspectRatio' in change:
+                    reference[0]['attributes']['videoSpecs'][0]['dimensions'].update(maxWidth=4000, maxHeight=2000)
                 self.state['/v1/appAssetLibraryRefData'] = reference
                 cli = FakeCLI(self.state, apply=True)
                 plan = self.planner(cli, {'metadata', 'header'})

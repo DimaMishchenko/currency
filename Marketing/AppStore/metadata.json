@@ -262,5 +262,55 @@
         "metals": "換算黃金、白銀及其他貴金屬。按金衡盎司、公克或公斤比較金額。"
       }
     }
+  },
+  "duoPresentation": {
+    "default": [
+      "duo-outer",
+      "duo-inner",
+      "duo-inner",
+      "duo-outer",
+      "duo-inner",
+      "duo-outer"
+    ],
+    "offline": [
+      "duo-outer",
+      "duo-outer",
+      "duo-inner",
+      "duo-inner",
+      "duo-inner",
+      "duo-outer"
+    ],
+    "travel": [
+      "duo-outer",
+      "duo-outer",
+      "duo-inner",
+      "duo-outer",
+      "duo-inner",
+      "duo-inner"
+    ],
+    "history": [
+      "duo-inner",
+      "duo-outer",
+      "duo-inner",
+      "duo-outer",
+      "duo-inner",
+      "duo-outer"
+    ],
+    "crypto": [
+      "duo-outer",
+      "duo-inner",
+      "duo-inner",
+      "duo-inner",
+      "duo-outer",
+      "duo-outer"
+    ],
+    "metals": [
+      "duo-outer",
+      "duo-inner",
+      "duo-outer",
+      "duo-inner",
+      "duo-inner",
+      "duo-outer"
+    ]
   }
 }

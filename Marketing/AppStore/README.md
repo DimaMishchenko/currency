@@ -27,7 +27,7 @@ Validation requires `ffprobe` from FFmpeg. It makes no App Store requests and ch
 
 ## Independent asset versions
 
-App versions and asset versions are separate. App 1.0 and 1.1 can both use `app-store-assets-v1`; a text-only metadata change stays in Git and does not require a new media release. Bump to `app-store-assets-v2` only when the approved media or placement mapping changes, and update `asset-bundle.json` plus the matching approved recipe hashes together. Never replace the bytes under an existing asset version.
+App versions and asset versions are separate. App 1.0 and 1.1 can both use `app-store-assets-v1`; a text-only metadata change stays in Git and does not require a new media release. The `duoPresentation` delivery selection stays in metadata Git history and reuses approved files. Bump to `app-store-assets-v2` when approved media or the bundle manifest changes, and update `asset-bundle.json` plus the matching approved recipe hashes together. Never replace the bytes under an existing asset version.
 
 To publish a newly approved media version, create a new tag rather than updating the old release:
 
@@ -71,7 +71,13 @@ python3 Marketing/AppStore/upload.py \
 
 Add `--apply` only after reviewing the plan. `--media-dir` selects a verified unpacked asset directory; `--metadata` defaults to the sibling JSON file. Remote plans and apply require a receipt path. Optional `--version-id`, `--version-string` and `--app-info-id` filters must match the selected editable targets; wrong or live-only filters fail without falling back to another draft. The selected IDs and version string are printed without raw API responses, then checked again during complete preflight before changes. `--validate-only` requires no target inputs, credentials or receipt path and cannot be combined with apply.
 
-The workflow uploads localized text, default device screenshot sets, contextual custom product page drafts, native Duo placements and the H09 product page header. Before any changes, native Duo/header preflight reads Apple’s current asset reference data, resolves placement groups through compatible specifications, and checks each applicable App Store version/CPP group limit. Unknown specifications/policies or insufficient capacity stop the whole selected plan. If both Duo poses map to one group, the approved six outer plus six inner screenshots require twelve slots in that group; the uploader never truncates them to fit. Select supported scopes separately or approve a revised mapping when Apple’s limit is lower. Capacity diagnostics contain only feature/type/group identifiers and counts. It refuses conflicting existing assets rather than deleting unrecognized screenshots. Interrupted uploads can leave draft resources: inspect remote state and the sanitized resource-ID receipt before retrying. The workflow preserves these receipts for seven days and suppresses raw API responses and signed upload URLs.
+The workflow uploads localized text, default device screenshot sets, contextual custom product page drafts, native Duo placements and the H09 product page header. Shared metadata uses pinned `asc metadata apply` with canonical app-info/version locale files, explicit targets and a read-only plan before apply. Omitted fields remain untouched; nulls, clears, default fallback files and locale deletion are disabled. CPP text and asset placement remain separately scoped.
+
+Duo uses six images per page, mixing inner and outer displays once per feature. `duoPresentation` selects the display for each of the six existing positions in every family; the complete two-pose source sets remain in the immutable media pack. Native preflight reads Apple’s reference data and checks the selected group capacities. Exact pixel dimensions take precedence over nominal aspect-ratio labels; flexible-size specifications still enforce ratios. Unknown or insufficient policies stop the selected plan before changes.
+
+Use `inspect-native-policy` for a read-only catalog report without downloading media or resolving an app draft. It emits only typed global specifications and limits. Inspections use a separate concurrency group; draft mutations remain serialized. Raw API responses, private error details and signed upload URLs stay suppressed. Failure diagnostics expose only bounded HTTP statuses, structured error identifiers and field pointers.
+
+The uploader refuses conflicting existing assets instead of deleting them. It refreshes missing localization identities immediately before creation so late resources can be reused without duplicate POST retries. Interrupted uploads can leave draft resources: inspect remote state and the sanitized resource-ID receipt before retrying. Receipts are retained for seven days.
 
 ## Remaining release actions
 
@@ -79,7 +85,7 @@ The workflow uploads localized text, default device screenshot sets, contextual 
 - Select the release build and complete account declarations: privacy, age rating, export compliance, pricing/availability, agreements and review contact information.
 - Review and submit the app version and custom product pages. Processed uploads do not establish Apple approval or storefront publication.
 - Configure organic custom-page keyword associations from terms eligible on the latest approved version. The first release may need approval before these exist. Direct page URLs and campaigns are separate routing choices; localization does not provide arbitrary country-level screenshot targeting.
-- Inspect the first authorized Duo upload. The uploader uses runtime-discovered groups and orders six outer and six inner images within their respective groups only when current per-group limits allow the complete approved mapping. The documented API path has mock coverage but has not been exercised against this app's live record.
+- Inspect the processed Duo screenshots in App Store Connect’s product-page preview before submission. The mixed six-image selection uses the single Duo placement group and current live capacity limits.
 
 No app preview video is included. H09 is product page header artwork, a different asset type.
 

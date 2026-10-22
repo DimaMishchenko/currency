@@ -27,6 +27,16 @@ class UploadError(Exception):
     pass
 
 
+def duo_presentation(metadata):
+    presentation = metadata.get('duoPresentation')
+    if not isinstance(presentation, dict) or set(presentation) != set(FAMILIES):
+        raise UploadError('Duo presentation must select six approved images for every family')
+    for profiles in presentation.values():
+        if not isinstance(profiles, list) or len(profiles) != 6 or any(not isinstance(profile, str) or profile not in {'duo-inner', 'duo-outer'} for profile in profiles) or set(profiles) != {'duo-inner', 'duo-outer'}:
+            raise UploadError('Duo presentation must select six ordered images using both displays')
+    return presentation
+
+
 def sha256(path):
     h = hashlib.sha256()
     with path.open('rb') as stream:
@@ -49,6 +59,7 @@ def validate_media(root, manifest, metadata):
         raise UploadError('Unsupported manifest or metadata schema/families')
     if metadata.get('appId') != '6816213577' or len(metadata.get('locales', {})) != 18:
         raise UploadError('Expected Currency app ID and all 18 locales')
+    duo_presentation(metadata)
     slots, hashes = {}, {}
     for item in manifest.get('placements', []):
         slot = (item['locale'], item['profile'], item['family'], item['order'])
@@ -180,7 +191,7 @@ class CLI:
             stream.flush()
             os.fsync(stream.fileno())
 
-    def run(self, args, body=None, mutate=False):
+    def run(self, args, body=None, mutate=False, cwd=None):
         if mutate and not self.apply:
             raise UploadError('Internal safety guard refused a mutation during dry-run')
         env = os.environ.copy()
@@ -192,7 +203,7 @@ class CLI:
         try:
             if mutate:
                 self.receipt('mutation-started')
-            result = subprocess.run([self.executable, *args], input=None if body is None else json.dumps(body), text=True, capture_output=True, env=env, timeout=2100, check=False)
+            result = subprocess.run([self.executable, *args], input=None if body is None else json.dumps(body), text=True, capture_output=True, env=env, cwd=cwd, timeout=2100, check=False)
         except (OSError, subprocess.TimeoutExpired):
             raise UploadError('asc command could not finish; inspect remote draft state before retrying') from None
         if result.returncode:
@@ -230,6 +241,24 @@ def resource(kind, attrs, relations=None, identifier=None):
     if relations:
         data['relationships'] = relations
     return {'data': data}
+
+
+def write_canonical_metadata(root, metadata, version):
+    """Write only explicitly selected nonempty localization text fields."""
+    if not re.fullmatch('[A-Za-z0-9][A-Za-z0-9._-]{0,99}', version):
+        raise UploadError('Metadata version is not a safe canonical directory name')
+    for locale, values in metadata['locales'].items():
+        if locale == 'default' or not re.fullmatch('[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*', locale):
+            raise UploadError('Metadata requires explicit supported locale files; default fallback is disabled')
+        for relative, fields in (('app-info/' + locale + '.json', INFO_FIELDS), ('version/' + version + '/' + locale + '.json', VERSION_FIELDS)):
+            selected = {key: value for key, value in values.items() if key in fields}
+            if not selected:
+                continue
+            if any(not isinstance(value, str) or not value.strip() for value in selected.values()):
+                raise UploadError('Metadata null values and empty field clears are disabled')
+            target = confined(root, relative)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(json.dumps(selected, ensure_ascii=False, sort_keys=True) + '\n', encoding='utf-8')
 
 
 def resolve_targets(cli, app_id, version_id=None, version_string=None, info_id=None):
@@ -308,17 +337,26 @@ class Planner:
         if len(infos) != 1 or infos[0]['attributes'].get('appStoreState') not in EDITABLE:
             raise UploadError('Explicit app-info ID does not belong to an editable Currency draft')
         self.native_policy_preflight()
+        metadata_changes = False
+        if 'metadata' in self.scopes:
+            result = self.sync_metadata(dry_run=True)
+            metadata_changes = bool(result['adds'] or result['updates'])
+            if metadata_changes:
+                self.queue('METADATA', '')
         version_locales = self.unique(self.get('/v1/appStoreVersions/' + self.version + '/appStoreVersionLocalizations'), 'locale')
-        info_locales = self.unique(self.get('/v1/appInfos/' + self.info + '/appInfoLocalizations'), 'locale')
         targets = {}
         for locale, fields in self.meta['locales'].items():
-            if 'metadata' in self.scopes:
-                self.upsert('appInfoLocalizations', info_locales.get(locale), dict(locale=locale, **{k: v for k, v in fields.items() if k in INFO_FIELDS}), {'appInfo': relationship('appInfos', self.info)})
             existing = version_locales.get(locale)
-            attrs = {'locale': locale}
             if 'metadata' in self.scopes:
-                attrs.update({k: v for k, v in fields.items() if k in VERSION_FIELDS})
-            targets[('default', locale)] = self.upsert('appStoreVersionLocalizations', existing, attrs, {'appStoreVersion': relationship('appStoreVersions', self.version)})
+                if existing:
+                    target = existing['id']
+                elif metadata_changes:
+                    target = self.queue('LOOKUP', '/v1/appStoreVersions/' + self.version + '/appStoreVersionLocalizations', locale=locale)
+                else:
+                    raise UploadError('Metadata dry-run did not plan the missing version locale; inspect draft state before applying')
+            else:
+                target = self.upsert('appStoreVersionLocalizations', existing, {'locale': locale}, {'appStoreVersion': relationship('appStoreVersions', self.version)})
+            targets[('default', locale)] = target
         if 'cpp' in self.scopes or 'duo' in self.scopes:
             self.cpp_targets(targets)
         if 'header' in self.scopes or 'duo' in self.scopes:
@@ -337,8 +375,23 @@ class Planner:
             if 'duo' in self.scopes:
                 self.duo_screenshots(target, family, locale)
         if 'duo' in self.scopes:
-            self.notes.append('Duo uses runtime-validated APP_SCREENSHOT groups and capacities: six outer then six inner, ordered per group. Apple processing and placement eligibility still apply.')
+            self.notes.append('Duo uses six ordered screenshots per page, mixing inner and outer displays through the approved presentation. Runtime group capacities and Apple processing still apply.')
         return self
+
+    def sync_metadata(self, dry_run):
+        with tempfile.TemporaryDirectory(prefix='currency-metadata-') as temporary:
+            directory = Path(temporary)
+            write_canonical_metadata(directory, self.meta, self.version_string)
+            arguments = ['metadata', 'apply', '--app', self.app, '--app-info', self.info, '--version', self.version_string, '--platform', 'IOS', '--dir', str(directory), '--include', 'localizations', '--if-exists', 'update', '--output', 'json']
+            if dry_run:
+                arguments.append('--dry-run')
+            result = self.cli.run(arguments, mutate=not dry_run, cwd=directory)
+            expected = {'appId': self.app, 'appInfoId': self.info, 'version': self.version_string, 'versionId': self.version}
+            if not isinstance(result, dict) or any(result.get(key) != value for key, value in expected.items()):
+                raise UploadError('Metadata CLI resolved a different or incomplete target; inspect draft state before retrying')
+            if any(not isinstance(result.get(key), list) for key in ('adds', 'updates', 'deletes')) or result['deletes']:
+                raise UploadError('Metadata CLI reported an invalid plan or requested deletions; deletion is disabled')
+            return result
 
     def native_policy_preflight(self):
         if not self.scopes & {'duo', 'header'}:
@@ -371,7 +424,9 @@ class Planner:
 
         def spec_constraints(spec, dimensions, media_type):
             ratio = spec.get('aspectRatio')
-            if ratio is not None:
+            bounds = spec.get('dimensions', {})
+            exact_dimensions = all(type(bounds.get(key)) is int for key in ('minWidth', 'maxWidth', 'minHeight', 'maxHeight')) and bounds['minWidth'] == bounds['maxWidth'] and bounds['minHeight'] == bounds['maxHeight']
+            if ratio is not None and not exact_dimensions:
                 match = re.fullmatch(r'([0-9]+):([1-9][0-9]*)', ratio) if isinstance(ratio, str) else None
                 if not match or abs(dimensions[0] / dimensions[1] - int(match[1]) / int(match[2])) > .001:
                     return False
@@ -434,11 +489,18 @@ class Planner:
             self.notes.append('Native placement capacity ' + message)
 
         if 'duo' in self.scopes:
-            counts = {}
+            presentation = duo_presentation(self.meta)
             for profile in ('duo-outer', 'duo-inner'):
                 group = matching_group('APP_SCREENSHOT', DIMENSIONS[profile], 'image', 'IPHONE_DUO', 'IPHONE_APP_STORE', 'APP_SCREENSHOTS_AND_PREVIEWS')
                 self.duo_groups[profile] = group
-                counts[group] = counts.get(group, 0) + 6
+            counts = {}
+            for profiles in presentation.values():
+                family_counts = {}
+                for profile in profiles:
+                    group = self.duo_groups[profile]
+                    family_counts[group] = family_counts.get(group, 0) + 1
+                for group, count in family_counts.items():
+                    counts[group] = max(counts.get(group, 0), count)
             for feature in ('APP_STORE_VERSIONS', 'CUSTOM_PRODUCT_PAGES'):
                 for group, count in counts.items():
                     capacity(feature, 'APP_SCREENSHOT', group, count)
@@ -541,21 +603,20 @@ class Planner:
         if any(p.get('attributes', {}).get('placementType') != 'APP_SCREENSHOT' for p in existing):
             raise UploadError('Duo group contains app previews; reconcile mixed media ordering explicitly first')
         desired, ordered = [], {}
-        for profile in ('duo-outer', 'duo-inner'):
+        for order, profile in enumerate(duo_presentation(self.meta)[family], 1):
             group = self.duo_groups[profile]
             ordered.setdefault(group, [])
-            for order in range(1, 7):
-                image = self.library_media(self.slots[(locale, profile, family, order)], 'image')
-                desired.append((image, group))
-                matching = [p for p in existing if p.get('attributes', {}).get('placementGroup') == group and p.get('relationships', {}).get('image', {}).get('data', {}).get('id') == image]
-                if len(matching) > 1:
-                    raise UploadError('Duplicate Duo image placements; reconcile in App Store Connect first')
-                if matching:
-                    if matching[0].get('attributes', {}).get('state') == 'FAILED':
-                        raise UploadError('Existing Duo placement failed; inspect before retry')
-                    ordered[group].append(matching[0]['id'])
-                else:
-                    ordered[group].append(self.queue('POST', '/v1/appAssetLibraryPlacements', resource('appAssetLibraryPlacements', {'placementType': 'APP_SCREENSHOT', 'placementGroup': group}, {'image': relationship('appAssetLibraryImages', image), rel: relationship(kind, target)})))
+            image = self.library_media(self.slots[(locale, profile, family, order)], 'image')
+            desired.append((image, group))
+            matching = [p for p in existing if p.get('attributes', {}).get('placementGroup') == group and p.get('relationships', {}).get('image', {}).get('data', {}).get('id') == image]
+            if len(matching) > 1:
+                raise UploadError('Duplicate Duo image placements; reconcile in App Store Connect first')
+            if matching:
+                if matching[0].get('attributes', {}).get('state') == 'FAILED':
+                    raise UploadError('Existing Duo placement failed; inspect before retry')
+                ordered[group].append(matching[0]['id'])
+            else:
+                ordered[group].append(self.queue('POST', '/v1/appAssetLibraryPlacements', resource('appAssetLibraryPlacements', {'placementType': 'APP_SCREENSHOT', 'placementGroup': group}, {'image': relationship('appAssetLibraryImages', image), rel: relationship(kind, target)})))
         if len(set(desired)) != len(desired):
             raise UploadError('Duo approved mapping contains duplicate image/group pairs')
         if any((p.get('relationships', {}).get('image', {}).get('data', {}).get('id'), p.get('attributes', {}).get('placementGroup')) not in desired for p in existing):
@@ -579,7 +640,6 @@ class Planner:
 
     def apply_resource(self, method, path, body):
         parents = {
-            '/v1/appInfoLocalizations': ('appInfo', 'appInfos'),
             '/v1/appStoreVersionLocalizations': ('appStoreVersion', 'appStoreVersions'),
             '/v1/appCustomProductPageLocalizations': ('appCustomProductPageVersion', 'appCustomProductPageVersions'),
         }
@@ -626,7 +686,15 @@ class Planner:
             op = substitute({k: v for k, v in operation.items() if k != 'ref'})
             if hasattr(self.cli, 'receipt'):
                 self.cli.receipt('operation-%d-started' % index)
-            if op['method'] == 'LIBRARY':
+            if op['method'] == 'METADATA':
+                self.sync_metadata(dry_run=False)
+                identifier = ''
+            elif op['method'] == 'LOOKUP':
+                matches = [row for row in self.get(op['path']) if row.get('attributes', {}).get('locale') == op['locale']]
+                if len(matches) != 1 or not isinstance(matches[0].get('id'), str) or not re.fullmatch('[A-Za-z0-9-]+', matches[0]['id']):
+                    raise UploadError('Metadata synchronization did not resolve one expected version localization; inspect draft state before retrying')
+                identifier = matches[0]['id']
+            elif op['method'] == 'LIBRARY':
                 plural = 'videos' if op['media_type'] == 'video' else 'images'
                 category = 'APP_SCREENSHOTS_AND_PREVIEWS' if op['media_type'] == 'image' else 'CREATIVE_ASSETS'
                 response = self.cli.run(['asset-library', plural, 'upload', '--library-id', op['library'], '--file', op['file'], '--reference-name', op['reference'], '--category', category, '--output', 'json'], mutate=True)
@@ -662,6 +730,10 @@ class Planner:
                 entry.update(family=operation['family'], profile=operation['profile'], screenshotCount=len(operation['files']))
             if operation['method'] == 'LIBRARY':
                 entry.update(mediaType=operation['media_type'], approvedReference=operation['reference'])
+            if operation['method'] == 'METADATA':
+                entry.update(localeCount=len(self.meta['locales']), appInfoFields=sorted({key for fields in self.meta['locales'].values() for key in fields if key in INFO_FIELDS}), versionFields=sorted({key for fields in self.meta['locales'].values() for key in fields if key in VERSION_FIELDS}))
+            if operation['method'] == 'LOOKUP':
+                entry['locale'] = operation['locale']
             if data.get('attributes', {}).get('placementGroup'):
                 entry['placementGroup'] = data['attributes']['placementGroup']
             result.append(entry)
