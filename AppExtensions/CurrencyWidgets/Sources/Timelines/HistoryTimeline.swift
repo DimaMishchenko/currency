@@ -13,6 +13,7 @@ struct HistoryTimelineDependencies: Sendable {
   var rates: @Sendable () -> RateSnapshot = { RateSnapshot() }
   var refreshRates: @Sendable () async -> Void = {}
   var saveContext: @Sendable (RateSnapshot, HistoryWidgetPair, Date) -> URL? = { _, _, _ in nil }
+  var synchronizeQuote: @Sendable (String, String, HistoryPoint) -> Void = { _, _, _ in }
   var localSnapshot: @Sendable () -> (LocalCurrency.WidgetLocation?, WidgetLocationStatus) = {
     (nil, .notDetermined)
   }
@@ -52,20 +53,33 @@ struct HistoryTimeline: AppIntentTimelineProvider {
       codes: [WidgetSelection.localID], location: location, status: status, now: now)
     let pair = configuration.pair(input: dependencies.input(), localCurrency: local.localCode)
     let range = configuration.effectiveRange(for: pair)
-    let result: HistoryResult
+    let loaded: HistoryResult
     await dependencies.refreshRates()
-    let rates = dependencies.rates()
     if let request = pair.historyRequest {
-      result = await dependencies.load(request.base, request.quote, range, now)
-        .includingLatestQuote(
-          from: rates, base: request.base, quote: request.quote, now: dependencies.now())
+      loaded = await dependencies.load(request.base, request.quote, range, now)
     } else {
-      result = HistoryResult(series: nil, issue: .unsupportedPair)
+      loaded = HistoryResult(series: nil, issue: .unsupportedPair)
+    }
+    let rates = dependencies.rates()
+    let renderedAt = dependencies.now()
+    let result: HistoryResult
+    if let request = pair.historyRequest {
+      result = loaded.includingLatestQuote(
+        from: rates, base: request.base, quote: request.quote, now: renderedAt)
+    } else {
+      result = loaded
+    }
+    let snapshot = HistoryWidgetSnapshot(pair: pair, range: range, result: result)
+    if persistContext, snapshot.series != nil, let request = pair.historyRequest,
+      let point = rates.historyQuote(base: request.base, quote: request.quote, now: renderedAt),
+      result.series?.points.last == point
+    {
+      dependencies.synchronizeQuote(request.base, request.quote, point)
     }
     return HistoryWidgetEntry(
-      date: now,
-      snapshot: HistoryWidgetSnapshot(pair: pair, range: range, result: result),
+      date: renderedAt,
+      snapshot: snapshot,
       locationStatus: status,
-      openURL: persistContext ? dependencies.saveContext(rates, pair, now) : nil)
+      openURL: persistContext ? dependencies.saveContext(rates, pair, renderedAt) : nil)
   }
 }
