@@ -715,7 +715,9 @@ class Planner:
         current = self.screenshot_linkages(identifier)
         identifiers = [row.get('id') if isinstance(row, dict) else None for row in current]
         if len(identifiers) != len(actual) or any(not isinstance(row, dict) or row.get('type') != 'appScreenshots' for row in current) or any(not isinstance(value, str) for value in identifiers) or set(identifiers) != {row['id'] for row in actual}:
-            raise UploadError('Screenshot ordering membership changed; inspect draft state before retrying')
+            diagnostic = safe_screenshot_conflict(identifier, actual, [], current)
+            diagnostic.pop('approvedChecksums')
+            raise UploadError('Screenshot ordering membership changed; inspect draft state before retrying. screenshotConflict=' + json.dumps(diagnostic, separators=(',', ':')))
         return identifiers
 
     def approved_duplicate(self, target, family, locale, profile, identifier, actual, files):

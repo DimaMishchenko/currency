@@ -82,7 +82,7 @@ class FakeCLI:
             return {'data': {'id': 'created-' + str(len(self.calls))}}
         if path.endswith('/relationships/appScreenshots') and path not in self.state:
             return {'data': [{'type': 'appScreenshots', 'id': asset['id']} for asset in self.state.get(path.replace('/relationships/appScreenshots', '/appScreenshots'), [])]}
-        return {'data': self.state.get(path, [])}
+        return json.loads(json.dumps({'data': self.state.get(path, [])}))
 
     def run(self, args, body=None, mutate=False, cwd=None):
         if mutate and not self.apply:
@@ -421,6 +421,41 @@ class UploaderTests(unittest.TestCase):
         verified = next(result for event, result in receipts if event == 'approved-duplicate-delete-verified')
         self.assertEqual(verified['screenshotId'], 'redundant-copy')
         self.assertEqual({item['assetId'] for item in verified['retained']}, {'iphone-' + str(order) for order in range(1, 7)})
+
+    def test_stale_canonical_read_after_verified_duplicate_removal_stops_with_snapshot_diagnostics(self):
+        class LaggingCLI(FakeCLI):
+            removed = False
+            reads_after_delete = 0
+            def api(self, method, path, body=None):
+                if method == 'DELETE':
+                    self.before_delete = json.loads(json.dumps(self.state['/v1/appScreenshotSets/set/relationships/appScreenshots']))
+                result = super().api(method, path, body)
+                if method == 'DELETE':
+                    self.removed = True
+                elif self.removed and method == 'GET' and path == '/v1/appScreenshotSets/set/relationships/appScreenshots':
+                    self.reads_after_delete += 1
+                    if self.reads_after_delete == 2:
+                        return {'data': json.loads(json.dumps(self.before_delete))}
+                return result
+        cli = LaggingCLI(self.state, apply=True)
+        events = []
+        cli.receipt = lambda event, result=None: events.append(event)
+        plan = self.duplicate_screenshot_plan(cli).preflight()
+        snapshot = plan.get('/v1/appScreenshotSets/set/appScreenshots')
+        with patch.object(sys, 'stdout', new=io.StringIO()):
+            with self.assertRaisesRegex(u.UploadError, 'membership changed') as error:
+                plan.execute()
+        diagnostic = json.loads(str(error.exception).split('screenshotConflict=', 1)[1])
+        self.assertEqual((diagnostic['assetCount'], diagnostic['uniqueIdCount'], diagnostic['completeCount']), (6, 6, 6))
+        self.assertEqual((diagnostic['orderedLinkages']['rowCount'], diagnostic['orderedLinkages']['uniqueIdCount']), (7, 7))
+        self.assertIn('redundant-copy', [asset['id'] for asset in diagnostic['orderedLinkages']['assets']])
+        self.assertNotIn('redundant-copy', [asset['id'] for asset in diagnostic['assets']])
+        self.assertEqual(len(snapshot), 7)
+        self.assertEqual(len(self.state['/v1/appScreenshotSets/set/appScreenshots']), 6)
+        self.assertEqual(cli.reads_after_delete, 2)
+        self.assertIn('operation-1-completed', events)
+        self.assertNotIn('operation-2-completed', events)
+        self.assertEqual([call[0] for call in cli.calls if call[0] != 'GET'], ['DELETE'])
 
     def test_explicit_duplicate_repair_supports_selected_cpp_gallery(self):
         cli = FakeCLI(self.state, apply=True)
