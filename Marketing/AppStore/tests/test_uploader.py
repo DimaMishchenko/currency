@@ -387,6 +387,34 @@ class UploaderTests(unittest.TestCase):
                     plan.apply_resource('POST', '/v1/' + path, body)
                 self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
 
+    def test_localization_refresh_rejects_malformed_envelopes_and_mixed_attributes(self):
+        for kind, relation, parent_kind in (
+            ('appStoreVersionLocalizations', 'appStoreVersion', 'appStoreVersions'),
+            ('appCustomProductPageLocalizations', 'appCustomProductPageVersion', 'appCustomProductPageVersions'),
+        ):
+            matching = row('existing', locale='en-GB', promotionalText='Keep')
+            responses = [None, [], 'PRIVATE_RESPONSE', {'data': None}, {'data': 'PRIVATE_DATA'}]
+            responses.extend({'data': [matching, malformed]} for malformed in (None, 'PRIVATE_ROW', {'id': 'unknown', 'attributes': None}, {'id': 'unknown', 'attributes': []}, {'id': 'unknown', 'attributes': 'PRIVATE_ATTRIBUTES'}))
+            for response in responses:
+                with self.subTest(kind=kind, response=response):
+                    cli = FakeCLI(self.state, apply=True)
+                    plan = self.planner(cli, set())
+                    body = u.resource(kind, {'locale': 'en-GB', 'promotionalText': 'Approved'}, {relation: u.relationship(parent_kind, 'parent')})
+                    with patch.object(cli, 'api', return_value=response) as api:
+                        with self.assertRaisesRegex(u.UploadError, 'invalid collection; inspect draft state') as error:
+                            plan.apply_resource('POST', '/v1/' + kind, body)
+                    api.assert_called_once_with('GET', '/v1/' + parent_kind + '/parent/' + kind)
+                    self.assertNotIn('PRIVATE', str(error.exception))
+
+    def test_localization_refresh_preserves_empty_and_omitted_attributes(self):
+        collection = '/v1/appStoreVersions/parent/appStoreVersionLocalizations'
+        for sparse in ({'id': 'sparse', 'attributes': {}}, {'id': 'sparse'}):
+            cli = FakeCLI({collection: [sparse, row('existing', locale='en-GB')]}, apply=True)
+            plan = self.planner(cli, set())
+            body = u.resource('appStoreVersionLocalizations', {'locale': 'en-GB'}, {'appStoreVersion': u.relationship('appStoreVersions', 'parent')})
+            self.assertEqual(plan.apply_resource('POST', '/v1/appStoreVersionLocalizations', body)['data']['id'], 'existing')
+            self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
     def test_complete_matching_screenshots_are_idempotent(self):
         sets = []
         for profile, display in u.PROFILES.items():

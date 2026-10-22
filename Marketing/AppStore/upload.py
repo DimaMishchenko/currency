@@ -883,8 +883,9 @@ class Planner:
             relation, parent_kind = parents[path]
             data = body['data']
             parent = data['relationships'][relation]['data']['id']
-            rows = self.cli.api('GET', '/v1/' + parent_kind + '/' + parent + path.removeprefix('/v1')).get('data')
-            if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
+            response = self.cli.api('GET', '/v1/' + parent_kind + '/' + parent + path.removeprefix('/v1'))
+            rows = response.get('data') if isinstance(response, dict) else None
+            if not isinstance(rows, list) or any(not isinstance(row, dict) or not isinstance(row.get('attributes', {}), dict) for row in rows):
                 raise UploadError('Localization refresh returned an invalid collection; inspect draft state before retrying')
             matching = [row for row in rows if row.get('attributes', {}).get('locale') == data['attributes']['locale']]
             if len(matching) > 1:
