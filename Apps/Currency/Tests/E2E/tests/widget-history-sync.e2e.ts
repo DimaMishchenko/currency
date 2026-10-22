@@ -89,8 +89,14 @@ test('simultaneous Bitcoin History ranges converge after one widget refreshes wi
           const isDay = configuration.range === 'day';
           const widget = device.locator('id=Currency value=Widget')
             .filter({ has: screen.getByLabel(isDay ? 'One day' : 'One week', { exact: true }) });
-          if (!(await widget.isVisible())) {
-            await agent.act(`Using only horizontal Home Screen swipes, reveal the already installed ${configuration.family.toLowerCase()} Currency History widget with ${isDay ? '1D' : '1W'} selected. Do not tap a widget, open an app, edit widgets, enter the gallery, or change configuration.`);
+          const bounds = await device.locator('role=Application').boundingBox();
+          assert.ok(bounds, 'Home Screen navigation requires the simulator viewport.');
+          for (const direction of [1, 1, 1, -1, -1, -1, -1, -1, -1]) {
+            if (await widget.isVisible()) break;
+            await screen.swipe({
+              from: { x: bounds.width * (direction > 0 ? 0.8 : 0.2), y: bounds.height * 0.75 },
+              to: { x: bounds.width * (direction > 0 ? 0.2 : 0.8), y: bounds.height * 0.75 },
+            });
           }
           await expect(widget).toBeVisible({ timeout: 30_000 });
           await expect(widget.getByLabel('Rate change over the selected range', { exact: true }))
