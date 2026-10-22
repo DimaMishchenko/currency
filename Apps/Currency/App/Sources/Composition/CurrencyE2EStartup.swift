@@ -347,7 +347,7 @@
       ExchangeRate(
         2 / priceUSD, published: day(now),
         source: .init(
-          provider: .coinMetrics, observation: .minuteReference,
+          provider: .coinMetrics, observation: .minuteReference, timeZone: .gmt,
           conversion: RateConversion(
             provider: .fawaz, published: day(now), value: 2, base: "EUR", quote: "USD")),
         observedAt: now, retrievedAt: now)
