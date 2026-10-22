@@ -3,6 +3,8 @@ import Testing
 
 @testable import ExchangeRates
 
+private let batchNow = Date(timeIntervalSince1970: 1_767_355_200)
+
 private actor BatchHTTP: HTTPClient {
   private(set) var urls: [URL] = []
   func get(_ url: URL) async throws -> Data {
@@ -10,14 +12,14 @@ private actor BatchHTTP: HTTPClient {
     if url.host == "community-api.coinmetrics.io" {
       let rows = CurrencyCatalog.crypto.map {
         [
-          "asset": $0.lowercased(), "time": Date().addingTimeInterval(-60).ISO8601Format(),
+          "asset": $0.lowercased(), "time": batchNow.addingTimeInterval(-60).ISO8601Format(),
           "ReferenceRateUSD": "8"
         ]
       }
       return try JSONSerialization.data(withJSONObject: ["data": rows])
     }
     return Data(
-      "{\"date\":\"\(String(Date().ISO8601Format().prefix(10)))\",\"eur\":{\"usd\":2,\"btc\":0.25}}"
+      "{\"date\":\"\(String(batchNow.ISO8601Format().prefix(10)))\",\"eur\":{\"usd\":2,\"btc\":0.25}}"
         .utf8)
   }
 }
@@ -25,7 +27,11 @@ private actor BatchHTTP: HTTPClient {
 @Suite struct BatchRefreshTests {
   @Test func wholeCryptoCatalogUsesOneMetricsRequestAndOneDailyFXRequest() async throws {
     let client = BatchHTTP()
-    let quotes = try await CoinMetricsProvider(client: client).fetch()
+    let quotes = try await CoinMetricsProvider(
+      metrics: CoinMetricsClient(client: client, acquire: {}, sleep: { _ in }),
+      daily: FawazProvider(client: client), now: { batchNow }
+    )
+    .fetch()
     #expect(Set(quotes.keys) == CurrencyCatalog.crypto)
     #expect(quotes.values.allSatisfy { $0.value == Decimal(string: "0.25") })
     #expect(await client.urls.count == 2)
