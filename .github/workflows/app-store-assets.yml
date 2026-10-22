@@ -39,7 +39,7 @@ concurrency:
 
 jobs:
   drafts:
-    if: github.ref == 'refs/heads/main' || (github.ref == 'refs/heads/bug/app-store-native-policy-compatibility' && github.actor == 'DimaMishchenko')
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 360
     environment: testflight
