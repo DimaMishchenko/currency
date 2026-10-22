@@ -396,7 +396,10 @@ class Planner:
     def get(self, path):
         if '@pending-' in path:
             return []
-        value = self.cli.api('GET', path).get('data', [])
+        response = self.cli.api('GET', path)
+        if not isinstance(response, dict):
+            raise UploadError('App Store read returned an invalid response; inspect draft state before retrying')
+        value = response.get('data', [])
         return value if isinstance(value, list) else [value]
 
     def queue(self, method, path, body=None, **extra):
@@ -433,11 +436,11 @@ class Planner:
         if len(infos) != 1 or infos[0]['attributes'].get('appStoreState') not in EDITABLE:
             raise UploadError('Explicit app-info ID does not belong to an editable Currency draft')
         self.native_policy_preflight()
-        metadata_changes = False
+        planned_version_locales = set()
         if 'metadata' in self.scopes:
             result = self.sync_metadata(dry_run=True)
-            metadata_changes = bool(result['adds'] or result['updates'])
-            if metadata_changes:
+            planned_version_locales = {entry['locale'] for entry in result['adds'] if isinstance(entry, dict) and entry.get('scope') == 'version' and entry.get('version') == self.version_string and isinstance(entry.get('field'), str) and entry['field'] in VERSION_FIELDS and isinstance(entry.get('locale'), str)}
+            if result['adds'] or result['updates']:
                 self.queue('METADATA', '')
         version_locales = self.unique(self.get('/v1/appStoreVersions/' + self.version + '/appStoreVersionLocalizations'), 'locale')
         targets = {}
@@ -446,7 +449,7 @@ class Planner:
             if 'metadata' in self.scopes:
                 if existing:
                     target = existing['id']
-                elif metadata_changes:
+                elif locale in planned_version_locales:
                     target = self.queue('LOOKUP', '/v1/appStoreVersions/' + self.version + '/appStoreVersionLocalizations', locale=locale)
                 else:
                     raise UploadError('Metadata dry-run did not plan the missing version locale; inspect draft state before applying')
@@ -740,7 +743,8 @@ class Planner:
         keep = next(value for value in ordered if value in duplicates)
         if keep == self.remove_approved_duplicate:
             raise UploadError('Explicit duplicate repair must retain the first ordered approved copy')
-        direct = self.cli.api('GET', '/v1/appScreenshots/' + self.remove_approved_duplicate + '?include=appScreenshotSet').get('data')
+        response = self.cli.api('GET', '/v1/appScreenshots/' + self.remove_approved_duplicate + '?include=appScreenshotSet')
+        direct = response.get('data') if isinstance(response, dict) else None
         relations = direct.get('relationships') if isinstance(direct, dict) else None
         parent = relations.get('appScreenshotSet') if isinstance(relations, dict) else None
         if not isinstance(direct, dict) or direct.get('type') != 'appScreenshots' or direct.get('id') != self.remove_approved_duplicate or not isinstance(parent, dict) or parent.get('data') != {'type': 'appScreenshotSets', 'id': identifier}:
@@ -928,16 +932,23 @@ class Planner:
                 pages = self.unique(self.get('/v1/apps/' + self.app + '/appCustomProductPages'), 'name')
                 existing = pages.get(op['name'])
                 response = {'data': existing} if existing else self.cli.run(['product-pages', 'custom-pages', 'create', '--app', self.app, '--name', op['name'], '--output', 'json'], mutate=True)
-                identifier = response.get('data', {}).get('id')
+                data = response.get('data') if isinstance(response, dict) else None
+                identifier = data.get('id') if isinstance(data, dict) else None
                 if not isinstance(identifier, str) or not re.fullmatch('[A-Za-z0-9-]+', identifier):
                     raise UploadError('Custom page creation returned no valid page identity; inspect draft state before retrying')
             elif op['method'] == 'CPP_VERSION_LOOKUP':
-                drafts = [row for row in self.get(op['path']) if row.get('attributes', {}).get('state') in {'PREPARE_FOR_SUBMISSION', 'REJECTED'}]
+                rows = self.get(op['path'])
+                if any(not isinstance(row, dict) or not isinstance(row.get('attributes'), dict) or not isinstance(row['attributes'].get('state'), str) for row in rows):
+                    raise UploadError('Custom page creation did not resolve one editable initial version; inspect draft state before retrying')
+                drafts = [row for row in rows if row['attributes'].get('state') in {'PREPARE_FOR_SUBMISSION', 'REJECTED'}]
                 if len(drafts) != 1 or not isinstance(drafts[0].get('id'), str) or not re.fullmatch('[A-Za-z0-9-]+', drafts[0]['id']):
                     raise UploadError('Custom page creation did not resolve one editable initial version; inspect draft state before retrying')
                 identifier = drafts[0]['id']
             elif op['method'] == 'LOOKUP':
-                matches = [row for row in self.get(op['path']) if row.get('attributes', {}).get('locale') == op['locale']]
+                rows = self.get(op['path'])
+                if any(not isinstance(row, dict) or not isinstance(row.get('attributes'), dict) for row in rows):
+                    raise UploadError('Metadata synchronization did not resolve one expected version localization; inspect draft state before retrying')
+                matches = [row for row in rows if row['attributes'].get('locale') == op['locale']]
                 if len(matches) != 1 or not isinstance(matches[0].get('id'), str) or not re.fullmatch('[A-Za-z0-9-]+', matches[0]['id']):
                     raise UploadError('Metadata synchronization did not resolve one expected version localization; inspect draft state before retrying')
                 identifier = matches[0]['id']

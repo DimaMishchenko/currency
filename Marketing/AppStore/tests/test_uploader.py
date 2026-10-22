@@ -234,7 +234,7 @@ class UploaderTests(unittest.TestCase):
             def run(self, args, body=None, mutate=False, cwd=None):
                 result = super().run(args, body, mutate, cwd)
                 if args[:2] == ['metadata', 'apply']:
-                    result['adds'] = [{'locale': 'en-GB'}]
+                    result['adds'] = [{'key': 'version:1.2:en-GB:description', 'scope': 'version', 'version': '1.2', 'locale': 'en-GB', 'field': 'description', 'reason': 'field exists locally but not remotely', 'to': 'Convert'}]
                     if mutate:
                         self.state['/v1/appStoreVersions/version/appStoreVersionLocalizations'].append(row('gb-created', locale='en-GB'))
                 return result
@@ -267,6 +267,81 @@ class UploaderTests(unittest.TestCase):
                     plan.preflight()
                 self.assertEqual(plan.ops, [])
                 self.assertFalse(any(cli.command_mutations))
+
+    def test_missing_sparse_version_locale_requires_its_own_explicit_version_addition(self):
+        self.meta['locales']['en-GB'] = {'name': 'Currency'}
+        unrelated_update = {'scope': 'version', 'version': '1.2', 'locale': 'en-US', 'field': 'description'}
+        for additions in (
+            [],
+            [{'scope': 'app-info', 'locale': 'en-GB', 'field': 'name'}],
+            [{'locale': 'en-GB', 'version': '1.2', 'field': 'description'}],
+            [{'scope': 'version', 'locale': 'en-GB', 'version': 'another-version', 'field': 'description'}],
+            [{'scope': 'version', 'locale': 'en-AU', 'version': '1.2', 'field': 'description'}],
+            [{'scope': 'version', 'locale': 'en-GB', 'version': '1.2', 'field': {'private': 'PRIVATE'}}],
+        ):
+            with self.subTest(additions=additions):
+                class SparseCLI(FakeCLI):
+                    def run(self, args, body=None, mutate=False, cwd=None):
+                        result = super().run(args, body, mutate, cwd)
+                        result.update(adds=additions, updates=[unrelated_update])
+                        return result
+                cli = SparseCLI(self.state, apply=True)
+                with self.assertRaisesRegex(u.UploadError, 'did not plan the missing version locale'):
+                    self.planner(cli, {'metadata'}).preflight()
+                self.assertFalse(any(cli.command_mutations))
+                self.assertTrue(all(call[0] in {'GET', 'COMMAND'} for call in cli.calls))
+
+    def test_cpp_create_malformed_json_shapes_preserve_recovery_guidance(self):
+        for response in (None, [], 'PRIVATE_RESPONSE', 7, {'data': None}, {'data': []}, {'data': 'PRIVATE_DATA'}):
+            with self.subTest(response=response):
+                cli = FakeCLI(self.state, apply=True)
+                plan = self.planner(cli, {'cpp'})
+                plan.queue('CPP_CREATE', '/v1/appCustomProductPages', name='Currency - travel')
+                plan.queue('CPP_VERSION_LOOKUP', '/v1/appCustomProductPages/pending/appCustomProductPageVersions')
+                with patch.object(cli, 'run', return_value=response) as command:
+                    with self.assertRaisesRegex(u.UploadError, 'inspect draft state') as error:
+                        plan.execute()
+                self.assertEqual(command.call_count, 1)
+                self.assertNotIn('PRIVATE', str(error.exception))
+                self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_recovery_lookups_reject_malformed_rows_and_attributes(self):
+        for method in ('CPP_VERSION_LOOKUP', 'LOOKUP'):
+            valid = row('valid', state='PREPARE_FOR_SUBMISSION') if method == 'CPP_VERSION_LOOKUP' else row('valid', locale='en-GB')
+            malformed_rows = [None, 'PRIVATE_ROW', 7, {'id': 'unknown', 'attributes': None}, {'id': 'unknown', 'attributes': 'PRIVATE_ATTRIBUTES'}, {'id': 'unknown', 'attributes': []}]
+            if method == 'CPP_VERSION_LOOKUP':
+                malformed_rows.extend(row('unknown', state=value) for value in ({'private': 'PRIVATE_STATE'}, ['PRIVATE_STATE'], None))
+            for malformed in malformed_rows:
+                with self.subTest(method=method, malformed=malformed):
+                    cli = FakeCLI({'/lookup': [valid, malformed]}, apply=True)
+                    plan = self.planner(cli, set())
+                    plan.queue(method, '/lookup', **({'locale': 'en-GB'} if method == 'LOOKUP' else {}))
+                    with self.assertRaisesRegex(u.UploadError, 'inspect draft state') as error:
+                        plan.execute()
+                    self.assertNotIn('PRIVATE', str(error.exception))
+                    self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+            for response in (None, [], 'PRIVATE_RESPONSE'):
+                cli = FakeCLI(self.state, apply=True)
+                plan = self.planner(cli, set())
+                plan.queue(method, '/lookup', **({'locale': 'en-GB'} if method == 'LOOKUP' else {}))
+                with patch.object(cli, 'api', return_value=response):
+                    with self.assertRaisesRegex(u.UploadError, 'inspect draft state') as error:
+                        plan.execute()
+                self.assertNotIn('PRIVATE', str(error.exception))
+
+    def test_duplicate_candidate_malformed_api_envelope_preserves_recovery_guidance(self):
+        for response in (None, [], 'PRIVATE_RESPONSE'):
+            with self.subTest(response=response):
+                cli = FakeCLI(self.state, apply=True)
+                plan = self.duplicate_screenshot_plan(cli)
+                original = cli.api
+                def malformed(method, path, body=None):
+                    return response if path.startswith('/v1/appScreenshots/') else original(method, path, body)
+                with patch.object(cli, 'api', side_effect=malformed):
+                    with self.assertRaisesRegex(u.UploadError, 'identity or parent does not match') as error:
+                        plan.preflight()
+                self.assertNotIn('PRIVATE', str(error.exception))
+                self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
 
     def test_dry_run_only_reads_and_plans_uploads(self):
         cli = FakeCLI(self.state)
