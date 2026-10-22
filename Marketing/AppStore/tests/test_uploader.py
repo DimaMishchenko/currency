@@ -328,6 +328,48 @@ class UploaderTests(unittest.TestCase):
         self.assertTrue(all(c[0] in {'GET', 'COMMAND'} for c in cli.calls))
         self.assertFalse(any(cli.command_mutations))
 
+    def test_screenshot_conflict_diagnostics_distinguish_repeated_rows_duplicates_and_foreign_assets(self):
+        expected = [hashlib.md5(self.slots[('en-US', 'iphone', 'default', order)]['file'].read_bytes()).hexdigest() for order in range(1, 7)]
+        approved = [dict(row('shot-' + str(order), sourceFileChecksum=checksum, fileSize=100 + order, assetDeliveryState={'state': 'COMPLETE'}), type='appScreenshots') for order, checksum in enumerate(expected, 1)]
+        cases = [
+            (approved + [approved[0]], 6),
+            (approved + [dict(approved[0], id='second-copy')], 7),
+            (approved + [dict(row('foreign', sourceFileChecksum='f' * 32, fileSize=999, assetDeliveryState={'state': 'COMPLETE'}), type='appScreenshots')], 7),
+        ]
+        self.state['/v1/appStoreVersionLocalizations/locale/appScreenshotSets'] = [row('set', screenshotDisplayType='APP_IPHONE_61')]
+        for actual, unique_count in cases:
+            with self.subTest(unique_count=unique_count, last_id=actual[-1]['id']):
+                for asset in actual:
+                    asset['attributes'].update(fileName='PRIVATE_FILE_NAME', assetToken='PRIVATE_TOKEN', imageAsset={'url': 'https://private.invalid/IMAGE'}, uploadOperations=[{'url': 'https://private.invalid/UPLOAD'}])
+                    asset['attributes']['assetDeliveryState']['errors'] = [{'description': 'PRIVATE_PROVIDER_ERROR'}]
+                self.state['/v1/appScreenshotSets/set/appScreenshots'] = actual
+                cli = FakeCLI(self.state, apply=True)
+                plan = self.planner(cli, {'default'})
+                with self.assertRaises(u.UploadError) as error:
+                    plan.screenshots('locale', 'default', 'en-US', 'iphone')
+                message = str(error.exception)
+                diagnostic = json.loads(message.split('screenshotConflict=', 1)[1])
+                self.assertEqual({key: diagnostic[key] for key in ('setId', 'assetCount', 'uniqueIdCount', 'completeCount')}, {'setId': 'set', 'assetCount': 7, 'uniqueIdCount': unique_count, 'completeCount': 7})
+                self.assertEqual(diagnostic['approvedChecksums'], [{'order': order, 'checksum': checksum} for order, checksum in enumerate(expected, 1)])
+                self.assertEqual(diagnostic['assets'], [{'id': asset['id'], 'type': 'appScreenshots', 'checksum': asset['attributes']['sourceFileChecksum'], 'fileSize': asset['attributes']['fileSize'], 'state': 'COMPLETE'} for asset in actual])
+                for private in ('PRIVATE', 'https', 'assetToken', 'imageAsset', 'uploadOperations', 'fileName', 'errors'):
+                    self.assertNotIn(private, message)
+                self.assertEqual(plan.ops, [])
+                self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_screenshot_conflict_diagnostics_bound_rows_and_sanitize_invalid_fields(self):
+        invalid = dict(row('https://private.invalid/PRIVATE_ID', sourceFileChecksum='PRIVATE_CHECKSUM', fileSize=True, assetDeliveryState={'state': 'PRIVATE_STATE', 'errors': ['PRIVATE_ERROR']}), type='https://private.invalid/PRIVATE_TYPE')
+        diagnostic = u.safe_screenshot_conflict('https://private.invalid/PRIVATE_SET', [invalid] * 25, ['a' * 32] * 6)
+        self.assertEqual(diagnostic['assetCount'], 25)
+        self.assertEqual(diagnostic['uniqueIdCount'], 0)
+        self.assertEqual(diagnostic['completeCount'], 0)
+        self.assertIsNone(diagnostic['setId'])
+        self.assertEqual(diagnostic['assets'], [dict.fromkeys(('id', 'type', 'checksum', 'fileSize', 'state'))] * 20)
+        self.assertNotIn('PRIVATE', json.dumps(diagnostic))
+        self.assertNotIn('https', json.dumps(diagnostic))
+        invalid['type'] = 'PrivateProviderToken'
+        self.assertIsNone(u.safe_screenshot_conflict('set', [invalid], [])['assets'][0]['type'])
+
     def test_live_or_wrong_version_refuses_before_mutation(self):
         for field, value in [('appStoreState', 'READY_FOR_SALE'), ('versionString', '8.0')]:
             with self.subTest(field=field):

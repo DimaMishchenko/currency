@@ -196,6 +196,32 @@ def safe_metadata_failure_summary(stdout):
     return ' metadataActions=' + json.dumps({'counts': counts, 'failures': failures}, separators=(',', ':'))
 
 
+def safe_screenshot_conflict(set_id, actual, expected):
+    def identifier(value):
+        return value if isinstance(value, str) and re.fullmatch('[A-Za-z0-9-]{1,180}', value) else None
+    assets = []
+    for row in actual[:20]:
+        attrs = row.get('attributes', {})
+        checksum, size = attrs.get('sourceFileChecksum'), attrs.get('fileSize')
+        delivery = attrs.get('assetDeliveryState')
+        state = delivery.get('state') if isinstance(delivery, dict) else None
+        resource_type = row.get('type')
+        assets.append({
+            'id': identifier(row.get('id')),
+            'type': resource_type if resource_type == 'appScreenshots' else None,
+            'checksum': checksum if isinstance(checksum, str) and re.fullmatch('[A-Fa-f0-9]{32}', checksum) else None,
+            'fileSize': size if type(size) is int and 0 <= size <= 2**63 - 1 else None,
+            'state': state if isinstance(state, str) and state in {'AWAITING_UPLOAD', 'UPLOAD_COMPLETE', 'COMPLETE', 'FAILED'} else None,
+        })
+    identifiers = {identifier(row.get('id')) for row in actual} - {None}
+    states = [row.get('attributes', {}).get('assetDeliveryState') for row in actual]
+    return {
+        'setId': identifier(set_id), 'assetCount': len(actual), 'uniqueIdCount': len(identifiers),
+        'completeCount': sum(isinstance(state, dict) and state.get('state') == 'COMPLETE' for state in states),
+        'assets': assets, 'approvedChecksums': [{'order': order, 'checksum': checksum} for order, checksum in enumerate(expected, 1)],
+    }
+
+
 class CLI:
     """Capture all CLI output; signed upload URLs/private API errors never reach logs."""
     def __init__(self, executable='asc', apply=False, receipts=None):
@@ -632,7 +658,8 @@ class Planner:
                 return
             if actual:
                 if not complete or len(set(expected)) != len(expected) or any(not isinstance(checksum, str) or checksum not in expected for checksum in received) or len(set(received)) != len(actual):
-                    raise UploadError('Existing screenshot set differs or is incomplete for %s/%s (%d assets, %d complete); reconcile it manually before apply. Automatic deletion is disabled.' % (locale, profile, len(actual), complete_count))
+                    diagnostic = json.dumps(safe_screenshot_conflict(matching[0]['id'], actual, expected), separators=(',', ':'))
+                    raise UploadError('Existing screenshot set differs or is incomplete for %s/%s (%d assets, %d complete); reconcile it manually before apply. Automatic deletion is disabled. screenshotConflict=%s' % (locale, profile, len(actual), complete_count, diagnostic))
                 resume = True
         self.queue('SCREENSHOTS', target, family=family, profile=profile, files=[str(i['file']) for i in items], skip_existing=resume)
 
