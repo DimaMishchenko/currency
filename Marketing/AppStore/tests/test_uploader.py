@@ -254,6 +254,71 @@ class UploaderTests(unittest.TestCase):
         plan = self.planner(FakeCLI(self.state), {'default'}).preflight()
         self.assertEqual(plan.ops, [])
 
+    def test_approved_partial_or_unordered_screenshots_resume_in_full_approved_order(self):
+        for family in ('default', 'travel'):
+            for orders in ([1, 3, 5], [6, 2], [4, 3, 2, 1, 5, 6]):
+                with self.subTest(family=family, orders=orders):
+                    for order in range(1, 7):
+                        self.slots[('en-US', 'iphone', family, order)] = self.slots[('en-US', 'iphone', 'default', order)]
+                    kind = 'appStoreVersionLocalizations' if family == 'default' else 'appCustomProductPageLocalizations'
+                    self.state['/v1/' + kind + '/locale/appScreenshotSets'] = [row('set', screenshotDisplayType='APP_IPHONE_61')]
+                    self.state['/v1/appScreenshotSets/set/appScreenshots'] = [row('shot-' + str(order), sourceFileChecksum=hashlib.md5(self.slots[('en-US', 'iphone', family, order)]['file'].read_bytes()).hexdigest(), assetDeliveryState={'state': 'COMPLETE'}) for order in orders]
+                    cli = FakeCLI(self.state, apply=True)
+                    plan = self.planner(cli, {'default'})
+                    plan.screenshots('locale', family, 'en-US', 'iphone')
+                    self.assertEqual(len(plan.ops), 1)
+                    self.assertTrue(plan.ops[0]['skip_existing'])
+                    self.assertEqual(plan.ops[0]['files'], [str(self.slots[('en-US', 'iphone', family, order)]['file']) for order in range(1, 7)])
+                    self.assertTrue(plan.summary()[0]['resumeExisting'])
+                    with patch.object(sys, 'stdout', new=io.StringIO()):
+                        plan.execute()
+                    commands = [call[1] for call in cli.calls if call[0] == 'COMMAND']
+                    self.assertEqual(len(commands), 1)
+                    self.assertIn('--skip-existing', commands[0])
+                    self.assertNotIn('--replace', commands[0])
+                    self.assertNotIn('--confirm', commands[0])
+                    self.assertEqual(commands[0][:2], ['screenshots', 'upload'] if family == 'default' else ['product-pages', 'custom-pages'])
+
+    def test_fresh_screenshots_do_not_enable_skip_existing(self):
+        for existing_set in (False, True):
+            with self.subTest(existing_set=existing_set):
+                self.state['/v1/appStoreVersionLocalizations/locale/appScreenshotSets'] = [row('set', screenshotDisplayType='APP_IPHONE_61')] if existing_set else []
+                cli = FakeCLI(self.state, apply=True)
+                plan = self.planner(cli, {'default'})
+                plan.screenshots('locale', 'default', 'en-US', 'iphone')
+                self.assertFalse(plan.ops[0]['skip_existing'])
+                self.assertFalse(plan.summary()[0]['resumeExisting'])
+                with patch.object(sys, 'stdout', new=io.StringIO()):
+                    plan.execute()
+                command = next(call[1] for call in cli.calls if call[0] == 'COMMAND')
+                self.assertNotIn('--skip-existing', command)
+
+    def test_unsafe_partial_screenshot_sets_refuse_before_upload(self):
+        checksum = hashlib.md5(self.slots[('en-US', 'iphone', 'default', 1)]['file'].read_bytes()).hexdigest()
+        approved = row('approved', sourceFileChecksum=checksum, assetDeliveryState={'state': 'COMPLETE'})
+        cases = [
+            [approved, row('foreign', sourceFileChecksum='f' * 32, assetDeliveryState={'state': 'COMPLETE'})],
+            [approved, row('duplicate', sourceFileChecksum=checksum, assetDeliveryState={'state': 'COMPLETE'})],
+            [approved, approved],
+            *[[row('unknown', sourceFileChecksum=value, assetDeliveryState={'state': 'COMPLETE'})] for value in (None, '', {'private': 'PRIVATE_VALUE'})],
+            *[[row('pending', sourceFileChecksum=checksum, assetDeliveryState={'state': state})] for state in ('FAILED', 'UPLOAD_COMPLETE', 'AWAITING_UPLOAD', 'PRIVATE_STATE')],
+            [row('unknown-state', sourceFileChecksum=checksum)],
+            [row('unknown-state', sourceFileChecksum=checksum, assetDeliveryState=None)],
+            *[[row(identifier, sourceFileChecksum=checksum, assetDeliveryState={'state': 'COMPLETE'})] for identifier in (None, '', 'https://private.invalid/PRIVATE_VALUE')],
+        ]
+        self.state['/v1/appStoreVersionLocalizations/locale/appScreenshotSets'] = [row('set', screenshotDisplayType='APP_IPHONE_61')]
+        for actual in cases:
+            with self.subTest(actual=actual):
+                self.state['/v1/appScreenshotSets/set/appScreenshots'] = actual
+                cli = FakeCLI(self.state, apply=True)
+                plan = self.planner(cli, {'default'})
+                with self.assertRaisesRegex(u.UploadError, 'en-US/iphone') as error:
+                    plan.screenshots('locale', 'default', 'en-US', 'iphone')
+                self.assertNotIn('PRIVATE', str(error.exception))
+                self.assertNotIn('https', str(error.exception))
+                self.assertEqual(plan.ops, [])
+                self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
     def test_conflicting_screenshot_refuses_before_writes(self):
         self.state['/v1/appStoreVersionLocalizations/locale/appScreenshotSets'] = [row('set', screenshotDisplayType='APP_IPHONE_61')]
         self.state['/v1/appScreenshotSets/set/appScreenshots'] = [row('old', sourceFileChecksum='different')]
@@ -513,52 +578,84 @@ class UploaderTests(unittest.TestCase):
                 self.assertEqual(plan.ops, [])
                 self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
 
-    def test_first_release_defers_cpp_creation_but_plans_default_duo(self):
+    def test_first_release_plans_all_cpp_families_and_default_duo(self):
         self.state['/v1/apps/6816213577/assetLibrary'] = [row('library')]
-        for order, profile in enumerate(self.meta['duoPresentation']['default'], 1):
-            file = self.root / ('duo' + str(order) + '.png')
-            file.write_bytes(str(order).encode())
-            self.slots[('en-US', profile, 'default', order)] = {'file': file, 'sha256': u.sha256(file)}
+        for family in u.FAMILIES:
+            for profile in u.PROFILES:
+                for order in range(1, 7):
+                    self.slots[('en-US', profile, family, order)] = self.slots[('en-US', profile, 'default', order)]
+            for order, profile in enumerate(self.meta['duoPresentation'][family], 1):
+                file = self.root / (family + '-duo' + str(order) + '.png')
+                file.write_bytes((family + str(order)).encode())
+                self.slots[('en-US', profile, family, order)] = {'file': file, 'sha256': u.sha256(file)}
         cli = FakeCLI(self.state, apply=True)
         plan = self.planner(cli, {'cpp', 'duo'}).preflight()
-        self.assertEqual(plan.cpp_status['preparedFamilyCount'], 5)
-        self.assertEqual(plan.cpp_status['deferredFamilies'], u.FAMILIES[1:])
-        self.assertEqual(plan.cpp_status['targetedFamilies'], [])
-        self.assertTrue(any('have not been uploaded' in note for note in plan.notes))
-        self.assertFalse(any('appCustomProduct' in operation['path'] or 'appCustomProduct' in json.dumps(operation.get('body')) for operation in plan.ops))
-        self.assertEqual(len([operation for operation in plan.ops if operation['path'] == '/v1/appAssetLibraryPlacements']), 6)
+        self.assertEqual(plan.cpp_status, {'preparedFamilyCount': 5, 'targetedFamilies': u.FAMILIES[1:]})
+        self.assertEqual(len([operation for operation in plan.ops if operation['method'] == 'CPP_CREATE']), 5)
+        self.assertEqual(len([operation for operation in plan.ops if operation['method'] == 'CPP_VERSION_LOOKUP']), 5)
+        self.assertFalse(any(operation['method'] == 'POST' and operation['path'] in {'/v1/appCustomProductPages', '/v1/appCustomProductPageVersions'} for operation in plan.ops))
+        placements = [operation for operation in plan.ops if operation['path'] == '/v1/appAssetLibraryPlacements']
+        self.assertEqual(len(placements), 36)
+        self.assertEqual(len([operation for operation in placements if 'appStoreVersionLocalization' in operation['body']['data']['relationships']]), 6)
         self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
 
-    def test_distributed_app_can_create_five_cpp_families_using_known_version_states(self):
-        for attributes in ({'appStoreState': 'READY_FOR_SALE'}, {'appStoreState': 'NOT_APPLICABLE', 'appVersionState': 'READY_FOR_DISTRIBUTION'}):
-            with self.subTest(attributes=attributes):
-                self.state['/v1/apps/6816213577/appStoreVersions'] = [row('version', platform='IOS', versionString='1.2', appStoreState='PREPARE_FOR_SUBMISSION'), row('released', platform='IOS', **attributes)]
-                plan = self.planner(FakeCLI(self.state), {'cpp'})
-                plan.cpp_targets({})
-                creations = [operation for operation in plan.ops if operation['path'] == '/v1/appCustomProductPages']
-                self.assertEqual(len(creations), 5)
-                self.assertEqual(plan.cpp_status['deferredFamilies'], [])
+    def test_cpp_creation_uses_pinned_command_and_reuses_initial_version_and_locale(self):
+        cli = FakeCLI(self.state, apply=True)
+        plan = self.planner(cli, {'cpp'})
+        plan.cpp_targets({})
+        commands = []
+        def create(args, body=None, mutate=False, cwd=None):
+            commands.append((args, mutate))
+            name = args[args.index('--name') + 1]
+            family = name.split(' - ')[1]
+            page = 'page-' + family
+            self.state['/v1/appCustomProductPages/' + page + '/appCustomProductPageVersions'] = [row('version-' + family, state='PREPARE_FOR_SUBMISSION')]
+            self.state['/v1/appCustomProductPageVersions/version-' + family + '/appCustomProductPageLocalizations'] = [row('locale-' + family, locale='en-US', promotionalText='')]
+            return {'data': {'type': 'appCustomProductPages', 'id': page}}
+        with patch.object(cli, 'run', side_effect=create):
+            plan.execute()
+        self.assertEqual(len(commands), 5)
+        for (args, mutate), family in zip(commands, u.FAMILIES[1:]):
+            self.assertEqual(args, ['product-pages', 'custom-pages', 'create', '--app', self.meta['appId'], '--name', 'Currency - ' + family, '--output', 'json'])
+            self.assertTrue(mutate)
+        writes = [call for call in cli.calls if call[0] != 'GET']
+        self.assertEqual(len(writes), 5)
+        self.assertTrue(all(call[0] == 'PATCH' and call[1].startswith('/v1/appCustomProductPageLocalizations/locale-') for call in writes))
 
-    def test_unknown_or_unreleased_states_do_not_enable_cpp_creation(self):
-        for attributes in ({'appStoreState': 'PREORDER_READY_FOR_SALE'}, {'appStoreState': 'READY_FOR_SALE', 'appVersionState': 'UNKNOWN'}, {'appStoreState': 'PENDING_APPLE_RELEASE'}):
-            with self.subTest(attributes=attributes):
-                self.state['/v1/apps/6816213577/appStoreVersions'] = [row('unreleased', platform='IOS', **attributes)]
-                plan = self.planner(FakeCLI(self.state), {'cpp'})
-                plan.cpp_targets({})
-                self.assertEqual(plan.ops, [])
-                self.assertEqual(len(plan.cpp_status['deferredFamilies']), 5)
+    def test_cpp_page_appearing_after_preflight_is_reused_without_create(self):
+        cli = FakeCLI(self.state, apply=True)
+        plan = self.planner(cli, {'duo'})
+        page_ref = plan.queue('CPP_CREATE', '/v1/appCustomProductPages', name='Currency - offline')
+        plan.queue('CPP_VERSION_LOOKUP', '/v1/appCustomProductPages/' + page_ref + '/appCustomProductPageVersions')
+        self.state['/v1/apps/6816213577/appCustomProductPages'] = [row('ui-created-page', name='Currency - offline')]
+        self.state['/v1/appCustomProductPages/ui-created-page/appCustomProductPageVersions'] = [row('ui-created-version', state='PREPARE_FOR_SUBMISSION')]
+        plan.execute()
+        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
 
-    def test_existing_cpp_still_updates_during_first_release(self):
+    def test_cpp_creation_or_initial_version_failure_never_falls_back_to_bare_post(self):
+        cli = FakeCLI(self.state, apply=True)
+        plan = self.planner(cli, {'cpp'})
+        page = plan.queue('CPP_CREATE', '/v1/appCustomProductPages', name='Currency - offline')
+        plan.queue('CPP_VERSION_LOOKUP', '/v1/appCustomProductPages/' + page + '/appCustomProductPageVersions')
+        with patch.object(cli, 'run', side_effect=u.UploadError('asc command failed (HTTP 409)')):
+            with self.assertRaisesRegex(u.UploadError, 'HTTP 409') as error:
+                plan.execute()
+        self.assertNotIn('first release', str(error.exception))
+        with patch.object(cli, 'run', return_value={'data': {'id': 'created-page'}}):
+            with self.assertRaisesRegex(u.UploadError, 'one editable initial version'):
+                plan.execute()
+        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_existing_cpp_still_updates_without_creating_a_duplicate(self):
         self.state['/v1/apps/6816213577/appCustomProductPages'] = [row('page', name='Currency - travel')]
         self.state['/v1/appCustomProductPages/page/appCustomProductPageVersions'] = [row('cpp-version', state='PREPARE_FOR_SUBMISSION')]
         self.state['/v1/appCustomProductPageVersions/cpp-version/appCustomProductPageLocalizations'] = [row('cpp-locale', locale='en-US', promotionalText='Old text')]
         plan = self.planner(FakeCLI(self.state), {'cpp'})
         targets = {}
         plan.cpp_targets(targets)
-        self.assertEqual(plan.cpp_status['targetedFamilies'], ['travel'])
-        self.assertEqual(len(plan.cpp_status['deferredFamilies']), 4)
-        self.assertEqual(targets, {('travel', 'en-US'): 'cpp-locale'})
-        self.assertEqual([(operation['method'], operation['path']) for operation in plan.ops], [('PATCH', '/v1/appCustomProductPageLocalizations/cpp-locale')])
+        self.assertEqual(len([operation for operation in plan.ops if operation['method'] == 'CPP_CREATE']), 4)
+        self.assertEqual(targets[('travel', 'en-US')], 'cpp-locale')
+        self.assertEqual(len([operation for operation in plan.ops if operation['method'] == 'PATCH' and operation['path'] == '/v1/appCustomProductPageLocalizations/cpp-locale']), 1)
 
     def test_duo_only_cpp_targets_do_not_change_text_or_keywords(self):
         self.meta['locales']['en-US'].pop('contextualPromotionalText')
@@ -606,12 +703,14 @@ class UploaderTests(unittest.TestCase):
     def test_partial_failure_receipt_contains_ids_without_urls(self):
         receipt = self.root / 'receipts.jsonl'
         cli = u.CLI(apply=True, receipts=receipt)
-        response = subprocess.CompletedProcess([], 1, json.dumps({'videoId': 'reserved-video', 'uploadOperations': [{'url': 'https://private.invalid/signed-token'}]}), 'private')
+        response = subprocess.CompletedProcess([], 1, json.dumps({'videoId': 'reserved-video', 'results': [{'assetId': 'reserved-screenshot', 'filePath': '/private/local/path'}], 'uploadOperations': [{'url': 'https://private.invalid/signed-token'}]}), 'private')
         with patch.object(subprocess, 'run', return_value=response):
             with self.assertRaises(u.UploadError):
                 cli.run(['asset-library', 'videos', 'upload'], mutate=True)
         text = receipt.read_text()
         self.assertIn('reserved-video', text)
+        self.assertIn('reserved-screenshot', text)
+        self.assertNotIn('/private/local/path', text)
         self.assertNotIn('https', text)
         self.assertNotIn('signed-token', text)
         self.assertEqual(receipt.stat().st_mode & 0o777, 0o600)

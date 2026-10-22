@@ -209,7 +209,7 @@ class CLI:
         def scan(value):
             if isinstance(value, dict):
                 for key, item in value.items():
-                    if key in {'id', 'imageId', 'videoId', 'screenshotId', 'setId', 'localizationId'} and isinstance(item, str) and re.fullmatch('[A-Za-z0-9-]{1,180}', item):
+                    if key in {'id', 'imageId', 'videoId', 'screenshotId', 'assetId', 'setId', 'localizationId'} and isinstance(item, str) and re.fullmatch('[A-Za-z0-9-]{1,180}', item):
                         identifiers.setdefault(key, []).append(item)
                     else:
                         scan(item)
@@ -321,18 +321,6 @@ def resolve_targets(cli, app_id, version_id=None, version_string=None, info_id=N
     return target
 
 
-def cpp_creation_eligible(versions):
-    for version in versions:
-        attributes = version.get('attributes', {})
-        if attributes.get('platform') != 'IOS':
-            continue
-        if 'appVersionState' in attributes:
-            if attributes['appVersionState'] == 'READY_FOR_DISTRIBUTION':
-                return True
-        elif attributes.get('appStoreState') == 'READY_FOR_SALE':
-            return True
-    return False
-
 
 class Planner:
     def __init__(self, cli, metadata, slots, header, version_id, version_string, info_id, scopes):
@@ -345,7 +333,6 @@ class Planner:
         self.media = {}
         self.duo_groups = {}
         self.cpp_profiles = []
-        self.cpp_creation_ready = None
         self.cpp_status = None
         self.header_group = None
 
@@ -388,7 +375,6 @@ class Planner:
         infos = [i for i in self.get('/v1/apps/' + self.app + '/appInfos') if i['id'] == self.info]
         if len(infos) != 1 or infos[0]['attributes'].get('appStoreState') not in EDITABLE:
             raise UploadError('Explicit app-info ID does not belong to an editable Currency draft')
-        self.cpp_creation_ready = cpp_creation_eligible(versions)
         self.native_policy_preflight()
         metadata_changes = False
         if 'metadata' in self.scopes:
@@ -584,31 +570,24 @@ class Planner:
 
     def cpp_targets(self, targets):
         pages = self.unique(self.get('/v1/apps/' + self.app + '/appCustomProductPages'), 'name')
-        missing = [family for family in FAMILIES[1:] if 'Currency - ' + family not in pages]
-        if missing and self.cpp_creation_ready is None:
-            versions = self.get('/v1/apps/' + self.app + '/appStoreVersions')
-            self.cpp_creation_ready = cpp_creation_eligible(versions)
-        deferred = missing if not self.cpp_creation_ready else []
-        self.cpp_status = {'preparedFamilyCount': len(FAMILIES) - 1, 'targetedFamilies': [family for family in FAMILIES[1:] if family not in deferred], 'deferredFamilies': deferred}
-        if deferred:
-            self.cpp_status['deferredReason'] = 'first-release-prerequisite'
-            self.notes.append('Prepared five custom product page families; missing pages deferred until the app is Ready for Distribution in at least one region. Rerun the workflow after the first release. Existing custom pages and selected default-page assets remain eligible; deferred families have not been uploaded.')
+        self.cpp_status = {'preparedFamilyCount': len(FAMILIES) - 1, 'targetedFamilies': FAMILIES[1:]}
         routing = self.meta.get('keywordRouting', {}) if 'cpp' in self.scopes else {}
         if 'cpp' in self.scopes and not routing and self.cpp_status['targetedFamilies']:
             self.notes.append('CPP keyword associations deferred: choose terms from the latest approved app version and provide keywordRouting; draft uploads remain available.')
         for family in FAMILIES[1:]:
             name = 'Currency - ' + family
             page = pages.get(name)
-            if family in deferred:
-                continue
-            page_id = self.upsert('appCustomProductPages', page, {'name': name}, {'app': relationship('apps', self.app)})
+            page_id = page['id'] if page else self.queue('CPP_CREATE', '/v1/appCustomProductPages', name=name)
             versions = self.get('/v1/appCustomProductPages/' + page_id + '/appCustomProductPageVersions')
             drafts = [v for v in versions if v.get('attributes', {}).get('state') in {'PREPARE_FOR_SUBMISSION', 'REJECTED'}]
             if len(drafts) > 1:
                 raise UploadError('Multiple editable CPP drafts; choose one in App Store Connect')
             if versions and not drafts:
                 raise UploadError('CPP has no editable draft; create its next draft in App Store Connect first')
-            version = drafts[0]['id'] if drafts else self.queue('POST', '/v1/appCustomProductPageVersions', resource('appCustomProductPageVersions', {}, {'appCustomProductPage': relationship('appCustomProductPages', page_id)}))
+            if not page:
+                version = self.queue('CPP_VERSION_LOOKUP', '/v1/appCustomProductPages/' + page_id + '/appCustomProductPageVersions')
+            else:
+                version = drafts[0]['id'] if drafts else self.queue('POST', '/v1/appCustomProductPageVersions', resource('appCustomProductPageVersions', {}, {'appCustomProductPage': relationship('appCustomProductPages', page_id)}))
             locales = self.unique(self.get('/v1/appCustomProductPageVersions/' + version + '/appCustomProductPageLocalizations'), 'locale')
             for locale, fields in self.meta['locales'].items():
                 attrs = {'locale': locale}
@@ -635,6 +614,7 @@ class Planner:
 
     def screenshots(self, target, family, locale, profile):
         items = [self.slots[(locale, profile, family, i)] for i in range(1, 7)]
+        resume = False
         kind = 'appStoreVersionLocalizations' if family == 'default' else 'appCustomProductPageLocalizations'
         sets = self.get('/v1/' + kind + '/' + target + '/appScreenshotSets')
         matching = [s for s in sets if s.get('attributes', {}).get('screenshotDisplayType') == PROFILES[profile]]
@@ -644,11 +624,17 @@ class Planner:
             actual = self.get('/v1/appScreenshotSets/' + matching[0]['id'] + '/appScreenshots')
             expected = [hashlib.md5(i['file'].read_bytes()).hexdigest() for i in items]
             received = [r.get('attributes', {}).get('sourceFileChecksum') for r in actual]
-            if received == expected and all(r.get('attributes', {}).get('assetDeliveryState', {}).get('state') == 'COMPLETE' for r in actual):
+            identifiers = [r.get('id') for r in actual]
+            states = [r.get('attributes', {}).get('assetDeliveryState') for r in actual]
+            complete_count = sum(isinstance(state, dict) and state.get('state') == 'COMPLETE' for state in states)
+            complete = complete_count == len(actual) and all(isinstance(identifier, str) and re.fullmatch('[A-Za-z0-9-]{1,180}', identifier) for identifier in identifiers) and len(set(identifiers)) == len(actual)
+            if received == expected and complete:
                 return
             if actual:
-                raise UploadError('Existing screenshot set differs or is incomplete; reconcile it manually before apply. Automatic deletion is disabled.')
-        self.queue('SCREENSHOTS', target, family=family, profile=profile, files=[str(i['file']) for i in items])
+                if not complete or len(set(expected)) != len(expected) or any(not isinstance(checksum, str) or checksum not in expected for checksum in received) or len(set(received)) != len(actual):
+                    raise UploadError('Existing screenshot set differs or is incomplete for %s/%s (%d assets, %d complete); reconcile it manually before apply. Automatic deletion is disabled.' % (locale, profile, len(actual), complete_count))
+                resume = True
+        self.queue('SCREENSHOTS', target, family=family, profile=profile, files=[str(i['file']) for i in items], skip_existing=resume)
 
     def library_media(self, item, media_type):
         reference = 'currency-approved-' + item['sha256']
@@ -770,6 +756,18 @@ class Planner:
             if op['method'] == 'METADATA':
                 self.sync_metadata(dry_run=False)
                 identifier = ''
+            elif op['method'] == 'CPP_CREATE':
+                pages = self.unique(self.get('/v1/apps/' + self.app + '/appCustomProductPages'), 'name')
+                existing = pages.get(op['name'])
+                response = {'data': existing} if existing else self.cli.run(['product-pages', 'custom-pages', 'create', '--app', self.app, '--name', op['name'], '--output', 'json'], mutate=True)
+                identifier = response.get('data', {}).get('id')
+                if not isinstance(identifier, str) or not re.fullmatch('[A-Za-z0-9-]+', identifier):
+                    raise UploadError('Custom page creation returned no valid page identity; inspect draft state before retrying')
+            elif op['method'] == 'CPP_VERSION_LOOKUP':
+                drafts = [row for row in self.get(op['path']) if row.get('attributes', {}).get('state') in {'PREPARE_FOR_SUBMISSION', 'REJECTED'}]
+                if len(drafts) != 1 or not isinstance(drafts[0].get('id'), str) or not re.fullmatch('[A-Za-z0-9-]+', drafts[0]['id']):
+                    raise UploadError('Custom page creation did not resolve one editable initial version; inspect draft state before retrying')
+                identifier = drafts[0]['id']
             elif op['method'] == 'LOOKUP':
                 matches = [row for row in self.get(op['path']) if row.get('attributes', {}).get('locale') == op['locale']]
                 if len(matches) != 1 or not isinstance(matches[0].get('id'), str) or not re.fullmatch('[A-Za-z0-9-]+', matches[0]['id']):
@@ -787,7 +785,7 @@ class Planner:
                     for order, name in enumerate(op['files'], 1):
                         shutil.copyfile(name, Path(directory) / ('%02d.png' % order))
                     args = ['screenshots', 'upload', '--version-localization', op['path']] if op['family'] == 'default' else ['product-pages', 'custom-pages', 'localizations', 'screenshot-sets', 'upload', '--localization-id', op['path']]
-                    self.cli.run([*args, '--path', directory, '--device-type', PROFILES[op['profile']], '--output', 'json'], mutate=True)
+                    self.cli.run([*args, '--path', directory, '--device-type', PROFILES[op['profile']], '--output', 'json', *(['--skip-existing'] if op.get('skip_existing') else [])], mutate=True)
                 identifier = ''
             else:
                 response = self.apply_resource(op['method'], op['path'], op['body'])
@@ -808,11 +806,13 @@ class Planner:
             if 'locale' in data.get('attributes', {}):
                 entry['locale'] = data['attributes']['locale']
             if operation['method'] == 'SCREENSHOTS':
-                entry.update(family=operation['family'], profile=operation['profile'], screenshotCount=len(operation['files']))
+                entry.update(family=operation['family'], profile=operation['profile'], screenshotCount=len(operation['files']), resumeExisting=operation.get('skip_existing', False))
             if operation['method'] == 'LIBRARY':
                 entry.update(mediaType=operation['media_type'], approvedReference=operation['reference'])
             if operation['method'] == 'METADATA':
                 entry.update(localeCount=len(self.meta['locales']), appInfoFields=sorted({key for fields in self.meta['locales'].values() for key in fields if key in INFO_FIELDS}), versionFields=sorted({key for fields in self.meta['locales'].values() for key in fields if key in VERSION_FIELDS}))
+            if operation['method'] == 'CPP_CREATE':
+                entry['pageName'] = operation['name']
             if operation['method'] == 'LOOKUP':
                 entry['locale'] = operation['locale']
             if data.get('attributes', {}).get('placementGroup'):
