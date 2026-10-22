@@ -73,6 +73,8 @@ Add `--apply` only after reviewing the plan. `--media-dir` selects a verified un
 
 The workflow uploads localized text, default device screenshot sets, contextual custom product page drafts, native Duo placements and the H09 product page header. Shared metadata uses pinned `asc metadata apply` with canonical app-info/version locale files, explicit targets and a read-only plan before apply. Omitted fields remain untouched; nulls, clears, default fallback files and locale deletion are disabled. CPP text and asset placement remain separately scoped.
 
+Apple requires the app to be [Ready for Distribution in at least one region before creating custom product pages](https://developer.apple.com/help/app-store-connect/create-custom-product-pages/configure-multiple-product-page-versions/). Before the first release, missing CPP families are deferred with a structured `cppStatus` report: five families are prepared locally, but deferred pages have not been uploaded. Existing CPP drafts can still be edited, and selected default-page screenshots, Duo placements and header remain eligible. Rerun the workflow after the first release to create the missing pages.
+
 Custom product pages use the iPhone and iPad screenshot sets. Apple’s current `CUSTOM_PRODUCT_PAGES` reference policy omits Watch, so preflight reports that exclusion while retaining all 108 Watch screenshots on the default page. Core CPP profiles require matching specifications and capacity for six screenshots; unknown or insufficient policies stop before changes. Eligibility follows Apple’s [asset specifications and feature policies](https://developer.apple.com/documentation/appstoreconnectapi/discovering-asset-specifications), checked again at runtime.
 
 Duo uses six images per page, mixing inner and outer displays once per feature. `duoPresentation` selects the display for each of the six existing positions in every family; the complete two-pose source sets remain in the immutable media pack. Native preflight reads Apple’s reference data and checks the selected group capacities. Exact pixel dimensions take precedence over nominal aspect-ratio labels; flexible-size specifications still enforce ratios. Unknown or insufficient policies stop the selected plan before changes.
@@ -85,7 +87,8 @@ The uploader refuses conflicting existing assets instead of deleting them. It re
 
 - Upload a signed app build to deliver primary/alternate icons. Existing TestFlight publishing builds the checked-in Icon Composer documents; metadata uploads cannot change binary icons.
 - Select the release build and complete account declarations: privacy, age rating, export compliance, pricing/availability, agreements and review contact information.
-- Review and submit the app version and custom product pages. Processed uploads do not establish Apple approval or storefront publication.
+- After the first app release becomes Ready for Distribution in a region, rerun the workflow to upload any deferred custom product page families.
+- Review and submit the app version and eligible custom product pages. Processed uploads do not establish Apple approval or storefront publication.
 - Configure organic custom-page keyword associations from terms eligible on the latest approved version. The first release may need approval before these exist. Direct page URLs and campaigns are separate routing choices; localization does not provide arbitrary country-level screenshot targeting.
 - Inspect the processed Duo screenshots in App Store Connect’s product-page preview before submission. The mixed six-image selection uses the single Duo placement group and current live capacity limits.
 

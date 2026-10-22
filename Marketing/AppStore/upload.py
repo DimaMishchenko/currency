@@ -187,6 +187,9 @@ def safe_metadata_failure_summary(stdout):
             fields = action.get('desiredFields')
             if isinstance(fields, dict):
                 entry['attemptedFields'] = sorted(set(fields) & scopes[action['scope']])
+            error = action.get('error')
+            if isinstance(error, str) and len(error) <= 16384 and 'the app name you entered is already being used' in error.casefold():
+                entry['reason'] = 'app-name-already-used'
             failures.append(entry)
     if not any(counts.values()):
         return ''
@@ -318,6 +321,19 @@ def resolve_targets(cli, app_id, version_id=None, version_string=None, info_id=N
     return target
 
 
+def cpp_creation_eligible(versions):
+    for version in versions:
+        attributes = version.get('attributes', {})
+        if attributes.get('platform') != 'IOS':
+            continue
+        if 'appVersionState' in attributes:
+            if attributes['appVersionState'] == 'READY_FOR_DISTRIBUTION':
+                return True
+        elif attributes.get('appStoreState') == 'READY_FOR_SALE':
+            return True
+    return False
+
+
 class Planner:
     def __init__(self, cli, metadata, slots, header, version_id, version_string, info_id, scopes):
         self.cli, self.meta, self.slots, self.header = cli, metadata, slots, header
@@ -329,6 +345,8 @@ class Planner:
         self.media = {}
         self.duo_groups = {}
         self.cpp_profiles = []
+        self.cpp_creation_ready = None
+        self.cpp_status = None
         self.header_group = None
 
     def get(self, path):
@@ -370,6 +388,7 @@ class Planner:
         infos = [i for i in self.get('/v1/apps/' + self.app + '/appInfos') if i['id'] == self.info]
         if len(infos) != 1 or infos[0]['attributes'].get('appStoreState') not in EDITABLE:
             raise UploadError('Explicit app-info ID does not belong to an editable Currency draft')
+        self.cpp_creation_ready = cpp_creation_eligible(versions)
         self.native_policy_preflight()
         metadata_changes = False
         if 'metadata' in self.scopes:
@@ -565,12 +584,23 @@ class Planner:
 
     def cpp_targets(self, targets):
         pages = self.unique(self.get('/v1/apps/' + self.app + '/appCustomProductPages'), 'name')
+        missing = [family for family in FAMILIES[1:] if 'Currency - ' + family not in pages]
+        if missing and self.cpp_creation_ready is None:
+            versions = self.get('/v1/apps/' + self.app + '/appStoreVersions')
+            self.cpp_creation_ready = cpp_creation_eligible(versions)
+        deferred = missing if not self.cpp_creation_ready else []
+        self.cpp_status = {'preparedFamilyCount': len(FAMILIES) - 1, 'targetedFamilies': [family for family in FAMILIES[1:] if family not in deferred], 'deferredFamilies': deferred}
+        if deferred:
+            self.cpp_status['deferredReason'] = 'first-release-prerequisite'
+            self.notes.append('Prepared five custom product page families; missing pages deferred until the app is Ready for Distribution in at least one region. Rerun the workflow after the first release. Existing custom pages and selected default-page assets remain eligible; deferred families have not been uploaded.')
         routing = self.meta.get('keywordRouting', {}) if 'cpp' in self.scopes else {}
-        if 'cpp' in self.scopes and not routing:
+        if 'cpp' in self.scopes and not routing and self.cpp_status['targetedFamilies']:
             self.notes.append('CPP keyword associations deferred: choose terms from the latest approved app version and provide keywordRouting; draft uploads remain available.')
         for family in FAMILIES[1:]:
             name = 'Currency - ' + family
             page = pages.get(name)
+            if family in deferred:
+                continue
             page_id = self.upsert('appCustomProductPages', page, {'name': name}, {'app': relationship('apps', self.app)})
             versions = self.get('/v1/appCustomProductPages/' + page_id + '/appCustomProductPageVersions')
             drafts = [v for v in versions if v.get('attributes', {}).get('state') in {'PREPARE_FOR_SUBMISSION', 'REJECTED'}]
@@ -828,7 +858,7 @@ def main():
     target = resolve_targets(cli, metadata['appId'], args.version_id, args.version_string, args.app_info_id)
     print(json.dumps({'resolvedTarget': target}))
     plan = Planner(cli, metadata, slots, header, target['versionId'], target['versionString'], target['appInfoId'], scopes).preflight()
-    print(json.dumps({'mode': 'apply' if args.apply else 'dry-run', 'plannedDraftOperations': len(plan.ops), 'scopes': sorted(scopes), 'blockers': plan.blockers, 'notes': plan.notes, 'plan': plan.summary()}, ensure_ascii=False, indent=2))
+    print(json.dumps({'mode': 'apply' if args.apply else 'dry-run', 'plannedDraftOperations': len(plan.ops), 'scopes': sorted(scopes), 'blockers': plan.blockers, 'notes': plan.notes, 'cppStatus': plan.cpp_status, 'plan': plan.summary()}, ensure_ascii=False, indent=2))
     if args.apply:
         plan.execute()
     elif plan.blockers:

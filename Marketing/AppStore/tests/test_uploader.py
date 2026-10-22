@@ -275,6 +275,7 @@ class UploaderTests(unittest.TestCase):
     def test_cpp_policy_excludes_watch_without_losing_default_watch_sets(self):
         locales = json.loads((MODULE.parent / 'metadata.json').read_text())['locales']
         self.meta['locales'] = locales
+        self.state['/v1/apps/6816213577/appStoreVersions'].append(row('released', platform='IOS', appStoreState='READY_FOR_SALE'))
         source = dict(self.slots)
         for locale in locales:
             for family in u.FAMILIES:
@@ -512,6 +513,53 @@ class UploaderTests(unittest.TestCase):
                 self.assertEqual(plan.ops, [])
                 self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
 
+    def test_first_release_defers_cpp_creation_but_plans_default_duo(self):
+        self.state['/v1/apps/6816213577/assetLibrary'] = [row('library')]
+        for order, profile in enumerate(self.meta['duoPresentation']['default'], 1):
+            file = self.root / ('duo' + str(order) + '.png')
+            file.write_bytes(str(order).encode())
+            self.slots[('en-US', profile, 'default', order)] = {'file': file, 'sha256': u.sha256(file)}
+        cli = FakeCLI(self.state, apply=True)
+        plan = self.planner(cli, {'cpp', 'duo'}).preflight()
+        self.assertEqual(plan.cpp_status['preparedFamilyCount'], 5)
+        self.assertEqual(plan.cpp_status['deferredFamilies'], u.FAMILIES[1:])
+        self.assertEqual(plan.cpp_status['targetedFamilies'], [])
+        self.assertTrue(any('have not been uploaded' in note for note in plan.notes))
+        self.assertFalse(any('appCustomProduct' in operation['path'] or 'appCustomProduct' in json.dumps(operation.get('body')) for operation in plan.ops))
+        self.assertEqual(len([operation for operation in plan.ops if operation['path'] == '/v1/appAssetLibraryPlacements']), 6)
+        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_distributed_app_can_create_five_cpp_families_using_known_version_states(self):
+        for attributes in ({'appStoreState': 'READY_FOR_SALE'}, {'appStoreState': 'NOT_APPLICABLE', 'appVersionState': 'READY_FOR_DISTRIBUTION'}):
+            with self.subTest(attributes=attributes):
+                self.state['/v1/apps/6816213577/appStoreVersions'] = [row('version', platform='IOS', versionString='1.2', appStoreState='PREPARE_FOR_SUBMISSION'), row('released', platform='IOS', **attributes)]
+                plan = self.planner(FakeCLI(self.state), {'cpp'})
+                plan.cpp_targets({})
+                creations = [operation for operation in plan.ops if operation['path'] == '/v1/appCustomProductPages']
+                self.assertEqual(len(creations), 5)
+                self.assertEqual(plan.cpp_status['deferredFamilies'], [])
+
+    def test_unknown_or_unreleased_states_do_not_enable_cpp_creation(self):
+        for attributes in ({'appStoreState': 'PREORDER_READY_FOR_SALE'}, {'appStoreState': 'READY_FOR_SALE', 'appVersionState': 'UNKNOWN'}, {'appStoreState': 'PENDING_APPLE_RELEASE'}):
+            with self.subTest(attributes=attributes):
+                self.state['/v1/apps/6816213577/appStoreVersions'] = [row('unreleased', platform='IOS', **attributes)]
+                plan = self.planner(FakeCLI(self.state), {'cpp'})
+                plan.cpp_targets({})
+                self.assertEqual(plan.ops, [])
+                self.assertEqual(len(plan.cpp_status['deferredFamilies']), 5)
+
+    def test_existing_cpp_still_updates_during_first_release(self):
+        self.state['/v1/apps/6816213577/appCustomProductPages'] = [row('page', name='Currency - travel')]
+        self.state['/v1/appCustomProductPages/page/appCustomProductPageVersions'] = [row('cpp-version', state='PREPARE_FOR_SUBMISSION')]
+        self.state['/v1/appCustomProductPageVersions/cpp-version/appCustomProductPageLocalizations'] = [row('cpp-locale', locale='en-US', promotionalText='Old text')]
+        plan = self.planner(FakeCLI(self.state), {'cpp'})
+        targets = {}
+        plan.cpp_targets(targets)
+        self.assertEqual(plan.cpp_status['targetedFamilies'], ['travel'])
+        self.assertEqual(len(plan.cpp_status['deferredFamilies']), 4)
+        self.assertEqual(targets, {('travel', 'en-US'): 'cpp-locale'})
+        self.assertEqual([(operation['method'], operation['path']) for operation in plan.ops], [('PATCH', '/v1/appCustomProductPageLocalizations/cpp-locale')])
+
     def test_duo_only_cpp_targets_do_not_change_text_or_keywords(self):
         self.meta['locales']['en-US'].pop('contextualPromotionalText')
         self.meta['keywordRouting'] = {family: {'en-US': ['travel']} for family in u.FAMILIES[1:]}
@@ -688,6 +736,21 @@ class UploaderTests(unittest.TestCase):
         self.assertEqual(process.call_args.kwargs['env']['ASC_DEBUG'], 'api')
         self.assertTrue(process.call_args.kwargs['capture_output'])
 
+    def test_metadata_name_conflict_reports_only_fixed_exact_phrase_classification(self):
+        action = {'scope': 'app-info', 'locale': 'de-DE', 'action': 'update', 'status': 'failed', 'desiredFields': {'name': 'PRIVATE_NAME', 'subtitle': 'PRIVATE_SUBTITLE'}}
+        for phrase in ('The app name you entered is already being used', 'THE APP NAME YOU ENTERED IS ALREADY BEING USED'):
+            with self.subTest(phrase=phrase):
+                output = json.dumps({'actions': [dict(action, error='PRIVATE_PREFIX https://signed.invalid/TOKEN ' + phrase + ' PRIVATE_SUFFIX')]})
+                summary = u.safe_metadata_failure_summary(output)
+                self.assertIn('"reason":"app-name-already-used"', summary)
+                for private in ('PRIVATE', 'https', 'TOKEN', 'signed.invalid', phrase):
+                    self.assertNotIn(private, summary)
+        for error in ('PRIVATE unrelated validation error', 'app name is unavailable', 'x' * 16385 + 'the app name you entered is already being used', None):
+            summary = u.safe_metadata_failure_summary(json.dumps({'actions': [dict(action, error=error)]}))
+            self.assertNotIn('reason', summary)
+        summary = u.safe_metadata_failure_summary(json.dumps({'actions': [dict(action, status='succeeded', error='the app name you entered is already being used')]}))
+        self.assertNotIn('reason', summary)
+
     def test_metadata_failure_summary_rejects_invalid_unbounded_or_non_json_results(self):
         for output in ('PRIVATE_ERROR', json.dumps({'actions': 'PRIVATE'}), json.dumps({'actions': [{'scope': {}}]}), json.dumps({'actions': [{}] * 201}), 'x' * 1048577, json.dumps({'actions': [{'scope': 'version', 'locale': 'en-US', 'action': 'update', 'status': 'PRIVATE'}]})):
             self.assertEqual(u.safe_metadata_failure_summary(output), '')
@@ -794,7 +857,7 @@ class UploaderTests(unittest.TestCase):
         cli = FakeCLI(self.state)
         args = ['upload.py', '--metadata', str(metadata), '--media-dir', str(self.root), '--receipts', str(self.root / 'receipt.jsonl'), '--version-id', '', '--version-string', '', '--app-info-id', '']
         with patch.object(sys, 'argv', args), patch.object(u, 'validate_media', return_value=({}, {})), patch.object(u, 'CLI', return_value=cli), patch.object(u, 'Planner') as planner, patch.object(sys, 'stdout', new_callable=io.StringIO) as output:
-            planner.return_value.preflight.return_value = SimpleNamespace(ops=[], blockers=[], notes=[], summary=lambda: [])
+            planner.return_value.preflight.return_value = SimpleNamespace(ops=[], blockers=[], notes=[], cpp_status=None, summary=lambda: [])
             self.assertEqual(u.main(), 0)
             self.assertEqual(planner.call_args.args[4:7], ('version', '1.2', 'info'))
             resolved = json.loads(output.getvalue().splitlines()[0])
