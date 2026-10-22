@@ -67,10 +67,10 @@
       }
     },
     "de-DE": {
-      "name": "Currency: Währungsrechner",
+      "name": "Currency: Währungs-Widgets",
       "subtitle": "Offline, Krypto & Edelmetalle",
       "description": "Rechne Währungen direkt auf deinem Home-Bildschirm um. Gib im Rechner-Widget einen Betrag ein und vergleiche deine ausgewählten Währungen, ohne die App zu öffnen.\n\nWÄHLE DEINE WIDGETS\n• Währungsrechner: Gib einen Betrag ein und sieh mehrere Umrechnungen gleichzeitig.\n• Währungsübersicht: Behalte deine ausgewählten Währungen zusammen im Blick.\n• Kurs für unterwegs: Halte ein Währungspaar griffbereit.\n• Bargeld verstehen: Rechne Banknotenbeträge oder Metallgewichte um.\n• Verlauf: Sieh, wie sich ein Wechselkurs verändert hat.\n\nWÄHRUNGEN, KRYPTO UND EDELMETALLE\nRechne Alltagswährungen, Bitcoin, Ethereum und weitere unterstützte Kryptowährungen um. Vergleiche Gold, Silber, Platin und Palladium in Feinunzen, Gramm oder Kilogramm.\n\nAUCH OFFLINE\nÖffne Currency mit Internetverbindung, um die benötigten Kurse zu laden. Danach kannst du neue Beträge mit den auf deinem Gerät gespeicherten Kursen berechnen. Verbinde dich erneut, um sie zu aktualisieren.\n\nAPPLE WATCH\nRechne Währungen um und sieh den Kursverlauf am Handgelenk. Behalte einen Kurs auf deinem Zifferblatt oder füge ein Widget zum Smart-Stapel hinzu.\n\nFür iPhone, iPad und Apple Watch.\n\nDie Kurse dienen zur Orientierung. Banken, Kartenanbieter und Händler können andere Kurse und Gebühren verwenden. Die Verfügbarkeit des Kursverlaufs hängt vom Währungspaar und der Quelle ab.",
-      "keywords": "wechselkurs,reisen,rechner,verlauf,diagramm,bitcoin,ethereum,gold,silber,bargeld,widgets,umrechnen",
+      "keywords": "währungsrechner,wechselkurs,reisen,verlauf,diagramm,bitcoin,ethereum,gold,silber,bargeld,umrechnen",
       "promotionalText": "Rechne Währungen auf deinem Home-Bildschirm um. Gib einen Betrag im Rechner-Widget ein und sieh deine ausgewählten Währungen zusammen.",
       "contextualPromotionalText": {
         "offline": "Rechne offline mit zuvor geladenen Kursen weiter. Lade die benötigten Kurse online und berechne danach Beträge ohne Verbindung.",
