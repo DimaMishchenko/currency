@@ -401,7 +401,10 @@ class Planner:
         if not isinstance(response, dict):
             raise UploadError('App Store read returned an invalid response; inspect draft state before retrying')
         value = response.get('data', [])
-        return value if isinstance(value, list) else [value]
+        rows = value if isinstance(value, list) else [value]
+        if any(not isinstance(row, dict) or not isinstance(row.get('attributes', {}), dict) for row in rows):
+            raise UploadError('App Store read returned an invalid collection; inspect draft state before retrying')
+        return rows
 
     def queue(self, method, path, body=None, **extra):
         ref = '@pending-' + str(len(self.ops))

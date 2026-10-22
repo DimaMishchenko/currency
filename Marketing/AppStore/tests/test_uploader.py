@@ -415,6 +415,69 @@ class UploaderTests(unittest.TestCase):
             self.assertEqual(plan.apply_resource('POST', '/v1/appStoreVersionLocalizations', body)['data']['id'], 'existing')
             self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
 
+    def test_read_boundary_rejects_malformed_rows_and_preserves_resource_and_linkage_shapes(self):
+        cli = FakeCLI(self.state)
+        plan = self.planner(cli, set())
+        for value in (None, 'PRIVATE_DATA', [None], [{'id': 'valid'}, 'PRIVATE_ROW'], [{'attributes': None}], [{'attributes': []}], [{'attributes': 'PRIVATE_ATTRIBUTES'}]):
+            with self.subTest(value=value), patch.object(cli, 'api', return_value={'data': value}):
+                with self.assertRaisesRegex(u.UploadError, 'invalid collection; inspect draft state') as error:
+                    plan.get('/read')
+                self.assertNotIn('PRIVATE', str(error.exception))
+        for value in ([], {'id': 'single'}, [{'type': 'appScreenshots', 'id': 'linkage'}], [{'id': 'sparse', 'attributes': {}}], [{'attributes': {'futureField': None}}]):
+            with self.subTest(value=value), patch.object(cli, 'api', return_value={'data': value}):
+                self.assertEqual(plan.get('/read'), value if isinstance(value, list) else [value])
+
+    def test_screenshot_set_and_asset_reads_reject_malformed_rows_before_mutation(self):
+        for malformed in (None, 'PRIVATE_ROW', {'id': 'bad', 'attributes': None}, {'id': 'bad', 'attributes': []}):
+            for collection in ('sets', 'assets'):
+                with self.subTest(collection=collection, malformed=malformed):
+                    self.state['/v1/appStoreVersionLocalizations/locale/appScreenshotSets'] = [row('set', screenshotDisplayType='APP_IPHONE_61')]
+                    self.state['/v1/appScreenshotSets/set/appScreenshots'] = self.screenshot_assets([1])
+                    path = '/v1/appStoreVersionLocalizations/locale/appScreenshotSets' if collection == 'sets' else '/v1/appScreenshotSets/set/appScreenshots'
+                    self.state[path].append(malformed)
+                    cli = FakeCLI(self.state, apply=True)
+                    with self.assertRaisesRegex(u.UploadError, 'invalid collection; inspect draft state'):
+                        self.planner(cli, {'default'}).screenshots('locale', 'default', 'en-US', 'iphone')
+                    self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_malformed_set_or_asset_read_after_delete_or_upload_stops_later_mutations(self):
+        for phase in ('delete', 'upload'):
+            for collection in ('sets', 'assets'):
+                for malformed in (None, {'id': 'bad', 'attributes': None}, {'id': 'bad', 'attributes': []}):
+                    with self.subTest(phase=phase, collection=collection, malformed=malformed):
+                        cli = FakeCLI(self.state, apply=True)
+                        plan = self.duplicate_screenshot_plan(cli).preflight() if phase == 'delete' else self.cpp_screenshot_plan(cli, [3])
+                        parent = 'appStoreVersionLocalizations' if phase == 'delete' else 'appCustomProductPageLocalizations'
+                        bad_path = '/v1/' + parent + '/locale/appScreenshotSets' if collection == 'sets' else '/v1/appScreenshotSets/set/appScreenshots'
+                        active = {'mutated': False}
+                        original_api, original_run = cli.api, cli.run
+                        def api(method, path, body=None):
+                            result = original_api(method, path, body)
+                            if method == 'DELETE':
+                                active['mutated'] = True
+                            elif active['mutated'] and method == 'GET' and path == bad_path:
+                                result['data'].append(malformed)
+                            return result
+                        def upload(args, body=None, mutate=False, cwd=None):
+                            result = original_run(args, body, mutate, cwd)
+                            active['mutated'] = True
+                            return result
+                        with patch.object(cli, 'api', side_effect=api), patch.object(cli, 'run', side_effect=upload):
+                            with self.assertRaisesRegex(u.UploadError, 'invalid collection; inspect draft state'):
+                                plan.execute()
+                        self.assertEqual([call[0] for call in cli.calls if call[0] != 'GET'], ['DELETE' if phase == 'delete' else 'COMMAND'])
+
+    def test_cpp_jit_discovery_malformed_attributes_stop_after_prior_mutation(self):
+        cli = FakeCLI(self.state, apply=True)
+        self.state['/v1/apps/6816213577/appCustomProductPages'] = [row('valid', name='Other'), {'id': 'bad', 'attributes': None}]
+        plan = self.planner(cli, {'cpp'})
+        plan.queue('POST', '/v1/appAssetLibraryPlacementOrderingRequests', u.resource('appAssetLibraryPlacementOrderingRequests', {}))
+        plan.queue('CPP_CREATE', '/v1/appCustomProductPages', name='Currency - travel')
+        with patch.object(sys, 'stdout', new=io.StringIO()):
+            with self.assertRaisesRegex(u.UploadError, 'invalid collection; inspect draft state'):
+                plan.execute()
+        self.assertEqual([call[0] for call in cli.calls if call[0] != 'GET'], ['POST'])
+
     def test_complete_matching_screenshots_are_idempotent(self):
         sets = []
         for profile, display in u.PROFILES.items():
@@ -900,7 +963,7 @@ class UploaderTests(unittest.TestCase):
             {'id': 'known', 'type': 'appScreenshots', 'url': 'https://private.invalid/PRIVATE_TOKEN'},
             {'id': 'https://private.invalid/PRIVATE_ID', 'type': 'PRIVATE_TYPE'},
             {'id': {'private': 'PRIVATE_ID'}, 'type': ['PRIVATE_TYPE']},
-            'PRIVATE_ROW',
+            {},
         ] * 6
         cli = FakeCLI(self.state, apply=True)
         plan = self.planner(cli, {'default'})
@@ -934,6 +997,7 @@ class UploaderTests(unittest.TestCase):
         self.assertNotIn('https', json.dumps(diagnostic))
         invalid['type'] = 'PrivateProviderToken'
         self.assertIsNone(u.safe_screenshot_conflict('set', [invalid], [])['assets'][0]['type'])
+        self.assertEqual(u.safe_screenshot_conflict('set', [], [], ['PRIVATE_ROW'])['orderedLinkages'], {'rowCount': 1, 'uniqueIdCount': 0, 'assets': [{'id': None, 'type': None}]})
 
     def test_live_or_wrong_version_refuses_before_mutation(self):
         for field, value in [('appStoreState', 'READY_FOR_SALE'), ('versionString', '8.0')]:
