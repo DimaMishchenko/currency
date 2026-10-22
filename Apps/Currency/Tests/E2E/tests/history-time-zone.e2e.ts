@@ -69,6 +69,10 @@ test('minute and hourly history use the local chart zone and local saved timesta
       await expect(source).toHaveValue('Collapsed');
       await source.tap();
       await expect(source).toHaveValue('Expanded');
+      await source.tap();
+      await expect(source).toHaveValue('Collapsed');
+      await source.tap();
+      await expect(source).toHaveValue('Expanded');
       await expect(screen.getByText(timestampPattern(
         Math.max(history.fetchedAt, rates.fetchedAt), zone.id, 'Saved ',
       ))).toBeVisible();
