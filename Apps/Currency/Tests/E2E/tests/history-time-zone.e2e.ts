@@ -60,7 +60,8 @@ test('minute and hourly history use the local chart zone and local saved timesta
       const latest = rates.quotes.BTC.observedAt;
       assert.ok(Number.isFinite(latest));
       await expect(screen.getByText(timestampPattern(latest, zone.id))).toBeVisible();
-      const source = screen.getByTestId('currency.details.sourceDisclosure');
+      const source = screen.getByTestId('currency.details.sourceDisclosure')
+        .filter({ hasText: /^(?:Coin Metrics|Fawaz)/ });
       await expect(source).toHaveAccessibleName(
         `Coin Metrics · ${range.key === 1 ? 'minute' : 'hourly'} reference prices`,
       );
@@ -108,7 +109,8 @@ test('monthly reference dates retain their provider calendar day in west and eas
     await expect(screen.getByTestId('currency.details.chartTimeZone')).toBeHidden();
     const history = readHistory(join(directory, 'history-v3-EUR-USD-0.json'));
     assert.equal(history.source.observation, 'monthlyReference');
-    const source = screen.getByTestId('currency.details.sourceDisclosure');
+    const source = screen.getByTestId('currency.details.sourceDisclosure')
+      .filter({ hasText: /^(?:Coin Metrics|Fawaz)/ });
     await source.tap();
     await expect(source).toHaveValue('Expanded');
     const first = dateText(history.points[0]!.date, 'UTC');

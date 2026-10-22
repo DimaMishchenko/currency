@@ -40,11 +40,15 @@ test('Rates uses one explicit local time zone while daily publication dates stay
     const rates = JSON.parse(readFileSync(join(directory, 'rates.json'), 'utf8')) as {
       fetchedAt: number;
       checkedAt: number;
-      quotes: { BTC: { observedAt: number }; USD: { published: string } };
+      quotes: {
+        BTC: { observedAt: number; source: { timeZone: { identifier: string } } };
+        USD: { published: string };
+      };
     };
     assert.ok(Number.isFinite(rates.fetchedAt));
     assert.ok(Number.isFinite(rates.checkedAt));
     assert.ok(Number.isFinite(rates.quotes.BTC.observedAt));
+    assert.equal(rates.quotes.BTC.source.timeZone.identifier, 'GMT');
     await expect(screen.getByTestId('settings.rates.timeZone')).toHaveText(`Times: ${zone.label}`);
     await expect(screen.getByTestId('settings.rates.retrievedAt'))
       .toHaveText(timestampPattern(rates.fetchedAt, zone.id));

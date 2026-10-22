@@ -98,7 +98,7 @@ Start each case once with a matching fixture. `fresh-onboarding` and `ready-conv
 
 The history and Rates time-zone journeys launch only the selected simulator app with `SIMCTL_CHILD_TZ` and retarget the existing driver session without relaunching. They derive expected timestamps from the app’s seeded caches and do not change simulator or host time-zone settings. They require the normal debug simulator build and the configured owned UDID.
 
-Run the provider journey with the normal app build. It verifies the standard Coin Metrics current rate, 1D capability, source credits and restart behavior. The fixture cache identity is `currency-fixtures-v14-hourly-week`; daily fiat fixtures include the current history-policy marker and All fixtures use completed months; rebuild after app or fixture changes.
+Run the provider journey with the normal app build. It verifies the standard Coin Metrics current rate, 1D capability, source credits and restart behavior. The fixture cache identity is `currency-fixtures-v15-source-zone`; daily fiat fixtures include the current history-policy marker and All fixtures use completed months; rebuild after app or fixture changes.
 
 ```sh
 npm run test:e2e -- tests/provider-policy.e2e.ts
