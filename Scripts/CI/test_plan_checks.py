@@ -115,7 +115,7 @@ class PlannerTests(unittest.TestCase):
         for force_full in (False, True):
             plan = self.plan(paths, full=force_full)
             self.assertFalse(any(plan[key] for key in planner.FLAGS))
-        workflow = Path('.github/workflows/app-store-validation.yml').read_text()
+        workflow = (SCRIPT.resolve().parents[2] / '.github/workflows/app-store-validation.yml').read_text()
         self.assertIn("'Marketing/AppStore/**'", workflow)
 
     def test_app_store_edits_do_not_suppress_accompanying_native_changes(self):
