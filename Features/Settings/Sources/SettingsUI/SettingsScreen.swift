@@ -16,6 +16,7 @@ struct SettingsScreen: View {
       ? .Settings.refreshFailed : RateMessages.refresh(model.rates.warning)
   }
   @Environment(\.locale) private var locale
+  @Environment(\.timeZone) private var timeZone
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(\.openURL) private var openURL
@@ -611,15 +612,18 @@ struct SettingsScreen: View {
   }
 
   private func timestamp(_ date: Date) -> String {
-    date.formatted(.dateTime.day().month().year().hour().minute().locale(locale))
+    CurrencyDisplay.timestamp(date, locale: locale, timeZone: timeZone)
   }
 
-  private func timestampRow(_ title: LocalizedStringResource, date: Date?) -> some View {
+  private func timestampRow(
+    _ title: LocalizedStringResource, date: Date?, identifier: String
+  ) -> some View {
     settingsValueRow {
       Text(title)
     } value: {
       Text(date.map(timestamp) ?? String(localized: .Settings.unavailable))
         .foregroundStyle(.secondary)
+        .accessibilityIdentifier(identifier)
     }
   }
 
@@ -660,8 +664,12 @@ struct SettingsScreen: View {
       Section {
         timestampRow(
           .Settings.ratesRetrieved,
-          date: snapshot.fetchedAt == .distantPast ? nil : snapshot.fetchedAt)
-        timestampRow(.Settings.lastChecked, date: snapshot.checkedAt)
+          date: snapshot.fetchedAt == .distantPast ? nil : snapshot.fetchedAt,
+          identifier: "settings.rates.retrievedAt"
+        )
+        timestampRow(
+          .Settings.lastChecked, date: snapshot.checkedAt,
+          identifier: "settings.rates.checkedAt")
         Button(.Settings.refreshNow, systemImage: "arrow.clockwise") {
           AppHaptics.play(.action)
           model.refresh()
@@ -673,11 +681,16 @@ struct SettingsScreen: View {
       } header: {
         Text(.Settings.rates)
       } footer: {
-        Text(.Settings.dailyRateExplanation)
+        VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
+          Text(.Settings.times(CurrencyDisplay.timeZoneName(timeZone, locale: locale)))
+            .accessibilityIdentifier("settings.rates.timeZone")
+          Text(.Settings.dailyRateExplanation)
+        }
       }
       Section(.Settings.quoteInformation) {
         ForEach(codes, id: \.self) { code in
           quoteRow(code)
+            .accessibilityIdentifier("settings.rates.quote.\(code)")
         }
       }
     }
@@ -708,7 +721,7 @@ struct SettingsScreen: View {
           if let conversion = RateMessages.conversionDescription(source, locale: locale) {
             Text(conversion).font(AppStyle.font(.caption)).foregroundStyle(.secondary)
           }
-          Text(RateMessages.providerDescription(source, locale: locale))
+          Text(RateMessages.providerDescription(source, locale: locale, includesTimeZone: false))
             .font(AppStyle.font(.subheadline)).foregroundStyle(.secondary)
           Group {
             if let observed = rate.observedAt {

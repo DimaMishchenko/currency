@@ -55,13 +55,15 @@ test('minute and hourly history use the local chart zone and local saved timesta
       const history = readHistory(join(directory, `history-v3-BTC-USD-${range.key}.json`));
       assert.equal(history.source.observation, range.observation);
       const rates = JSON.parse(readFileSync(join(directory, 'rates.json'), 'utf8')) as {
-        fetchedAt: number; quotes: { BTC: { observedAt: number; retrievedAt: number } };
+        fetchedAt: number; quotes: { BTC: { observedAt: number } };
       };
       const latest = rates.quotes.BTC.observedAt;
       assert.ok(Number.isFinite(latest));
       await expect(screen.getByText(timestampPattern(latest, zone.id))).toBeVisible();
       const source = screen.getByTestId('currency.details.sourceDisclosure');
-      await expect(source.filter({ hasText: /source sampling: GMT/ })).toBeVisible();
+      await expect(source).toHaveAccessibleName(
+        `Coin Metrics · ${range.key === 1 ? 'minute' : 'hourly'} reference prices`,
+      );
       await source.tap();
       await expect(source).toHaveValue('Expanded');
       await expect(screen.getByText(timestampPattern(
@@ -70,11 +72,17 @@ test('minute and hourly history use the local chart zone and local saved timesta
       await expect(screen.getByText(new RegExp(
         `^${timestampFragment(history.points[0]!.date, zone.id)} – ${timestampFragment(latest, zone.id)}$`,
       ))).toBeVisible();
-      await agent.act('Scroll in Details until the Observed and Retrieved timestamp rows are visible. Keep the source details expanded.');
-      await expect(screen.getByText(timestampPattern(latest, zone.id, 'Observed '))).toBeVisible();
-      await expect(screen.getByText(timestampPattern(
-        rates.quotes.BTC.retrievedAt, zone.id, 'Retrieved ',
-      ))).toBeVisible();
+      await expect(screen.getByText(/^Observed /)).toBeHidden();
+      await expect(screen.getByText(/^Retrieved /)).toBeHidden();
+      await expect(screen.getByText(/source sampling:/i)).toBeHidden();
+      await agent.act('Scroll in Details until the crypto history explanation is visible. Keep the source details expanded.');
+      await expect(screen.getByText(
+        'Crypto history combines daily and monthly reference data with intraday prices when available. Converted prices may be approximate. Historical and current sources can differ.',
+        { exact: true },
+      )).toBeVisible();
+      await expect(screen.getByText(/^Observed /)).toBeHidden();
+      await expect(screen.getByText(/^Retrieved /)).toBeHidden();
+      await expect(screen.getByText(/^Approximate conversion:/i)).toBeHidden();
       await app.screenshot(`history-${range.key}-${zone.id.replaceAll('/', '-')}`);
       await agent.act('Scroll back until the Coin Metrics source disclosure control is visible. Keep Details open.');
       await source.tap();
