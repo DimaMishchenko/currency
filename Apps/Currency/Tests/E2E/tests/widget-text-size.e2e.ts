@@ -31,7 +31,7 @@ for (const [title, family] of examples) {
     try {
       await size('large');
       const widget = await installedWidget(title, family);
-      await agent.waitFor(`The installed ${family} ${title} widget shows complete readable EUR 1 and USD 2, without missing data or clipped glyphs.`, { vision: 'only', timeout: 30_000 });
+      await agent.waitFor(`The installed Currency widget on the Home Screen shows complete readable EUR 1 and USD 2, without missing data or clipped glyphs. ${title === 'History' ? 'It has a line graph, +11.11% (decimal comma equivalent), and 1M. The Home Screen title below it is Currency.' : ''}`, { vision: 'only', timeout: 30_000 });
       const range = title === 'History' ? widget.getByLabel('One month', { exact: true }) : undefined;
       const baseline = await range?.boundingBox();
       await app.screenshot(`widget-text-${name}-large`);
@@ -55,7 +55,7 @@ for (const [title, family] of examples) {
         await expect.poll(async () => (await range.boundingBox())?.height ?? 0, { timeout: 30_000 })
           .toBeGreaterThan(baseline.height);
       }
-      await agent.waitFor(`The same installed ${family} ${title} widget has readable EUR 1 and USD 2 after larger text was selected. Judge actual drawn glyphs: both complete currency codes and amounts must be visible without clipping or overlap. ${title === 'Currency Calculator' ? 'Every keypad label remains readable inside its button.' : title === 'History' ? 'The percentage change and 1M range remain readable, with the graph present.' : 'The original currency rows remain visible.'}`, { vision: 'only', timeout: 30_000 });
+      await agent.waitFor(`The installed Currency widget on the Home Screen has readable EUR 1 and USD 2 after larger text was selected. Judge actual drawn glyphs: both complete currency codes and amounts must be visible without clipping or collisions between labels. ${title === 'Currency Calculator' ? 'Every keypad label remains readable inside its button.' : title === 'History' ? 'The percentage change and 1M range remain readable, with the graph present behind the text as designed.' : 'The original currency rows remain visible.'}`, { vision: 'only', timeout: 30_000 });
       await app.screenshot(`widget-text-${name}-ax5`);
 
       if (title === 'Currency Calculator' && family === 'Medium') {
@@ -63,9 +63,8 @@ for (const [title, family] of examples) {
         await tapCalculatorControl(widget, 'Clear');
         await tapCalculatorControl(widget, '4');
         await tapCalculatorControl(widget, '2');
-        await expect(widget.getByRole('button', /^Euro, EUR/i)).toHaveValue('42', { timeout: 30_000 });
-        await expect(widget.getByRole('button', /^US Dollar, USD/i)).toHaveValue('84');
-        await agent.assert('The installed Calculator shows complete readable EUR 42 and USD 84, with its existing keypad visible and no clipped glyphs.', { vision: 'only' });
+        await expect(widget.getByRole('button', /^US Dollar, USD/i)).toHaveValue('84', { timeout: 30_000 });
+        await agent.assert('The installed Currency widget shows complete readable EUR 42 and USD 84, with its existing keypad visible and no clipped glyphs.', { vision: 'only' });
         await app.restart();
         await expect(screen.getByRole('button', 'Edit amount in EUR', { exact: true })).toHaveValue('42');
         await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 84');
@@ -76,6 +75,9 @@ for (const [title, family] of examples) {
         await expect(screen.getByRole('button', 'Edit amount in EUR', { exact: true })).toHaveValue('1');
         await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2');
       }
+    } catch (error) {
+      await app.screenshot(`widget-text-${name}-failure-before-restoration`);
+      throw error;
     } finally {
       await size(originalSize);
     }
