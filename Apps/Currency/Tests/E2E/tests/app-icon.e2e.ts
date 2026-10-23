@@ -21,15 +21,39 @@ async function openPicker({ screen }: PickerContext) {
 
 async function revealIcon({ screen }: PickerContext, icon: string, direction: 'down' | 'up' = 'down') {
   const tile = screen.getByTestId(`settings.appIcon.${icon}`);
-  await screen.scrollUntilVisible(tile, { direction, momentum: 'slow', timeout: 15_000 });
+  await revealPickerItem({ screen }, tile, direction);
   await expect(tile).toBeVisible();
+}
+
+async function revealPickerItem(
+  { screen }: Pick<PickerContext, 'screen'>,
+  target: ReturnType<PickerContext['screen']['getByTestId']>,
+  direction: 'down' | 'up' = 'down',
+) {
+  const viewport = await screen.getByLabel('Currency', { exact: true }).boundingBox();
+  const navigation = await screen.getByRole('navigation').boundingBox();
+  assert.ok(viewport && navigation, 'Picker scrolling requires actual viewport and navigation bounds');
+  const top = navigation.y + navigation.height;
+  const bottom = viewport.y + viewport.height;
+  const centerY = (top + bottom) / 2;
+  const distance = (bottom - top) * 0.15;
+  for (let swipe = 0; swipe < 8; swipe++) {
+    const bounds = await target.count() === 1 ? await target.boundingBox() : null;
+    if (bounds && bounds.y >= top && bounds.y + bounds.height <= bottom) return;
+    const above = bounds ? bounds.y < top : direction === 'up';
+    await screen.swipe({
+      from: { x: viewport.x + viewport.width / 2, y: centerY },
+      to: { x: viewport.x + viewport.width / 2, y: centerY + (above ? distance : -distance) },
+    });
+  }
+  throw new Error('App icon item did not become fully visible inside the picker');
 }
 
 async function assertCatalog(context: PickerContext) {
   const { screen } = context;
   for (const [style, title] of [['world', 'World'], ['grid', 'Grid']] as const) {
     const heading = screen.getByTestId(`settings.appIcon.section.${style}`);
-    await screen.scrollUntilVisible(heading, { direction: 'down', momentum: 'slow', timeout: 15_000 });
+    await revealPickerItem(context, heading);
     await expect(heading).toBeVisible();
     for (const [suffix, currency] of currencies) {
       await revealIcon(context, `${style}${suffix}`);
@@ -102,20 +126,20 @@ test('app icon picker adapts when largest accessibility text and dark appearance
     const viewport = await screen.getByLabel('Currency', { exact: true }).boundingBox();
     const navigation = await screen.getByRole('navigation').boundingBox();
     assert.ok(viewport && navigation, 'Capture requires native viewport and navigation bounds');
-    await expect.poll(async () => {
-      const bounds = await selected.count() === 1 ? await selected.boundingBox() : null;
-      const inside = bounds !== null
-        && bounds.x >= viewport.x
-        && bounds.x + bounds.width <= viewport.x + viewport.width
-        && bounds.y >= navigation.y + navigation.height
-        && bounds.y + bounds.height <= viewport.y + viewport.height;
-      if (!inside) await screen.swipe({ direction: 'up', momentum: 'slow' });
-      return inside;
-    }, { timeout: 20_000 }).toBe(true);
+    await revealPickerItem(context, selected, 'up');
+    const selectedBounds = await selected.boundingBox();
+    assert.ok(selectedBounds && selectedBounds.x >= viewport.x
+      && selectedBounds.x + selectedBounds.width <= viewport.x + viewport.width
+      && selectedBounds.y >= navigation.y + navigation.height
+      && selectedBounds.y + selectedBounds.height <= viewport.y + viewport.height,
+    'Selected tile must be fully inside the visible picker');
     await expect(selected).toBeVisible();
     await expect(selected).toHaveValue('Selected');
     await app.screenshot('settings-app-icon-live-accessibility-dark');
     await agent.assert('The App icon picker is in dark appearance with very large accessibility text. The selected World Yen / Yuan tile is fully on screen. Its name has complete readable glyphs, without clipping or words broken into one- or two-character fragments. Its small contrasting checkmark badge is clearly visible at the icon corner. The badge may overlap the rounded icon frame, but it does not obscure either currency symbol. Other fully visible tile names are readable; a row partially cut off at the viewport scroll edge is allowed.', { vision: 'only' });
+  } catch (error) {
+    await app.screenshot('settings-app-icon-accessibility-failure-before-restoration').catch(() => {});
+    throw error;
   } finally {
     try {
       await ui('content_size', originalSize);

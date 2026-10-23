@@ -160,14 +160,18 @@ test(`${scope === 'full' ? 'converter and supporting screens' : 'Settings and Hi
     const value = `${new Intl.NumberFormat('en-US', { maximumFractionDigits: 6 }).format(latest.value)} USD`;
     const detailsBounds = await screen.getByTestId('currency.details.EUR').boundingBox();
     assert.ok(detailsBounds, 'Details must expose its actual sheet bounds');
+    const historyRangeBounds = await screen.getByTestId('currency.details.historyRange').boundingBox();
+    assert.ok(historyRangeBounds, 'History range must expose bounds inside the scroll content');
+    const scrollX = historyRangeBounds.x + historyRangeBounds.width / 2;
     const reveal = async (target: ReturnType<typeof screen.getByTestId>) => {
       for (let swipe = 0; swipe < 8; swipe++) {
         const bounds = await target.count() ? await target.boundingBox() : null;
         if (bounds && bounds.y >= detailsBounds.y + 72
           && bounds.y + bounds.height <= detailsBounds.y + detailsBounds.height - 16) return bounds;
+        const above = bounds !== null && bounds.y < detailsBounds.y + 72;
         await screen.swipe({
-          from: { x: detailsBounds.x + 8, y: detailsBounds.y + detailsBounds.height * 0.8 },
-          to: { x: detailsBounds.x + 8, y: detailsBounds.y + detailsBounds.height * 0.35 },
+          from: { x: scrollX, y: detailsBounds.y + detailsBounds.height * 0.55 },
+          to: { x: scrollX, y: detailsBounds.y + detailsBounds.height * (above ? 0.7 : 0.4) },
         });
       }
       throw new Error('History content did not become fully visible inside the Details sheet');
