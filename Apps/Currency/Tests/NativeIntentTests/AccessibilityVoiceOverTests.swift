@@ -48,10 +48,25 @@ final class AccessibilityVoiceOverTests: XCTestCase {
     XCTAssertTrue(app.buttons["converter.widgets"].waitForExistence(timeout: 10))
     if !wasEnabled { try voiceOver.enable() }
     XCTAssertTrue(voiceOver.isEnabled)
-    let initial = try voiceOver.currentSpeech().utterance
+    let initial = try initialSpeech()
     record("Initial: \(initial)")
     XCTAssertFalse(initial.isEmpty)
     try body()
+  }
+
+  private func initialSpeech() throws -> String {
+    let deadline = Date().addingTimeInterval(10)
+    while true {
+      do {
+        return try XCUIDevice.shared.voiceOverService.currentSpeech().utterance
+      } catch {
+        let serviceError = error as NSError
+        guard serviceError.domain == "com.apple.xctest.voiceoverservice",
+          serviceError.code == 3, Date() < deadline
+        else { throw error }
+        RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+      }
+    }
   }
 
   private func focus(containing text: String, maximumMoves: Int = 30) throws {
