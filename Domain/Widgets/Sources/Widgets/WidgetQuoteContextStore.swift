@@ -13,10 +13,6 @@ public struct WidgetQuoteContextStore: Sendable {
     public let base: String?
     /// Configured comparison currency, or nil for a converter-following context.
     public let quote: String?
-    /// Exact editable input used by the rendered suite widget.
-    public let renderedInput: WidgetInput?
-    /// Widget presentation whose captured input and rates define the readout.
-    public let renderedKind: String?
   }
   private struct Record: Codable {
     let id: UUID
@@ -25,8 +21,6 @@ public struct WidgetQuoteContextStore: Sendable {
     let snapshot: RateSnapshot
     let base: String?
     let quote: String?
-    let renderedInput: WidgetInput?
-    let renderedKind: String?
   }
   private struct IndexEntry: Codable {
     let id: UUID
@@ -51,7 +45,7 @@ public struct WidgetQuoteContextStore: Sendable {
   /// Saves one context per distinct rendered snapshot and returns a price-free navigation URL.
   public func save(
     _ snapshot: RateSnapshot, base: String? = nil, quote: String? = nil,
-    renderedInput: WidgetInput? = nil, renderedKind: String? = nil, now: Date = .now
+    now: Date = .now
   ) throws -> URL? {
     guard !snapshot.quotes.isEmpty else { return nil }
     let encoder = JSONEncoder()
@@ -59,8 +53,6 @@ public struct WidgetQuoteContextStore: Sendable {
     let digest =
       SHA256.hash(
         data: try encoder.encode(snapshot) + Data((":" + (base ?? "") + ":" + (quote ?? "")).utf8)
-          + (renderedInput.map { try encoder.encode($0) } ?? Data())
-          + Data((renderedKind ?? "").utf8)
       )
       .map { String(format: "%02x", $0) }
       .joined()
@@ -75,7 +67,7 @@ public struct WidgetQuoteContextStore: Sendable {
       {
         let record = Record(
           id: entry.id, digest: digest, createdAt: entry.createdAt, snapshot: snapshot,
-          base: base, quote: quote, renderedInput: renderedInput, renderedKind: renderedKind)
+          base: base, quote: quote)
         try encoder.encode(record).write(to: recordURL(entry.id), options: .atomic)
       }
       entries.removeAll { $0.id == entry.id }
@@ -112,9 +104,7 @@ public struct WidgetQuoteContextStore: Sendable {
       record = try? readLegacy().first { $0.id == id }
     }
     guard let record, valid(record, now: now) else { return nil }
-    return Context(
-      snapshot: record.snapshot, base: record.base, quote: record.quote,
-      renderedInput: record.renderedInput, renderedKind: record.renderedKind)
+    return Context(snapshot: record.snapshot, base: record.base, quote: record.quote)
   }
 
   private func readIndex() throws -> [IndexEntry] {

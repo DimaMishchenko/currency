@@ -381,11 +381,6 @@ struct HomeScreen: View {
   private var optionsMenu: some View {
     Menu {
       Group {
-        Button(.Converter.refreshRates, systemImage: "arrow.clockwise") {
-          dismissAmount(feedback: false)
-          if !model.refreshing { refreshRequest = UUID() }
-        }
-        .disabled(model.refreshing)
         Button(.Converter.manageCurrencies, systemImage: "slider.horizontal.3") {
           dismissAmount(feedback: false)
           AppHaptics.play(.action)

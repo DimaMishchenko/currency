@@ -17,23 +17,10 @@ import Testing
     "currency://currency?v=1&id=WRONG", "currency://currency?v=1&id=USD&id=EUR",
     "currency://conversion?v=1&request=garbage", "https://currency?v=1&id=USD",
     "currency://currency/path?v=1&id=USD", "currency://converter?v=2",
-    "currency://converter?v=1&id=USD",
-    "currency://widget-readout?v=1&context=bad",
-    "currency://widget-readout?v=2&context=00000000-0000-0000-0000-000000000000",
-    "currency://widget-readout?v=1&context=00000000-0000-0000-0000-000000000000&amount=10"
+    "currency://converter?v=1&id=USD"
   ])
   func invalidURLsFailClosed(_ text: String) throws {
     #expect(CurrencyRoute(url: try #require(URL(string: text))) == nil)
-  }
-  @Test func widgetNavigationRoutesRemainDistinctAndRoundTrip() throws {
-    let id = UUID()
-    let normal = try #require(CurrencyRoute.widget(id).url)
-    let enlarged = try #require(CurrencyRoute.widgetReadout(id).url)
-    #expect(normal.host == "widget")
-    #expect(enlarged.host == "widget-readout")
-    #expect(CurrencyRoute(url: normal) == .widget(id))
-    #expect(CurrencyRoute(url: enlarged) == .widgetReadout(id))
-    #expect(!enlarged.absoluteString.contains("amount"))
   }
   @Test func converterRouteOpensHomeAndDismissesOtherContent() throws {
     let route = CurrencyRoute.converter

@@ -55,9 +55,8 @@ enum WidgetComposition {
         await controller.refreshForWidget()
       },
       now: { .now },
-      saveContext: { snapshot, input, kind, now in
-        try? WidgetQuoteContextStore(directory: directory)
-          .save(snapshot, renderedInput: input, renderedKind: kind, now: now)
+      saveContext: { snapshot, now in
+        try? WidgetQuoteContextStore(directory: directory).save(snapshot, now: now)
       }, refreshInterval: CurrencyRateConfiguration.widgetRefreshInterval)
   }
 

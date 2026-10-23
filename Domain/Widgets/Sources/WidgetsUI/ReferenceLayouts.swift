@@ -94,7 +94,7 @@ public struct CashView: View {
       WidgetFooter(entry: entry)
     }
     .animation(nil, value: entry.input)
-    .modifier(WidgetSurface(openURL: entry.openURL))
+    .modifier(WidgetSurface(openURL: entry.openURL, maximumTypeSize: .xxLarge))
   }
 
   private func label(_ value: Decimal) -> String {
@@ -160,7 +160,7 @@ public struct AnchorView: View {
     }
     .frame(maxWidth: .infinity, alignment: .leading)
     .lineLimit(1).minimumScaleFactor(0.4)
-    .modifier(WidgetSurface(openURL: entry.openURL))
+    .modifier(WidgetSurface(openURL: entry.openURL, maximumTypeSize: .xLarge))
   }
 
   private func referenceLabel(_ code: String) -> String {

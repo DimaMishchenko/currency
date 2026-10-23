@@ -122,7 +122,7 @@ public struct HistoryWidgetView: View {
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     .font(AppStyle.font(.caption))
     .tint(Color(uiColor: .label))
-    .dynamicTypeSize(...DynamicTypeSize.large)
+    .dynamicTypeSize(...(compact ? DynamicTypeSize.xLarge : .xxxLarge))
     .modifier(HistoryWidgetBackground(snapshot: snapshot, preview: preview))
     .modifier(
       HistoryChartAccessibility(

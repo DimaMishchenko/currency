@@ -254,7 +254,7 @@ let project = Project(
       dependencies: [
         .target(name: "Home"), .target(name: "Onboarding"),
         .target(name: "Conversion"), .target(name: "ExchangeRates"),
-        .target(name: "LocalCurrency"), .target(name: "Widgets")
+        .target(name: "LocalCurrency")
       ]),
     .target(
       name: "ForegroundRefresh", destinations: .iOS, product: .staticFramework,
@@ -465,7 +465,7 @@ let project = Project(
       dependencies: [
         .target(name: "Conversion"), .target(name: "LocalCurrency"),
         .target(name: "ExchangeRates"), .target(name: "Home"),
-        .target(name: "Onboarding"), .target(name: "CurrencyApplication"), .target(name: "Widgets")
+        .target(name: "Onboarding"), .target(name: "CurrencyApplication")
       ]),
     .target(
       name: "ForegroundRefreshTests", destinations: .iOS, product: .unitTests,

@@ -43,14 +43,12 @@ struct CurrencyRoot: View {
           HomeEntry(
             flowID: scene.homeID, active: !scene.showsOnboarding && scenePhase == .active,
             discoveryVisitID: discoveryVisitID,
-            discoveryIdle: scene.detail == nil && scene.sheet == nil && scene.widgetReadout == nil
-              && scene.location == nil
+            discoveryIdle: scene.detail == nil && scene.sheet == nil && scene.location == nil
               && scene.path.isEmpty,
             detailsNamespace: detailsMotion, widgetsNamespace: widgetsMotion,
             currencyDecoration: { id, content in
               let visible =
                 !scene.showsOnboarding && scene.detail == nil && scene.sheet == nil
-                && scene.widgetReadout == nil
                 && scene.location == nil && scene.path.isEmpty
               return visible
                 ? AnyView(content.appEntityIdentifier(EntityIdentifier(for: CurrencyEntity(id))))
@@ -93,9 +91,6 @@ struct CurrencyRoot: View {
         detailsContent(detail)
           .navigationTransition(.zoom(sourceID: detail.request.selectionID, in: detailsMotion))
       }
-    }
-    .sheet(item: $scene.widgetReadout) { readout in
-      WidgetReadoutScreen(readout: readout)
     }
     .sheet(item: $scene.sheet, onDismiss: composition.changed) { sheet in
       sheetContent(sheet)

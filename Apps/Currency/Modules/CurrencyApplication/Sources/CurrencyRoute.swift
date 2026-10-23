@@ -8,8 +8,6 @@ public enum CurrencyRoute: Equatable, Sendable {
   /// Opens the existing converter.
   case converter
   case widget(UUID)
-  /// Opens immutable widget amounts in an enlarged, scrollable app presentation.
-  case widgetReadout(UUID)
   /// Opens supported currency content without changing the saved selection.
   case currency(String)
 
@@ -20,8 +18,8 @@ public enum CurrencyRoute: Equatable, Sendable {
     components.queryItems = [URLQueryItem(name: "v", value: "1")]
     switch self {
     case .converter: components.host = "converter"
-    case .widget(let id), .widgetReadout(let id):
-      components.host = if case .widgetReadout = self { "widget-readout" } else { "widget" }
+    case .widget(let id):
+      components.host = "widget"
       components.queryItems?.append(URLQueryItem(name: "context", value: id.uuidString))
     case .currency(let id):
       components.host = "currency"
@@ -41,11 +39,11 @@ public enum CurrencyRoute: Equatable, Sendable {
       items.filter({ $0.name == "v" && $0.value == "1" }).count == 1
     else { return nil }
     switch parts.host {
-    case "widget", "widget-readout":
+    case "widget":
       guard items.count == 2, let value = items.first(where: { $0.name == "context" })?.value,
         let id = UUID(uuidString: value)
       else { return nil }
-      self = parts.host == "widget-readout" ? .widgetReadout(id) : .widget(id)
+      self = .widget(id)
     case "converter":
       guard items.count == 1 else { return nil }
       self = .converter

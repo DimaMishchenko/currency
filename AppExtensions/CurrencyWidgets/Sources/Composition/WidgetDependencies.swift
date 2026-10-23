@@ -12,9 +12,7 @@ struct WidgetTimelineDependencies: Sendable {
   let refreshRates: @Sendable (_ force: Bool) async throws -> RefreshResult
   let refreshLocalCurrency: @Sendable () async -> Void
   let now: @Sendable () -> Date
-  var saveContext: @Sendable (RateSnapshot, WidgetInput?, String, Date) -> URL? = { _, _, _, _ in
-    nil
-  }
+  var saveContext: @Sendable (RateSnapshot, Date) -> URL? = { _, _ in nil }
   var refreshInterval: TimeInterval = 1_800
 }
 

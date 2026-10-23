@@ -4,7 +4,6 @@ import Foundation
 import Home
 import Onboarding
 import Testing
-import Widgets
 
 @testable import CurrencyApplication
 
@@ -284,56 +283,5 @@ import Widgets
     #expect(scene.detail?.id == flowID)
     scene.finishWidgetHandoff(id: widgetID, snapshot: RateSnapshot())
     #expect(scene.detail?.id == flowID)
-  }
-}
-
-@MainActor @Suite struct WidgetReadoutTests {
-  @Test func enlargedReadoutRetainsCapturedInputAndRatesAcrossHandoffRefreshes() throws {
-    let id = UUID()
-    let snapshot = RateSnapshot(quotes: [
-      "USD": ExchangeRate(1.25, published: "2026-10-22", source: .init(provider: .frankfurter))
-    ])
-    var input = WidgetInput(codes: ["XAU", "USD", "@local:CZK"], amount: "3.456")
-    input.setMetalUnit(.gram)
-    let captured = input
-    let saved = ConverterState()
-    let scene = CurrencyScene(
-      completed: true, replay: {},
-      readWidgetContext: { _ in .init(snapshot: snapshot, renderedInput: captured) },
-      readInput: { saved })
-    scene.open(.widget(id))
-    scene.open(.widgetReadout(id))
-    let presentation = try #require(scene.widgetReadout)
-    #expect(presentation.context?.renderedInput == captured)
-    #expect(scene.widgetContextID == nil)
-    #expect(scene.widgetSnapshot == nil)
-    scene.releaseWidgetSnapshot(id: id, snapshot: RateSnapshot())
-    scene.finishWidgetHandoff(id: id, snapshot: RateSnapshot())
-    #expect(scene.widgetReadout?.id == presentation.id)
-    #expect(scene.widgetReadout?.context?.snapshot.quotes["USD"]?.value == 1.25)
-    #expect(saved == ConverterState())
-    scene.open(.converter)
-    #expect(scene.widgetReadout == nil)
-  }
-
-  @Test func legacyOrMissingInputShowsUnavailableWithoutSubstitutingCurrentAppAmounts() {
-    let scene = CurrencyScene(
-      completed: true, replay: {}, readWidgetContext: { _ in .init(snapshot: RateSnapshot()) })
-    scene.open(.widgetReadout(UUID()))
-    #expect(scene.widgetReadout != nil)
-    #expect(scene.widgetReadout?.context == nil)
-    #expect(scene.widgetContextID == nil)
-  }
-
-  @Test func readoutWaitsForOnboardingAndIsOwnedByOneScene() {
-    let first = CurrencyScene(completed: false, replay: {})
-    let second = CurrencyScene(completed: true, replay: {})
-    first.open(.widgetReadout(UUID()))
-    #expect(first.widgetReadout == nil)
-    first.receive(OnboardingOutput.completed, flowID: first.onboardingID)
-    #expect(first.widgetReadout != nil)
-    #expect(second.widgetReadout == nil)
-    first.receive(HomeOutput.widgetsRequested)
-    #expect(first.widgetReadout == nil)
   }
 }
