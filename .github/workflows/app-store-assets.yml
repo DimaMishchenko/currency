@@ -76,10 +76,13 @@ jobs:
           chmod 755 "$RUNNER_TEMP/currency-asc-bin/asc"
           echo "$RUNNER_TEMP/currency-asc-bin" >> "$GITHUB_PATH"
           if [[ "$REQUEST_MODE" != inspect-native-policy && ",$ASSET_SCOPE," == *,header,* ]] && ! command -v ffprobe >/dev/null 2>&1; then
+            if [[ -f /etc/apt/apt-mirrors.txt ]]; then
+              printf '%s\n' 'https://archive.ubuntu.com/ubuntu/' | sudo tee /etc/apt/apt-mirrors.txt >/dev/null
+            fi
             echo 'Refreshing package index for video inspection'
-            sudo timeout 120 apt-get -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20 -o Acquire::Retries=1 update
+            sudo timeout 120 apt-get -o Acquire::ForceIPv4=true -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20 -o Acquire::Retries=1 update
             echo 'Installing video inspection dependency'
-            sudo env DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a timeout 240 apt-get -o Dpkg::Use-Pty=0 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20 -o Acquire::Retries=1 install -y --no-install-recommends ffmpeg
+            sudo env DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a timeout 240 apt-get -o Acquire::ForceIPv4=true -o Dpkg::Use-Pty=0 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20 -o Acquire::Retries=1 install -y --no-install-recommends ffmpeg
             ffprobe -version
           fi
       - name: Fetch and verify the pinned asset release
