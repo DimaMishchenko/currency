@@ -187,7 +187,23 @@ jobs:
               return {'mode': 'inspect-native-policy', 'referenceData': [project(rows[0].get('attributes', {}), schema)]}
 
           try:
-              print(json.dumps(inspect_native_policy(module.CLI(apply=False)), indent=2))
+              cli = module.CLI(apply=False)
+              result = inspect_native_policy(cli)
+              recipe = json.load(open('Marketing/AppStore/design/recipe.json'))
+              checksums = set(recipe.get('approved_header_sha256_by_locale', {}).values())
+              if recipe.get('approved_header_sha256'):
+                  checksums.add(recipe['approved_header_sha256'])
+              references = {'currency-approved-' + checksum for checksum in checksums if isinstance(checksum, str) and re.fullmatch('[0-9a-f]{64}', checksum)}
+              library = cli.api('GET', '/v1/apps/6816213577/assetLibrary').get('data')
+              if not isinstance(library, dict) or not isinstance(library.get('id'), str) or not re.fullmatch('[A-Za-z0-9-]+', library['id']):
+                  raise UploadError('No unique valid asset library for processing inspection')
+              videos = cli.api('GET', '/v1/appAssetLibraries/' + library['id'] + '/videos').get('data')
+              if not isinstance(videos, list) or any(not isinstance(video, dict) or not isinstance(video.get('attributes'), dict) for video in videos):
+                  raise UploadError('Video processing inspection returned invalid data')
+              states = {'UPLOADING', 'PROCESSING', 'PREPARE_FOR_SUBMISSION', 'WAITING_FOR_REVIEW', 'IN_REVIEW', 'APPROVED', 'REJECTED', 'FAILED'}
+              result['approvedHeaderProcessing'] = [{'reference': a['referenceName'], 'state': a.get('state') if a.get('state') in states else 'OTHER', 'hasVideoAsset': bool(a.get('videoAsset')), 'hasSpecification': bool(a.get('specId'))} for video in videos if (a := video['attributes']).get('referenceName') in references]
+              result['expectedUniqueHeaders'] = len(references)
+              print(json.dumps(result, indent=2))
           except UploadError as error:
               sys.exit(str(error))
           PY
