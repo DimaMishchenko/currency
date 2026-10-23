@@ -9,6 +9,7 @@ import Widgets
 /// Interactive banknote and metal-weight reference widget.
 public struct CashView: View {
   @Environment(\.locale) private var locale
+  @Environment(\.colorSchemeContrast) private var contrast
   let entry: SuiteEntry
   /// Creates a reference-value widget with the entry’s preset currencies.
   public init(entry: SuiteEntry) { self.entry = entry }
@@ -79,8 +80,10 @@ public struct CashView: View {
               .overlay {
                 RoundedRectangle(cornerRadius: AppStyle.Widget.keyRadius)
                   .strokeBorder(
-                    .primary.opacity(preset == amount ? AppStyle.Widget.selectedBorder : 0),
-                    lineWidth: 1)
+                    .primary.opacity(
+                      preset == amount
+                        ? (contrast == .increased ? 1 : AppStyle.Widget.selectedBorder) : 0),
+                    lineWidth: contrast == .increased ? 2 : 1)
               }
           }
           .buttonStyle(WidgetButtonStyle())

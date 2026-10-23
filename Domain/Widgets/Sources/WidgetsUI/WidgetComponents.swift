@@ -8,6 +8,7 @@ import WidgetKit
 import Widgets
 
 struct WidgetSurface: ViewModifier {
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   let openURL: URL?
   func body(content: Content) -> some View {
     content
@@ -15,7 +16,15 @@ struct WidgetSurface: ViewModifier {
       .font(AppStyle.font(.caption))
       .tint(Color(uiColor: .label))
       .modifier(WidgetContainerBackground())
-      .widgetURL(openURL ?? URL(string: "currency://convert"))
+      .widgetURL(readoutURL ?? openURL ?? URL(string: "currency://convert"))
+  }
+  private var readoutURL: URL? {
+    guard dynamicTypeSize.isAccessibilitySize, let openURL,
+      var components = URLComponents(url: openURL, resolvingAgainstBaseURL: false),
+      components.host == "widget"
+    else { return nil }
+    components.host = "widget-readout"
+    return components.url
   }
 }
 
@@ -263,6 +272,7 @@ struct WidgetCurrencyIcon: View {
 
 struct CurrencyTile: View {
   @Environment(\.locale) private var locale
+  @Environment(\.colorSchemeContrast) private var contrast
   let entry: SuiteEntry
   let code: String
   var compact = false
@@ -343,7 +353,9 @@ struct CurrencyTile: View {
     .overlay {
       RoundedRectangle(cornerRadius: cornerRadius)
         .strokeBorder(
-          .primary.opacity(selected ? AppStyle.Widget.selectedBorder : 0), lineWidth: 1.2)
+          .primary.opacity(
+            selected ? (contrast == .increased ? 1 : AppStyle.Widget.selectedBorder) : 0),
+          lineWidth: contrast == .increased ? 2 : 1.2)
     }
     .contentShape(.rect)
   }

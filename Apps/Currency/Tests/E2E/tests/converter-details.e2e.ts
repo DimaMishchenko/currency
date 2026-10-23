@@ -16,7 +16,15 @@ test('converter state survives inspecting history and rate sources', { tags: ['c
   await agent.act('Change the history range to Three months (3M).');
   await expect(screen.getByTestId('currency.details.historyRange').getByRole('tab', 'Three months')).toBeSelected();
 
-  const source = screen.getByTestId('currency.details.sourceDisclosure').filter({ hasText: /Fawaz.*daily reference rates/i });
+  const detailsBounds = await screen.getByTestId('currency.details.USD').boundingBox();
+  if (!detailsBounds) throw new Error('Details must expose its sheet bounds');
+  await screen.swipe({
+    from: { x: detailsBounds.x + 8, y: detailsBounds.y + detailsBounds.height * 0.8 },
+    to: { x: detailsBounds.x + 8, y: detailsBounds.y + detailsBounds.height * 0.3 },
+  });
+  const source = screen.getByTestId('currency.details.sourceDisclosure')
+    .filter({ hasText: /^Frankfurter.*daily reference rates$/i });
+  await expect(source).toHaveText(/Frankfurter.*daily reference rates/i);
   await source.tap();
   await expect(source).toHaveValue('Expanded');
   await agent.act('Scroll down in Details until the exact text "Reference-rate history may have gaps on weekends or when no data is published. Historical and current conversion sources may differ." is visible. Use that exact text when scrolling to text. Keep Details open.');

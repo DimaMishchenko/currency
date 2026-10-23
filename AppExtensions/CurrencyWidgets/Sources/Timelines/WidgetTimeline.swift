@@ -36,7 +36,8 @@ struct SuiteTimeline<Configuration: SuiteConfiguration>: AppIntentTimelineProvid
 
   func timeline(starting current: SuiteEntry, retry: Bool = false) -> Timeline<SuiteEntry> {
     var current = current
-    current.openURL = dependencies.saveContext(current.snapshot, dependencies.now())
+    current.openURL = dependencies.saveContext(
+      current.snapshot, readoutInput(current), kind, dependencies.now())
     var entries = [current]
     if current.spec.usesLocation, current.spec.localCode != nil, !current.spec.localIsStale,
       let expiresAt = current.spec.localExpiresAt
@@ -50,6 +51,37 @@ struct SuiteTimeline<Configuration: SuiteConfiguration>: AppIntentTimelineProvid
       entries: entries,
       policy: .after(
         dependencies.now().addingTimeInterval(retry ? 300 : dependencies.refreshInterval)))
+  }
+
+  private func readoutInput(_ entry: SuiteEntry) -> WidgetInput? {
+    let codes = entry.spec.codes
+    guard !codes.isEmpty else { return nil }
+    let base = WidgetSelection.currency(codes.first ?? "EUR")
+    switch kind {
+    case "CurrencyBoard":
+      guard WidgetMath.parseAmount(entry.spec.amount) != nil else { return nil }
+      return WidgetInput(codes: codes, amount: entry.spec.amount, metalUnit: entry.input.metalUnit)
+    case "CurrencyCash":
+      let presets = WidgetPresets.amounts(base)
+      let amount = presets.contains(entry.input.decimal) ? entry.input.decimal : presets[0]
+      return WidgetInput(
+        codes: codes, amount: NSDecimalNumber(decimal: amount).stringValue, metalUnit: .gram)
+    case "CurrencyPocketRate":
+      let target = WidgetSelection.currency(codes.last ?? "USD")
+      let rate = entry.snapshot.convert(1, from: base, to: target, metalUnit: .gram)
+      guard let amount = rate.flatMap({ WidgetMath.anchor(rate: $0) }) else { return nil }
+      return WidgetInput(
+        codes: codes, amount: NSDecimalNumber(decimal: amount).stringValue, metalUnit: .gram)
+    case "CurrencyMentalMath":
+      let target = WidgetSelection.currency(codes.last ?? "USD")
+      guard
+        let rate = entry.snapshot.convert(
+          1, from: base, to: target, metalUnit: entry.input.metalUnit),
+        WidgetMath.rule(rate: rate) != nil
+      else { return nil }
+      return WidgetInput(codes: codes, amount: "1", metalUnit: entry.input.metalUnit)
+    default: return entry.input
+    }
   }
 
   func entry(_ configuration: Configuration) -> SuiteEntry {

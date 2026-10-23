@@ -33,6 +33,7 @@ struct RateDetailsScreen: View {
 
   @State private var selectedDate: Date?
   @State private var sourceDetailsExpanded = false
+  @State private var historyValuesExpanded = false
   @State private var historySelectionHeight: CGFloat = 48
   private var quote: String { model.quote }
   private var sourceLabel: String { unitLabel(code) }
@@ -252,8 +253,10 @@ struct RateDetailsScreen: View {
           VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
             Text(verbatim: "\(rateLabel(Decimal(selected.value))) \(quoteLabel)")
               .font(AppStyle.font(.title3).monospacedDigit())
-              .lineLimit(1).minimumScaleFactor(0.25)
+              .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1).minimumScaleFactor(0.25)
+              .accessibilityIdentifier("currency.details.selectedValue")
             Text(dates.pointLabel(selected.date))
+              .accessibilityIdentifier("currency.details.selectedDate")
               .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
             if dates.showsTime {
               Text(.Details.chartTimeZone(dates.chartTimeZone))
@@ -399,6 +402,9 @@ struct RateDetailsScreen: View {
         }
         .foregroundStyle(.primary)
       }
+      if let series, !loading, !series.points.isEmpty {
+        historyValues(series)
+      }
       DisclosureGroup(isExpanded: $sourceDetailsExpanded) {
         VStack(alignment: .leading, spacing: AppStyle.Space.medium) {
           if let series, !series.points.isEmpty {
@@ -440,6 +446,59 @@ struct RateDetailsScreen: View {
     }
     .font(AppStyle.font(.footnote)).foregroundStyle(.secondary)
     .fixedSize(horizontal: false, vertical: true)
+  }
+
+  private func historyValues(_ series: HistorySeries) -> some View {
+    VStack(alignment: .leading, spacing: AppStyle.Space.small) {
+      Button {
+        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.2)) {
+          historyValuesExpanded.toggle()
+        }
+      } label: {
+        HStack(spacing: AppStyle.Space.small) {
+          Text(.Details.historyValues)
+          Image(systemName: "chevron.right")
+            .font(AppStyle.font(.caption, weight: .semibold))
+            .rotationEffect(.degrees(historyValuesExpanded ? 90 : 0))
+            .accessibilityHidden(true)
+        }
+        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+        .contentShape(Rectangle())
+      }
+      .buttonStyle(.plain)
+      .accessibilityValue(
+        Text(historyValuesExpanded ? .Details.sourceExpanded : .Details.sourceCollapsed)
+      )
+      .accessibilityIdentifier("currency.details.historyValues")
+      if historyValuesExpanded {
+        ForEach(series.points) { point in
+          Button {
+            selectedDate = point.date
+          } label: {
+            VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
+              Text(dates.pointLabel(point.date))
+                .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
+              HStack(alignment: .firstTextBaseline, spacing: AppStyle.Space.small) {
+                Text(verbatim: "\(rateLabel(Decimal(point.value))) \(quoteLabel)")
+                  .font(AppStyle.font(.body).monospacedDigit())
+                if selected?.id == point.id {
+                  Image(systemName: "checkmark").accessibilityHidden(true)
+                }
+              }
+            }
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+            .contentShape(Rectangle())
+          }
+          .buttonStyle(.plain)
+          .accessibilityLabel(dates.pointLabel(point.date))
+          .accessibilityValue("\(rateLabel(Decimal(point.value))) \(quoteLabel)")
+          .accessibilityAddTraits(selected?.id == point.id ? .isSelected : [])
+          .accessibilityIdentifier(
+            "currency.details.historyPoint.\(point.date.timeIntervalSinceReferenceDate)")
+        }
+      }
+    }
   }
 
   private func rateLabel(_ value: Decimal?) -> String {

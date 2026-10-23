@@ -90,6 +90,7 @@ import Testing
     try data.write(to: legacyURL)
     let store = WidgetQuoteContextStore(directory: directory)
     _ = try store.save(snapshot, now: now)
+    #expect(store.context(id, now: now)?.renderedInput == nil)
     #expect(store.context(id, now: now)?.base == "BTC")
     #expect(store.context(id, now: now)?.quote == "USD")
     #expect(store.context(id, now: now)?.snapshot.quotes["USD"]?.value == 1.125)
@@ -161,6 +162,36 @@ import Testing
       Set(remaining.map(\.lastPathComponent)) == [
         "index.json", id.uuidString + ".json", "unrelated.json", unrelatedText.lastPathComponent
       ])
+  }
+
+  @Test func capturedInputRoundTripsAndDistinctAmountsHaveIndependentContexts() throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = WidgetQuoteContextStore(directory: directory)
+    let now = Date.now
+    let snapshot = fullSnapshot(now: now)
+    var input = WidgetInput(codes: ["XAU", "BTC", "@local:CZK", "USD"], amount: "12.345")
+    input.setMetalUnit(.gram)
+    input.select("BTC", snapshot: snapshot)
+    input.press("7")
+    let first = try #require(try store.save(snapshot, renderedInput: input, now: now))
+    let id = try contextID(first)
+    let restored = try #require(store.context(id, now: now)?.renderedInput)
+    #expect(restored == input)
+    #expect(restored.active == "BTC")
+    #expect(restored.metalUnit == .gram)
+    #expect(restored.codes == ["XAU", "BTC", "@local:CZK", "USD"])
+    #expect(try store.save(snapshot, renderedInput: input, now: now.addingTimeInterval(1)) == first)
+    input.press("8")
+    #expect(try store.save(snapshot, renderedInput: input, now: now) != first)
+    #expect(try store.save(snapshot, now: now) != first)
+    let mentalURL = try #require(
+      try store.save(
+        snapshot, renderedInput: restored, renderedKind: "CurrencyMentalMath", now: now))
+    #expect(mentalURL != first)
+    #expect(store.context(try contextID(mentalURL), now: now)?.renderedKind == "CurrencyMentalMath")
+    #expect(store.context(id, now: now)?.renderedInput == restored)
+    #expect(store.context(id, now: now.addingTimeInterval(WidgetQuoteContextStore.lifetime)) == nil)
   }
 
   private func contextID(_ url: URL) throws -> UUID {

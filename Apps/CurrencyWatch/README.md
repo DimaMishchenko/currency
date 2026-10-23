@@ -29,6 +29,30 @@ xcrun simctl install "$WATCH_SIMULATOR_UDID" "$WATCH_APP"
 
 Confirm `TeamIdentifier` matches the project team. Verify a custom pair such as GBP/CZK through the native widget editor, installed Smart Stack and corner complication, rather than accepting a default EUR/USD rendering as configuration proof. Board/Favorite Pairs must also retain configured amount/targets; Cash must use its configured currencies; History must retain its pair/range. Snapshots use configured cached data, while timeline refreshes fetch live data.
 
+## Amount editing acceptance
+
+For WATCH-01–02, use one explicitly owned Watch simulator, then repeat the assistive-input checks on a physical Watch. The phone E2E driver does not cover Watch. Amount entry appends to the existing draft; there is no replacement mode. The amount uses the primary foreground before and after every key. The editor keeps the keypad in the available height when its scalable rows fit; smaller viewports at larger text sizes allow vertical scrolling rather than shrinking the digits. Long draft values scroll horizontally and retain their full accessibility value.
+
+1. Save an initial amount of 100. Open the amount editor and press 5. Expect 1005; press Delete once and expect 100. The initial amount and both resulting drafts must remain white in the Watch dark interface.
+2. Press the locale's decimal separator and 5. Expect 100.5 (100,5 in a comma-decimal locale). Press the separator again; it must not add a second decimal. Delete removes the final digit, then the separator. Deleting down to the last digit yields 0.
+3. Change a draft and use the native Cancel/dismiss action. The converter must retain its saved amount. Reopen, make a new edit, and choose Done. Confirm the converter and its destination conversions use the new amount. Terminate and relaunch; the saved amount must persist.
+4. With VoiceOver, focus the amount before and after editing. Expect the localized Amount label and the complete current draft value, including its decimal separator. Activate digits, Decimal separator, Delete digit, Done and Cancel; verify their actual outcomes and focus restoration. An accessibility tree alone does not prove spoken feedback or task completion.
+5. On the smallest supported Watch viewport, compare default and maximum Watch text size with Bold Text off/on. Repeat the short draft and a 14-digit amount with a decimal. Verify readable digits, all twelve reachable keys, Done/Cancel, horizontal access to the complete long draft and any needed vertical scrolling. Do not count smaller type or VoiceOver as the visual enlargement alternative.
+6. Repeat editing with Reduce Motion and Increase Contrast enabled. Confirm amounts do not change color to indicate editing state, numeric transitions settle without spatial animation under Reduce Motion, and value/key contrast remains readable over the actual glass backgrounds.
+
+Record the owned UDID, text-size/settings, expected and observed values, screenshots and any driver limitation in ignored local evidence. Do not mark this journey passed from a build or shared conversion-model tests.
+
+## Enlarged details and complication acceptance
+
+For WATCH-04–05, compare default and maximum Watch text size on a small Watch viewport. Read the full pair, selected range, latest numeric value and both endpoint dates. Header/date content must remain readable as rows grow or stack, and the chart must grow with text size. Scroll to the reference explanation and any cached/unavailable issue. With VoiceOver, explore native chart observations and their dates/values as well as the range control; the pair label alone is insufficient history access.
+
+Installed accessory complications have system-defined layouts. This app supports rectangular, circular and inline families, plus Pocket's corner family; it does not implement an X-Large family. Keep these constrained summaries compact and verify their actual app alternatives instead of assuming an unsupported large complication exists:
+
+- Pocket, Cash, Board and Favorite Pairs link to the converter with a captured pair and amount. Check a nondefault pair and long amount at maximum Watch text size after opening each supported surface. Cash links must preserve their captured metal quantity. Favorite Pairs has separate per-pair links; verify each selected pair. Mental Math opens the captured conversion; the app's full source/result values provide the conversion outcome, while its compact arithmetic rule remains in the complication.
+- History opens details for its captured pair. Its route does not carry the selected history range. Select that same range in the app and verify the enlarged values, dates and chart. Do not claim automatic preservation of the complication's period or a complete equivalent summary from the link alone.
+
+Check saved/unavailable states, native return navigation and actual installed-family contrast separately. These are maintained acceptance instructions, not a record that accessibility support labels have passed.
+
 ## Rate provider acceptance
 
 Use one explicitly owned Watch simulator and device-targeted controls. Keep the independent Watch networking path active. Coin Metrics is the standard current crypto and intraday source; Fawaz provides the automatic daily-rate fallback.

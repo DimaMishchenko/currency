@@ -148,6 +148,72 @@ import WidgetsUI
     #expect(timeline.entries[1].spec.localIsStale)
   }
 
+  @Test func readoutContextCapturesCustomBoardRenderingAndKeepsNormalTapURL() throws {
+    let now = Date.now
+    let snapshot = rates
+    let captured = Mutex<WidgetInput?>(nil)
+    let normalURL = URL(
+      string: "currency://widget?v=1&context=00000000-0000-0000-0000-000000000001")!
+    let dependencies = WidgetTimelineDependencies(
+      input: { ConverterState() }, rates: { snapshot }, localSnapshot: { (nil, .notDetermined) },
+      widgetInput: { _, _, _ in WidgetInput(codes: ["GBP", "JPY"], amount: "999") },
+      refreshRates: { _ in .init(snapshot: snapshot, warning: nil) },
+      refreshLocalCurrency: {}, now: { now },
+      saveContext: { _, input, _, _ in
+        captured.withLock { $0 = input }
+        return normalURL
+      })
+    let provider = SuiteTimeline<BoardSettings>(kind: "CurrencyBoard", dependencies: dependencies)
+    var entry = provider.entry(BoardSettings())
+    entry.spec.codes = ["USD", "EUR", "@local:CZK"]
+    entry.spec.amount = "42.5"
+    let timeline = provider.timeline(starting: entry)
+    let input = try #require(captured.withLock { $0 })
+    #expect(input.codes == ["USD", "EUR", "@local:CZK"])
+    #expect(input.active == "USD")
+    #expect(input.amount == "42.5")
+    #expect(timeline.entries.first?.openURL == normalURL)
+    #expect(timeline.entries.first?.input.amount == "999")
+  }
+
+  @Test(arguments: ["CurrencyCash", "CurrencyPocketRate", "CurrencyMentalMath"])
+  func referenceReadoutUsesRenderedReferenceAmountAndUnit(kind: String) throws {
+    let snapshot = rates
+    let captured = Mutex<WidgetInput?>(nil)
+    let capturedKind = Mutex<String?>(nil)
+    let dependencies = WidgetTimelineDependencies(
+      input: { ConverterState() }, rates: { snapshot }, localSnapshot: { (nil, .notDetermined) },
+      widgetInput: { _, _, _ in WidgetInput(codes: ["EUR", "USD"], amount: "999") },
+      refreshRates: { _ in .init(snapshot: snapshot, warning: nil) },
+      refreshLocalCurrency: {}, now: { .now },
+      saveContext: { _, input, kind, _ in
+        captured.withLock { $0 = input }
+        capturedKind.withLock { $0 = kind }
+        return nil
+      })
+    let provider = SuiteTimeline<AnchorSettings>(kind: kind, dependencies: dependencies)
+    var entry = provider.entry(AnchorSettings())
+    entry.spec.codes = ["EUR", "USD"]
+    _ = provider.timeline(starting: entry)
+    let input = try #require(captured.withLock { $0 })
+    #expect(capturedKind.withLock { $0 } == kind)
+    #expect(input.codes == ["EUR", "USD"])
+    if kind == "CurrencyCash" {
+      #expect(input.decimal == 10)
+      #expect(input.metalUnit == .gram)
+    } else if kind == "CurrencyPocketRate" {
+      #expect(input.decimal == 5)
+      #expect(input.metalUnit == .gram)
+    } else {
+      #expect(input.decimal == 1)
+      #expect(input.metalUnit == entry.input.metalUnit)
+      let rate = try #require(
+        snapshot.convert(1, from: "EUR", to: "USD", metalUnit: input.metalUnit))
+      let rule = try #require(WidgetMath.rule(rate: rate))
+      #expect(!rule.divide && rule.factor == 2)
+    }
+  }
+
   @Test func intentUsesPersistedKeyAndReloadsOnlyAfterSuccessfulCommit() throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }

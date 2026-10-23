@@ -10,6 +10,8 @@ public struct CurrencyDetailsWatchScreen: View {
   @Environment(\.locale) private var locale
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
+  @ScaledMetric(relativeTo: .body) private var chartHeight = 64
+
   /// Supplies the selected pair, rate snapshot, and owned history loading capability.
   public init(input: CurrencyDetailsInput, dependencies: CurrencyDetailsDependencies) {
     _model = State(initialValue: CurrencyDetailsModel(input: input, dependencies: dependencies))
@@ -49,11 +51,16 @@ public struct CurrencyDetailsWatchScreen: View {
             .id(model.range)
         } else if let series = model.series, !series.points.isEmpty {
           VStack(alignment: .leading, spacing: 4) {
-            HStack {
-              Text(verbatim: "\(model.input.code) → \(model.quote)")
-                .font(.system(.caption2, design: .rounded, weight: .semibold))
-              Spacer(minLength: 4)
-              Text(title(model.range)).font(.caption2).foregroundStyle(.secondary)
+            ViewThatFits(in: .horizontal) {
+              HStack {
+                historyPair
+                Spacer(minLength: 4)
+                historyRange
+              }
+              VStack(alignment: .leading, spacing: 4) {
+                historyPair
+                historyRange
+              }
             }
             if let latest = series.points.last {
               Text(
@@ -74,18 +81,24 @@ public struct CurrencyDetailsWatchScreen: View {
             .chartYScale(domain: chartDomain(series))
             .chartXAxis(.hidden)
             .chartYAxis { AxisMarks(position: .leading, values: .automatic(desiredCount: 2)) }
-            .frame(height: 64)
+            .frame(height: chartHeight)
             .accessibilityLabel(Text(.Watch.historyTitle))
             .accessibilityValue(Text(verbatim: "\(model.input.code) → \(model.quote)"))
             .accessibilityIdentifier("watch.details.chart")
             if let first = series.points.first, let latest = series.points.last {
-              HStack {
-                Text(verbatim: chartDate(first.date))
-                Spacer(minLength: 4)
-                Text(verbatim: chartDate(latest.date))
+              ViewThatFits(in: .horizontal) {
+                HStack {
+                  Text(verbatim: chartDate(first.date))
+                  Spacer(minLength: 4)
+                  Text(verbatim: chartDate(latest.date))
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                  Text(verbatim: chartDate(first.date))
+                  Text(verbatim: chartDate(latest.date))
+                }
               }
               .font(.caption2).foregroundStyle(.secondary)
-              .lineLimit(1).minimumScaleFactor(0.8)
+              .fixedSize(horizontal: false, vertical: true)
               .accessibilityElement(children: .combine)
             }
           }
@@ -109,6 +122,17 @@ public struct CurrencyDetailsWatchScreen: View {
     .navigationTitle(model.input.code)
     .task(id: model.range) { await model.load() }
     .onDisappear { model.stop() }
+  }
+
+  private var historyPair: some View {
+    Text(verbatim: "\(model.input.code) → \(model.quote)")
+      .font(.system(.caption2, design: .rounded, weight: .semibold))
+      .fixedSize()
+  }
+
+  private var historyRange: some View {
+    Text(title(model.range)).font(.caption2).foregroundStyle(.secondary)
+      .fixedSize(horizontal: false, vertical: true)
   }
 
   private func amountLabel(_ amount: String, code: String) -> String {

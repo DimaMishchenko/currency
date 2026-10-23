@@ -4,6 +4,7 @@ import Foundation
 import Home
 import Observation
 import Onboarding
+import Widgets
 
 /// Scene-owned identities prevent navigation and in-flight feature state leaking between windows.
 @MainActor @Observable
@@ -16,10 +17,26 @@ public final class CurrencyScene {
     public let base: String?
     /// Configured comparison currency, or nil when the widget follows converter input.
     public let quote: String?
+    /// Exact input captured with a suite widget, absent in legacy and history contexts.
+    public let renderedInput: WidgetInput?
+    /// Captured widget layout, used to preserve reference rules.
+    public let renderedKind: String?
     /// Creates a rendered quote context without changing saved converter input.
-    public init(snapshot: RateSnapshot, base: String? = nil, quote: String? = nil) {
+    public init(
+      snapshot: RateSnapshot, base: String? = nil, quote: String? = nil,
+      renderedInput: WidgetInput? = nil, renderedKind: String? = nil
+    ) {
       self.snapshot = snapshot; self.base = base; self.quote = quote
+      self.renderedInput = renderedInput
+      self.renderedKind = renderedKind
     }
+  }
+  /// A scene-owned immutable widget presentation, including an explicit unavailable state.
+  public struct WidgetReadout: Identifiable {
+    /// Stable identity for this presentation.
+    public let id: UUID
+    /// Captured content, absent when its stored input is missing or expired.
+    public let context: WidgetContext?
   }
   /// One currency-details destination, identified independently of quote refreshes.
   public struct Details: Identifiable, Hashable {
@@ -72,6 +89,8 @@ public final class CurrencyScene {
   public var detail: Details?
   /// The active widget guide sheet.
   public var sheet: Sheet?
+  /// Enlarged captured amounts remain independent of the timed converter handoff.
+  public var widgetReadout: WidgetReadout?
   /// The active location flow and its correlation identity.
   public var location: Location?
   /// Scene-local rendered rates retained during the initial widget handoff.
@@ -99,6 +118,7 @@ public final class CurrencyScene {
   /// Interprets synchronous requests from this scene's Home feature.
   public func receive(_ output: HomeOutput) {
     clearWidgetHandoff()
+    widgetReadout = nil
     switch output {
     case .detailsRequested(let request): detail = Details(id: UUID(), request: request)
     case .settingsRequested: path.append(.settings(UUID()))
@@ -120,6 +140,7 @@ public final class CurrencyScene {
   public func restartOnboarding() throws {
     try replay()
     path = []; detail = nil; sheet = nil; location = nil; pendingRoute = nil
+    widgetReadout = nil
     clearWidgetHandoff()
     onboardingID = UUID(); homeID = UUID(); preloadsHome = false; showsOnboarding = true
   }
@@ -127,6 +148,7 @@ public final class CurrencyScene {
   public func requestLocation(addsToApp: Bool, presenterID: UUID? = nil) {
     guard location == nil else { return }
     clearWidgetHandoff()
+    widgetReadout = nil
     location = Location(id: UUID(), addsToApp: addsToApp, presenterID: presenterID)
   }
   /// Only the requesting surface may present this correlated cross-feature flow.
@@ -188,7 +210,14 @@ public final class CurrencyScene {
 
   private func present(_ route: CurrencyRoute) {
     switch route {
+    case .widgetReadout(let id):
+      let context = readWidgetContext(id)
+      clearWidgetHandoff()
+      path = []; detail = nil; sheet = nil; location = nil
+      widgetReadout = WidgetReadout(
+        id: UUID(), context: context?.renderedInput == nil ? nil : context)
     case .widget(let id):
+      widgetReadout = nil
       let context = readWidgetContext(id)
       widgetSnapshot = context?.snapshot
       widgetContextID = context == nil ? nil : id
@@ -211,10 +240,12 @@ public final class CurrencyScene {
         }
       }
     case .converter:
+      widgetReadout = nil
       clearWidgetHandoff()
       path = []; detail = nil; sheet = nil; location = nil
     case .currency(let id):
       guard let request = openCurrency(id) else { return }
+      widgetReadout = nil
       clearWidgetHandoff()
       path = []; detail = nil; sheet = nil; location = nil
       detail = Details(id: UUID(), request: request, usesZoom: false)
