@@ -1258,64 +1258,6 @@ class UploaderTests(unittest.TestCase):
                     self.assertEqual(operation['body']['data']['relationships']['orderedPlacements']['data'], [{'type': 'appAssetLibraryPlacements', 'id': placement['id']} for placement in linked if placement['attributes']['placementGroup'] == changed_group])
                     self.assertEqual(cli.calls, [('GET', path, None)])
 
-    def test_localized_header_routing_selects_language_for_default_and_cpp_and_deduplicates(self):
-        self.meta['locales']['de-DE'] = dict(self.meta['locales']['en-US'])
-        files = {}
-        for locale in ['en-US','de-DE']:
-            path = self.root / (locale + '.mp4')
-            path.write_bytes(locale.encode())
-            files[locale] = {'file':path,'sha256':u.sha256(path),'video':{'fps':60,'duration':15,'audio':False}}
-        cli = FakeCLI(self.state)
-        plan = u.Planner(cli,self.meta,self.slots,{'locales':files},'version','1.2','info',{'header'})
-        plan.library,plan.header_group = 'library','DEFAULT_PROFILE'
-        targets = {('default','en-US'):'en',('default','de-DE'):'de',('travel','en-US'):'cpp-en',('travel','de-DE'):'cpp-de'}
-        plan.place_headers(targets)
-        uploads = [op for op in plan.ops if op['method']=='LIBRARY']
-        self.assertEqual(len(uploads),2)
-        references = {op['file']:op['ref'] for op in uploads}
-        placements = [op['body']['data']['relationships'] for op in plan.ops if op['path']=='/v1/appAssetLibraryPlacements']
-        self.assertEqual([item['video']['data']['id'] for item in placements],[references[str(files[locale]['file'])] for family,locale in targets])
-        self.assertEqual([next(item[key]['data']['id'] for key in ['appStoreVersionLocalization','appCustomProductPageLocalization'] if key in item) for item in placements],list(targets.values()))
-        files['de-DE'] = files['en-US']
-        shared = u.Planner(FakeCLI(self.state),self.meta,self.slots,{'locales':files},'version','1.2','info',{'header'})
-        shared.library,shared.header_group = 'library','DEFAULT_PROFILE'
-        shared.place_headers(targets)
-        self.assertEqual(len([op for op in shared.ops if op['method']=='LIBRARY']),1)
-        self.assertTrue(all(call[0]=='GET' for call in cli.calls))
-
-    def test_localized_header_missing_locale_fails_before_remote_calls(self):
-        self.meta['locales']['de-DE'] = dict(self.meta['locales']['en-US'])
-        cli = FakeCLI(self.state)
-        with self.assertRaisesRegex(u.UploadError,'cover every metadata locale'):
-            u.Planner(cli,self.meta,self.slots,{'locales':{'en-US':{}}},'version','1.2','info',{'header'})
-        self.assertEqual(cli.calls,[])
-
-    def test_localized_media_validation_requires_complete_map_and_checks_each_header(self):
-        metadata, manifest, _ = self.approved_media_fixture()
-        generic = manifest.pop('header')
-        other = self.root / 'german.mp4'
-        other.write_bytes(b'german-video')
-        manifest['headers'] = {locale:dict(generic) for locale in metadata['locales']}
-        manifest['headers']['de-DE'] = {'path':other.name,'sha256':u.sha256(other)}
-        with patch.object(u,'validate_video',return_value={'fps':60,'duration':15,'audio':False}) as probe:
-            slots, headers = u.validate_media(self.root,manifest,metadata)
-            self.assertEqual(probe.call_count,2)
-            self.assertEqual(headers['locales']['de-DE']['file'],other.resolve())
-            self.assertEqual(headers['locales']['en-US']['file'],(self.root/'header.mp4').resolve())
-        (self.root/'manifest.json').write_text(json.dumps(manifest))
-        arguments = ['upload.py','--validate-only','--metadata',str(self.root/'metadata.json'),'--media-dir',str(self.root)]
-        with patch.object(sys,'argv',arguments), patch.object(u,'validate_video',return_value={'fps':60,'duration':15,'audio':False}), patch.object(u,'CLI') as client, patch.object(sys,'stdout',new_callable=io.StringIO) as output:
-            self.assertEqual(u.main(),0)
-            self.assertTrue(json.loads(output.getvalue())['verifiedHeader'])
-            client.assert_not_called()
-        del manifest['headers']['de-DE']
-        manifest['header'] = generic
-        with self.assertRaisesRegex(u.UploadError,'without a global fallback'):
-            u.validate_media(self.root,manifest,metadata,probe_header=False)
-        del manifest['header']
-        with self.assertRaisesRegex(u.UploadError,'every metadata locale'):
-            u.validate_media(self.root,manifest,metadata,probe_header=False)
-
     def test_header_uses_runtime_group_and_optional_video_constraints(self):
         reference = native_reference()
         attributes = reference[0]['attributes']

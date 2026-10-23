@@ -12,7 +12,6 @@ Run from the repository root:
 python3 Marketing/AppStore/generator/generate.py verify-inputs --inputs Marketing/AppStore/generator/.local/inputs
 python3 Marketing/AppStore/generator/generate.py render --inputs Marketing/AppStore/generator/.local/inputs --output Marketing/AppStore/generator/.local/preview --locale de-DE
 python3 Marketing/AppStore/generator/header.py --inputs Marketing/AppStore/generator/.local/inputs --output Marketing/AppStore/generator/.local/header --video
-python3 Marketing/AppStore/generator/header.py --inputs Marketing/AppStore/generator/.local/inputs --output Marketing/AppStore/generator/.local/localized-headers --all-locales --video
 python3 -m unittest discover -s Marketing/AppStore/generator/tests -v
 ```
 
@@ -33,21 +32,3 @@ python3 Marketing/AppStore/generator/generate.py bundle --archive INPUT.zip --he
 `bundle` verifies approved archive/header identity and all 1,512 unique PNG hashes/dimensions, then creates a deterministic ZIP with fixed member timestamps and permissions. The ZIP contains one PNG per locale master, one header video and `manifest.json`. Its 3,240 placements reference shared master paths. The manifest contract is `{schemaVersion:1, placements:[{locale,profile,family,order,path,sha256,...}], header:{path,sha256}}`. Screenshot profiles are `iphone`, `ipad`, `watch`, `duo-outer` and `duo-inner`. Existing bundle outputs are refused. Neither command publishes or contacts App Store Connect.
 
 Exact archive assembly preserves accepted bytes across platforms. Editable raster generation is reproducible only with the same input bytes and rendering stack. Historical English originals can differ from this renderer; their accepted pixels remain in the frozen archive. Use the approved output for upload and visually review design changes before updating the recipe's approved hashes.
-
-The localized header command writes eighteen 3840 × 1646, silent H.264 videos at 60 fps, posters, a local review gallery and per-locale render proofs. Repeat `--locale` to select editions. Without `--video`, it creates a poster gallery. Add `--gallery-only` with the same locale selection to rebuild the gallery from completed output. Exact background PNGs are shared under `.header-backgrounds/` next to locale output folders; their cache key includes the pixel renderer, layout, font, Pillow and linked FreeType versions. Delete only this generated cache to reclaim its space. `design/header-locales.json` owns the approved language currency priorities: the primary and first two secondary screenshot examples. The center tiles and their replacement reels use those currencies; the peripheral rails, geometry, Nunito face, 15-second period, leftward scroll and early reel timing remain fixed. Multicharacter symbols fit the existing tile aperture. These outputs require review and do not replace the approved bundle or its release pointer. Rendering checks all 900 unique input frames, exact raw scene/reel return, repeating rail textures and the encoded duration, dimensions, frame count and BT.709 color tags. Exact video bytes depend on the same Pillow/FreeType and ffmpeg/libx264 versions.
-
-Localized delivery uses `header-map.json` from a complete video gallery. Its `headers` object maps each locale to a relative `path` and `sha256`; every screenshot locale must be present. Pin reviewed hashes in a candidate recipe's `approved_header_sha256_by_locale`, then pass `--headers header-map.json` instead of `--header` to `bundle`. Bundle media paths use content hashes, so identical editions share one MP4. `unpack` checks the complete locale map and every unique video's bytes against that recipe. A recipe with localized headers refuses a global fallback. Existing single-header recipes and bundles remain supported.
-
-Gallery generation requires the current pixel-renderer/configuration/runtime identity, matching poster bytes, completed 900-frame video proof and the actual MP4 hash. Poster-only renders cannot authorize an old video left in the output directory. Pixel-code fingerprints exclude gallery/proof orchestration; each render also records its actual full script hash. All localized media remains a review candidate until approved and pinned in a new asset version.
-
-When the original placement archive has been retired, reuse its pinned compact bundle without regenerating screenshots:
-
-```sh
-python3 Marketing/AppStore/generator/generate.py --recipe Marketing/AppStore/generator/.local/assets-v2/recipe.json bundle \
-  --base-bundle Marketing/AppStore/generator/.local/Currency-AppStore-Approved.zip \
-  --base-recipe Marketing/AppStore/design/recipe.json \
-  --headers Marketing/AppStore/generator/.local/localized-headers/header-map.json \
-  --output Marketing/AppStore/generator/.local/assets-v2/Currency-AppStore-Approved.zip
-```
-
-The candidate recipe must retain the existing screenshot mapping and pin every localized header hash. The base recipe independently pins the source bundle; every source member is checked before reuse. This command creates only a local bundle. Update the candidate bundle hash before checking it with `unpack`; publish and change the public asset pin only after separate approval.

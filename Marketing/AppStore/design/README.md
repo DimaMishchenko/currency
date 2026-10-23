@@ -6,7 +6,7 @@ The recipe deliberately contains no simulator identities, proof documents, local
 
 `input-manifest.json` defines the external frozen input pack. Each entry is addressed by SHA-256 and records its byte length and input roles. Put the exact bytes at `objects/<sha256>` under a private input directory. The renderer validates every consumed object. Native captures are immutable bitmap inputs: the generator composes and crops them using SVG geometry; it does not redraw or translate the app UI. Headline text is separate from native UI.
 
-`header.svg` is the editable H09 currency symbol layout. The header renderer uses the geometry to create its repeating background and three animated currency reels. `header-locales.json` selects each language edition’s primary and first two secondary currency examples for the center tiles and replacement spins. Currency glyphs use Nunito; disambiguating prefixes retain the local dollar identity.
+`header.svg` is the editable H09 currency symbol layout. The header renderer uses the geometry to create its repeating background and three animated currency reels.
 
 The approved archive and header hashes identify the accepted output authority. Existing English originals used a different historical rendering path. Editing a design or rerendering an original requires visual review before replacing its accepted pixels.
 

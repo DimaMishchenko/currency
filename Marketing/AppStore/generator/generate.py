@@ -110,85 +110,41 @@ def export_archive(archive, output, recipe):
     return result
 
 
-def bundle_header_plan(recipe):
-    if 'approved_header_sha256_by_locale' in recipe:
-        approved = recipe['approved_header_sha256_by_locale']
-        locales = {item['locale'] for item in recipe['placements']}
-        if not isinstance(approved, dict) or set(approved) != locales or any(not isinstance(value, str) or not re.fullmatch('[a-f0-9]{64}', value) for value in approved.values()):
-            raise ValueError('Approved localized headers must cover every placement locale')
-        headers = {locale: {'path': 'headers/' + sha + '.mp4', 'sha256': sha} for locale, sha in sorted(approved.items())}
-        return {'headers': headers}, {item['path']: item['sha256'] for item in headers.values()}
-    sha = recipe['approved_header_sha256']
-    return {'header': {'path': 'header/header.mp4', 'sha256': sha}}, {'header/header.mp4': sha}
-
-
-def bundle_archive(archive, header, output, recipe, headers=None, source_recipe=None):
+def bundle_archive(archive, header, output, recipe):
     validate_recipe(recipe)
     if output.exists():
         raise ValueError('Bundle output already exists')
-    if source_recipe is not None:
-        validate_recipe(source_recipe)
-        if digest(archive) != source_recipe['approved_bundle_sha256']:
-            raise ValueError('Approved source bundle hash mismatch')
-        normalized = lambda value: [{**item, 'path': 'masters/' + item['master'] + '.png'} for item in value['placements']]
-        if normalized(source_recipe) != normalized(recipe):
-            raise ValueError('Source bundle screenshots must remain unchanged')
-    elif digest(archive) != recipe['approved_archive_sha256']:
+    if digest(archive) != recipe['approved_archive_sha256']:
         raise ValueError('Approved archive hash mismatch')
-    header_manifest, _ = bundle_header_plan(recipe)
-    if 'headers' in header_manifest:
-        if header is not None or headers is None:
-            raise ValueError('Localized header recipe requires --headers without a global fallback')
-        supplied = load(headers)
-        mapping = supplied.get('headers')
-        if supplied.get('schemaVersion') != 1 or 'header' in supplied or not isinstance(mapping, dict) or set(mapping) != set(header_manifest['headers']):
-            raise ValueError('Localized header inputs must cover every placement locale')
-        header_files = {}
-        for locale, approved in header_manifest['headers'].items():
-            item = mapping[locale]
-            if not isinstance(item, dict) or item.get('sha256') != approved['sha256']:
-                raise ValueError('Approved localized header hash mismatch: ' + locale)
-            if not isinstance(item.get('path'), str):
-                raise ValueError('Invalid localized header path: ' + locale)
-            path = confined(headers.parent, item['path'])
-            if not path.is_file() or digest(path) != approved['sha256']:
-                raise ValueError('Approved localized header bytes mismatch: ' + locale)
-            header_files[approved['path']] = path
-    else:
-        if headers is not None or header is None or digest(header) != recipe['approved_header_sha256']:
-            raise ValueError('Approved header hash mismatch')
-        header_files = {'header/header.mp4': header}
+    if digest(header) != recipe['approved_header_sha256']:
+        raise ValueError('Approved header hash mismatch')
     placements = []
     unique = {}
     for item in recipe['placements']:
         path = 'masters/' + item['master'] + '.png'
         placements.append({**item, 'path': path})
         unique.setdefault(item['master'], item)
-    result = {'schemaVersion': 1, 'placements': placements, **header_manifest}
+    result = {'schemaVersion': 1, 'placements': placements, 'header': {'path': 'header/header.mp4', 'sha256': recipe['approved_header_sha256']}}
     output.parent.mkdir(parents=True, exist_ok=True)
     pending = output.with_name(output.name + '.partial')
     if pending.exists():
         raise ValueError('Partial bundle output already exists')
     try:
         with zipfile.ZipFile(archive) as source, zipfile.ZipFile(pending, 'w', compression=zipfile.ZIP_STORED, allowZip64=True) as target:
-            if source_recipe is not None:
-                verify_bundle_members(source, source_recipe, output.parent)
-            else:
-                names = source.namelist()
-                if len(names) != len(set(names)) or set(names) != {p['path'] for p in recipe['placements']} | {'mapping.csv', 'manifest.json'}:
-                    raise ValueError('Unexpected archive members')
-                for name in names:
-                    confined(output.parent, name)
+            names = source.namelist()
+            if len(names) != len(set(names)) or set(names) != {p['path'] for p in recipe['placements']} | {'mapping.csv', 'manifest.json'}:
+                raise ValueError('Unexpected archive members')
+            for name in names:
+                confined(output.parent, name)
             for key, item in sorted(unique.items()):
-                source_path = 'masters/' + key + '.png' if source_recipe is not None else item['path']
-                data = source.read(source_path)
+                data = source.read(item['path'])
                 if hashlib.sha256(data).hexdigest() != item['sha256'] or png_dimensions(data[:24]) != (item['width'], item['height']):
                     raise ValueError('Approved master mismatch: ' + key)
                 info = zipfile.ZipInfo('masters/' + key + '.png', (1980, 1, 1, 0, 0, 0))
                 info.create_system = 3
                 info.external_attr = 0o100644 << 16
                 target.writestr(info, data)
-            for name, data in [*[(name, path.read_bytes()) for name, path in sorted(header_files.items())], ('manifest.json', (json.dumps(result, ensure_ascii=False, sort_keys=True, separators=(',', ':')) + '\n').encode())]:
+            for name, data in [('header/header.mp4', header.read_bytes()), ('manifest.json', (json.dumps(result, ensure_ascii=False, sort_keys=True, separators=(',', ':')) + '\n').encode())]:
                 info = zipfile.ZipInfo(name, (1980, 1, 1, 0, 0, 0))
                 info.create_system = 3
                 info.external_attr = 0o100644 << 16
@@ -200,43 +156,34 @@ def bundle_archive(archive, header, output, recipe, headers=None, source_recipe=
     return result
 
 
-def bundle_contents(recipe):
-    expected_placements = [{**p, 'path': 'masters/' + p['master'] + '.png'} for p in recipe['placements']]
-    header_manifest, header_hashes = bundle_header_plan(recipe)
-    expected_manifest = {'schemaVersion': 1, 'placements': expected_placements, **header_manifest}
-    expected = {p['path']: (p['sha256'], (p['width'], p['height'])) for p in expected_placements}
-    expected.update({name: (sha, None) for name, sha in header_hashes.items()})
-    return expected_manifest, expected
-
-
-def verify_bundle_members(source, recipe, root):
-    expected_manifest, expected = bundle_contents(recipe)
-    names = source.namelist()
-    if len(names) != len(set(names)) or set(names) != set(expected) | {'manifest.json'}:
-        raise ValueError('Unexpected bundle members')
-    for member in source.infolist():
-        confined(root, member.filename)
-        if (member.external_attr >> 16) & 0o170000 == 0o120000:
-            raise ValueError('Bundle symlink refused')
-    if json.loads(source.read('manifest.json')) != expected_manifest:
-        raise ValueError('Bundle placement mapping mismatch')
-    for name, (sha, dimensions) in expected.items():
-        data = source.read(name)
-        if hashlib.sha256(data).hexdigest() != sha:
-            raise ValueError('Bundle media hash mismatch: ' + name)
-        if dimensions and png_dimensions(data[:24]) != dimensions:
-            raise ValueError('Bundle PNG dimensions mismatch: ' + name)
-    return expected_manifest, expected
-
-
 def unpack_bundle(archive, output, recipe):
     validate_recipe(recipe)
     if output.exists() and any(output.iterdir()):
         raise ValueError('Output directory must be empty')
     if digest(archive) != recipe['approved_bundle_sha256']:
         raise ValueError('Approved bundle hash mismatch')
+    expected_placements = [{**p, 'path': 'masters/' + p['master'] + '.png'} for p in recipe['placements']]
+    expected_manifest = {'schemaVersion': 1, 'placements': expected_placements, 'header': {'path': 'header/header.mp4', 'sha256': recipe['approved_header_sha256']}}
+    expected = {}
+    for p in expected_placements:
+        expected[p['path']] = (p['sha256'], (p['width'], p['height']))
+    expected['header/header.mp4'] = (recipe['approved_header_sha256'], None)
     with zipfile.ZipFile(archive) as source:
-        expected_manifest, expected = verify_bundle_members(source, recipe, output)
+        names = source.namelist()
+        if len(names) != len(set(names)) or set(names) != set(expected) | {'manifest.json'}:
+            raise ValueError('Unexpected bundle members')
+        for member in source.infolist():
+            confined(output, member.filename)
+            if (member.external_attr >> 16) & 0o170000 == 0o120000:
+                raise ValueError('Bundle symlink refused')
+        if json.loads(source.read('manifest.json')) != expected_manifest:
+            raise ValueError('Bundle placement mapping mismatch')
+        for name, (sha, dimensions) in expected.items():
+            data = source.read(name)
+            if hashlib.sha256(data).hexdigest() != sha:
+                raise ValueError('Bundle media hash mismatch: ' + name)
+            if dimensions and png_dimensions(data[:24]) != dimensions:
+                raise ValueError('Bundle PNG dimensions mismatch: ' + name)
         output.mkdir(parents=True, exist_ok=True)
         for name in expected:
             target = confined(output, name)
@@ -315,13 +262,8 @@ def main():
     export.add_argument('--archive', required=True, type=Path)
     export.add_argument('--output', required=True, type=Path)
     bundle = sub.add_parser('bundle')
-    source_choice = bundle.add_mutually_exclusive_group(required=True)
-    source_choice.add_argument('--archive', type=Path)
-    source_choice.add_argument('--base-bundle', type=Path)
-    bundle.add_argument('--base-recipe', type=Path, default=DESIGN / 'recipe.json')
-    header_choice = bundle.add_mutually_exclusive_group(required=True)
-    header_choice.add_argument('--header', type=Path)
-    header_choice.add_argument('--headers', type=Path)
+    bundle.add_argument('--archive', required=True, type=Path)
+    bundle.add_argument('--header', required=True, type=Path)
     bundle.add_argument('--output', required=True, type=Path)
     unpack = sub.add_parser('unpack')
     unpack.add_argument('--archive', required=True, type=Path)
@@ -344,7 +286,7 @@ def main():
         result = unpack_bundle(args.archive, args.output, recipe)
         print(json.dumps({'placements': len(result['placements']), 'masters': len(recipe['masters'])}))
     elif args.command == 'bundle':
-        result = bundle_archive(args.base_bundle or args.archive, args.header, args.output, recipe, args.headers, load(args.base_recipe) if args.base_bundle else None)
+        result = bundle_archive(args.archive, args.header, args.output, recipe)
         print(json.dumps({'placements': len(result['placements']), 'masters': len(recipe['masters']), 'bundle_sha256': digest(args.output)}))
     elif args.command == 'export':
         result = export_archive(args.archive, args.output, recipe)

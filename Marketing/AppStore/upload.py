@@ -77,23 +77,12 @@ def validate_media(root, manifest, metadata, probe_header=True):
     expected = {(l, p, f, n) for l in metadata['locales'] for p in {*PROFILES, 'duo-inner', 'duo-outer'} for f in FAMILIES for n in range(1, 7)}
     if set(slots) != expected:
         raise UploadError('Media manifest must contain all 3240 screenshot placements')
-    def checked_header(header):
-        if not isinstance(header, dict):
-            raise UploadError('Invalid header mapping')
-        path = confined(root, header.get('path'))
-        if path.suffix.lower() not in {'.mp4', '.m4v', '.mov'} or not path.is_file() or sha256(path) != header.get('sha256'):
-            raise UploadError('Approved header video is missing or has the wrong hash')
-        identifier = header['sha256']
-        if identifier not in probes:
-            probes[identifier] = validate_video(path) if probe_header else {}
-        return dict(header, file=path, video=probes[identifier])
-    probes = {}
-    if 'headers' in manifest:
-        headers = manifest['headers']
-        if 'header' in manifest or not isinstance(headers, dict) or set(headers) != set(metadata['locales']):
-            raise UploadError('Localized headers must contain every metadata locale exactly once, without a global fallback')
-        return slots, {'locales': {locale: checked_header(item) for locale, item in headers.items()}}
-    return slots, checked_header(manifest.get('header', {}))
+    header = manifest.get('header', {})
+    path = confined(root, header.get('path'))
+    if path.suffix.lower() not in {'.mp4', '.m4v', '.mov'} or not path.is_file() or sha256(path) != header.get('sha256'):
+        raise UploadError('Approved header video is missing or has the wrong hash')
+    video = validate_video(path) if probe_header else {}
+    return slots, dict(header, file=path, video=video)
 
 
 def validate_png(path, dimensions):
@@ -414,20 +403,10 @@ class Planner:
         self.cpp_profiles = []
         self.cpp_status = None
         self.header_group = None
-        if 'locales' in self.header and (not isinstance(self.header['locales'], dict) or set(self.header['locales']) != set(self.meta['locales'])):
-            raise UploadError('Localized headers must cover every metadata locale without fallback')
         if remove_approved_duplicate is not None and (not isinstance(remove_approved_duplicate, str) or not re.fullmatch('[A-Za-z0-9-]{1,180}', remove_approved_duplicate)):
             raise UploadError('Explicit duplicate screenshot ID is invalid')
         self.remove_approved_duplicate = remove_approved_duplicate
         self.duplicate_repair = None
-
-    def header_for_locale(self, locale):
-        return self.header['locales'][locale] if 'locales' in self.header else self.header
-
-    def place_headers(self, targets):
-        for (family, locale), target in targets.items():
-            video = self.library_media(self.header_for_locale(locale), 'video')
-            self.place_header(target, family, video)
 
     def get(self, path):
         if '@pending-' in path:
@@ -503,7 +482,9 @@ class Planner:
                 raise UploadError('No unique Asset Library; initialize it in App Store Connect first')
             self.library = libraries[0]['id']
         if 'header' in self.scopes:
-            self.place_headers(targets)
+            video = self.library_media(self.header, 'video')
+            for (family, locale), target in targets.items():
+                self.place_header(target, family, video)
         for (family, locale), target in targets.items():
             if (family == 'default' and 'default' in self.scopes) or (family != 'default' and 'cpp' in self.scopes):
                 for profile in (PROFILES if family == 'default' else self.cpp_profiles):
@@ -570,27 +551,25 @@ class Planner:
                     return False
             if media_type != 'video':
                 return True
-            def accepts_video(video):
-                if 'frameRates' in spec:
-                    fps = video.get('fps')
-                    rates = records(spec['frameRates'])
-                    if not isinstance(fps, (int, float)) or not any(type(rate.get('minFps')) is int and type(rate.get('maxFps')) is int and rate['minFps'] <= fps <= rate['maxFps'] for rate in rates):
-                        return False
-                if 'duration' in spec:
-                    bounds = spec['duration']
-                    def seconds(value):
-                        match = re.fullmatch(r'PT(?:(\d+(?:\.\d+)?)H)?(?:(\d+(?:\.\d+)?)M)?(?:(\d+(?:\.\d+)?)S)?', value) if isinstance(value, str) else None
-                        return sum(float(part or 0) * scale for part, scale in zip(match.groups(), (3600, 60, 1))) if match and any(match.groups()) else None
-                    low = seconds(bounds.get('min')) if isinstance(bounds, dict) else None
-                    high = seconds(bounds.get('max')) if isinstance(bounds, dict) else None
-                    duration = video.get('duration')
-                    if low is None or high is None or not isinstance(duration, (int, float)) or not low <= duration <= high:
-                        return False
-                if spec.get('audioRequired') is True and video.get('audio') is not True:
+            video = self.header.get('video', {})
+            if 'frameRates' in spec:
+                fps = video.get('fps')
+                rates = records(spec['frameRates'])
+                if not isinstance(fps, (int, float)) or not any(type(rate.get('minFps')) is int and type(rate.get('maxFps')) is int and rate['minFps'] <= fps <= rate['maxFps'] for rate in rates):
                     return False
-                return True
-            variants = self.header['locales'].values() if 'locales' in self.header else [self.header]
-            return all(accepts_video(header.get('video', {})) for header in variants)
+            if 'duration' in spec:
+                bounds = spec['duration']
+                def seconds(value):
+                    match = re.fullmatch(r'PT(?:(\d+(?:\.\d+)?)H)?(?:(\d+(?:\.\d+)?)M)?(?:(\d+(?:\.\d+)?)S)?', value) if isinstance(value, str) else None
+                    return sum(float(part or 0) * scale for part, scale in zip(match.groups(), (3600, 60, 1))) if match and any(match.groups()) else None
+                low = seconds(bounds.get('min')) if isinstance(bounds, dict) else None
+                high = seconds(bounds.get('max')) if isinstance(bounds, dict) else None
+                duration = video.get('duration')
+                if low is None or high is None or not isinstance(duration, (int, float)) or not low <= duration <= high:
+                    return False
+            if spec.get('audioRequired') is True and video.get('audio') is not True:
+                return False
+            return True
 
         def matching_group(placement_type, dimensions, media_type, display_class, platform, category):
             placement = types.get(placement_type, {})
@@ -1080,9 +1059,7 @@ def main():
     manifest = json.loads((root / 'manifest.json').read_text())
     slots, header = validate_media(root, manifest, metadata, probe_header='header' in scopes)
     if args.validate_only:
-        variants = header['locales'].values() if 'locales' in header else [header]
-        verified_header = all(bool(item.get('video')) for item in variants)
-        print(json.dumps({'mode': 'validate-only', 'verifiedPlacements': len(slots), 'verifiedHeader': verified_header, 'verifiedHeaderHash': True, 'appStoreRequests': 0}))
+        print(json.dumps({'mode': 'validate-only', 'verifiedPlacements': len(slots), 'verifiedHeader': bool(header.get('video')), 'verifiedHeaderHash': True, 'appStoreRequests': 0}))
         return 0
     cli = CLI(apply=args.apply, receipts=args.receipts)
     target = resolve_targets(cli, metadata['appId'], args.version_id, args.version_string, args.app_info_id)
