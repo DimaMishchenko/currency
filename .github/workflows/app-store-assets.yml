@@ -29,6 +29,10 @@ on:
         description: Optional exact previous header SHA-256 values, comma-separated; replaces only matching drafts
         type: string
         required: false
+      inspect_header_processing:
+        description: Include approved video readiness in read-only native policy inspection
+        type: boolean
+        default: false
       duplicate_screenshot_id:
         description: Optional exact screenshot ID; remove only a verified extra copy of an approved image
         type: string
@@ -51,6 +55,7 @@ jobs:
       ASC_STRICT_AUTH: 'true'
       ASC_APP_ID: '6816213577'
       ASC_UPLOAD_TIMEOUT: '30m'
+      INSPECT_HEADER_PROCESSING: ${{ inputs.inspect_header_processing }}
       REQUEST_MODE: ${{ inputs.mode }}
       TARGET_VERSION_ID: ${{ inputs.version_id }}
       TARGET_VERSION_STRING: ${{ inputs.version_string }}
@@ -127,6 +132,7 @@ jobs:
           import importlib.util
           import json
           import math
+          import os
           import re
           import sys
           spec = importlib.util.spec_from_file_location('app_store_upload', 'Marketing/AppStore/upload.py')
@@ -189,8 +195,33 @@ jobs:
                   invalid()
               return {'mode': 'inspect-native-policy', 'referenceData': [project(rows[0].get('attributes', {}), schema)]}
 
+          def inspect_header_processing(cli):
+              recipe = json.load(open('Marketing/AppStore/design/recipe.json'))
+              hashes = set(recipe.get('approved_header_sha256_by_locale', {}).values())
+              if recipe.get('approved_header_sha256'):
+                  hashes.add(recipe['approved_header_sha256'])
+              references = {'currency-approved-' + value for value in hashes if isinstance(value, str) and re.fullmatch('[0-9a-f]{64}', value)}
+              library = cli.api('GET', '/v1/apps/6816213577/assetLibrary').get('data')
+              if not isinstance(library, dict) or not isinstance(library.get('id'), str) or not re.fullmatch('[A-Za-z0-9-]+', library['id']):
+                  raise UploadError('Invalid library identity for read-only header inspection')
+              videos = cli.api('GET', '/v1/appAssetLibraries/' + library['id'] + '/videos').get('data')
+              if not isinstance(videos, list) or any(not isinstance(video, dict) or not isinstance(video.get('attributes'), dict) for video in videos):
+                  raise UploadError('Invalid video readiness response')
+              result = []
+              for video in videos:
+                  attrs = video['attributes']
+                  if attrs.get('referenceName') not in references:
+                      continue
+                  state = attrs.get('state')
+                  result.append({'reference': attrs['referenceName'], 'state': state if isinstance(state, str) and re.fullmatch('[A-Z_]{1,64}', state) else 'OTHER', 'uploaded': attrs.get('uploaded') if type(attrs.get('uploaded')) is bool else None, 'hasSpecification': bool(attrs.get('specId')), 'hasVideoAsset': bool(attrs.get('videoAsset')), 'uploadOperationCount': len(attrs['uploadOperations']) if isinstance(attrs.get('uploadOperations'), list) else None})
+              return {'expectedUniqueHeaders': len(references), 'videos': result}
+
           try:
-              print(json.dumps(inspect_native_policy(module.CLI(apply=False)), indent=2))
+              cli = module.CLI(apply=False)
+              result = inspect_native_policy(cli)
+              if os.environ.get('INSPECT_HEADER_PROCESSING') == 'true':
+                  result['approvedHeaderProcessing'] = inspect_header_processing(cli)
+              print(json.dumps(result, indent=2))
           except UploadError as error:
               sys.exit(str(error))
           PY
