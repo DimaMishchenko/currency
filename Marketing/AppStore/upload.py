@@ -422,7 +422,7 @@ class Planner:
             raise UploadError('Explicit duplicate screenshot ID is invalid')
         self.remove_approved_duplicate = remove_approved_duplicate
         self.duplicate_repair = None
-        if replace_header_sha256 is not None and (not re.fullmatch('[a-f0-9]{64}', replace_header_sha256) or 'header' not in scopes):
+        if replace_header_sha256 is not None and (not isinstance(replace_header_sha256, str) or not all(re.fullmatch('[a-f0-9]{64}', value) for value in replace_header_sha256.split(',')) or 'header' not in scopes):
             raise UploadError('Header replacement requires header scope and the exact previous approved SHA-256')
         self.replace_header_sha256 = replace_header_sha256
 
@@ -968,12 +968,13 @@ class Planner:
                 if headers[0].get('attributes', {}).get('state') == 'FAILED':
                     raise UploadError('Existing header placement failed; inspect before retry')
                 return
-            reference = 'currency-approved-' + self.replace_header_sha256 if self.replace_header_sha256 else None
+            references = {'currency-approved-' + value for value in self.replace_header_sha256.split(',')} if self.replace_header_sha256 else set()
             old = headers[0] if len(headers) == 1 else None
             old_video = old.get('relationships', {}).get('video', {}).get('data', {}).get('id') if old else None
-            matching = [row for row in self.library_rows.get('video', []) if row.get('id') == old_video and row.get('attributes', {}).get('referenceName') == reference] if reference else []
+            matching = [row for row in self.library_rows.get('video', []) if row.get('id') == old_video and row.get('attributes', {}).get('referenceName') in references] if references else []
             if not old or old.get('attributes', {}).get('placementGroup') != self.header_group or len(matching) != 1 or not re.fullmatch('[A-Za-z0-9-]+', old.get('id', '')):
                 raise UploadError('Existing product-page header differs; inspect and remove/swap explicitly in App Store Connect first')
+            reference = matching[0]['attributes']['referenceName']
             new_references = [key for key, identifier in self.media.items() if identifier == video]
             if len(new_references) != 1:
                 raise UploadError('Replacement header must resolve to one approved media checksum')
@@ -1142,7 +1143,7 @@ def main():
     parser.add_argument('--scope', default='metadata,default,cpp,header,duo')
     parser.add_argument('--apply', action='store_true')
     parser.add_argument('--remove-approved-duplicate', help='Explicit exact screenshot ID to remove only after proving one redundant approved copy')
-    parser.add_argument('--replace-header-sha256', help='Explicit previous approved header SHA-256; replace only matching draft placements after the new video is ready')
+    parser.add_argument('--replace-header-sha256', help='Comma-separated exact previous approved header SHA-256 values; replace only matching draft placements after the new video is ready')
     parser.add_argument('--receipts', type=Path, help='Private durable JSONL receipt path; required for remote plans and apply')
     args = parser.parse_args()
     scopes = set(args.scope.split(','))

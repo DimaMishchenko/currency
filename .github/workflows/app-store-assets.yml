@@ -26,7 +26,7 @@ on:
         default: metadata,default,cpp,header,duo
         required: true
       replace_header_sha256:
-        description: Optional exact previous approved header SHA-256; replaces only matching draft placements
+        description: Optional exact previous header SHA-256 values, comma-separated; replaces only matching drafts
         type: string
         required: false
       duplicate_screenshot_id:

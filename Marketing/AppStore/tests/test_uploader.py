@@ -1238,6 +1238,26 @@ class UploaderTests(unittest.TestCase):
                     with self.assertRaisesRegex(u.UploadError,'header differs'): plan.place_header('locale','default','new-video')
                 self.assertFalse(any(call[0] in {'DELETE','POST'} for call in cli.calls))
 
+    def test_localized_header_update_accepts_only_explicit_previous_checksum_set(self):
+        plan, cli, path = self.approved_header_replacement()
+        plan.replace_header_sha256 = 'c' * 64 + ',' + 'a' * 64
+        plan.place_header('locale', 'default', 'new-video')
+        self.assertEqual(plan.ops[0]['old_reference'], 'currency-approved-' + 'a' * 64)
+        self.assertEqual(plan.summary()[0]['previousApprovedSha256'], 'a' * 64)
+        plan.execute()
+        self.assertEqual([call[1] for call in cli.calls if call[0] == 'DELETE'], ['/v1/appAssetLibraryPlacements/old-header'])
+        plan, cli, path = self.approved_header_replacement()
+        plan.replace_header_sha256 = 'c' * 64 + ',' + 'd' * 64
+        with self.assertRaisesRegex(u.UploadError, 'header differs'):
+            plan.place_header('locale', 'default', 'new-video')
+        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_previous_header_checksum_lists_reject_empty_or_invalid_entries(self):
+        for checksum in ('', ',' + 'a' * 64, 'a' * 64 + ',', 'a' * 64 + ',*', 'a' * 64 + ', ' + 'b' * 64, 'A' * 64):
+            with self.subTest(checksum=checksum):
+                with self.assertRaisesRegex(u.UploadError, 'exact previous approved SHA'):
+                    u.Planner(FakeCLI(self.state), self.meta, self.slots, {}, 'version', '1.2', 'info', {'header'}, replace_header_sha256=checksum)
+
     def test_header_replacement_refuses_unprocessed_video_before_deleting(self):
         plan,cli,path = self.approved_header_replacement(state='UPLOAD_COMPLETE')
         plan.place_header('locale','default','new-video')
