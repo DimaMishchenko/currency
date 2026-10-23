@@ -47,7 +47,7 @@ concurrency:
 
 jobs:
   drafts:
-    if: github.ref == 'refs/heads/main' || (github.ref == 'refs/heads/feature/localized-app-store-headers' && github.actor == github.repository_owner)
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 360
     environment: testflight
