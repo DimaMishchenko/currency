@@ -54,11 +54,14 @@ public struct HistoryWidgetView: View {
   @Environment(\.isWidgetPreview) private var preview
   @Environment(\.locale) private var locale
   @Environment(\.colorSchemeContrast) private var contrast
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+  @ScaledMetric(relativeTo: .headline) private var changeFontSize = 17.0
   private var secondaryInk: Color { contrast == .increased ? .primary : .secondary }
   private let entry: HistoryWidgetEntry
   private let family: WidgetFamily
   private var snapshot: HistoryWidgetSnapshot { entry.snapshot }
   private var compact: Bool { family == .systemSmall }
+  private var enlargesChange: Bool { !compact && dynamicTypeSize.isAccessibilitySize }
   private var changeFormat: FloatingPointFormatStyle<Double>.Percent {
     .percent.precision(.fractionLength(2)).sign(strategy: .always(includingZero: false))
   }
@@ -82,7 +85,13 @@ public struct HistoryWidgetView: View {
               change,
               format: changeFormat
             )
-            .font(AppStyle.font(.headline)).monospacedDigit()
+            .font(
+              enlargesChange
+                ? .system(size: min(changeFontSize, 34), weight: .semibold, design: .rounded)
+                : AppStyle.font(.headline)
+            )
+            .monospacedDigit()
+            .lineLimit(enlargesChange ? 1 : nil)
             .foregroundStyle(.primary)
             .modifier(HistoryLabelContrast())
             .accessibilityLabel(.WidgetPresentation.historyChange)
@@ -118,7 +127,7 @@ public struct HistoryWidgetView: View {
         }
       }
     }
-    .padding(AppStyle.Space.large)
+    .padding(enlargesChange ? AppStyle.Space.small : AppStyle.Space.large)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     .font(AppStyle.font(.caption))
     .tint(Color(uiColor: .label))
