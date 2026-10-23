@@ -3,7 +3,7 @@ from functools import lru_cache
 from PIL import Image, ImageDraw, ImageFont, ImageChops, features
 import argparse, hashlib, html, json, math, os, shutil, subprocess, sys, xml.etree.ElementTree as ET
 from generate import DESIGN, load, verified_object
-from header_validation import background_identity, pixel_source_sha256, validate_entry
+from header_validation import background_identity, pixel_source_sha256, validate_entry, resolve_currencies, currency_reels
 
 parser = argparse.ArgumentParser(description='Render the fifteen second H09 currency header from frozen design geometry.')
 parser.add_argument('--inputs', required=True, type=Path)
@@ -29,7 +29,7 @@ if selected:
             command.append('--video')
         if not args.gallery_only:
             subprocess.run(command, check=True)
-        entry = validate_entry(args.output, locale, configuration['locales'][locale], render_identity, args.video)
+        entry = validate_entry(args.output, locale, configuration, render_identity, args.video)
         entries.append(entry)
     cards = []
     for entry in entries:
@@ -44,7 +44,7 @@ if selected:
         (args.output / 'header-map.json').write_text(json.dumps({'schemaVersion': 1, 'headers': {entry['locale']: {'path': entry['locale'] + '/header.mp4', 'sha256': entry['videoSha256']} for entry in entries}}, indent=2, ensure_ascii=False) + '\n')
     raise SystemExit(0)
 locale = args.render_locale
-currencies = configuration['locales'][locale] if locale else None
+currencies = resolve_currencies(configuration, locale) if locale else None
 W,H,FPS,DURATION=3840,1646,60,15
 N=FPS*DURATION
 SPACING,MARGIN,BAND=310,310,150
@@ -62,7 +62,7 @@ assert set(sum(GROUPS,[]))==set(sequence) and len(set(sequence))==14
 REELS=[['€','₹','¥','$','₽','£','€'],['¥','€','₹','£','$','₩','¥'],['₹','£','€','₩','¥','$','₹']]
 if currencies:
     glyphs = [configuration['glyphs'][code] for code in currencies]
-    REELS = [[glyphs[i], glyphs[(i+1)%3], glyphs[(i+2)%3], glyphs[(i+1)%3], glyphs[(i+2)%3], glyphs[i], glyphs[i]] for i in range(3)]
+    REELS = currency_reels(glyphs)
 SESSION_STARTS=[1.5,8.5]
 SESSION_DURATION=1.6
 STAGGER=0.12

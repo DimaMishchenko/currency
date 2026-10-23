@@ -1,23 +1,22 @@
 {
   "schemaVersion": 1,
-  "selection": "Approved language-based screenshot examples; primary followed by the first two secondary currencies. No storefront inference.",
+  "selection": "Language-based screenshot currency priorities, skipping missing currency signs and repeated rendered glyphs, then using the ordered fallback currencies. No storefront inference.",
   "glyphs": {
     "USD": "$",
     "EUR": "€",
     "GBP": "£",
-    "CAD": "C$",
-    "AUD": "A$",
-    "CHF": "Fr",
-    "MXN": "MX$",
-    "BRL": "R$",
+    "CAD": "$",
+    "AUD": "$",
+    "MXN": "$",
+    "BRL": "$",
     "JPY": "¥",
     "KRW": "₩",
     "TRY": "₺",
     "RUB": "₽",
     "UAH": "₴",
     "CNY": "¥",
-    "HKD": "HK$",
-    "TWD": "NT$"
+    "HKD": "$",
+    "TWD": "$"
   },
   "locales": {
     "en-US": [
@@ -110,5 +109,12 @@
       "USD",
       "HKD"
     ]
-  }
+  },
+  "fallbacks": [
+    "EUR",
+    "USD",
+    "GBP",
+    "JPY",
+    "KRW"
+  ]
 }

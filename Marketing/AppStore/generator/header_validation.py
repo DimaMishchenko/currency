@@ -1,6 +1,21 @@
 import ast
 import hashlib
 import json
+import unicodedata
+
+
+def resolve_currencies(configuration, locale):
+    currencies = []
+    glyphs = set()
+    for code in configuration['locales'][locale] + configuration['fallbacks']:
+        glyph = configuration['glyphs'].get(code, '')
+        if len(glyph) != 1 or unicodedata.category(glyph) != 'Sc' or glyph in glyphs:
+            continue
+        currencies.append(code)
+        glyphs.add(glyph)
+        if len(currencies) == 3:
+            return currencies
+    raise ValueError('Three distinct currency signs are unavailable: ' + locale)
 
 
 def pixel_source_sha256(source):
@@ -30,10 +45,14 @@ def background_identity(identity):
     return fingerprint({key: identity[key] for key in ('pixelSourceSha256', 'sourceSha256', 'fontSha256', 'pillow', 'freetype')})
 
 
-def validate_entry(root, locale, currencies, identity, video):
+def validate_entry(root, locale, configuration, identity, video):
+    currencies = resolve_currencies(configuration, locale)
+    glyphs = [configuration['glyphs'][code] for code in currencies]
     entry = json.loads((root / locale / 'manifest.json').read_text())
     if entry.get('locale') != locale or entry.get('currencies') != currencies or entry.get('renderIdentity') != identity:
         raise ValueError('Stale locale manifest: ' + locale)
+    if entry.get('glyphs') != glyphs or entry.get('reels') != currency_reels(glyphs):
+        raise ValueError('Invalid locale currency signs: ' + locale)
     poster = root / locale / 'poster.png'
     if not poster.is_file() or hashlib.sha256(poster.read_bytes()).hexdigest() != entry.get('posterSha256'):
         raise ValueError('Stale locale poster: ' + locale)
@@ -44,3 +63,7 @@ def validate_entry(root, locale, currencies, identity, video):
         if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != entry.get('videoSha256'):
             raise ValueError('Stale locale video: ' + locale)
     return entry
+
+
+def currency_reels(glyphs):
+    return [[glyphs[i], glyphs[(i+1)%3], glyphs[(i+2)%3], glyphs[(i+1)%3], glyphs[(i+2)%3], glyphs[i], glyphs[i]] for i in range(3)]
