@@ -51,7 +51,7 @@ def validate_entry(root, locale, configuration, identity, video):
     entry = json.loads((root / locale / 'manifest.json').read_text())
     if entry.get('locale') != locale or entry.get('currencies') != currencies or entry.get('renderIdentity') != identity:
         raise ValueError('Stale locale manifest: ' + locale)
-    if entry.get('glyphs') != glyphs or entry.get('reels') != currency_reels(glyphs):
+    if entry.get('glyphs') != glyphs or entry.get('reels') != currency_reels(glyphs, configuration['spinGlyphs']):
         raise ValueError('Invalid locale currency signs: ' + locale)
     poster = root / locale / 'poster.png'
     if not poster.is_file() or hashlib.sha256(poster.read_bytes()).hexdigest() != entry.get('posterSha256'):
@@ -65,5 +65,17 @@ def validate_entry(root, locale, configuration, identity, video):
     return entry
 
 
-def currency_reels(glyphs):
-    return [[glyphs[i], glyphs[(i+1)%3], glyphs[(i+2)%3], glyphs[(i+1)%3], glyphs[(i+2)%3], glyphs[i], glyphs[i]] for i in range(3)]
+def currency_reels(glyphs, spin_glyphs):
+    if len(glyphs) != 3 or len(set(glyphs)) != 3:
+        raise ValueError('Three distinct opening signs are required')
+    if len(set(spin_glyphs)) < 6 or len(set(spin_glyphs)) != len(spin_glyphs) or any(len(sign) != 1 or unicodedata.category(sign) != 'Sc' for sign in spin_glyphs):
+        raise ValueError('At least six distinct currency signs are required for the spins')
+    seed = '|'.join(glyphs)
+    def ranked(signs, stage):
+        return sorted(signs, key=lambda sign: hashlib.sha256((seed + ':' + stage + ':' + sign).encode()).digest())
+    settled = ranked([sign for sign in spin_glyphs if sign not in glyphs], 'settled')[:3]
+    reels = []
+    for index, opening in enumerate(glyphs):
+        moving = ranked(spin_glyphs, str(index))
+        reels.append([opening, moving[0], moving[1], settled[index], moving[2], moving[3], opening])
+    return reels

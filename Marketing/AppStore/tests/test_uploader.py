@@ -74,6 +74,11 @@ class FakeCLI:
                     if collection.endswith('/appScreenshots') and isinstance(assets, list):
                         assets[:] = [asset for asset in assets if asset['id'] != path.rsplit('/', 1)[1]]
                 return {}
+            if method == 'DELETE' and path.startswith('/v1/appAssetLibraryPlacements/'):
+                for collection, assets in self.state.items():
+                    if '/placements' in collection and isinstance(assets, list):
+                        assets[:] = [asset for asset in assets if asset.get('id') != path.rsplit('/', 1)[1]]
+                return {}
             if method == 'PATCH' and path.endswith('/relationships/appScreenshots'):
                 self.state[path] = body['data']
                 collection = path.replace('/relationships/appScreenshots', '/appScreenshots')
@@ -1189,6 +1194,60 @@ class UploaderTests(unittest.TestCase):
                     with self.assertRaisesRegex(u.UploadError, 'header differs'):
                         plan.place_header('locale', family, 'approved-video')
                     self.assertEqual(plan.ops, [])
+
+    def approved_header_replacement(self, state='PREPARE_FOR_SUBMISSION'):
+        checksum = 'a' * 64
+        videos = [row('old-video', referenceName='currency-approved-' + checksum, state='APPROVED', category='CREATIVE_ASSETS', videoAsset={'templateUrl':'old'}), row('new-video', referenceName='currency-approved-' + 'b' * 64, state=state, category='CREATIVE_ASSETS', videoAsset={'templateUrl':'new'})]
+        path = '/v1/appStoreVersionLocalizations/locale/placements?include=video'
+        placement = dict(row('old-header', placementType='PRODUCT_PAGE_HEADER_ASSET', placementGroup='DEFAULT_PROFILE'), relationships={'video':u.relationship('appAssetLibraryVideos','old-video')})
+        self.state[path] = [placement]
+        self.state['/v1/appAssetLibraries/library/videos'] = videos
+        cli = FakeCLI(self.state, apply=True)
+        plan = u.Planner(cli,self.meta,self.slots,{},'version','1.2','info',{'header'},replace_header_sha256=checksum)
+        plan.library,plan.header_group = 'library','DEFAULT_PROFILE'
+        plan.library_rows['video'] = videos
+        plan.media['currency-approved-' + 'b' * 64] = 'new-video'
+        return plan,cli,path
+
+    def test_explicit_header_replacement_keeps_old_library_asset_and_queues_new_video(self):
+        plan,cli,path = self.approved_header_replacement()
+        plan.place_header('locale','default','new-video')
+        self.assertEqual([op['method'] for op in plan.ops],['REPLACE_APPROVED_HEADER','POST'])
+        self.assertTrue(all(call[0]=='GET' for call in cli.calls))
+        plan.execute()
+        deletes = [call for call in cli.calls if call[0]=='DELETE']
+        self.assertEqual(deletes,[('DELETE','/v1/appAssetLibraryPlacements/old-header',None)])
+        self.assertEqual([item['id'] for item in self.state['/v1/appAssetLibraries/library/videos']],['old-video','new-video'])
+        post = next(call for call in cli.calls if call[:2]==('POST','/v1/appAssetLibraryPlacements'))
+        self.assertEqual(post[2]['data']['relationships']['video']['data']['id'],'new-video')
+
+    def test_header_replacement_refuses_wrong_hash_ambiguity_and_changed_slot(self):
+        for conflict in ['hash','duplicates','group','changed-after-plan','new-checksum']:
+            with self.subTest(conflict=conflict):
+                plan,cli,path = self.approved_header_replacement()
+                if conflict=='hash': plan.replace_header_sha256='b'*64
+                if conflict=='duplicates': self.state[path].append(dict(self.state[path][0],id='extra-header'))
+                if conflict=='group': self.state[path][0]['attributes']['placementGroup']='OTHER_PROFILE'
+                if conflict in {'changed-after-plan','new-checksum'}:
+                    plan.place_header('locale','default','new-video')
+                    if conflict=='changed-after-plan': self.state[path][0]['id']='different-header'
+                    else: self.state['/v1/appAssetLibraries/library/videos'][1]['attributes']['referenceName']='unreviewed-video'
+                    with self.assertRaises(u.UploadError): plan.execute()
+                else:
+                    with self.assertRaisesRegex(u.UploadError,'header differs'): plan.place_header('locale','default','new-video')
+                self.assertFalse(any(call[0] in {'DELETE','POST'} for call in cli.calls))
+
+    def test_header_replacement_refuses_unprocessed_video_before_deleting(self):
+        plan,cli,path = self.approved_header_replacement(state='UPLOAD_COMPLETE')
+        plan.place_header('locale','default','new-video')
+        with self.assertRaisesRegex(u.UploadError,'ready before swapping'): plan.execute()
+        self.assertEqual(self.state[path][0]['id'],'old-header')
+        self.assertFalse(any(call[0] in {'DELETE','POST'} for call in cli.calls))
+
+    def test_header_replacement_requires_exact_hash_and_header_scope(self):
+        for checksum,scopes in [('not-a-checksum',{'header'}),('a'*64,{'metadata'})]:
+            with self.assertRaisesRegex(u.UploadError,'exact previous approved SHA'):
+                u.Planner(FakeCLI(self.state),self.meta,self.slots,{},'version','1.2','info',scopes,replace_header_sha256=checksum)
 
     def test_duo_reconciliation_requests_image_linkage_and_retains_approved_placements(self):
         for family in ('default', 'travel'):

@@ -25,6 +25,10 @@ on:
         type: string
         default: metadata,default,cpp,header,duo
         required: true
+      replace_header_sha256:
+        description: Optional exact previous approved header SHA-256; replaces only matching draft placements
+        type: string
+        required: false
       duplicate_screenshot_id:
         description: Optional exact screenshot ID; remove only a verified extra copy of an approved image
         type: string
@@ -52,6 +56,7 @@ jobs:
       TARGET_VERSION_STRING: ${{ inputs.version_string }}
       TARGET_APP_INFO_ID: ${{ inputs.app_info_id }}
       ASSET_SCOPE: ${{ inputs.scope }}
+      REPLACE_HEADER_SHA256: ${{ inputs.replace_header_sha256 }}
       DUPLICATE_SCREENSHOT_ID: ${{ inputs.duplicate_screenshot_id }}
     steps:
       - uses: actions/checkout@v7
@@ -189,6 +194,7 @@ jobs:
           fi
           mode_args=()
           if [[ "$REQUEST_MODE" == apply ]]; then mode_args+=(--apply); fi
+          if [[ -n "$REPLACE_HEADER_SHA256" ]]; then mode_args+=(--replace-header-sha256 "$REPLACE_HEADER_SHA256"); fi
           if [[ -n "$DUPLICATE_SCREENSHOT_ID" ]]; then mode_args+=(--remove-approved-duplicate "$DUPLICATE_SCREENSHOT_ID"); fi
           python3 Marketing/AppStore/upload.py \
             --metadata Marketing/AppStore/metadata.json \

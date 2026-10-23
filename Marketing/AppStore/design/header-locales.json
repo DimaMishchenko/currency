@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "selection": "Language-based screenshot currency priorities, skipping missing currency signs and repeated rendered glyphs, then using the ordered fallback currencies. No storefront inference.",
+  "selection": "Only the opening three signs follow language priorities. Later reel faces use deterministic varied, recognizable currency signs; the final faces return to the opening for a seamless loop. No storefront inference.",
   "glyphs": {
     "USD": "$",
     "EUR": "€",
@@ -116,5 +116,13 @@
     "GBP",
     "JPY",
     "KRW"
+  ],
+  "spinGlyphs": [
+    "$",
+    "€",
+    "£",
+    "¥",
+    "₹",
+    "₩"
   ]
 }

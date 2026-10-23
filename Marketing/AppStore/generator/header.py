@@ -18,7 +18,7 @@ configuration = load(DESIGN / 'header-locales.json')
 SOURCE = DESIGN / 'header.svg'
 FONT = verified_object(args.inputs, 'bb55a5ca5c2042335b3991af27c4d0705d0ef41cac6164ac737fd8f2a1e85207', load(DESIGN / 'input-manifest.json')['objects'])
 renderer_source = Path(__file__).read_text()
-render_identity = {'pixelSourceSha256': pixel_source_sha256(renderer_source), 'sourceSha256': hashlib.sha256(SOURCE.read_bytes()).hexdigest(), 'fontSha256': hashlib.sha256(FONT.read_bytes()).hexdigest(), 'configSha256': hashlib.sha256((DESIGN / 'header-locales.json').read_bytes()).hexdigest(), 'pillow': Image.__version__, 'freetype': features.version('freetype2')}
+render_identity = {'pixelSourceSha256': pixel_source_sha256(renderer_source), 'sourceSha256': hashlib.sha256(SOURCE.read_bytes()).hexdigest(), 'fontSha256': hashlib.sha256(FONT.read_bytes()).hexdigest(), 'configSha256': hashlib.sha256((DESIGN / 'header-locales.json').read_bytes()).hexdigest(), 'reelPolicySha256': hashlib.sha256(Path(__file__).with_name('header_validation.py').read_bytes()).hexdigest(), 'pillow': Image.__version__, 'freetype': features.version('freetype2')}
 
 selected = list(configuration['locales']) if args.all_locales else args.locale
 if selected:
@@ -62,7 +62,7 @@ assert set(sum(GROUPS,[]))==set(sequence) and len(set(sequence))==14
 REELS=[['€','₹','¥','$','₽','£','€'],['¥','€','₹','£','$','₩','¥'],['₹','£','€','₩','¥','$','₹']]
 if currencies:
     glyphs = [configuration['glyphs'][code] for code in currencies]
-    REELS = currency_reels(glyphs)
+    REELS = currency_reels(glyphs, configuration['spinGlyphs'])
 SESSION_STARTS=[1.5,8.5]
 SESSION_DURATION=1.6
 STAGGER=0.12

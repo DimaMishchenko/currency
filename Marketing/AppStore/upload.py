@@ -402,7 +402,7 @@ def resolve_targets(cli, app_id, version_id=None, version_string=None, info_id=N
 
 
 class Planner:
-    def __init__(self, cli, metadata, slots, header, version_id, version_string, info_id, scopes, remove_approved_duplicate=None):
+    def __init__(self, cli, metadata, slots, header, version_id, version_string, info_id, scopes, remove_approved_duplicate=None, replace_header_sha256=None):
         self.cli, self.meta, self.slots, self.header = cli, metadata, slots, header
         self.version, self.version_string, self.info = version_id, version_string, info_id
         self.scopes, self.ops, self.blockers, self.notes = scopes, [], [], []
@@ -420,14 +420,17 @@ class Planner:
             raise UploadError('Explicit duplicate screenshot ID is invalid')
         self.remove_approved_duplicate = remove_approved_duplicate
         self.duplicate_repair = None
+        if replace_header_sha256 is not None and (not re.fullmatch('[a-f0-9]{64}', replace_header_sha256) or 'header' not in scopes):
+            raise UploadError('Header replacement requires header scope and the exact previous approved SHA-256')
+        self.replace_header_sha256 = replace_header_sha256
 
     def header_for_locale(self, locale):
         return self.header['locales'][locale] if 'locales' in self.header else self.header
 
     def place_headers(self, targets):
+        videos = {locale: self.library_media(self.header_for_locale(locale), 'video') for _, locale in targets}
         for (family, locale), target in targets.items():
-            video = self.library_media(self.header_for_locale(locale), 'video')
-            self.place_header(target, family, video)
+            self.place_header(target, family, videos[locale])
 
     def get(self, path):
         if '@pending-' in path:
@@ -910,8 +913,31 @@ class Planner:
                 if headers[0].get('attributes', {}).get('state') == 'FAILED':
                     raise UploadError('Existing header placement failed; inspect before retry')
                 return
-            raise UploadError('Existing product-page header differs; inspect and remove/swap explicitly in App Store Connect first')
+            reference = 'currency-approved-' + self.replace_header_sha256 if self.replace_header_sha256 else None
+            old = headers[0] if len(headers) == 1 else None
+            old_video = old.get('relationships', {}).get('video', {}).get('data', {}).get('id') if old else None
+            matching = [row for row in self.library_rows.get('video', []) if row.get('id') == old_video and row.get('attributes', {}).get('referenceName') == reference] if reference else []
+            if not old or old.get('attributes', {}).get('placementGroup') != self.header_group or len(matching) != 1 or not re.fullmatch('[A-Za-z0-9-]+', old.get('id', '')):
+                raise UploadError('Existing product-page header differs; inspect and remove/swap explicitly in App Store Connect first')
+            new_references = [key for key, identifier in self.media.items() if identifier == video]
+            if len(new_references) != 1:
+                raise UploadError('Replacement header must resolve to one approved media checksum')
+            self.queue('REPLACE_APPROVED_HEADER', '/v1/' + kind + '/' + target + '/placements?include=video', old_id=old['id'], old_video=old_video, old_reference=reference, new_video=video, new_reference=new_references[0], group=self.header_group)
         self.queue('POST', '/v1/appAssetLibraryPlacements', resource('appAssetLibraryPlacements', {'placementType': 'PRODUCT_PAGE_HEADER_ASSET', 'placementGroup': self.header_group}, {'video': relationship('appAssetLibraryVideos', video), 'appStoreVersionLocalization' if family == 'default' else 'appCustomProductPageLocalization': relationship(kind, target)}))
+
+    def remove_replaced_header(self, op):
+        current = [row for row in self.get(op['path']) if row.get('attributes', {}).get('placementType') == 'PRODUCT_PAGE_HEADER_ASSET']
+        if len(current) != 1 or current[0].get('id') != op['old_id'] or current[0].get('attributes', {}).get('placementGroup') != op['group'] or current[0].get('relationships', {}).get('video', {}).get('data', {}).get('id') != op['old_video']:
+            raise UploadError('Approved header placement changed since planning; nothing was deleted')
+        videos = self.get('/v1/appAssetLibraries/' + self.library + '/videos')
+        old = [row for row in videos if row.get('id') == op['old_video'] and row.get('attributes', {}).get('referenceName') == op['old_reference']]
+        new = [row for row in videos if row.get('id') == op['new_video'] and row.get('attributes', {}).get('referenceName') == op['new_reference']]
+        ready = lambda row: row.get('attributes', {}).get('state') in {'APPROVED', 'PREPARE_FOR_SUBMISSION'} and row.get('attributes', {}).get('category') == 'CREATIVE_ASSETS' and bool(row.get('attributes', {}).get('videoAsset'))
+        if len(old) != 1 or len(new) != 1 or not ready(old[0]) or not ready(new[0]):
+            raise UploadError('Old and replacement header videos must be ready before swapping; nothing was deleted')
+        self.cli.api('DELETE', '/v1/appAssetLibraryPlacements/' + op['old_id'])
+        if any(row.get('attributes', {}).get('placementType') == 'PRODUCT_PAGE_HEADER_ASSET' for row in self.get(op['path'])):
+            raise UploadError('Header removal readback did not clear the slot; stopped before creating a replacement')
 
     def apply_resource(self, method, path, body):
         parents = {
@@ -966,6 +992,9 @@ class Planner:
                 self.cli.receipt('operation-%d-started' % index)
             if op['method'] == 'DELETE_APPROVED_DUPLICATE':
                 self.delete_approved_duplicate(op['proof'])
+                identifier = ''
+            elif op['method'] == 'REPLACE_APPROVED_HEADER':
+                self.remove_replaced_header(op)
                 identifier = ''
             elif op['method'] == 'METADATA':
                 self.sync_metadata(dry_run=False)
@@ -1032,6 +1061,8 @@ class Planner:
                 entry.update(family=operation['family'], profile=operation['profile'], screenshotCount=len(operation['files']), resumeExisting=operation.get('skip_existing', False))
             if operation['method'] == 'DELETE_APPROVED_DUPLICATE':
                 entry.update({key: operation['proof'][key] for key in ('setId', 'removeId', 'keepId', 'checksum', 'bytes', 'family', 'locale', 'profile')})
+            if operation['method'] == 'REPLACE_APPROVED_HEADER':
+                entry.update(previousApprovedSha256=operation['old_reference'].removeprefix('currency-approved-'), placementGroup=operation['group'])
             if operation['method'] == 'LIBRARY':
                 entry.update(mediaType=operation['media_type'], approvedReference=operation['reference'])
             if operation['method'] == 'METADATA':
@@ -1057,6 +1088,7 @@ def main():
     parser.add_argument('--scope', default='metadata,default,cpp,header,duo')
     parser.add_argument('--apply', action='store_true')
     parser.add_argument('--remove-approved-duplicate', help='Explicit exact screenshot ID to remove only after proving one redundant approved copy')
+    parser.add_argument('--replace-header-sha256', help='Explicit previous approved header SHA-256; replace only matching draft placements after the new video is ready')
     parser.add_argument('--receipts', type=Path, help='Private durable JSONL receipt path; required for remote plans and apply')
     args = parser.parse_args()
     scopes = set(args.scope.split(','))
@@ -1064,6 +1096,8 @@ def main():
         parser.error('--scope must select metadata,default,cpp,header,duo')
     if args.validate_only and args.apply:
         parser.error('--validate-only cannot be combined with --apply')
+    if args.replace_header_sha256 and (args.validate_only or 'header' not in scopes or not re.fullmatch('[a-f0-9]{64}', args.replace_header_sha256)):
+        parser.error('--replace-header-sha256 requires header scope, remote planning and a lowercase SHA-256')
     if args.validate_only and args.remove_approved_duplicate:
         parser.error('--validate-only cannot repair a remote duplicate')
     args.version_id = args.version_id.strip() if args.version_id else None
@@ -1087,7 +1121,7 @@ def main():
     cli = CLI(apply=args.apply, receipts=args.receipts)
     target = resolve_targets(cli, metadata['appId'], args.version_id, args.version_string, args.app_info_id)
     print(json.dumps({'resolvedTarget': target}))
-    plan = Planner(cli, metadata, slots, header, target['versionId'], target['versionString'], target['appInfoId'], scopes, remove_approved_duplicate=args.remove_approved_duplicate).preflight()
+    plan = Planner(cli, metadata, slots, header, target['versionId'], target['versionString'], target['appInfoId'], scopes, remove_approved_duplicate=args.remove_approved_duplicate, replace_header_sha256=args.replace_header_sha256).preflight()
     print(json.dumps({'mode': 'apply' if args.apply else 'dry-run', 'plannedDraftOperations': len(plan.ops), 'scopes': sorted(scopes), 'blockers': plan.blockers, 'notes': plan.notes, 'cppStatus': plan.cpp_status, 'plan': plan.summary()}, ensure_ascii=False, indent=2))
     if args.apply:
         plan.execute()

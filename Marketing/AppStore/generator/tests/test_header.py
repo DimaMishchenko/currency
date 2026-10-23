@@ -31,7 +31,13 @@ class HeaderLocaleTests(unittest.TestCase):
                     self.assertFalse(any(character.isascii() and character.isalpha() for character in glyph))
                 glyphs = [configuration['glyphs'][code] for code in currencies]
                 self.assertEqual(len(set(glyphs)), 3)
-                self.assertTrue(all(set(reel) == set(glyphs) for reel in currency_reels(glyphs)))
+                reels = currency_reels(glyphs, configuration['spinGlyphs'])
+                self.assertEqual([reel[0] for reel in reels], glyphs)
+                self.assertEqual([reel[-1] for reel in reels], glyphs)
+                self.assertEqual(len(set(reel[3] for reel in reels)), 3)
+                self.assertFalse(set(reel[3] for reel in reels) & set(glyphs))
+                self.assertTrue(all(set(reel[1:-1]) <= set(configuration['spinGlyphs']) for reel in reels))
+                self.assertEqual(reels, currency_reels(glyphs, configuration['spinGlyphs']))
         self.assertEqual(resolve_currencies(configuration, 'de-DE'), ['EUR', 'USD', 'GBP'])
         self.assertEqual(resolve_currencies(configuration, 'zh-Hans'), ['CNY', 'USD', 'EUR'])
         self.assertEqual(resolve_currencies(configuration, 'zh-Hant'), ['TWD', 'EUR', 'GBP'])
@@ -39,7 +45,7 @@ class HeaderLocaleTests(unittest.TestCase):
         self.assertEqual(configuration['locales']['zh-Hant'], ['TWD', 'USD', 'HKD'])
 
     def test_missing_sign_and_dollar_collision_are_skipped(self):
-        configuration = {'locales': {'test': ['CHF', 'CAD', 'USD']}, 'glyphs': {'CAD': '$', 'USD': '$', 'EUR': '€', 'GBP': '£'}, 'fallbacks': ['EUR', 'USD', 'GBP']}
+        configuration = {'locales': {'test': ['CHF', 'CAD', 'USD']}, 'glyphs': {'CAD': '$', 'USD': '$', 'EUR': '€', 'GBP': '£'}, 'fallbacks': ['EUR', 'USD', 'GBP'], 'spinGlyphs': ['$','€','£','¥','₹','₩']}
         self.assertEqual(resolve_currencies(configuration, 'test'), ['CAD', 'EUR', 'GBP'])
         for unsupported in ['Fr', 'CHF', 'C$', 'A$', 'MX$', 'R$', 'HK$', 'NT$', '?']:
             with self.subTest(unsupported=unsupported):
@@ -48,6 +54,11 @@ class HeaderLocaleTests(unittest.TestCase):
         configuration['fallbacks'] = ['USD']
         with self.assertRaisesRegex(ValueError, 'Three distinct currency signs'):
             resolve_currencies(configuration, 'test')
+
+    def test_spins_reject_ambiguous_or_non_currency_pools(self):
+        for pool in [['$','€','£'],['$','€','£','¥','₹','₹'],['$','€','£','¥','₹','Fr']]:
+            with self.subTest(pool=pool), self.assertRaisesRegex(ValueError,'six distinct currency signs'):
+                currency_reels(['€','$','£'],pool)
 
     def test_background_identity_includes_linked_freetype(self):
         identity = dict(pixelSourceSha256='code', sourceSha256='layout', fontSha256='font', pillow='12', freetype='2.14')
@@ -66,9 +77,9 @@ class HeaderLocaleTests(unittest.TestCase):
             (locale / 'poster.png').write_bytes(b'poster')
             (locale / 'header.mp4').write_bytes(b'video')
             identity = {'renderer': 'current'}
-            configuration = {'locales': {'de-DE': ['EUR', 'CHF', 'USD']}, 'glyphs': {'EUR': '€', 'USD': '$', 'GBP': '£'}, 'fallbacks': ['EUR', 'USD', 'GBP']}
+            configuration = {'locales': {'de-DE': ['EUR', 'CHF', 'USD']}, 'glyphs': {'EUR': '€', 'USD': '$', 'GBP': '£'}, 'fallbacks': ['EUR', 'USD', 'GBP'], 'spinGlyphs': ['$','€','£','¥','₹','₩']}
             glyphs = ['€', '$', '£']
-            entry = dict(locale='de-DE', currencies=['EUR','USD','GBP'], glyphs=glyphs, reels=currency_reels(glyphs), renderIdentity=identity, posterSha256=hashlib.sha256(b'poster').hexdigest(), videoSha256=hashlib.sha256(b'video').hexdigest(), videoComplete=True, uniqueInputFrames=900, uniqueDecodedFrames=900)
+            entry = dict(locale='de-DE', currencies=['EUR','USD','GBP'], glyphs=glyphs, reels=currency_reels(glyphs, configuration['spinGlyphs']), renderIdentity=identity, posterSha256=hashlib.sha256(b'poster').hexdigest(), videoSha256=hashlib.sha256(b'video').hexdigest(), videoComplete=True, uniqueInputFrames=900, uniqueDecodedFrames=900)
             manifest = locale / 'manifest.json'
             manifest.write_text(json.dumps(entry))
             self.assertEqual(validate_entry(root, 'de-DE', configuration, identity, True), entry)

@@ -113,3 +113,5 @@ Unit tests use a fake CLI and require no credentials or media downloads. Local c
 - [Apple creative asset specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/creative-assets-specifications/)
 - [Apple custom product pages](https://developer.apple.com/help/app-store-connect/create-custom-product-pages/configure-multiple-product-page-versions/)
 - [Pinned asc asset-library guide](https://github.com/rorkai/App-Store-Connect-CLI/blob/5.16.0/guides/asset-library.mdx)
+
+For an approved header update, supply `replace_header_sha256` with the previous approved header hash and select `header` scope. Dry-run shows each guarded replacement. Apply checks that the old draft placement still references that exact approved video and that both videos are ready before deleting only the placement. The old library video remains available. If a create step is interrupted, rerun the same reviewed input to fill the empty slot; unrelated or ambiguous headers remain blocked.
