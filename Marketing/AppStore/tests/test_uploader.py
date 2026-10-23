@@ -1592,12 +1592,13 @@ class UploaderTests(unittest.TestCase):
 
     def test_pending_video_wait_rejects_changed_identity_failure_and_timeout(self):
         original = dict(row('pending-video', referenceName='approved-reference', category='CREATIVE_ASSETS', fileSize=8, state='PREPARE_FOR_SUBMISSION', specId='header', videoAsset=None), type='appAssetLibraryVideos')
-        for change in ('referenceName', 'fileSize', 'category', 'id', 'type', 'failed', 'timeout'):
+        for change in ('referenceName', 'fileSize', 'category', 'id', 'type', 'attributes', 'failed', 'timeout'):
             with self.subTest(change=change):
                 video = json.loads(json.dumps(original))
                 if change in ('referenceName', 'category'): video['attributes'][change] = 'different'
                 if change == 'fileSize': video['attributes'][change] = 9
                 if change in ('id', 'type'): video[change] = 'different'
+                if change == 'attributes': video['attributes'] = None
                 if change == 'failed': video['attributes']['state'] = 'FAILED'
                 cli = FakeCLI(apply=True)
                 plan = self.planner(cli, set())

@@ -890,7 +890,7 @@ class Planner:
             response = self.cli.run(['api', 'GET', '/v1/appAssetLibraryVideos/' + op['video_id'], '--output', 'json'])
             video = response.get('data') if isinstance(response, dict) else None
             attrs = video.get('attributes', {}) if isinstance(video, dict) else {}
-            if not isinstance(video, dict) or video.get('id') != op['video_id'] or video.get('type') != 'appAssetLibraryVideos' or attrs.get('referenceName') != op['reference'] or attrs.get('category') != 'CREATIVE_ASSETS' or attrs.get('fileSize') != op['bytes']:
+            if not isinstance(video, dict) or not isinstance(attrs, dict) or video.get('id') != op['video_id'] or video.get('type') != 'appAssetLibraryVideos' or attrs.get('referenceName') != op['reference'] or attrs.get('category') != 'CREATIVE_ASSETS' or attrs.get('fileSize') != op['bytes']:
                 raise UploadError('Pending approved video identity changed; no placements were changed')
             if attrs.get('state') in {'PREPARE_FOR_SUBMISSION', 'APPROVED'} and attrs.get('specId') and attrs.get('videoAsset'):
                 return op['video_id']
