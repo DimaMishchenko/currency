@@ -7,6 +7,7 @@ import subprocess
 import struct
 import sys
 import tempfile
+import threading
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
@@ -1542,6 +1543,70 @@ class UploaderTests(unittest.TestCase):
         self.assertNotIn('https', text)
         self.assertNotIn('signed-token', text)
         self.assertEqual(receipt.stat().st_mode & 0o777, 0o600)
+
+    def test_header_videos_prepare_concurrently_before_any_placement(self):
+        cli = FakeCLI(apply=True)
+        plan = self.planner(cli, set())
+        refs = [plan.queue('LIBRARY', '', media_type='video', library='library', file='approved-file', reference='approved-' + str(i)) for i in range(3)]
+        plan.queue('POST', '/v1/appAssetLibraryPlacements', u.resource('appAssetLibraryPlacements', {}, {'video': u.relationship('appAssetLibraryVideos', refs[0])}))
+        barrier = threading.Barrier(3)
+        def prepare(op):
+            barrier.wait(timeout=3)
+            self.assertFalse(cli.calls)
+            return 'video-' + op['reference']
+        with patch.object(plan, 'prepare_video', side_effect=prepare), patch.object(sys, 'stdout', new=io.StringIO()):
+            plan.execute()
+        self.assertEqual(len(cli.calls), 1)
+        self.assertEqual(cli.calls[0][2]['data']['relationships']['video']['data']['id'], 'video-approved-0')
+
+    def test_header_preparation_failure_preserves_every_existing_placement(self):
+        plan, cli, path = self.approved_header_replacement()
+        plan.queue('LIBRARY', '', media_type='video', library='library', file='approved-file', reference='approved-video')
+        plan.place_header('locale', 'default', 'new-video')
+        with patch.object(plan, 'prepare_video', side_effect=u.UploadError('processing incomplete')):
+            with self.assertRaisesRegex(u.UploadError, 'processing incomplete'):
+                plan.execute()
+        self.assertEqual(self.state[path][0]['id'], 'old-header')
+        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_pending_approved_video_reuses_identity_without_duplicate_upload(self):
+        file = self.root / 'approved-header.mp4'
+        file.write_bytes(b'approved')
+        checksum = hashlib.sha256(file.read_bytes()).hexdigest()
+        video = dict(row('pending-video', referenceName='currency-approved-' + checksum, category='CREATIVE_ASSETS', fileSize=file.stat().st_size, state='PREPARE_FOR_SUBMISSION', specId='header', videoAsset=None), type='appAssetLibraryVideos')
+        cli = FakeCLI({'/v1/appAssetLibraries/library/videos': [video]}, apply=True)
+        plan = self.planner(cli, {'header'})
+        plan.library = 'library'
+        ref = plan.library_media({'sha256': checksum, 'file': file}, 'video')
+        self.assertEqual([op['method'] for op in plan.ops], ['WAIT_VIDEO'])
+        self.assertEqual(plan.summary()[0]['approvedReference'], 'currency-approved-' + checksum)
+        plan.queue('POST', '/v1/appAssetLibraryPlacements', u.resource('appAssetLibraryPlacements', {}, {'video': u.relationship('appAssetLibraryVideos', ref)}))
+        ready = json.loads(json.dumps(video))
+        ready['attributes']['videoAsset'] = 'https://example.invalid/processed'
+        with patch.object(cli, 'run', side_effect=[{'data': video}, {'data': ready}]) as command, patch.object(u.time, 'sleep'), patch.object(sys, 'stdout', new=io.StringIO()):
+            plan.execute()
+        self.assertEqual(command.call_count, 2)
+        self.assertTrue(all(call.args[0][:2] == ['api', 'GET'] for call in command.call_args_list))
+        post = next(call for call in cli.calls if call[0] == 'POST')
+        self.assertEqual(post[2]['data']['relationships']['video']['data']['id'], 'pending-video')
+
+    def test_pending_video_wait_rejects_changed_identity_failure_and_timeout(self):
+        original = dict(row('pending-video', referenceName='approved-reference', category='CREATIVE_ASSETS', fileSize=8, state='PREPARE_FOR_SUBMISSION', specId='header', videoAsset=None), type='appAssetLibraryVideos')
+        for change in ('referenceName', 'fileSize', 'category', 'id', 'type', 'failed', 'timeout'):
+            with self.subTest(change=change):
+                video = json.loads(json.dumps(original))
+                if change in ('referenceName', 'category'): video['attributes'][change] = 'different'
+                if change == 'fileSize': video['attributes'][change] = 9
+                if change in ('id', 'type'): video[change] = 'different'
+                if change == 'failed': video['attributes']['state'] = 'FAILED'
+                cli = FakeCLI(apply=True)
+                plan = self.planner(cli, set())
+                op = {'method': 'WAIT_VIDEO', 'video_id': 'pending-video', 'reference': 'approved-reference', 'bytes': 8}
+                with patch.object(cli, 'run', return_value={'data': video}) as command, patch.object(u.time, 'monotonic', side_effect=[0, 1801]), patch.object(u.time, 'sleep') as sleep:
+                    with self.assertRaises(u.UploadError): plan.prepare_video(op)
+                sleep.assert_not_called()
+                self.assertEqual(command.call_args.args[0][:2], ['api', 'GET'])
+                self.assertFalse(command.call_args.kwargs.get('mutate', False))
 
     def test_pending_ids_resolve_in_order(self):
         cli = FakeCLI(apply=True)

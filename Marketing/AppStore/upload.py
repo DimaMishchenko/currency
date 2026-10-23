@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Plan/reconcile App Store drafts through the pinned asc CLI. Never submit review."""
 import argparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from fractions import Fraction
 import hashlib
 import json
@@ -12,6 +13,7 @@ import struct
 import subprocess
 import sys
 import tempfile
+import time
 
 ASC_VERSION = '5.16.0'
 PROFILES = {'iphone': 'APP_IPHONE_61', 'ipad': 'APP_IPAD_PRO_3GEN_129', 'watch': 'APP_WATCH_SERIES_10'}
@@ -857,17 +859,70 @@ class Planner:
             raise UploadError('Duplicate approved library assets; resolve duplicates first')
         if found:
             attrs = found[0].get('attributes', {})
-            if attrs.get('state') not in {'PREPARE_FOR_SUBMISSION', 'APPROVED'}:
-                raise UploadError('Existing approved media is still processing or failed; inspect it before retry')
             category = 'APP_SCREENSHOTS_AND_PREVIEWS' if media_type == 'image' else 'CREATIVE_ASSETS'
+            identifier = found[0].get('id')
+            if not isinstance(identifier, str) or not re.fullmatch('[A-Za-z0-9-]+', identifier) or attrs.get('category') != category or attrs.get('fileSize') != item['file'].stat().st_size:
+                raise UploadError('Existing library asset does not match approved identity, category or file size; inspect it before reuse')
             ready = attrs.get('videoAsset') if media_type == 'video' else attrs.get('imageAsset', {}).get('width') and attrs.get('imageAsset', {}).get('height')
-            if not ready or not attrs.get('specId') or attrs.get('category') != category or attrs.get('fileSize') != item['file'].stat().st_size:
-                raise UploadError('Existing library asset does not match approved media readiness, category or file size; inspect it before reuse')
-            identifier = found[0]['id']
+            if media_type == 'video' and attrs.get('state') in {'PREPARE_FOR_SUBMISSION', 'PROCESSING', 'UPLOADING'} and (not ready or not attrs.get('specId')):
+                identifier = self.queue('WAIT_VIDEO', '', video_id=identifier, reference=reference, bytes=item['file'].stat().st_size)
+            elif attrs.get('state') not in {'PREPARE_FOR_SUBMISSION', 'APPROVED'} or not ready or not attrs.get('specId'):
+                raise UploadError('Existing approved media is still processing or failed; inspect it before reuse')
         else:
             identifier = self.queue('LIBRARY', '', media_type=media_type, library=self.library, file=str(item['file']), reference=reference)
         self.media[reference] = identifier
         return identifier
+
+    def upload_library_asset(self, op):
+        media_type = op['media_type']
+        category = 'CREATIVE_ASSETS' if media_type == 'video' else 'APP_SCREENSHOTS_AND_PREVIEWS'
+        response = self.cli.run(['asset-library', 'videos' if media_type == 'video' else 'images', 'upload', '--library-id', op['library'], '--file', op['file'], '--reference-name', op['reference'], '--category', category, '--output', 'json'], mutate=True)
+        identifier = response.get(media_type + 'Id') if isinstance(response, dict) else None
+        if not isinstance(identifier, str) or not re.fullmatch('[A-Za-z0-9-]+', identifier):
+            raise UploadError('Library upload returned no valid asset ID; inspect remote library before retry')
+        return identifier
+
+    def prepare_video(self, op):
+        if op['method'] == 'LIBRARY':
+            return self.upload_library_asset(op)
+        deadline = time.monotonic() + 1800
+        while True:
+            response = self.cli.run(['api', 'GET', '/v1/appAssetLibraryVideos/' + op['video_id'], '--output', 'json'])
+            video = response.get('data') if isinstance(response, dict) else None
+            attrs = video.get('attributes', {}) if isinstance(video, dict) else {}
+            if not isinstance(video, dict) or video.get('id') != op['video_id'] or video.get('type') != 'appAssetLibraryVideos' or attrs.get('referenceName') != op['reference'] or attrs.get('category') != 'CREATIVE_ASSETS' or attrs.get('fileSize') != op['bytes']:
+                raise UploadError('Pending approved video identity changed; no placements were changed')
+            if attrs.get('state') in {'PREPARE_FOR_SUBMISSION', 'APPROVED'} and attrs.get('specId') and attrs.get('videoAsset'):
+                return op['video_id']
+            if attrs.get('state') not in {'UPLOADING', 'PROCESSING', 'PREPARE_FOR_SUBMISSION'}:
+                raise UploadError('Pending approved video failed processing; no placements were changed')
+            if time.monotonic() >= deadline:
+                raise UploadError('Approved video is still processing; no placements were changed; inspect before retrying')
+            time.sleep(5)
+
+    def prepare_videos(self):
+        operations = [(index, op) for index, op in enumerate(self.ops, 1) if op['method'] == 'WAIT_VIDEO' or (op['method'] == 'LIBRARY' and op['media_type'] == 'video')]
+        resolved, failures = {}, []
+        if not operations:
+            return resolved
+        if any('@pending-' in op.get('library', '') for _, op in operations):
+            raise UploadError('Video preparation requires an existing library identity')
+        with ThreadPoolExecutor(max_workers=min(8, len(operations))) as executor:
+            pending = {executor.submit(self.prepare_video, op): (index, op) for index, op in operations}
+            for future in as_completed(pending):
+                index, op = pending[future]
+                try:
+                    identifier = future.result()
+                except UploadError as error:
+                    failures.append(error)
+                    continue
+                resolved[op['ref']] = identifier
+                if hasattr(self.cli, 'receipt'):
+                    self.cli.receipt('operation-%d-video-ready' % index, {'videoId': identifier})
+                print('Prepared approved header video %d/%d' % (len(resolved), len(operations)), flush=True)
+        if failures:
+            raise failures[0]
+        return resolved
 
     def duo_screenshots(self, target, family, locale):
         if set(self.duo_groups) != {'duo-outer', 'duo-inner'}:
@@ -973,7 +1028,7 @@ class Planner:
             raise UploadError('Apply mode is required to execute a plan')
         if self.remove_approved_duplicate and (self.duplicate_repair is None or not self.ops or self.ops[0]['method'] != 'DELETE_APPROVED_DUPLICATE' or self.ops[0]['proof'] != self.duplicate_repair):
             raise UploadError('Explicit duplicate repair was not uniquely verified before execution')
-        resolved = {}
+        resolved = self.prepare_videos()
         def substitute(value):
             if isinstance(value, str):
                 for ref, identifier in sorted(resolved.items(), key=lambda p: -len(p[0])):
@@ -987,6 +1042,8 @@ class Planner:
                 return {k: substitute(v) for k, v in value.items()}
             return value
         for index, operation in enumerate(self.ops, 1):
+            if operation['ref'] in resolved:
+                continue
             op = substitute({k: v for k, v in operation.items() if k != 'ref'})
             if hasattr(self.cli, 'receipt'):
                 self.cli.receipt('operation-%d-started' % index)
@@ -1024,12 +1081,7 @@ class Planner:
                     raise UploadError('Metadata synchronization did not resolve one expected version localization; inspect draft state before retrying')
                 identifier = matches[0]['id']
             elif op['method'] == 'LIBRARY':
-                plural = 'videos' if op['media_type'] == 'video' else 'images'
-                category = 'APP_SCREENSHOTS_AND_PREVIEWS' if op['media_type'] == 'image' else 'CREATIVE_ASSETS'
-                response = self.cli.run(['asset-library', plural, 'upload', '--library-id', op['library'], '--file', op['file'], '--reference-name', op['reference'], '--category', category, '--output', 'json'], mutate=True)
-                identifier = response.get(op['media_type'] + 'Id') if isinstance(response, dict) else None
-                if not isinstance(identifier, str) or not re.fullmatch('[A-Za-z0-9-]+', identifier):
-                    raise UploadError('Library upload returned no valid asset ID; inspect remote library before retry')
+                identifier = self.upload_library_asset(op)
             elif op['method'] == 'SCREENSHOTS':
                 self.upload_screenshots(op)
                 identifier = ''
@@ -1065,6 +1117,8 @@ class Planner:
                 entry.update(previousApprovedSha256=operation['old_reference'].removeprefix('currency-approved-'), placementGroup=operation['group'])
             if operation['method'] == 'LIBRARY':
                 entry.update(mediaType=operation['media_type'], approvedReference=operation['reference'])
+            if operation['method'] == 'WAIT_VIDEO':
+                entry.update(mediaType='video', approvedReference=operation['reference'], waitForProcessing=True)
             if operation['method'] == 'METADATA':
                 entry.update(localeCount=len(self.meta['locales']), appInfoFields=sorted({key for fields in self.meta['locales'].values() for key in fields if key in INFO_FIELDS}), versionFields=sorted({key for fields in self.meta['locales'].values() for key in fields if key in VERSION_FIELDS}))
             if operation['method'] == 'CPP_CREATE':
