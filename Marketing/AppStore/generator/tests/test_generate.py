@@ -128,5 +128,96 @@ class GeneratorTests(unittest.TestCase):
             self.assertEqual(image.tobytes(), rendered.tobytes())
 
 
+    def localized_fixture(self):
+        second = dict(self.placement, locale='de-DE', master='de-DE/home', path='de-DE/iphone/default/01-home.png')
+        self.recipe['placements'].append(second)
+        self.recipe['masters'][second['master']] = {'approved_sha256': self.sha}
+        archive = self.root / 'localized-source.zip'
+        with zipfile.ZipFile(archive, 'w') as target:
+            for item in self.recipe['placements']:
+                target.writestr(item['path'], self.png)
+            target.writestr('manifest.json', 'private')
+            target.writestr('mapping.csv', 'private')
+        self.recipe['approved_archive_sha256'] = generate.digest(archive)
+        video = self.root / 'localized.mp4'
+        video.write_bytes(b'localized-video')
+        sha = generate.digest(video)
+        self.recipe['approved_header_sha256_by_locale'] = {'en-US': sha, 'de-DE': sha}
+        mapping = self.root / 'headers.json'
+        mapping.write_text(json.dumps({'schemaVersion':1,'headers':{locale:{'path':video.name,'sha256':sha} for locale in ['en-US','de-DE']}}))
+        return archive, mapping, sha
+
+    def test_localized_bundle_deduplicates_headers_and_unpacks_exact_mapping(self):
+        archive, headers, sha = self.localized_fixture()
+        first, second = self.root / 'a.zip', self.root / 'b.zip'
+        generate.bundle_archive(archive, None, first, self.recipe, headers)
+        generate.bundle_archive(archive, None, second, self.recipe, headers)
+        self.assertEqual(first.read_bytes(), second.read_bytes())
+        with zipfile.ZipFile(first) as bundle:
+            self.assertEqual(len([name for name in bundle.namelist() if name.endswith('.mp4')]), 1)
+            manifest = json.loads(bundle.read('manifest.json'))
+            self.assertNotIn('header', manifest)
+            self.assertEqual(set(manifest['headers']), {'en-US','de-DE'})
+        self.recipe['approved_bundle_sha256'] = generate.digest(first)
+        restored = generate.unpack_bundle(first, self.root / 'unpacked', self.recipe)
+        self.assertEqual(restored, manifest)
+        self.assertEqual((self.root / 'unpacked' / manifest['headers']['de-DE']['path']).read_bytes(), b'localized-video')
+
+    def test_localized_bundle_refuses_missing_locale_and_global_fallback(self):
+        archive, headers, sha = self.localized_fixture()
+        mapping = json.loads(headers.read_text())
+        del mapping['headers']['de-DE']
+        headers.write_text(json.dumps(mapping))
+        with self.assertRaisesRegex(ValueError, 'cover every placement locale'):
+            generate.bundle_archive(archive, None, self.root / 'output.zip', self.recipe, headers)
+        with self.assertRaisesRegex(ValueError, 'without a global fallback'):
+            generate.bundle_archive(archive, self.root / 'localized.mp4', self.root / 'output.zip', self.recipe)
+        del self.recipe['approved_header_sha256_by_locale']['de-DE']
+        with self.assertRaisesRegex(ValueError, 'cover every placement locale'):
+            generate.bundle_header_plan(self.recipe)
+        self.assertFalse((self.root / 'output.zip').exists())
+
+    def test_compact_base_reuses_exact_screenshots_and_rejects_source_drift(self):
+        archive, headers, sha = self.localized_fixture()
+        approved_headers = self.recipe.pop('approved_header_sha256_by_locale')
+        original_header = self.root / 'old.mp4'
+        original_header.write_bytes(b'old-header')
+        self.recipe['approved_header_sha256'] = generate.digest(original_header)
+        base_bundle = self.root / 'base.zip'
+        generate.bundle_archive(archive, original_header, base_bundle, self.recipe)
+        source_recipe = json.loads(json.dumps(self.recipe))
+        source_recipe['approved_bundle_sha256'] = generate.digest(base_bundle)
+        self.recipe['approved_header_sha256_by_locale'] = approved_headers
+        first, second = self.root / 'localized-a.zip', self.root / 'localized-b.zip'
+        generate.bundle_archive(base_bundle,None,first,self.recipe,headers,source_recipe)
+        generate.bundle_archive(base_bundle,None,second,self.recipe,headers,source_recipe)
+        self.assertEqual(first.read_bytes(),second.read_bytes())
+        with zipfile.ZipFile(base_bundle) as old, zipfile.ZipFile(first) as new:
+            pngs = [name for name in old.namelist() if name.endswith('.png')]
+            self.assertEqual(pngs,[name for name in new.namelist() if name.endswith('.png')])
+            self.assertTrue(all(old.read(name)==new.read(name) for name in pngs))
+            self.assertNotIn('header/header.mp4',new.namelist())
+        self.recipe['placements'][0]['order'] = 2
+        with self.assertRaisesRegex(ValueError,'screenshots must remain unchanged'):
+            generate.bundle_archive(base_bundle,None,self.root/'drift.zip',self.recipe,headers,source_recipe)
+        self.recipe['placements'][0]['order'] = 1
+        base_bundle.write_bytes(base_bundle.read_bytes()+b'corrupt')
+        with self.assertRaisesRegex(ValueError,'source bundle hash mismatch'):
+            generate.bundle_archive(base_bundle,None,self.root/'corrupt.zip',self.recipe,headers,source_recipe)
+
+    def test_localized_bundle_confines_video_paths_and_checks_bytes(self):
+        archive, headers, sha = self.localized_fixture()
+        mapping = json.loads(headers.read_text())
+        mapping['headers']['de-DE']['path'] = '../outside.mp4'
+        headers.write_text(json.dumps(mapping))
+        with self.assertRaisesRegex(ValueError, 'Invalid relative path'):
+            generate.bundle_archive(archive, None, self.root / 'output.zip', self.recipe, headers)
+        mapping['headers']['de-DE']['path'] = 'localized.mp4'
+        headers.write_text(json.dumps(mapping))
+        (self.root / 'localized.mp4').write_bytes(b'changed')
+        with self.assertRaisesRegex(ValueError, 'header bytes mismatch'):
+            generate.bundle_archive(archive, None, self.root / 'output.zip', self.recipe, headers)
+
+
 if __name__ == '__main__':
     unittest.main()

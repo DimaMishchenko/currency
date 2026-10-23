@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "selection": "Approved language-based screenshot examples; primary followed by the first two secondary currencies. No storefront inference.",
+  "glyphs": {
+    "USD": "$",
+    "EUR": "€",
+    "GBP": "£",
+    "CAD": "C$",
+    "AUD": "A$",
+    "CHF": "Fr",
+    "MXN": "MX$",
+    "BRL": "R$",
+    "JPY": "¥",
+    "KRW": "₩",
+    "TRY": "₺",
+    "RUB": "₽",
+    "UAH": "₴",
+    "CNY": "¥",
+    "HKD": "HK$",
+    "TWD": "NT$"
+  },
+  "locales": {
+    "en-US": [
+      "USD",
+      "EUR",
+      "GBP"
+    ],
+    "en-GB": [
+      "GBP",
+      "EUR",
+      "USD"
+    ],
+    "en-AU": [
+      "AUD",
+      "USD",
+      "EUR"
+    ],
+    "en-CA": [
+      "CAD",
+      "USD",
+      "EUR"
+    ],
+    "de-DE": [
+      "EUR",
+      "CHF",
+      "USD"
+    ],
+    "fr-FR": [
+      "EUR",
+      "CHF",
+      "USD"
+    ],
+    "fr-CA": [
+      "CAD",
+      "USD",
+      "EUR"
+    ],
+    "es-ES": [
+      "EUR",
+      "USD",
+      "MXN"
+    ],
+    "es-MX": [
+      "MXN",
+      "USD",
+      "EUR"
+    ],
+    "it": [
+      "EUR",
+      "USD",
+      "CHF"
+    ],
+    "pt-BR": [
+      "BRL",
+      "USD",
+      "EUR"
+    ],
+    "ja": [
+      "JPY",
+      "USD",
+      "EUR"
+    ],
+    "ko": [
+      "KRW",
+      "USD",
+      "EUR"
+    ],
+    "tr": [
+      "TRY",
+      "USD",
+      "EUR"
+    ],
+    "ru": [
+      "RUB",
+      "USD",
+      "EUR"
+    ],
+    "uk": [
+      "UAH",
+      "EUR",
+      "USD"
+    ],
+    "zh-Hans": [
+      "CNY",
+      "USD",
+      "HKD"
+    ],
+    "zh-Hant": [
+      "TWD",
+      "USD",
+      "HKD"
+    ]
+  }
+}

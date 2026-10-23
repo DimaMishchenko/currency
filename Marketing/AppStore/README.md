@@ -10,7 +10,7 @@
 
 Install the pinned Python dependencies in `generator/requirements.txt`, plus `rsvg-convert` for screenshot bodies and FFmpeg for header video. See [generator/README.md](generator/README.md) for rendering commands and input-pack layout. Rendering requires the private frozen source pack, including native app captures and licensed resources. Downloading and uploading the approved final assets does not require that pack.
 
-Editable rendering produces review candidates. Approve media changes before packaging a new asset version. The unpacked manifest uses `schemaVersion: 1`: placements record `locale`, `profile`, `family`, `order`, `path` and `sha256`; the header records `path` and `sha256`. Paths are relative to the unpacked directory, and placements may share a PNG.
+Editable rendering produces review candidates. Approve media changes before packaging a new asset version. The unpacked manifest uses `schemaVersion: 1`: placements record `locale`, `profile`, `family`, `order`, `path` and `sha256`; the legacy `header` records `path` and `sha256`. A localized bundle instead records `headers`, mapping all eighteen locales to `{path, sha256}`. A supplied locale map must be complete; a global fallback is refused. Identical video hashes share one bundled file and one Asset Library upload. The uploader selects the locale’s header for both default and custom product pages, preserving existing placement conflict and readback checks. Paths are relative to the unpacked directory, and placements may share a PNG.
 
 Download the exact release asset, verify its pinned byte count and SHA-256, then unpack into an empty ignored directory:
 
