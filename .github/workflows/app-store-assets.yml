@@ -6,7 +6,7 @@ on:
       mode:
         description: Inspect native policy, plan, or apply draft changes (never submit review)
         type: choice
-        options: [dry-run, apply, inspect-native-policy]
+        options: [dry-run, apply, inspect-native-policy, inspect-accessibility, confirm-larger-text]
         default: dry-run
       version_id:
         description: Optional exact editable iOS version ID; blank requires one unique draft
@@ -43,7 +43,7 @@ concurrency:
 
 jobs:
   drafts:
-    if: github.ref == 'refs/heads/main' || (github.ref == 'refs/heads/feature/localized-app-store-headers' && github.actor == github.repository_owner)
+    if: (github.ref == 'refs/heads/main' || (github.ref == 'refs/heads/feature/localized-app-store-headers' && github.actor == github.repository_owner)) && inputs.mode != 'inspect-accessibility' && inputs.mode != 'confirm-larger-text'
     runs-on: ubuntu-latest
     timeout-minutes: 360
     environment: testflight
@@ -214,3 +214,74 @@ jobs:
         if: always()
         shell: bash
         run: rm -rf "$RUNNER_TEMP/currency-app-store-media"
+
+  accessibility-confirmation:
+    if: github.ref == 'refs/heads/feature/localized-app-store-headers' && github.actor == github.repository_owner && (inputs.mode == 'inspect-accessibility' || inputs.mode == 'confirm-larger-text')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: testflight
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Install verified asc
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/currency-asc-bin"
+          curl --fail --silent --show-error --location --connect-timeout 15 --max-time 120 --retry 2 --retry-max-time 120 https://github.com/rorkai/App-Store-Connect-CLI/releases/download/5.16.0/asc_5.16.0_linux_amd64 --output "$RUNNER_TEMP/currency-asc-bin/asc"
+          echo 'f0be6185b82e300899e2c162bae8975cafb3fcd7c6f990b8e22d637184bcaabc  '"$RUNNER_TEMP/currency-asc-bin/asc" | sha256sum --check --status
+          chmod 755 "$RUNNER_TEMP/currency-asc-bin/asc"
+          echo "$RUNNER_TEMP/currency-asc-bin" >> "$GITHUB_PATH"
+      - name: Inspect or confirm existing draft Larger Text declarations
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+          ASC_PRIVATE_KEY_B64: ${{ secrets.ASC_API_CERT }}
+          REQUEST_MODE: ${{ inputs.mode }}
+        shell: bash
+        run: |
+          python3 - <<'PYTHON'
+          import importlib.util
+          import json
+          import os
+          import re
+          import sys
+          spec = importlib.util.spec_from_file_location('upload', 'Marketing/AppStore/upload.py')
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          try:
+              apply = os.environ['REQUEST_MODE'] == 'confirm-larger-text'
+              cli = module.CLI(apply=apply)
+              path = '/v1/apps/6816213577/accessibilityDeclarations'
+              def read():
+                  rows = cli.api('GET', path)['data']
+                  assert isinstance(rows, list)
+                  families = [row['attributes']['deviceFamily'] for row in rows]
+                  assert len(families) == len(set(families))
+                  return {row['attributes']['deviceFamily']: row for row in rows}
+              before = read()
+              assert {'IPHONE', 'IPAD'} <= before.keys()
+              print(json.dumps({'mode': os.environ['REQUEST_MODE'], 'before': {family: row['attributes'] for family, row in before.items()}}), flush=True)
+              for family in ('IPHONE', 'IPAD'):
+                  row = before[family]
+                  assert row['attributes']['state'] == 'DRAFT'
+                  identifier = row['id']
+                  assert isinstance(identifier, str) and re.fullmatch('[A-Za-z0-9-]+', identifier)
+                  if apply and row['attributes'].get('supportsLargerText') is not True:
+                      cli.api('PATCH', '/v1/accessibilityDeclarations/' + identifier, {'data': {'type': 'accessibilityDeclarations', 'id': identifier, 'attributes': {'supportsLargerText': True}}})
+              after = read()
+              assert before.keys() == after.keys()
+              for family, row in before.items():
+                  expected = dict(row['attributes'])
+                  if apply and family in ('IPHONE', 'IPAD'):
+                      expected['supportsLargerText'] = True
+                  assert after[family]['attributes'] == expected
+              print(json.dumps({'verified': True, 'after': {family: row['attributes'] for family, row in after.items()}}), flush=True)
+          except module.UploadError as error:
+              print(str(error), file=sys.stderr)
+              sys.exit(1)
+          except (AssertionError, KeyError, ValueError, TypeError):
+              print('Declaration guard or readback failed; inspect existing draft state before retrying.', file=sys.stderr)
+              sys.exit(1)
+          PYTHON

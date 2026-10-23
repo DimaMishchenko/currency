@@ -33,7 +33,7 @@ To publish a newly approved media version, create a new tag rather than updating
 
 ```sh
 gh release create app-store-assets-v3 APPROVED-BUNDLE.zip \
-  --target REVIEWED_COMMIT --title "App Store assets v2" \
+  --target REVIEWED_COMMIT --title "App Store assets v3" \
   --notes-file ASSET-NOTES.md --prerelease --latest=false
 ```
 
