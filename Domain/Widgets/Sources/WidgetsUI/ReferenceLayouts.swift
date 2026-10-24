@@ -9,6 +9,7 @@ import Widgets
 /// Interactive banknote and metal-weight reference widget.
 public struct CashView: View {
   @Environment(\.locale) private var locale
+  @Environment(\.colorSchemeContrast) private var contrast
   let entry: SuiteEntry
   /// Creates a reference-value widget with the entry’s preset currencies.
   public init(entry: SuiteEntry) { self.entry = entry }
@@ -79,8 +80,10 @@ public struct CashView: View {
               .overlay {
                 RoundedRectangle(cornerRadius: AppStyle.Widget.keyRadius)
                   .strokeBorder(
-                    .primary.opacity(preset == amount ? AppStyle.Widget.selectedBorder : 0),
-                    lineWidth: 1)
+                    .primary.opacity(
+                      preset == amount
+                        ? (contrast == .increased ? 1 : AppStyle.Widget.selectedBorder) : 0),
+                    lineWidth: contrast == .increased ? 2 : 1)
               }
           }
           .buttonStyle(WidgetButtonStyle())
@@ -91,7 +94,7 @@ public struct CashView: View {
       WidgetFooter(entry: entry)
     }
     .animation(nil, value: entry.input)
-    .modifier(WidgetSurface(openURL: entry.openURL))
+    .modifier(WidgetSurface(openURL: entry.openURL, maximumTypeSize: .xxLarge))
   }
 
   private func label(_ value: Decimal) -> String {
@@ -157,7 +160,7 @@ public struct AnchorView: View {
     }
     .frame(maxWidth: .infinity, alignment: .leading)
     .lineLimit(1).minimumScaleFactor(0.4)
-    .modifier(WidgetSurface(openURL: entry.openURL))
+    .modifier(WidgetSurface(openURL: entry.openURL, maximumTypeSize: .xLarge))
   }
 
   private func referenceLabel(_ code: String) -> String {

@@ -52,8 +52,12 @@ struct WidgetGuide: View {
         }
       }
       .sheet(item: $selection) { kind in
-        WidgetPlayground(kind: kind, family: selectedFamily)
-          .navigationTransition(.zoom(sourceID: selectedSource, in: expansion))
+        if reduceMotion {
+          WidgetPlayground(kind: kind, family: selectedFamily)
+        } else {
+          WidgetPlayground(kind: kind, family: selectedFamily)
+            .navigationTransition(.zoom(sourceID: selectedSource, in: expansion))
+        }
       }
       .sheet(isPresented: $tutorial) {
         WidgetPresentation { WidgetTutorial(kind: .calculator) }

@@ -9,9 +9,10 @@ import Widgets
 
 struct WidgetSurface: ViewModifier {
   let openURL: URL?
+  var maximumTypeSize: DynamicTypeSize = .xxxLarge
   func body(content: Content) -> some View {
     content
-      .dynamicTypeSize(...DynamicTypeSize.large)
+      .dynamicTypeSize(...maximumTypeSize)
       .font(AppStyle.font(.caption))
       .tint(Color(uiColor: .label))
       .modifier(WidgetContainerBackground())
@@ -263,6 +264,8 @@ struct WidgetCurrencyIcon: View {
 
 struct CurrencyTile: View {
   @Environment(\.locale) private var locale
+  @Environment(\.colorSchemeContrast) private var contrast
+  @ScaledMetric(relativeTo: .title3) private var amountScale: CGFloat = 1
   let entry: SuiteEntry
   let code: String
   var compact = false
@@ -328,7 +331,7 @@ struct CurrencyTile: View {
         isLocal: WidgetSelection.isLocal(code), normalizesGeometry: true
       )
       currencyCode.opacity(codeVisibility)
-      amount.font(.system(size: amountSize, weight: .medium, design: .rounded))
+      amount.font(.system(size: amountSize * amountScale, weight: .medium, design: .rounded))
     }
     .padding(
       .horizontal,
@@ -343,7 +346,9 @@ struct CurrencyTile: View {
     .overlay {
       RoundedRectangle(cornerRadius: cornerRadius)
         .strokeBorder(
-          .primary.opacity(selected ? AppStyle.Widget.selectedBorder : 0), lineWidth: 1.2)
+          .primary.opacity(
+            selected ? (contrast == .increased ? 1 : AppStyle.Widget.selectedBorder) : 0),
+          lineWidth: contrast == .increased ? 2 : 1.2)
     }
     .contentShape(.rect)
   }

@@ -44,7 +44,7 @@ public struct HomeWatchScreen: View {
                   .animation(
                     reduceMotion ? nil : .snappy(duration: 0.25), value: model.input.amount
                   )
-                  .lineLimit(1).minimumScaleFactor(0.35)
+                  .fixedSize(horizontal: false, vertical: true)
               }
             }
             .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
@@ -209,11 +209,13 @@ public struct HomeWatchScreen: View {
 private struct WatchAmountEntry: View {
   let save: (String) -> Bool
   @State private var draft: ConverterState
-  @State private var replacing = true
   @State private var failed = false
   @Environment(\.dismiss) private var dismiss
   @Environment(\.locale) private var locale
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+  @ScaledMetric(relativeTo: .title2) private var amountHeight = 28
+  @ScaledMetric(relativeTo: .title3) private var minimumKeyHeight = 28
 
   init(amount: String, save: @escaping (String) -> Bool) {
     var input = ConverterState()
@@ -225,52 +227,60 @@ private struct WatchAmountEntry: View {
   var body: some View {
     NavigationStack {
       GeometryReader { geometry in
-        VStack(spacing: 2) {
-          Text(
-            verbatim: draft.amount.replacingOccurrences(
-              of: ".", with: locale.decimalSeparator ?? ".")
-          )
-          .font(.system(.title2, design: .rounded, weight: .medium)).monospacedDigit()
-          .foregroundStyle(replacing ? Color.accentColor : Color.primary)
-          .lineLimit(1).minimumScaleFactor(0.35)
-          .frame(maxWidth: .infinity, alignment: .trailing)
-          .frame(height: 22)
-          .contentTransition(reduceMotion ? .identity : .numericText())
-          .animation(reduceMotion ? nil : .snappy(duration: 0.15), value: draft.amount)
-          .accessibilityLabel(Text(.Watch.amountLabel))
-          .accessibilityIdentifier("watch.home.amountField")
-          GlassEffectContainer(spacing: 2) {
-            Grid(horizontalSpacing: 6, verticalSpacing: 2) {
-              ForEach(0..<4) { row in
-                GridRow {
-                  ForEach(0..<3) { column in
-                    let key = keys[row][column]
-                    Button {
-                      press(key)
-                    } label: {
-                      Group {
-                        if key == "⌫" {
-                          Image(systemName: "delete.left")
-                        } else {
-                          Text(verbatim: key == "." ? locale.decimalSeparator ?? "." : key)
+        ScrollView(.vertical) {
+          VStack(spacing: 2) {
+            ScrollView(.horizontal) {
+              Text(verbatim: localizedDraft)
+                .font(.system(.title2, design: .rounded, weight: .medium)).monospacedDigit()
+                .foregroundStyle(.primary)
+                .fixedSize()
+                .frame(minWidth: max(0, geometry.size.width - 8), alignment: .trailing)
+                .contentTransition(reduceMotion ? .identity : .numericText())
+                .animation(reduceMotion ? nil : .snappy(duration: 0.15), value: draft.amount)
+            }
+            .defaultScrollAnchor(.trailing)
+            .frame(height: amountHeight)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text(.Watch.amountLabel))
+            .accessibilityValue(Text(verbatim: localizedDraft))
+            .accessibilityIdentifier("watch.home.amountField")
+            GlassEffectContainer(spacing: 2) {
+              Grid(horizontalSpacing: 6, verticalSpacing: 2) {
+                ForEach(0..<4) { row in
+                  GridRow {
+                    ForEach(0..<3) { column in
+                      let key = keys[row][column]
+                      Button {
+                        draft.press(key)
+                      } label: {
+                        Group {
+                          if key == "⌫" {
+                            Image(systemName: "delete.left")
+                          } else {
+                            Text(verbatim: key == "." ? locale.decimalSeparator ?? "." : key)
+                          }
                         }
+                        .font(.system(.title3, design: .rounded, weight: .medium))
+                        .frame(maxWidth: .infinity)
+                        .frame(
+                          height: max(
+                            minimumKeyHeight, (geometry.size.height - amountHeight - 8) / 4)
+                        )
+                        .contentShape(Rectangle())
                       }
-                      .font(.system(.title3, design: .rounded, weight: .medium))
-                      .frame(maxWidth: .infinity)
-                      .frame(height: max(24, (geometry.size.height - 30) / 4))
-                      .contentShape(Rectangle())
+                      .buttonStyle(.plain)
+                      .glassEffect(.regular, in: .capsule)
+                      .accessibilityLabel(keyLabel(key))
+                      .accessibilityIdentifier("watch.home.key.\(key)")
                     }
-                    .buttonStyle(.plain)
-                    .glassEffect(.regular, in: .capsule)
-                    .accessibilityLabel(keyLabel(key))
-                    .accessibilityIdentifier("watch.home.key.\(key)")
                   }
                 }
               }
             }
           }
+          .padding(.horizontal, 4)
         }
-        .padding(.horizontal, 4)
+        .scrollBounceBehavior(.basedOnSize)
       }
       .toolbar {
         ToolbarItem(placement: .confirmationAction) {
@@ -291,10 +301,8 @@ private struct WatchAmountEntry: View {
 
   private let keys = [["1", "2", "3"], ["4", "5", "6"], ["7", "8", "9"], [".", "0", "⌫"]]
 
-  private func press(_ key: String) {
-    if replacing && key != "⌫" { draft.press("AC") }
-    replacing = false
-    draft.press(key)
+  private var localizedDraft: String {
+    draft.amount.replacingOccurrences(of: ".", with: locale.decimalSeparator ?? ".")
   }
 
   private func keyLabel(_ key: String) -> Text {

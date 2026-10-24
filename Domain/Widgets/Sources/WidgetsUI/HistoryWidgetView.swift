@@ -1,3 +1,4 @@
+import Accessibility
 import Conversion
 import DesignSystem
 import ExchangeRates
@@ -52,10 +53,15 @@ public struct HistoryWidgetEntry: TimelineEntry {
 public struct HistoryWidgetView: View {
   @Environment(\.isWidgetPreview) private var preview
   @Environment(\.locale) private var locale
+  @Environment(\.colorSchemeContrast) private var contrast
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+  @ScaledMetric(relativeTo: .headline) private var changeFontSize = 17.0
+  private var secondaryInk: Color { contrast == .increased ? .primary : .secondary }
   private let entry: HistoryWidgetEntry
   private let family: WidgetFamily
   private var snapshot: HistoryWidgetSnapshot { entry.snapshot }
   private var compact: Bool { family == .systemSmall }
+  private var enlargesChange: Bool { !compact && dynamicTypeSize.isAccessibilitySize }
   private var changeFormat: FloatingPointFormatStyle<Double>.Percent {
     .percent.precision(.fractionLength(2)).sign(strategy: .always(includingZero: false))
   }
@@ -79,7 +85,14 @@ public struct HistoryWidgetView: View {
               change,
               format: changeFormat
             )
-            .font(AppStyle.font(.headline)).monospacedDigit()
+            .font(
+              enlargesChange
+                ? .system(size: min(changeFontSize, 34), weight: .semibold, design: .rounded)
+                : AppStyle.font(.headline)
+            )
+            .monospacedDigit()
+            .lineLimit(enlargesChange ? 1 : nil)
+            .minimumScaleFactor(enlargesChange ? 0.5 : 1)
             .foregroundStyle(.primary)
             .modifier(HistoryLabelContrast())
             .accessibilityLabel(.WidgetPresentation.historyChange)
@@ -92,7 +105,7 @@ public struct HistoryWidgetView: View {
               }
               Text(observationDate(latest.date))
             }
-            .font(AppStyle.font(.caption2)).foregroundStyle(.secondary)
+            .font(AppStyle.font(.caption2)).foregroundStyle(secondaryInk)
             .modifier(HistoryLabelContrast())
             .accessibilityElement(children: .combine)
             .accessibilityLabel(
@@ -108,19 +121,23 @@ public struct HistoryWidgetView: View {
       } else {
         HStack(alignment: .bottom) {
           Text(unavailableMessage)
-            .font(AppStyle.font(.caption2)).foregroundStyle(.secondary)
+            .font(AppStyle.font(.caption2)).foregroundStyle(secondaryInk)
             .lineLimit(3).fixedSize(horizontal: false, vertical: true)
           Spacer(minLength: AppStyle.Space.xs)
           rangeLabel
         }
       }
     }
-    .padding(AppStyle.Space.large)
+    .padding(enlargesChange ? AppStyle.Space.small : AppStyle.Space.large)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     .font(AppStyle.font(.caption))
     .tint(Color(uiColor: .label))
-    .dynamicTypeSize(...DynamicTypeSize.large)
+    .dynamicTypeSize(...(compact ? DynamicTypeSize.xLarge : .xxLarge))
     .modifier(HistoryWidgetBackground(snapshot: snapshot, preview: preview))
+    .modifier(
+      HistoryChartAccessibility(
+        snapshot: snapshot, locale: locale, rangeTitle: rangeAccessibilityTitle)
+    )
     .widgetURL(
       snapshot.pair.needsLocalCurrency
         ? URL(string: "currency://local-currency")
@@ -134,7 +151,7 @@ public struct HistoryWidgetView: View {
         Image(systemName: "location.fill")
           .frame(width: iconSize, height: iconSize).accessibilityHidden(true)
         Text(.WidgetPresentation.localCurrencyChoice)
-          .font(AppStyle.font(.caption, weight: .medium)).foregroundStyle(.secondary)
+          .font(AppStyle.font(.caption, weight: .medium)).foregroundStyle(secondaryInk)
           .lineLimit(1).minimumScaleFactor(0.7)
       } else if let code {
         WidgetCurrencyIcon(code: code, size: iconSize)
@@ -144,10 +161,10 @@ public struct HistoryWidgetView: View {
             + (CurrencyCode(rawValue: code)?.isMetal == true
               ? " · " + snapshot.pair.metalUnit.symbol : "")
         )
-        .font(AppStyle.font(.caption, weight: .medium)).foregroundStyle(.secondary).fixedSize()
+        .font(AppStyle.font(.caption, weight: .medium)).foregroundStyle(secondaryInk).fixedSize()
         .modifier(HistoryLabelContrast())
       } else {
-        Text(verbatim: "—").foregroundStyle(.secondary)
+        Text(verbatim: "—").foregroundStyle(secondaryInk)
       }
       Spacer(minLength: AppStyle.Space.xs)
       Text(value.map { rate($0, code: code) } ?? "—")
@@ -161,7 +178,7 @@ public struct HistoryWidgetView: View {
 
   private var rangeLabel: some View {
     Text(rangeTitle).font(AppStyle.font(.caption2, weight: .medium))
-      .foregroundStyle(.secondary).fixedSize()
+      .foregroundStyle(secondaryInk).fixedSize()
       .modifier(HistoryLabelContrast())
       .accessibilityLabel(rangeAccessibilityTitle)
   }
@@ -214,8 +231,15 @@ public struct HistoryWidgetView: View {
 }
 
 private struct HistoryLabelContrast: ViewModifier {
+  @Environment(\.colorSchemeContrast) private var contrast
+  @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+
   func body(content: Content) -> some View {
-    content.shadow(color: Color(uiColor: .systemBackground).opacity(0.45), radius: 0.75)
+    if contrast == .increased || reduceTransparency {
+      content.background(Color(uiColor: .systemBackground))
+    } else {
+      content.shadow(color: Color(uiColor: .systemBackground).opacity(0.45), radius: 0.75)
+    }
   }
 }
 
@@ -242,9 +266,11 @@ private struct HistoryWidgetGraph: View {
   @Environment(\.widgetRenderingMode) private var renderingMode
   @Environment(\.colorScheme) private var colorScheme
   @Environment(\.colorSchemeContrast) private var contrast
+  @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
   let snapshot: HistoryWidgetSnapshot
 
   private var tint: Color {
+    if contrast == .increased { return .primary }
     guard renderingMode == .fullColor, let change = snapshot.change, change != 0 else {
       return .secondary
     }
@@ -262,7 +288,7 @@ private struct HistoryWidgetGraph: View {
           let high = points.map(\.value).max() ?? 1
           let spread = max(high - low, high * 0.002)
           let midpoint = (high + low) / 2
-          let duration = last.date.timeIntervalSince(first.date)
+          let duration = max(1, last.date.timeIntervalSince(first.date))
           var line = Path()
           for (index, point) in points.enumerated() {
             let x = point.date.timeIntervalSince(first.date) / duration * size.width
@@ -274,13 +300,15 @@ private struct HistoryWidgetGraph: View {
           area.addLine(to: CGPoint(x: size.width, y: size.height))
           area.addLine(to: CGPoint(x: 0, y: size.height))
           area.closeSubpath()
-          context.fill(
-            area,
-            with: .linearGradient(
-              Gradient(colors: [
-                tint.opacity(colorScheme == .dark ? 0.22 : 0.17), tint.opacity(0.025)
-              ]),
-              startPoint: .zero, endPoint: CGPoint(x: 0, y: size.height)))
+          if contrast != .increased && !reduceTransparency {
+            context.fill(
+              area,
+              with: .linearGradient(
+                Gradient(colors: [
+                  tint.opacity(colorScheme == .dark ? 0.22 : 0.17), tint.opacity(0.025)
+                ]),
+                startPoint: .zero, endPoint: CGPoint(x: 0, y: size.height)))
+          }
           context.stroke(
             line, with: .color(tint.opacity(contrast == .increased ? 0.85 : 0.6)),
             style: StrokeStyle(lineWidth: contrast == .increased ? 2 : 1.5, lineJoin: .round))
@@ -288,5 +316,79 @@ private struct HistoryWidgetGraph: View {
       }
     }
     .accessibilityHidden(true)
+  }
+}
+
+private struct HistoryChartAccessibility: ViewModifier {
+  @Environment(\.timeZone) private var timeZone
+  let snapshot: HistoryWidgetSnapshot
+  let locale: Locale
+  let rangeTitle: LocalizedStringResource
+
+  func body(content: Content) -> some View {
+    if let points = snapshot.series?.points, !points.isEmpty {
+      content
+        .accessibilityElement(children: .contain)
+        .accessibilityChartDescriptor(
+          HistoryChartDescriptor(
+            snapshot: snapshot, locale: locale, timeZone: timeZone, rangeTitle: rangeTitle))
+    } else {
+      content
+    }
+  }
+}
+
+private struct HistoryChartDescriptor: AXChartDescriptorRepresentable {
+  let snapshot: HistoryWidgetSnapshot
+  let locale: Locale
+  let timeZone: TimeZone
+  let rangeTitle: LocalizedStringResource
+
+  func makeChartDescriptor() -> AXChartDescriptor {
+    let points = snapshot.series?.points ?? []
+    let first = points.first?.date.timeIntervalSince1970 ?? 0
+    let last = points.last?.date.timeIntervalSince1970 ?? first
+    let low = points.map(\.value).min() ?? 0
+    let high = points.map(\.value).max() ?? 1
+    let spread = max(high - low, high * 0.002)
+    let midpoint = (low + high) / 2
+    let halfRange = spread / (2 * 0.76)
+    let code = snapshot.pair.quote ?? ""
+    let unit = CurrencyCatalog.metals.contains(code) ? " · " + snapshot.pair.metalUnit.symbol : ""
+    let pair = snapshot.pair.base + " → " + code + unit
+    let formatter = DateFormatter()
+    formatter.locale = locale
+    let observation = snapshot.series?.source.observation
+    let showsTime =
+      observation == .minuteReference || observation == .hourlyReference
+      || (observation == nil && snapshot.range == .day)
+    formatter.timeZone = showsTime ? timeZone : TimeZone(secondsFromGMT: 0)
+    formatter.setLocalizedDateFormatFromTemplate(showsTime ? "yMMMdjm" : "yMMMd")
+    let xAxis = AXNumericDataAxisDescriptor(
+      title: "", range: first...max(first + 1, last), gridlinePositions: []
+    ) {
+      formatter.string(from: Date(timeIntervalSince1970: $0))
+    }
+    let yAxis = AXNumericDataAxisDescriptor(
+      title: code + unit, range: (midpoint - halfRange)...(midpoint + halfRange),
+      gridlinePositions: []
+    ) { value in
+      if CurrencyCatalog.metals.contains(code) {
+        return CurrencyDisplay.format(
+          Decimal(value), code: code, locale: locale, metalUnit: snapshot.pair.metalUnit)
+      }
+      return value.formatted(.number.precision(.significantDigits(1...6)).locale(locale))
+    }
+    var localizedRange = rangeTitle
+    localizedRange.locale = locale
+    return AXChartDescriptor(
+      title: pair, summary: String(localized: localizedRange), xAxis: xAxis, yAxis: yAxis,
+      series: [
+        AXDataSeriesDescriptor(
+          name: pair, isContinuous: true,
+          dataPoints: points.map {
+            AXDataPoint(x: $0.date.timeIntervalSince1970, y: $0.value)
+          })
+      ])
   }
 }

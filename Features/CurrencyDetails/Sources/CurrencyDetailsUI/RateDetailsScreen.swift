@@ -252,8 +252,10 @@ struct RateDetailsScreen: View {
           VStack(alignment: .leading, spacing: AppStyle.Space.xs) {
             Text(verbatim: "\(rateLabel(Decimal(selected.value))) \(quoteLabel)")
               .font(AppStyle.font(.title3).monospacedDigit())
-              .lineLimit(1).minimumScaleFactor(0.25)
+              .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1).minimumScaleFactor(0.25)
+              .accessibilityIdentifier("currency.details.selectedValue")
             Text(dates.pointLabel(selected.date))
+              .accessibilityIdentifier("currency.details.selectedDate")
               .font(AppStyle.font(.caption)).foregroundStyle(.secondary)
             if dates.showsTime {
               Text(.Details.chartTimeZone(dates.chartTimeZone))
