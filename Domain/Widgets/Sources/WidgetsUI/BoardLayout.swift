@@ -35,8 +35,7 @@ public struct BoardLayout: View {
       if let amount = WidgetMath.parseAmount(entry.spec.amount) {
         GeometryReader { geometry in
           let columns = family == .systemSmall ? 1 : 2
-          let rows = (targets.count + columns - 1) / columns
-          let rowHeight = geometry.size.height / CGFloat(max(1, rows))
+          let rowHeight = geometry.size.height / CGFloat(limit / columns)
           LazyVGrid(
             columns: Array(
               repeating: GridItem(.flexible(), spacing: AppStyle.Space.medium), count: columns),

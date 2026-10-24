@@ -6,6 +6,28 @@ import Testing
 @testable import Widgets
 
 @Suite struct WidgetCommandTests {
+  @Test(arguments: [false, true])
+  func persistedInactivityStartsFreshAndPublishesOnlyWhenSynchronized(synchronized: Bool) throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = WidgetStore(directory: directory)
+    let app = ConversionStore(directory: directory)
+    try app.updateInput { $0.setAmount("42") }
+    var spec = WidgetSpec(kind: "CurrencyConverter", codes: ["EUR", "USD"], status: .notDetermined)
+    spec.synchronized = synchronized
+    try store.updateWidgetInput(key: spec.key, codes: spec.codes) { input in
+      input.synchronize(with: app.input(), snapshot: snapshot)
+      input.press("4", now: .distantPast)
+      input.press("2", now: .distantPast)
+    }
+    #expect(try store.apply(WidgetCommand("7", spec: spec), snapshot: snapshot) == synchronized)
+    #expect(store.widgetInput(key: spec.key, codes: spec.codes).amount == "7")
+    #expect(app.input().amount == (synchronized ? "7" : "42"))
+    try store.apply(WidgetCommand("8", spec: spec), snapshot: snapshot)
+    #expect(store.widgetInput(key: spec.key, codes: spec.codes).amount == "78")
+    #expect(app.input().amount == (synchronized ? "78" : "42"))
+  }
+
   private var snapshot: RateSnapshot {
     RateSnapshot(quotes: [
       "EUR": ExchangeRate(1, published: "2026-01-01", source: .init(provider: .ecb)),
