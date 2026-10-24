@@ -6,12 +6,12 @@ const displayTags = ['extended', 'widgets', 'widget-display'];
 const sizeTags = ['extended', 'widget-sizes'];
 const contentWarnings = 'It has no redacted placeholders, missing-value dashes, "Open app to load rates", "History unavailable", "Add a currency in the app", or Local currency setup or permission prompt.';
 const loadedContent = `The installed Currency widget is on the normal Home Screen and has fully loaded content. ${contentWarnings}`;
-const boardLayout = `The installed Currency widget is on the normal Home Screen. ${contentWarnings} Currency rows begin near the top content margin, with empty space below instead of being vertically centered or spread down the widget. Medium and large families arrange entries side by side.`;
+const boardLayout = `The installed Currency widget is on the normal Home Screen. ${contentWarnings} Currency rows begin near the top content margin, with empty space below instead of being vertically centered or spread down the widget.`;
 
 test('medium Currency board displays default amounts and follows app amount changes', { tags: displayTags }, async ({ installedWidget, app, agent, device, screen }) => {
   const board = await installedWidget('Currency board', 'Medium');
   await expect(board).toBeVisible();
-  await agent.waitFor(`${boardLayout} The medium Currency board shows an EUR entry with exactly 1 and a USD entry with exactly 2. Both entries and their complete amounts are readable.`, { vision: 'only', timeout: 30_000 });
+  await agent.waitFor(`${boardLayout} The medium Currency board has EUR and USD entries side by side in its top row. It shows an EUR entry with exactly 1 and a USD entry with exactly 2. Both entries and their complete amounts are readable.`, { vision: 'only', timeout: 30_000 });
   await app.screenshot('widget-board-medium-eur-1-usd-2');
 
   await app.restart();
@@ -25,7 +25,7 @@ test('medium Currency board displays default amounts and follows app amount chan
   if (widgetSetupMethod() === 'private') await revealWidget('Currency board', 'Medium');
   else await agent.act('Show the Home Screen page containing the installed Currency board widget.');
   await expect(board).toBeVisible();
-  await agent.waitFor(`${boardLayout} The medium Currency board now shows an EUR entry with exactly 42 and a USD entry with exactly 84. It no longer shows the old EUR 1 and USD 2 amounts.`, { vision: 'only', timeout: 30_000 });
+  await agent.waitFor(`${boardLayout} The medium Currency board has EUR and USD entries side by side in its top row. It now shows an EUR entry with exactly 42 and a USD entry with exactly 84. It no longer shows the old EUR 1 and USD 2 amounts.`, { vision: 'only', timeout: 30_000 });
   await app.screenshot('widget-board-medium-eur-42-usd-84');
 
   await app.restart();
@@ -77,14 +77,14 @@ test('large Currency Calculator displays default EUR 1 and USD 2 with its keypad
 test('small Currency board keeps default EUR 1 and USD 2 readable', { tags: sizeTags }, async ({ installedWidget, app, agent }) => {
   const board = await installedWidget('Currency board', 'Small');
   await expect(board).toBeVisible();
-  await agent.waitFor(`${boardLayout} The small Currency board shows an EUR entry with exactly 1 and a USD entry with exactly 2. Both currency codes and their complete amounts fit inside the small widget and are readable without clipping.`, { vision: 'only', timeout: 30_000 });
+  await agent.waitFor(`${boardLayout} The small Currency board has EUR above USD in the first two rows at the top. It shows an EUR entry with exactly 1 and a USD entry with exactly 2. Both currency codes and their complete amounts fit inside the small widget and are readable without clipping.`, { vision: 'only', timeout: 30_000 });
   await app.screenshot('widget-board-small-eur-1-usd-2');
 });
 
 test('large Currency board keeps default EUR 1 and USD 2 readable', { tags: sizeTags }, async ({ installedWidget, app, agent }) => {
   const board = await installedWidget('Currency board', 'Large');
   await expect(board).toBeVisible();
-  await agent.waitFor(`${boardLayout} The large Currency board shows an EUR entry with exactly 1 and a USD entry with exactly 2. Both currency codes and their complete amounts fit inside the large widget and are readable without clipping.`, { vision: 'only', timeout: 30_000 });
+  await agent.waitFor(`${boardLayout} The large Currency board has EUR and USD entries side by side in its top row. It shows an EUR entry with exactly 1 and a USD entry with exactly 2. Both currency codes and their complete amounts fit inside the large widget and are readable without clipping.`, { vision: 'only', timeout: 30_000 });
   await app.screenshot('widget-board-large-eur-1-usd-2');
 });
 
