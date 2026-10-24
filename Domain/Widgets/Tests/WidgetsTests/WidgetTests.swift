@@ -6,6 +6,44 @@ import Testing
 import Widgets
 
 struct WidgetTests {
+  @Test(arguments: [59.999, 60.0, 60.001])
+  func inactivityStartsFreshAtOneMinute(interval: TimeInterval) {
+    let start = Date(timeIntervalSince1970: 1_000)
+    var input = WidgetInput(codes: ["EUR", "USD"])
+    input.press("4", now: start)
+    input.press("2", now: start)
+    let next = start.addingTimeInterval(interval)
+    input.press("7", now: next)
+    #expect(input.amount == (interval < 60 ? "427" : "7"))
+    #expect(input.editedAt == next)
+    input.press("8", now: next.addingTimeInterval(1))
+    #expect(input.amount == (interval < 60 ? "4278" : "78"))
+  }
+
+  @Test(arguments: [".", ",", "00", "000", "⌫", "AC"])
+  func inactivityAppliesToEveryKeypadCommand(key: String) {
+    let start = Date(timeIntervalSince1970: 1_000)
+    var input = WidgetInput(codes: ["EUR", "USD"])
+    input.press("4", now: start)
+    input.press("2", now: start)
+    input.press(key, now: start.addingTimeInterval(60))
+    #expect(input.amount == (key == "." || key == "," ? "0." : "0"))
+  }
+
+  @Test func inactivityUsesLastAcceptedInteractionAndSurvivesPersistence() throws {
+    let start = Date(timeIntervalSince1970: 1_000)
+    var input = WidgetInput(codes: ["EUR", "USD"])
+    input.press("4", now: start)
+    input.press("2", now: start.addingTimeInterval(59))
+    input = try JSONDecoder().decode(WidgetInput.self, from: JSONEncoder().encode(input))
+    input.press("7", now: start.addingTimeInterval(118))
+    #expect(input.amount == "427")
+    input.press("invalid", now: start.addingTimeInterval(177))
+    #expect(input.editedAt == start.addingTimeInterval(118))
+    input.press("8", now: start.addingTimeInterval(178))
+    #expect(input.amount == "8")
+  }
+
   private var rates: RateSnapshot {
     RateSnapshot(quotes: [
       "EUR": quote(1), "USD": quote(2), "CZK": quote(25),

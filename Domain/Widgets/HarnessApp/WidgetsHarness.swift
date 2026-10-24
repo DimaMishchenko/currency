@@ -77,6 +77,8 @@ private struct WidgetHarnessContent: View {
       codes = allCodes
     case "board-local", "board-stale":
       codes = allCodes.filter { $0 != "CZK" } + [WidgetSelection.localID]
+    case "board-single":
+      codes = ["EUR"]
     case "board-custom":
       codes = ["EUR"]
     default:

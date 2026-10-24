@@ -161,8 +161,14 @@ public struct WidgetInput: Codable, Equatable, Sendable {
     editor.select(code, snapshot: snapshot, metalUnit: metalUnit)
   }
 
-  /// Applies a currency amount editing command.
-  public mutating func press(_ key: String) { editor.press(key) }
+  /// Applies a keypad command, starting fresh after one minute without interaction.
+  public mutating func press(_ key: String, now: Date = .now) {
+    guard WidgetCommand.Key(rawValue: key) != nil else { return }
+    if let editedAt, now.timeIntervalSince(editedAt) >= 60 {
+      replacesOnDigit = true
+    }
+    editor.press(key, now: now)
+  }
 
   /// Selects a trusted reference preset without opening a keyboard.
   public mutating func preset(_ value: Decimal) { editor.preset(value) }
