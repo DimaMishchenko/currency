@@ -99,6 +99,7 @@ final class WatchComposition {
       refreshRates: { [self] in try await refresh(force: $0) },
       changes: { [self] in changes() }, readDiscovery: { [discovery] in discovery.load() },
       saveDiscovery: { [discovery] in discovery.save($0) }, onboardingCompleted: { true },
+      recordConversion: {}, claimReviewRequest: { false },
       now: { .now })
   }
 

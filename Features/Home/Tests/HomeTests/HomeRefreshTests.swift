@@ -33,6 +33,7 @@ private final class HomeRefreshFixture {
       readDiscovery: { self.discovery },
       saveDiscovery: { self.discovery = $0 },
       onboardingCompleted: { true },
+      recordConversion: {}, claimReviewRequest: { false },
       now: { .now })
   }
 

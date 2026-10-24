@@ -60,6 +60,10 @@ public struct HomeDependencies {
   public var saveDiscovery: (HomeDiscoveryProgress) -> Void
   /// Reports successful onboarding completion without exposing its storage.
   public var onboardingCompleted: () -> Bool
+  /// Records one completed conversion in shared app and widget usage.
+  public var recordConversion: () -> Void
+  /// Atomically consumes eligibility after three conversions, regardless of prompt presentation.
+  public var claimReviewRequest: () -> Bool
   /// Supplies the current date for calendar-day eligibility.
   public var now: () -> Date
 
@@ -74,6 +78,7 @@ public struct HomeDependencies {
     readDiscovery: @escaping () -> HomeDiscoveryProgress,
     saveDiscovery: @escaping (HomeDiscoveryProgress) -> Void,
     onboardingCompleted: @escaping () -> Bool,
+    recordConversion: @escaping () -> Void, claimReviewRequest: @escaping () -> Bool,
     now: @escaping () -> Date
   ) {
     self.readInput = readInput; self.readRates = readRates
@@ -82,5 +87,6 @@ public struct HomeDependencies {
     self.refreshRates = refreshRates; self.changes = changes
     self.readDiscovery = readDiscovery; self.saveDiscovery = saveDiscovery
     self.onboardingCompleted = onboardingCompleted; self.now = now
+    self.recordConversion = recordConversion; self.claimReviewRequest = claimReviewRequest
   }
 }

@@ -81,6 +81,7 @@ private final class HomeHarnessFixture {
       readDiscovery: { self.discovery },
       saveDiscovery: { self.discovery = $0 },
       onboardingCompleted: { true },
+      recordConversion: {}, claimReviewRequest: { false },
       now: { .now })
   }
 }
