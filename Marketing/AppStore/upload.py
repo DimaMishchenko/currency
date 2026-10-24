@@ -1151,8 +1151,8 @@ def main():
         parser.error('--scope must select metadata,default,cpp,header,duo')
     if args.validate_only and args.apply:
         parser.error('--validate-only cannot be combined with --apply')
-    if args.replace_header_sha256 and (args.validate_only or 'header' not in scopes or not re.fullmatch('[a-f0-9]{64}', args.replace_header_sha256)):
-        parser.error('--replace-header-sha256 requires header scope, remote planning and a lowercase SHA-256')
+    if args.replace_header_sha256 is not None and (args.validate_only or 'header' not in scopes or not all(re.fullmatch('[a-f0-9]{64}', value) for value in args.replace_header_sha256.split(','))):
+        parser.error('--replace-header-sha256 requires header scope, remote planning and comma-separated lowercase SHA-256 values')
     if args.validate_only and args.remove_approved_duplicate:
         parser.error('--validate-only cannot repair a remote duplicate')
     args.version_id = args.version_id.strip() if args.version_id else None

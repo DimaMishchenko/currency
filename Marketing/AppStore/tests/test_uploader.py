@@ -1982,6 +1982,31 @@ class UploaderTests(unittest.TestCase):
             self.assertEqual(u.main(), 0)
         self.assertEqual(json.loads(output.getvalue()), {'mode': 'validate-only', 'verifiedPlacements': 3240, 'verifiedHeader': True, 'verifiedHeaderHash': True, 'appStoreRequests': 0})
 
+    def test_main_accepts_previous_header_hash_sets(self):
+        metadata = self.root / 'metadata.json'
+        metadata.write_text(json.dumps(self.meta))
+        (self.root / 'manifest.json').write_text('{}')
+        for hashes in ('a' * 64, ','.join(character * 64 for character in '01234567')):
+            with self.subTest(hashes=hashes):
+                cli = FakeCLI(self.state)
+                args = ['upload.py', '--metadata', str(metadata), '--media-dir', str(self.root), '--receipts', str(self.root / 'receipt.jsonl'), '--scope', 'header', '--replace-header-sha256', hashes]
+                with patch.object(sys, 'argv', args), patch.object(u, 'validate_media', return_value=({}, {})), patch.object(u, 'CLI', return_value=cli), patch.object(u, 'Planner') as planner, patch.object(sys, 'stdout', new_callable=io.StringIO):
+                    planner.return_value.preflight.return_value = SimpleNamespace(ops=[], blockers=[], notes=[], cpp_status=None, summary=lambda: [])
+                    self.assertEqual(u.main(), 0)
+                    self.assertEqual(planner.call_args.kwargs['replace_header_sha256'], hashes)
+                self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_main_rejects_invalid_previous_header_hash_sets_before_remote_access(self):
+        valid = 'a' * 64
+        for hashes in ('', '*', valid + ',', ',' + valid, valid + ', ' + valid, valid + ',' + 'A' * 64, valid + ',short'):
+            with self.subTest(hashes=hashes):
+                args = ['upload.py', '--scope', 'header', '--replace-header-sha256', hashes]
+                with patch.object(sys, 'argv', args), patch.object(u, 'CLI') as client, patch.object(sys, 'stderr', new_callable=io.StringIO):
+                    with self.assertRaises(SystemExit) as error:
+                        u.main()
+                    self.assertEqual(error.exception.code, 2)
+                    client.assert_not_called()
+
     def test_remote_plan_requires_receipts(self):
         with patch.object(sys, 'argv', ['upload.py']), patch.object(u, 'validate_media') as validate:
             with self.assertRaises(SystemExit) as error:
