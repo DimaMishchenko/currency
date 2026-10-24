@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
   "fileName": "Currency-AppStore-Approved.zip",
-  "sha256": "9d1feb83858df13a3c3fd53bd54b5ebf7f64df9c2f09c5541e69fe5ec56d0a57",
-  "bytes": 881927239,
+  "sha256": "2ca2809bcb3b18ec7e1703b7f5aff8172aa6190fbdabf48c455437a209ec32bb",
+  "bytes": 882235390,
   "locales": 18,
   "uniqueScreenshots": 1512,
   "placements": 3240,
   "headerSeconds": 15,
-  "releaseTag": "app-store-assets-v2"
+  "releaseTag": "app-store-assets-v3"
 }

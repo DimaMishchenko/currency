@@ -2,7 +2,7 @@
 
 `metadata.json` contains the approved name, subtitle, description, keywords and promotional text for eighteen App Store localizations. The widget-focused default page has five contextual alternatives: Offline, Travel, History, Crypto and Metals. The app name and subtitle are shared across custom product pages; their screenshots and promotional text vary.
 
-`asset-bundle.json` pins the approved media to an independent GitHub asset release, currently `app-store-assets-v2`. The ZIP contains 1,512 unique screenshots referenced by 3,240 placements, the fifteen-second H09 header and `manifest.json`. Media binaries stay out of Git history; no Git LFS, external hosting account or download-URL secret is needed.
+`asset-bundle.json` pins the approved media to an independent GitHub asset release, currently `app-store-assets-v3`. The ZIP contains 1,512 unique screenshots referenced by 3,240 placements, the fifteen-second H09 header and `manifest.json`. Media binaries stay out of Git history; no Git LFS, external hosting account or download-URL secret is needed.
 
 `design/` and `generator/` hold editable screenshot and header recipes. Icon Composer documents and icon generation sources are documented in [../Icons/README.md](../Icons/README.md). Generated media, native captures, system fonts, private source packs, evidence, credentials and delivery archives remain excluded from Git. Never commit an App Store Connect API key.
 
@@ -32,8 +32,8 @@ App versions and asset versions are separate. App 1.0 and 1.1 can both use `app-
 To publish a newly approved media version, create a new tag rather than updating the old release:
 
 ```sh
-gh release create app-store-assets-v3 APPROVED-BUNDLE.zip \
-  --target REVIEWED_COMMIT --title "App Store assets v3" \
+gh release create app-store-assets-v4 APPROVED-BUNDLE.zip \
+  --target REVIEWED_COMMIT --title "App Store assets v4" \
   --notes-file ASSET-NOTES.md --prerelease --latest=false
 ```
 
