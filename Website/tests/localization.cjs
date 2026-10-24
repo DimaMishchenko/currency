@@ -1,0 +1,33 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+const assert = require('node:assert/strict');
+const output = process.argv[2] || 'Website/.local/dist';
+const locales = JSON.parse(fs.readFileSync('Website/locales/manifest.json', 'utf8'));
+const source = fs.readFileSync('Website/calculator.js', 'utf8');
+for (const item of locales) {
+  const markup = fs.readFileSync(path.join(output, item.path, 'index.html'), 'utf8');
+  const config = markup.match(/<script type="application\/json" id="calculator-copy">(.*?)<\/script>/s)[1];
+  const strings = JSON.parse(config).strings;
+  const codes = ['EUR', 'USD', 'GBP', 'CZK', 'JPY', 'CHF'];
+  const tiles = codes.map(currency => ({dataset:{currency}, attrs:{}, label:{textContent:'',style:{}}, setAttribute(k,v){this.attrs[k]=v}, querySelector(){return this.label}}));
+  const host = {dataset:{},classList:{add(){}},listeners:{},querySelectorAll(){return tiles},querySelector(){return {}},addEventListener(k,v){this.listeners[k]=v}};
+  vm.runInNewContext(source, {document:{readyState:'complete',querySelector(){return {textContent:config}},querySelectorAll(){return [host]}}, Intl,Date,Map,Number,String,setTimeout(){},clearTimeout(){}});
+  const amount = code => tiles[codes.indexOf(code)].label.textContent;
+  const key = value => host.listeners.click({target:{closest(selector){return selector==='[data-key]'?{dataset:{key:value}}:null}}});
+  assert.equal(amount('USD'), new Intl.NumberFormat(item.locale,{maximumFractionDigits:2}).format(112.29), item.locale);
+  assert.ok(tiles[0].attrs['aria-label'].startsWith(strings.Euro),item.locale+': currency label');
+  assert.ok(tiles[0].attrs['aria-label'].includes(strings['Selected input currency.']),item.locale+': selected state');
+  key('clear');key('.');
+  const separator = new Intl.NumberFormat(item.locale).formatToParts(1.1).find(p=>p.type==='decimal').value;
+  assert.equal(amount('EUR'),'0'+separator,item.locale+': pending decimal');
+  key('0');key('5');key('00');
+  const decimal = new Intl.NumberFormat(item.locale).formatToParts(1.1).find(p=>p.type==='decimal').value;
+  assert.equal(amount('EUR'),'0'+decimal+'0500',item.locale+': decimal/trailing zero retention');
+  key('delete');assert.equal(amount('EUR'),'0'+decimal+'050');
+  key('delete');key('delete');key('delete');
+  assert.equal(amount('EUR'),'0'+decimal,item.locale+': deletion retains decimal');
+  key('clear');key('7');key('000');
+  assert.equal(amount('EUR'),new Intl.NumberFormat(item.locale,{maximumFractionDigits:0}).format(7000),item.locale+': grouping');
+}
+console.log('PASS: localized calculator numbers, decimal input, trailing zeros, deletion, grouping and accessible labels in all '+locales.length+' locales');

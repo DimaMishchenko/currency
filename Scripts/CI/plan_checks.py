@@ -78,7 +78,7 @@ def classify(paths, missing=False, force_full=False):
             continue
         if path.startswith(('Documentation/', '.github/')) or path in ('README.md', 'LICENSE', '.gitignore', 'AGENTS.md') or MODULE_README.match(path):
             continue
-        if path.startswith('Marketing/AppStore/'):
+        if path.startswith(('Marketing/AppStore/', 'Website/')):
             continue
         native.append(path)
         plan['xcode'] = True
