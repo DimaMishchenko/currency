@@ -167,7 +167,11 @@ struct HomeScreen: View {
             return model.changeSource(code)
           }
         }
-        chooser.navigationTransition(.zoom(sourceID: purpose.id, in: pickerMotion))
+        if reduceMotion {
+          chooser
+        } else {
+          chooser.navigationTransition(.zoom(sourceID: purpose.id, in: pickerMotion))
+        }
       }
       .sheet(isPresented: $showManage) {
         ManageCurrencies(model: model)
@@ -451,6 +455,10 @@ struct HomeScreen: View {
     .accessibilityLabel(
       .Converter.sourceAccessibility(CurrencyDisplay.name(model.input.source, locale: locale))
     )
+    .accessibilityInputLabels([
+      Text(verbatim: model.input.source),
+      Text(CurrencyDisplay.name(model.input.source, locale: locale))
+    ])
     .accessibilityIdentifier("converter.source")
   }
 
@@ -463,15 +471,16 @@ struct HomeScreen: View {
       }
     } label: {
       HStack(alignment: .firstTextBaseline, spacing: AppStyle.Space.small) {
-        Text(amountLabel)
-          .font(
-            .system(
-              size: compact ? min(amountSize, 42) : amountSize,
-              weight: editingAmount && model.editingSelectionID == model.input.source
-                ? .semibold : .regular, design: .rounded)
-          )
-          .tracking(compact ? -1 : -2)
-          .lineLimit(1).minimumScaleFactor(0.4).contentTransition(.numericText())
+        if dynamicTypeSize.isAccessibilitySize {
+          ScrollView(.horizontal) {
+            sourceAmount(compact: false).fixedSize()
+          }
+          .defaultScrollAnchor(.trailing)
+          .frame(height: amountSize * 1.3)
+        } else {
+          sourceAmount(compact: compact)
+            .lineLimit(1).minimumScaleFactor(0.4)
+        }
         Text(verbatim: model.input.source)
           .font(AppStyle.font(compact ? .subheadline : .title3, weight: .medium))
           .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
@@ -490,6 +499,9 @@ struct HomeScreen: View {
     .buttonStyle(.plain)
     .accessibilityLabel(.Converter.editAmountAccessibility(amountCode(model.input.source)))
     .accessibilityValue(amountLabel)
+    .accessibilityInputLabels([
+      Text(.Converter.editAmountAccessibility(amountCode(model.input.source)))
+    ])
     .accessibilityHint(editingAmount ? .Converter.doneEntering : .Converter.enterAmount)
     .contextMenu {
       Button(.Converter.detailsAndHistory, systemImage: "chart.xyaxis.line") {
@@ -497,6 +509,26 @@ struct HomeScreen: View {
       }
     }
     .matchedTransitionSource(id: model.input.source, in: detailsMotion)
+  }
+
+  private func sourceAmount(compact: Bool) -> some View {
+    Text(amountLabel)
+      .font(
+        .system(
+          size: compact ? min(amountSize, 42) : amountSize,
+          weight: editingAmount && model.editingSelectionID == model.input.source
+            ? .semibold : .regular, design: .rounded)
+      )
+      .tracking(compact ? -1 : -2)
+      .contentTransition(.numericText())
+  }
+
+  private func destinationAmount(_ row: ConverterState.Destination, value: Decimal?) -> String {
+    if editingAmount && model.editingSelectionID == row.id {
+      return CurrencyDisplay.inputAmount(model.editingText, locale: locale)
+    }
+    return CurrencyDisplay.format(
+      value, code: row.code, locale: locale, metalUnit: model.input.metalUnit)
   }
 
   private func destinationLabel(_ row: ConverterState.Destination, value: Decimal?) -> some View {
@@ -541,20 +573,15 @@ struct HomeScreen: View {
         }
         .frame(minWidth: 64, alignment: .leading)
         if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: AppStyle.Space.medium) }
-        Text(
-          editingAmount && model.editingSelectionID == row.id
-            ? CurrencyDisplay.inputAmount(model.editingText, locale: locale)
-            : CurrencyDisplay.format(
-              value, code: code, locale: locale, metalUnit: model.input.metalUnit)
-        )
-        .font(
-          AppStyle.font(
-            .title2,
-            weight: editingAmount && model.editingSelectionID == row.id ? .semibold : .regular)
-        )
-        .monospacedDigit()
-        .lineLimit(1).minimumScaleFactor(0.45).contentTransition(.numericText())
-        .layoutPriority(1)
+        Text(destinationAmount(row, value: value))
+          .font(
+            AppStyle.font(
+              .title2,
+              weight: editingAmount && model.editingSelectionID == row.id ? .semibold : .regular)
+          )
+          .monospacedDigit()
+          .lineLimit(1).minimumScaleFactor(0.45).contentTransition(.numericText())
+          .layoutPriority(1)
       }
     }
     .frame(maxWidth: .infinity, minHeight: 70, alignment: .leading).contentShape(Rectangle())
@@ -585,10 +612,18 @@ struct HomeScreen: View {
             localized: .Converter.localCurrencyName(
               CurrencyDisplay.name(code, locale: locale)))
           : CurrencyDisplay.name(code, locale: locale),
-        CurrencyDisplay.format(value, code: code, locale: locale, metalUnit: model.input.metalUnit)
+        destinationAmount(row, value: value)
           + (CurrencyCode(rawValue: code)?.isMetal == true
             ? " \(model.input.metalUnit.symbol)" : ""))
     )
+    .accessibilityInputLabels([
+      Text(verbatim: row.isLocal ? "\(code) \(String(localized: .Converter.localCurrency))" : code),
+      Text(
+        row.isLocal
+          ? String(
+            localized: .Converter.localCurrencyName(CurrencyDisplay.name(code, locale: locale)))
+          : CurrencyDisplay.name(code, locale: locale))
+    ])
     .accessibilityHint(
       editingAmount
         ? .Converter.doneEntering
@@ -694,6 +729,7 @@ struct HomeScreen: View {
                 .Converter.editingCurrencyAmount(
                   CurrencyDisplay.name(model.editingCode, locale: locale))
               )
+              .accessibilityValue(CurrencyDisplay.inputAmount(model.editingText, locale: locale))
               Button {
                 if editingAmount && !persistent {
                   dismissAmount()

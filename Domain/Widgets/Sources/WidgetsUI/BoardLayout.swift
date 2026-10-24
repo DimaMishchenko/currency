@@ -72,7 +72,10 @@ public struct BoardLayout: View {
       }
     }
     .animation(nil, value: entry.spec.amount)
-    .modifier(WidgetSurface(openURL: entry.openURL))
+    .modifier(
+      WidgetSurface(
+        openURL: entry.openURL,
+        maximumTypeSize: targets.count > (family == .systemSmall ? 4 : 8) ? .xLarge : .xxxLarge))
   }
 
   private func row(
