@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 import textwrap
 
 workflow = Path(__file__).resolve().parents[3] / '.github/workflows/app-store-assets.yml'
@@ -17,7 +18,7 @@ class NativeInspectionTests(unittest.TestCase):
         self.addCleanup(os.chdir, previous)
         os.chdir(workflow.parents[2])
 
-    def run_inspector(self, response):
+    def run_inspector(self, response, processing=None):
         namespace = {}
         exec(compile(ast.Module(body=program.body[:-1], type_ignores=[]), '<workflow-inspector>', 'exec'), namespace)
         calls = []
@@ -27,18 +28,42 @@ class NativeInspectionTests(unittest.TestCase):
                     raise AssertionError('Inspector enabled writes')
             def api(self, method, path):
                 calls.append((method, path))
-                if method != 'GET' or path != '/v1/appAssetLibraryRefData':
-                    raise AssertionError('Unexpected API call')
-                return response
+                if method == 'GET' and path == '/v1/appAssetLibraryRefData':
+                    return response
+                if processing is not None and method == 'GET' and path == '/v1/apps/6816213577/assetLibrary':
+                    return {'data': {'id': 'library'}}
+                if processing is not None and method == 'GET' and path == '/v1/appAssetLibraries/library/videos':
+                    return {'data': processing}
+                raise AssertionError('Unexpected API call')
         namespace['module'].CLI = FakeCLI
         def no_media_or_targets(*args, **kwargs):
             raise AssertionError('Inspector touched media or app targets')
         namespace['module'].validate_media = no_media_or_targets
         namespace['module'].resolve_targets = no_media_or_targets
         output = io.StringIO()
-        with contextlib.redirect_stdout(output):
+        with contextlib.redirect_stdout(output), patch.dict(os.environ, {'INSPECT_HEADER_PROCESSING': 'true' if processing is not None else 'false'}):
             exec(compile(ast.Module(body=[program.body[-1]], type_ignores=[]), '<workflow-inspector>', 'exec'), namespace)
         return json.loads(output.getvalue()), calls
+
+    def test_optional_header_readiness_is_read_only_and_excludes_urls_and_unapproved_media(self):
+        recipe = json.loads(Path('Marketing/AppStore/design/recipe.json').read_text())
+        hashes = set(recipe.get('approved_header_sha256_by_locale', {}).values())
+        if recipe.get('approved_header_sha256'): hashes.add(recipe['approved_header_sha256'])
+        reference = 'currency-approved-' + next(iter(hashes))
+        videos = [{'attributes': {'referenceName': reference, 'state': 'PREPARE_FOR_SUBMISSION', 'uploaded': True, 'specId': 'header', 'videoAsset': 'https://PRIVATE.invalid/signed', 'uploadOperations': [{'url': 'https://PRIVATE.invalid/upload'}], 'privateKey': 'PRIVATE'}}, {'attributes': {'referenceName': 'PRIVATE', 'videoAsset': 'PRIVATE'}}]
+        result, calls = self.run_inspector({'data': [{'attributes': {}}]}, processing=videos)
+        observed = result['approvedHeaderProcessing']
+        self.assertEqual(observed['expectedUniqueHeaders'], len(hashes))
+        self.assertEqual(observed['videos'], [{'reference': reference, 'state': 'PREPARE_FOR_SUBMISSION', 'uploaded': True, 'hasSpecification': True, 'hasVideoAsset': True, 'uploadOperationCount': 1}])
+        self.assertEqual(len(calls), 3)
+        self.assertTrue(all(method == 'GET' for method, _ in calls))
+        self.assertNotIn('PRIVATE', json.dumps(result))
+        self.assertNotIn('https', json.dumps(result))
+
+    def test_optional_header_readiness_rejects_malformed_attributes(self):
+        with self.assertRaises(SystemExit) as error:
+            self.run_inspector({'data': [{'attributes': {}}]}, processing=[{'attributes': None}])
+        self.assertEqual(str(error.exception), 'Invalid video readiness response')
 
     def test_structural_fields_only_and_one_global_get(self):
         attrs = {

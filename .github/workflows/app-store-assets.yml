@@ -25,6 +25,14 @@ on:
         type: string
         default: metadata,default,cpp,header,duo
         required: true
+      replace_header_sha256:
+        description: Optional exact previous header SHA-256 values, comma-separated; replaces only matching drafts
+        type: string
+        required: false
+      inspect_header_processing:
+        description: Include approved video readiness in read-only native policy inspection
+        type: boolean
+        default: false
       duplicate_screenshot_id:
         description: Optional exact screenshot ID; remove only a verified extra copy of an approved image
         type: string
@@ -47,11 +55,13 @@ jobs:
       ASC_STRICT_AUTH: 'true'
       ASC_APP_ID: '6816213577'
       ASC_UPLOAD_TIMEOUT: '30m'
+      INSPECT_HEADER_PROCESSING: ${{ inputs.inspect_header_processing }}
       REQUEST_MODE: ${{ inputs.mode }}
       TARGET_VERSION_ID: ${{ inputs.version_id }}
       TARGET_VERSION_STRING: ${{ inputs.version_string }}
       TARGET_APP_INFO_ID: ${{ inputs.app_info_id }}
       ASSET_SCOPE: ${{ inputs.scope }}
+      REPLACE_HEADER_SHA256: ${{ inputs.replace_header_sha256 }}
       DUPLICATE_SCREENSHOT_ID: ${{ inputs.duplicate_screenshot_id }}
     steps:
       - uses: actions/checkout@v7
@@ -71,10 +81,14 @@ jobs:
           chmod 755 "$RUNNER_TEMP/currency-asc-bin/asc"
           echo "$RUNNER_TEMP/currency-asc-bin" >> "$GITHUB_PATH"
           if [[ "$REQUEST_MODE" != inspect-native-policy && ",$ASSET_SCOPE," == *,header,* ]] && ! command -v ffprobe >/dev/null 2>&1; then
+            if [[ -f /etc/apt/apt-mirrors.txt ]]; then
+              printf '%s\n' 'https://archive.ubuntu.com/ubuntu/' | sudo tee /etc/apt/apt-mirrors.txt >/dev/null
+            fi
             echo 'Refreshing package index for video inspection'
-            sudo apt-get -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 -o Acquire::Retries=2 update -qq
+            sudo timeout 120 apt-get -o Acquire::ForceIPv4=true -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20 -o Acquire::Retries=1 update
             echo 'Installing video inspection dependency'
-            sudo apt-get -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 -o Acquire::Retries=2 install -y -qq ffmpeg
+            sudo env DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a timeout 240 apt-get -o Acquire::ForceIPv4=true -o Dpkg::Use-Pty=0 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20 -o Acquire::Retries=1 install -y --no-install-recommends ffmpeg
+            ffprobe -version
           fi
       - name: Fetch and verify the pinned asset release
         if: inputs.mode != 'inspect-native-policy'
@@ -118,6 +132,7 @@ jobs:
           import importlib.util
           import json
           import math
+          import os
           import re
           import sys
           spec = importlib.util.spec_from_file_location('app_store_upload', 'Marketing/AppStore/upload.py')
@@ -180,8 +195,33 @@ jobs:
                   invalid()
               return {'mode': 'inspect-native-policy', 'referenceData': [project(rows[0].get('attributes', {}), schema)]}
 
+          def inspect_header_processing(cli):
+              recipe = json.load(open('Marketing/AppStore/design/recipe.json'))
+              hashes = set(recipe.get('approved_header_sha256_by_locale', {}).values())
+              if recipe.get('approved_header_sha256'):
+                  hashes.add(recipe['approved_header_sha256'])
+              references = {'currency-approved-' + value for value in hashes if isinstance(value, str) and re.fullmatch('[0-9a-f]{64}', value)}
+              library = cli.api('GET', '/v1/apps/6816213577/assetLibrary').get('data')
+              if not isinstance(library, dict) or not isinstance(library.get('id'), str) or not re.fullmatch('[A-Za-z0-9-]+', library['id']):
+                  raise UploadError('Invalid library identity for read-only header inspection')
+              videos = cli.api('GET', '/v1/appAssetLibraries/' + library['id'] + '/videos').get('data')
+              if not isinstance(videos, list) or any(not isinstance(video, dict) or not isinstance(video.get('attributes'), dict) for video in videos):
+                  raise UploadError('Invalid video readiness response')
+              result = []
+              for video in videos:
+                  attrs = video['attributes']
+                  if attrs.get('referenceName') not in references:
+                      continue
+                  state = attrs.get('state')
+                  result.append({'reference': attrs['referenceName'], 'state': state if isinstance(state, str) and re.fullmatch('[A-Z_]{1,64}', state) else 'OTHER', 'uploaded': attrs.get('uploaded') if type(attrs.get('uploaded')) is bool else None, 'hasSpecification': bool(attrs.get('specId')), 'hasVideoAsset': bool(attrs.get('videoAsset')), 'uploadOperationCount': len(attrs['uploadOperations']) if isinstance(attrs.get('uploadOperations'), list) else None})
+              return {'expectedUniqueHeaders': len(references), 'videos': result}
+
           try:
-              print(json.dumps(inspect_native_policy(module.CLI(apply=False)), indent=2))
+              cli = module.CLI(apply=False)
+              result = inspect_native_policy(cli)
+              if os.environ.get('INSPECT_HEADER_PROCESSING') == 'true':
+                  result['approvedHeaderProcessing'] = inspect_header_processing(cli)
+              print(json.dumps(result, indent=2))
           except UploadError as error:
               sys.exit(str(error))
           PY
@@ -189,6 +229,7 @@ jobs:
           fi
           mode_args=()
           if [[ "$REQUEST_MODE" == apply ]]; then mode_args+=(--apply); fi
+          if [[ -n "$REPLACE_HEADER_SHA256" ]]; then mode_args+=(--replace-header-sha256 "$REPLACE_HEADER_SHA256"); fi
           if [[ -n "$DUPLICATE_SCREENSHOT_ID" ]]; then mode_args+=(--remove-approved-duplicate "$DUPLICATE_SCREENSHOT_ID"); fi
           python3 Marketing/AppStore/upload.py \
             --metadata Marketing/AppStore/metadata.json \
