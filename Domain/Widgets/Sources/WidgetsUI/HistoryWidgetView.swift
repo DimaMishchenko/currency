@@ -92,6 +92,7 @@ public struct HistoryWidgetView: View {
             )
             .monospacedDigit()
             .lineLimit(enlargesChange ? 1 : nil)
+            .minimumScaleFactor(enlargesChange ? 0.5 : 1)
             .foregroundStyle(.primary)
             .modifier(HistoryLabelContrast())
             .accessibilityLabel(.WidgetPresentation.historyChange)
