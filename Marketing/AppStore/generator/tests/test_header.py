@@ -14,8 +14,8 @@ from header_validation import background_identity, pixel_source_sha256, validate
 class HeaderLocaleTests(unittest.TestCase):
     def test_header_locales_match_screenshot_placements(self):
         design = Path(__file__).parents[2] / 'design'
-        configuration = json.loads((design / 'header-locales.json').read_text())
-        recipe = json.loads((design / 'recipe.json').read_text())
+        configuration = json.loads((design / 'header-locales.json').read_text(encoding='utf-8'))
+        recipe = json.loads((design / 'recipe.json').read_text(encoding='utf-8'))
         locales = {placement['locale'] for placement in recipe['placements']}
         self.assertEqual(set(configuration['locales']), locales)
         self.assertEqual(len(locales), 18)
@@ -65,7 +65,7 @@ class HeaderLocaleTests(unittest.TestCase):
         self.assertNotEqual(background_identity(identity), background_identity(dict(identity, freetype='2.15')))
 
     def test_pixel_identity_tracks_drawing_without_proof_or_gallery_changes(self):
-        source = (Path(__file__).parents[1] / 'header.py').read_text()
+        source = (Path(__file__).parents[1] / 'header.py').read_text(encoding='utf-8')
         self.assertNotEqual(pixel_source_sha256(source), pixel_source_sha256(source.replace('#acc4e5', '#acc4e6')))
         self.assertEqual(pixel_source_sha256(source), pixel_source_sha256(source.replace('H09 · language editions', 'Review gallery')))
 
@@ -81,13 +81,13 @@ class HeaderLocaleTests(unittest.TestCase):
             glyphs = ['€', '$', '£']
             entry = dict(locale='de-DE', currencies=['EUR','USD','GBP'], glyphs=glyphs, reels=currency_reels(glyphs, configuration['spinGlyphs']), renderIdentity=identity, posterSha256=hashlib.sha256(b'poster').hexdigest(), videoSha256=hashlib.sha256(b'video').hexdigest(), videoComplete=True, uniqueInputFrames=900, uniqueDecodedFrames=900)
             manifest = locale / 'manifest.json'
-            manifest.write_text(json.dumps(entry))
+            manifest.write_text(json.dumps(entry), encoding='utf-8')
             self.assertEqual(validate_entry(root, 'de-DE', configuration, identity, True), entry)
             for changed in [dict(entry, currencies=['EUR','CHF','USD']), dict(entry, glyphs=['€','Fr','$']), dict(entry, reels=[['Fr']]*3), dict(entry, videoComplete=False), {k:v for k,v in entry.items() if k not in {'videoComplete','videoSha256'}}, dict(entry, renderIdentity={'renderer':'old'}), dict(entry, videoSha256='stale')]:
-                manifest.write_text(json.dumps(changed))
+                manifest.write_text(json.dumps(changed), encoding='utf-8')
                 with self.assertRaises(ValueError):
                     validate_entry(root, 'de-DE', configuration, identity, True)
-            manifest.write_text(json.dumps(entry))
+            manifest.write_text(json.dumps(entry), encoding='utf-8')
             (locale / 'header.mp4').write_bytes(b'changed-video')
             with self.assertRaisesRegex(ValueError, 'Stale locale video'):
                 validate_entry(root, 'de-DE', configuration, identity, True)

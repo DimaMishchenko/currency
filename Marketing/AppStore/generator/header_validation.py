@@ -48,7 +48,7 @@ def background_identity(identity):
 def validate_entry(root, locale, configuration, identity, video):
     currencies = resolve_currencies(configuration, locale)
     glyphs = [configuration['glyphs'][code] for code in currencies]
-    entry = json.loads((root / locale / 'manifest.json').read_text())
+    entry = json.loads((root / locale / 'manifest.json').read_text(encoding='utf-8'))
     if entry.get('locale') != locale or entry.get('currencies') != currencies or entry.get('renderIdentity') != identity:
         raise ValueError('Stale locale manifest: ' + locale)
     if entry.get('glyphs') != glyphs or entry.get('reels') != currency_reels(glyphs, configuration['spinGlyphs']):

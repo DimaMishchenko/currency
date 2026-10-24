@@ -17,7 +17,7 @@ args = parser.parse_args()
 configuration = load(DESIGN / 'header-locales.json')
 SOURCE = DESIGN / 'header.svg'
 FONT = verified_object(args.inputs, 'bb55a5ca5c2042335b3991af27c4d0705d0ef41cac6164ac737fd8f2a1e85207', load(DESIGN / 'input-manifest.json')['objects'])
-renderer_source = Path(__file__).read_text()
+renderer_source = Path(__file__).read_text(encoding='utf-8')
 render_identity = {'pixelSourceSha256': pixel_source_sha256(renderer_source), 'sourceSha256': hashlib.sha256(SOURCE.read_bytes()).hexdigest(), 'fontSha256': hashlib.sha256(FONT.read_bytes()).hexdigest(), 'configSha256': hashlib.sha256((DESIGN / 'header-locales.json').read_bytes()).hexdigest(), 'reelPolicySha256': hashlib.sha256(Path(__file__).with_name('header_validation.py').read_bytes()).hexdigest(), 'pillow': Image.__version__, 'freetype': features.version('freetype2')}
 
 selected = list(configuration['locales']) if args.all_locales else args.locale
@@ -38,10 +38,10 @@ if selected:
         media = f'<video controls loop muted playsinline preload="none" poster="{locale}/poster.png" src="{locale}/header.mp4"></video>' if args.video else f'<img src="{locale}/poster.png" alt="{label}">'
         cards.append(f'<article><h2>{label}</h2>{media}<p>Center glyphs {html.escape(" / ".join(entry["glyphs"]))} · <a href="{locale}/manifest.json">Render proof</a></p></article>')
     args.output.mkdir(parents=True, exist_ok=True)
-    (args.output / 'index.html').write_text('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Localized H09 review</title><style>body{font:16px system-ui;background:#eef3fc;color:#172034;margin:32px auto;max-width:1400px;padding:0 20px}main{display:grid;grid-template-columns:repeat(auto-fit,minmax(430px,1fr));gap:24px}article{background:white;padding:18px;border-radius:20px}h2{font-size:20px}video,img{width:100%;border-radius:12px}a{color:#075fcf}@media(max-width:500px){main{display:block}article{margin-bottom:20px}}</style><h1>H09 · language editions</h1><p>15 seconds · 60 fps · early upward reel spins · continuous leftward rails. Currency priorities follow the approved language examples. Review only.</p><main>' + ''.join(cards) + '</main>')
-    (args.output / 'manifest.json').write_text(json.dumps({'schemaVersion': 1, 'status': 'local-review', 'headers': entries}, indent=2, ensure_ascii=False) + '\n')
+    (args.output / 'index.html').write_text('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Localized H09 review</title><style>body{font:16px system-ui;background:#eef3fc;color:#172034;margin:32px auto;max-width:1400px;padding:0 20px}main{display:grid;grid-template-columns:repeat(auto-fit,minmax(430px,1fr));gap:24px}article{background:white;padding:18px;border-radius:20px}h2{font-size:20px}video,img{width:100%;border-radius:12px}a{color:#075fcf}@media(max-width:500px){main{display:block}article{margin-bottom:20px}}</style><h1>H09 · language editions</h1><p>15 seconds · 60 fps · early upward reel spins · continuous leftward rails. Currency priorities follow the approved language examples. Review only.</p><main>' + ''.join(cards) + '</main>', encoding='utf-8')
+    (args.output / 'manifest.json').write_text(json.dumps({'schemaVersion': 1, 'status': 'local-review', 'headers': entries}, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
     if args.video:
-        (args.output / 'header-map.json').write_text(json.dumps({'schemaVersion': 1, 'headers': {entry['locale']: {'path': entry['locale'] + '/header.mp4', 'sha256': entry['videoSha256']} for entry in entries}}, indent=2, ensure_ascii=False) + '\n')
+        (args.output / 'header-map.json').write_text(json.dumps({'schemaVersion': 1, 'headers': {entry['locale']: {'path': entry['locale'] + '/header.mp4', 'sha256': entry['videoSha256']} for entry in entries}}, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
     raise SystemExit(0)
 locale = args.render_locale
 currencies = resolve_currencies(configuration, locale) if locale else None
@@ -207,4 +207,4 @@ if args.video:
     decoded_hashes = [line.rsplit(',',1)[-1].strip() for line in decoded_hashes.splitlines() if line and not line.startswith('#')]
     assert len(decoded_hashes) == N and len(set(decoded_hashes)) == N
     manifest.update({'videoComplete': True, 'uniqueDecodedFrames': len(set(decoded_hashes)), 'ffmpeg': subprocess.run([FFMPEG, '-version'], check=True, capture_output=True, text=True).stdout.splitlines()[0], 'probe': probe, 'uniqueInputFrames': len(set(input_hashes)), 'videoSha256': hashlib.sha256((args.output/'header.mp4').read_bytes()).hexdigest(), 'videoBytes': (args.output/'header.mp4').stat().st_size})
-(args.output/'manifest.json').write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + '\n')
+(args.output/'manifest.json').write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
