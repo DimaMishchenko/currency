@@ -25,6 +25,7 @@ final class AppComposition {
   private(set) var companionIssue: CompanionSyncIssue?
   let rates: RateStore
   let conversion: ConversionStore
+  let conversionUsage: ConversionUsageStore
   let local: LocalCurrencyStore
   let progress: OnboardingProgressStore
   let discovery: HomeDiscoveryStore
@@ -74,6 +75,7 @@ final class AppComposition {
     self.appearance = appearance ?? AppearancePreferences(defaults: .standard)
     rates = RateStore(directory: directory)
     conversion = ConversionStore(directory: directory)
+    conversionUsage = ConversionUsageStore(directory: directory)
     local = LocalCurrencyStore(directory: directory)
     progress = OnboardingProgressStore(directory: directory)
     discovery = HomeDiscoveryStore(defaults: discoveryDefaults)
@@ -188,6 +190,10 @@ final class AppComposition {
       readDiscovery: { [discovery] in discovery.load() },
       saveDiscovery: { [discovery] in discovery.save($0) },
       onboardingCompleted: { [progress] in progress.load()?.completed == true },
+      recordConversion: { [conversionUsage] in try? conversionUsage.recordConversion() },
+      claimReviewRequest: { [conversionUsage] in
+        (try? conversionUsage.claimReviewRequest()) ?? false
+      },
       now: { .now })
   }
   func markDetailsVisited() {

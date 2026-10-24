@@ -99,4 +99,43 @@ import Testing
     #expect(try !store.apply(WidgetCommand("invalid", spec: spec), snapshot: nil))
     #expect(!FileManager.default.fileExists(atPath: directory.path))
   }
+  @Test(arguments: [false, true])
+  func committedNumericConversionsNotifyAfterPersistence(synchronized: Bool) throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = WidgetStore(directory: directory)
+    var spec = WidgetSpec(kind: "CurrencyConverter", codes: ["EUR", "USD"], status: .notDetermined)
+    spec.synchronized = synchronized
+    var notifications = 0
+    for command in ["7", ".", "0", "select:USD", "AC", "⌫", "0", "invalid"] {
+      try store.apply(WidgetCommand(command, spec: spec), snapshot: snapshot) {
+        notifications += 1
+        #expect(store.widgetInput(key: spec.key, codes: spec.codes).decimal > 0)
+      }
+    }
+    #expect(notifications == 1)
+    try store.apply(WidgetCommand("8", spec: spec), snapshot: snapshot) { notifications += 1 }
+    #expect(notifications == 2)
+  }
+
+  @Test func missingDestinationRatesAndFailedCommitsNeverNotify() throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = WidgetStore(directory: directory)
+    var spec = WidgetSpec(kind: "CurrencyConverter", codes: ["EUR", "USD"], status: .notDetermined)
+    var notifications = 0
+    try store.apply(WidgetCommand("7", spec: spec), snapshot: RateSnapshot()) {
+      notifications += 1
+    }
+    spec.synchronized = true
+    let url = directory.appendingPathComponent("input.json")
+    let corrupt = Data("invalid".utf8)
+    try corrupt.write(to: url)
+    #expect(throws: (any Error).self) {
+      try store.apply(WidgetCommand("8", spec: spec), snapshot: snapshot) { notifications += 1 }
+    }
+    #expect(notifications == 0)
+    #expect(try Data(contentsOf: url) == corrupt)
+  }
+
 }

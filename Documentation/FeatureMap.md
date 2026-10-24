@@ -28,6 +28,7 @@ Owner: [Home](../Features/Home/Sources/Home/HomeModel.swift), [converter UI](../
 | CONV-05 | App restart, foreground return, shared widget changes | Saved input is restored. Unchanged shared input preserves valid editing; changed shared source/amount ends editing and displays the authoritative input. |
 | CONV-06 | Currency row context menu → Copy amount | The selected row’s formatted amount reaches the clipboard. |
 | CONV-07 | Context menu and converter discovery tips | Details/history, removal, and widget entry points open the appropriate surface; contextual tips respect prior discovery. |
+| CONV-08 | Complete meaningful conversions in the app or Calculator widget | A completed app amount edit requests a native App Store review once shared app and Calculator widget usage reaches three meaningful conversion sessions, after two seconds of idle converter time. Requests occur only in the active main app with the keypad and other presentations closed. Widget numeric edits contribute once per 30-second activity session; setup, selection, unchanged/zero input and presentation alone do not count. The shared count survives restart and each request consumes a batch of three. Each later batch may request again; Apple controls whether the native prompt is actually shown. |
 
 ## Rates and history
 
