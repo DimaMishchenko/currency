@@ -23,6 +23,8 @@ func makeHomeModel(
   store: HomeTestStore, service: RateService, readRates: (() -> RateSnapshot)? = nil,
   discovery: HomeDiscoveryStore? = nil,
   onboardingCompleted: @escaping () -> Bool = { true },
+  recordConversion: @escaping () -> Void = {},
+  claimReviewRequest: @escaping () -> Bool = { false },
   now: @escaping () -> Date = { .now }
 ) -> HomeModel {
   HomeModel(
@@ -39,5 +41,6 @@ func makeHomeModel(
       readDiscovery: { discovery?.load() ?? HomeDiscoveryProgress() },
       saveDiscovery: { discovery?.save($0) },
       onboardingCompleted: onboardingCompleted,
+      recordConversion: recordConversion, claimReviewRequest: claimReviewRequest,
       now: now))
 }

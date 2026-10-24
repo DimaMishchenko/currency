@@ -286,4 +286,56 @@ import WidgetsUI
       #expect(CurrencySymbolChoice.caseDisplayRepresentations[choice] != nil)
     }
   }
+  @Test(arguments: [false, true], [nil, "12345678-1234-1234-1234-123456789012"] as [String?])
+  func liveCompositionCountsCommittedDefaultAndCustomConversions(
+    synchronized: Bool, instanceID: String?
+  ) throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    _ = try RateStore(directory: directory).saveBootstrapRates(rates)
+    let usage = ConversionUsageStore(directory: directory)
+    for _ in 0..<2 { try usage.recordConversion() }
+    var spec = WidgetSpec(
+      kind: "CurrencyConverter", codes: ["EUR", "USD"], instanceID: instanceID,
+      status: .notDetermined)
+    spec.synchronized = synchronized
+    try WidgetAction(WidgetCommand("7", spec: spec))
+      .execute(using: WidgetComposition.action(directory: directory))
+    #expect(try usage.claimReviewRequest())
+    try WidgetAction(WidgetCommand("8", spec: spec))
+      .execute(using: WidgetComposition.action(directory: directory))
+    #expect(try !usage.claimReviewRequest())
+  }
+
+  @Test func reviewPersistenceFailureDoesNotFailCommittedWidgetInteraction() throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    _ = try RateStore(directory: directory).saveBootstrapRates(rates)
+    let url = directory.appendingPathComponent("conversion-usage.json")
+    let corrupt = Data("invalid".utf8)
+    try corrupt.write(to: url)
+    let spec = WidgetSpec(kind: "CurrencyConverter", codes: ["EUR", "USD"], status: .notDetermined)
+    try WidgetAction(WidgetCommand("7", spec: spec))
+      .execute(using: WidgetComposition.action(directory: directory))
+    #expect(
+      WidgetStore(directory: directory).widgetInput(key: spec.key, codes: spec.codes).amount == "7")
+    #expect(try Data(contentsOf: url) == corrupt)
+  }
+
+  @Test(arguments: ["CurrencyCash", "CurrencyBoard"])
+  func liveCompositionDoesNotCountNonCalculatorPresets(kind: String) throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    _ = try RateStore(directory: directory).saveBootstrapRates(rates)
+    let usage = ConversionUsageStore(directory: directory)
+    for _ in 0..<2 { try usage.recordConversion() }
+    let spec = WidgetSpec(kind: kind, codes: ["EUR", "USD"], status: .notDetermined)
+    try WidgetAction(WidgetCommand("preset:10", spec: spec))
+      .execute(using: WidgetComposition.action(directory: directory))
+    #expect(
+      WidgetStore(directory: directory).widgetInput(key: spec.key, codes: spec.codes).amount == "10"
+    )
+    #expect(try !usage.claimReviewRequest())
+  }
+
 }

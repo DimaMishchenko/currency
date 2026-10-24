@@ -86,12 +86,19 @@ public struct WidgetCommand: Sendable {
 
   /// Applies the same reduction to persisted input or an isolated tutorial state.
   public func apply(to input: inout WidgetInput, snapshot: RateSnapshot?) {
-    guard let action else { return }
+    _ = applyTrackingConversion(to: &input, snapshot: snapshot)
+  }
+
+  fileprivate func applyTrackingConversion(
+    to input: inout WidgetInput, snapshot: RateSnapshot?
+  ) -> Bool {
+    guard let action else { return false }
     if let activeCurrency, input.active == hiddenCurrency, input.active != activeCurrency,
       let snapshot
     {
       input.select(activeCurrency, snapshot: snapshot)
     }
+    let previousAmount = input.decimal
     switch action {
     case .selectCurrency(let code):
       if let snapshot { input.select(code, snapshot: snapshot) }
@@ -100,6 +107,18 @@ public struct WidgetCommand: Sendable {
         input.preset(amount)
       }
     case .keypad(let key): input.press(key.rawValue)
+    }
+    guard !changesSelection, input.decimal > 0, input.decimal != previousAmount,
+      let snapshot
+    else { return false }
+    let source = WidgetSelection.currency(input.active)
+    return input.codes.contains { selection in
+      let destination = WidgetSelection.currency(selection)
+      guard destination != source,
+        let value = snapshot.convert(
+          input.decimal, from: source, to: destination, metalUnit: input.metalUnit)
+      else { return false }
+      return !value.isNaN && value > 0
     }
   }
 }
@@ -112,37 +131,42 @@ public enum WidgetMutationError: Error, Equatable, Sendable {
 extension WidgetStore {
   /// Applies an intent under the existing app-then-widget lock ordering.
   /// Returns whether synchronized widgets need invalidation after a successful commit.
+  /// Calls `onConversion` after a committed numeric edit with an available destination value.
   @discardableResult
   public func apply(
-    _ action: WidgetCommand, key: String? = nil, snapshot: RateSnapshot?
+    _ action: WidgetCommand, key: String? = nil, snapshot: RateSnapshot?,
+    onConversion: () -> Void = {}
   ) throws -> Bool {
     guard action.action != nil else { return false }
     if action.requiresSnapshot && snapshot == nil { throw WidgetMutationError.ratesRequired }
     let spec = action.spec
     let key = key ?? spec.key
     let conversion = ConversionStore(directory: directory)
+    var completedConversion = false
     if spec.synchronized, let snapshot {
       guard action.changesSelection else {
         try conversion.updateInput { app in
           try updateWidgetInput(key: key, codes: spec.codes, amount: spec.amount) { input in
             input.synchronize(with: app, snapshot: snapshot)
-            action.apply(to: &input, snapshot: snapshot)
+            completedConversion = action.applyTrackingConversion(to: &input, snapshot: snapshot)
             input.publish(to: &app, snapshot: snapshot)
           }
         }
+        if completedConversion { onConversion() }
         return true
       }
       let app = conversion.input()
       try updateWidgetInput(key: key, codes: spec.codes, amount: spec.amount) { input in
         input.synchronize(with: app, snapshot: snapshot)
-        action.apply(to: &input, snapshot: snapshot)
+        completedConversion = action.applyTrackingConversion(to: &input, snapshot: snapshot)
       }
     } else {
       try updateWidgetInput(key: key, codes: spec.codes, amount: spec.amount) { input in
         if spec.kind == "CurrencyConverter" { input.setMetalUnit(conversion.input().metalUnit) }
-        action.apply(to: &input, snapshot: snapshot)
+        completedConversion = action.applyTrackingConversion(to: &input, snapshot: snapshot)
       }
     }
+    if completedConversion { onConversion() }
     return false
   }
 }

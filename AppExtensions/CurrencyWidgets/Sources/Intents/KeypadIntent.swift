@@ -65,7 +65,8 @@ struct WidgetAction: AppIntent {
   /// Runs the production adapter with controlled capabilities in integration tests.
   func execute(using dependencies: WidgetActionDependencies) throws {
     var spec = WidgetSpec(
-      kind: "", codes: codes, amount: initialAmount, status: .notDetermined)
+      kind: String(stateKey.prefix { $0 != "|" }), codes: codes, amount: initialAmount,
+      status: .notDetermined)
     // AppIntent parameters already carry the resolved selection shown by the tapped control.
     spec.codes = codes
     spec.synchronized = synchronized
