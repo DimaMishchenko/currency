@@ -32,7 +32,7 @@ test('Home Screen calculator shares input and starts fresh after one minute of i
   await expect(dollars).toHaveValue('4');
   await tapCalculatorControl(calculator, '4');
   await expect(dollars).toHaveValue('48');
-  await agent.assert('The Currency calculator widget shows EUR 24 and USD 48. The new entry replaced 42 after inactivity, then continued normally.', { vision: 'only' });
+  await agent.assert('The Currency calculator widget visibly shows EUR 24 and USD 48, with both complete amounts readable.', { vision: 'only' });
   await app.screenshot('home-screen-widget-after-inactivity-eur-24-usd-48');
 
   await app.restart();
