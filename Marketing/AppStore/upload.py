@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Plan/reconcile App Store drafts through the pinned asc CLI. Never submit review."""
 import argparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from fractions import Fraction
 import hashlib
 import json
@@ -12,6 +13,7 @@ import struct
 import subprocess
 import sys
 import tempfile
+import time
 
 ASC_VERSION = '5.16.0'
 PROFILES = {'iphone': 'APP_IPHONE_61', 'ipad': 'APP_IPAD_PRO_3GEN_129', 'watch': 'APP_WATCH_SERIES_10'}
@@ -77,12 +79,23 @@ def validate_media(root, manifest, metadata, probe_header=True):
     expected = {(l, p, f, n) for l in metadata['locales'] for p in {*PROFILES, 'duo-inner', 'duo-outer'} for f in FAMILIES for n in range(1, 7)}
     if set(slots) != expected:
         raise UploadError('Media manifest must contain all 3240 screenshot placements')
-    header = manifest.get('header', {})
-    path = confined(root, header.get('path'))
-    if path.suffix.lower() not in {'.mp4', '.m4v', '.mov'} or not path.is_file() or sha256(path) != header.get('sha256'):
-        raise UploadError('Approved header video is missing or has the wrong hash')
-    video = validate_video(path) if probe_header else {}
-    return slots, dict(header, file=path, video=video)
+    def checked_header(header):
+        if not isinstance(header, dict):
+            raise UploadError('Invalid header mapping')
+        path = confined(root, header.get('path'))
+        if path.suffix.lower() not in {'.mp4', '.m4v', '.mov'} or not path.is_file() or sha256(path) != header.get('sha256'):
+            raise UploadError('Approved header video is missing or has the wrong hash')
+        identifier = header['sha256']
+        if identifier not in probes:
+            probes[identifier] = validate_video(path) if probe_header else {}
+        return dict(header, file=path, video=probes[identifier])
+    probes = {}
+    if 'headers' in manifest:
+        headers = manifest['headers']
+        if 'header' in manifest or not isinstance(headers, dict) or set(headers) != set(metadata['locales']):
+            raise UploadError('Localized headers must contain every metadata locale exactly once, without a global fallback')
+        return slots, {'locales': {locale: checked_header(item) for locale, item in headers.items()}}
+    return slots, checked_header(manifest.get('header', {}))
 
 
 def validate_png(path, dimensions):
@@ -391,7 +404,7 @@ def resolve_targets(cli, app_id, version_id=None, version_string=None, info_id=N
 
 
 class Planner:
-    def __init__(self, cli, metadata, slots, header, version_id, version_string, info_id, scopes, remove_approved_duplicate=None):
+    def __init__(self, cli, metadata, slots, header, version_id, version_string, info_id, scopes, remove_approved_duplicate=None, replace_header_sha256=None):
         self.cli, self.meta, self.slots, self.header = cli, metadata, slots, header
         self.version, self.version_string, self.info = version_id, version_string, info_id
         self.scopes, self.ops, self.blockers, self.notes = scopes, [], [], []
@@ -403,10 +416,23 @@ class Planner:
         self.cpp_profiles = []
         self.cpp_status = None
         self.header_group = None
+        if 'locales' in self.header and (not isinstance(self.header['locales'], dict) or set(self.header['locales']) != set(self.meta['locales'])):
+            raise UploadError('Localized headers must cover every metadata locale without fallback')
         if remove_approved_duplicate is not None and (not isinstance(remove_approved_duplicate, str) or not re.fullmatch('[A-Za-z0-9-]{1,180}', remove_approved_duplicate)):
             raise UploadError('Explicit duplicate screenshot ID is invalid')
         self.remove_approved_duplicate = remove_approved_duplicate
         self.duplicate_repair = None
+        if replace_header_sha256 is not None and (not isinstance(replace_header_sha256, str) or not all(re.fullmatch('[a-f0-9]{64}', value) for value in replace_header_sha256.split(',')) or 'header' not in scopes):
+            raise UploadError('Header replacement requires header scope and the exact previous approved SHA-256')
+        self.replace_header_sha256 = replace_header_sha256
+
+    def header_for_locale(self, locale):
+        return self.header['locales'][locale] if 'locales' in self.header else self.header
+
+    def place_headers(self, targets):
+        videos = {locale: self.library_media(self.header_for_locale(locale), 'video') for _, locale in targets}
+        for (family, locale), target in targets.items():
+            self.place_header(target, family, videos[locale])
 
     def get(self, path):
         if '@pending-' in path:
@@ -482,9 +508,7 @@ class Planner:
                 raise UploadError('No unique Asset Library; initialize it in App Store Connect first')
             self.library = libraries[0]['id']
         if 'header' in self.scopes:
-            video = self.library_media(self.header, 'video')
-            for (family, locale), target in targets.items():
-                self.place_header(target, family, video)
+            self.place_headers(targets)
         for (family, locale), target in targets.items():
             if (family == 'default' and 'default' in self.scopes) or (family != 'default' and 'cpp' in self.scopes):
                 for profile in (PROFILES if family == 'default' else self.cpp_profiles):
@@ -551,25 +575,27 @@ class Planner:
                     return False
             if media_type != 'video':
                 return True
-            video = self.header.get('video', {})
-            if 'frameRates' in spec:
-                fps = video.get('fps')
-                rates = records(spec['frameRates'])
-                if not isinstance(fps, (int, float)) or not any(type(rate.get('minFps')) is int and type(rate.get('maxFps')) is int and rate['minFps'] <= fps <= rate['maxFps'] for rate in rates):
+            def accepts_video(video):
+                if 'frameRates' in spec:
+                    fps = video.get('fps')
+                    rates = records(spec['frameRates'])
+                    if not isinstance(fps, (int, float)) or not any(type(rate.get('minFps')) is int and type(rate.get('maxFps')) is int and rate['minFps'] <= fps <= rate['maxFps'] for rate in rates):
+                        return False
+                if 'duration' in spec:
+                    bounds = spec['duration']
+                    def seconds(value):
+                        match = re.fullmatch(r'PT(?:(\d+(?:\.\d+)?)H)?(?:(\d+(?:\.\d+)?)M)?(?:(\d+(?:\.\d+)?)S)?', value) if isinstance(value, str) else None
+                        return sum(float(part or 0) * scale for part, scale in zip(match.groups(), (3600, 60, 1))) if match and any(match.groups()) else None
+                    low = seconds(bounds.get('min')) if isinstance(bounds, dict) else None
+                    high = seconds(bounds.get('max')) if isinstance(bounds, dict) else None
+                    duration = video.get('duration')
+                    if low is None or high is None or not isinstance(duration, (int, float)) or not low <= duration <= high:
+                        return False
+                if spec.get('audioRequired') is True and video.get('audio') is not True:
                     return False
-            if 'duration' in spec:
-                bounds = spec['duration']
-                def seconds(value):
-                    match = re.fullmatch(r'PT(?:(\d+(?:\.\d+)?)H)?(?:(\d+(?:\.\d+)?)M)?(?:(\d+(?:\.\d+)?)S)?', value) if isinstance(value, str) else None
-                    return sum(float(part or 0) * scale for part, scale in zip(match.groups(), (3600, 60, 1))) if match and any(match.groups()) else None
-                low = seconds(bounds.get('min')) if isinstance(bounds, dict) else None
-                high = seconds(bounds.get('max')) if isinstance(bounds, dict) else None
-                duration = video.get('duration')
-                if low is None or high is None or not isinstance(duration, (int, float)) or not low <= duration <= high:
-                    return False
-            if spec.get('audioRequired') is True and video.get('audio') is not True:
-                return False
-            return True
+                return True
+            variants = self.header['locales'].values() if 'locales' in self.header else [self.header]
+            return all(accepts_video(header.get('video', {})) for header in variants)
 
         def matching_group(placement_type, dimensions, media_type, display_class, platform, category):
             placement = types.get(placement_type, {})
@@ -833,17 +859,70 @@ class Planner:
             raise UploadError('Duplicate approved library assets; resolve duplicates first')
         if found:
             attrs = found[0].get('attributes', {})
-            if attrs.get('state') not in {'PREPARE_FOR_SUBMISSION', 'APPROVED'}:
-                raise UploadError('Existing approved media is still processing or failed; inspect it before retry')
             category = 'APP_SCREENSHOTS_AND_PREVIEWS' if media_type == 'image' else 'CREATIVE_ASSETS'
+            identifier = found[0].get('id')
+            if not isinstance(identifier, str) or not re.fullmatch('[A-Za-z0-9-]+', identifier) or attrs.get('category') != category or attrs.get('fileSize') != item['file'].stat().st_size:
+                raise UploadError('Existing library asset does not match approved identity, category or file size; inspect it before reuse')
             ready = attrs.get('videoAsset') if media_type == 'video' else attrs.get('imageAsset', {}).get('width') and attrs.get('imageAsset', {}).get('height')
-            if not ready or not attrs.get('specId') or attrs.get('category') != category or attrs.get('fileSize') != item['file'].stat().st_size:
-                raise UploadError('Existing library asset does not match approved media readiness, category or file size; inspect it before reuse')
-            identifier = found[0]['id']
+            if media_type == 'video' and attrs.get('state') in {'PREPARE_FOR_SUBMISSION', 'PROCESSING', 'UPLOADING'} and (not ready or not attrs.get('specId')):
+                identifier = self.queue('WAIT_VIDEO', '', video_id=identifier, reference=reference, bytes=item['file'].stat().st_size)
+            elif attrs.get('state') not in {'PREPARE_FOR_SUBMISSION', 'APPROVED'} or not ready or not attrs.get('specId'):
+                raise UploadError('Existing approved media is still processing or failed; inspect it before reuse')
         else:
             identifier = self.queue('LIBRARY', '', media_type=media_type, library=self.library, file=str(item['file']), reference=reference)
         self.media[reference] = identifier
         return identifier
+
+    def upload_library_asset(self, op):
+        media_type = op['media_type']
+        category = 'CREATIVE_ASSETS' if media_type == 'video' else 'APP_SCREENSHOTS_AND_PREVIEWS'
+        response = self.cli.run(['asset-library', 'videos' if media_type == 'video' else 'images', 'upload', '--library-id', op['library'], '--file', op['file'], '--reference-name', op['reference'], '--category', category, '--output', 'json'], mutate=True)
+        identifier = response.get(media_type + 'Id') if isinstance(response, dict) else None
+        if not isinstance(identifier, str) or not re.fullmatch('[A-Za-z0-9-]+', identifier):
+            raise UploadError('Library upload returned no valid asset ID; inspect remote library before retry')
+        return identifier
+
+    def prepare_video(self, op):
+        if op['method'] == 'LIBRARY':
+            return self.upload_library_asset(op)
+        deadline = time.monotonic() + 1800
+        while True:
+            response = self.cli.run(['api', 'GET', '/v1/appAssetLibraryVideos/' + op['video_id'], '--output', 'json'])
+            video = response.get('data') if isinstance(response, dict) else None
+            attrs = video.get('attributes', {}) if isinstance(video, dict) else {}
+            if not isinstance(video, dict) or not isinstance(attrs, dict) or video.get('id') != op['video_id'] or video.get('type') != 'appAssetLibraryVideos' or attrs.get('referenceName') != op['reference'] or attrs.get('category') != 'CREATIVE_ASSETS' or attrs.get('fileSize') != op['bytes']:
+                raise UploadError('Pending approved video identity changed; no placements were changed')
+            if attrs.get('state') in {'PREPARE_FOR_SUBMISSION', 'APPROVED'} and attrs.get('specId') and attrs.get('videoAsset'):
+                return op['video_id']
+            if attrs.get('state') not in {'UPLOADING', 'PROCESSING', 'PREPARE_FOR_SUBMISSION'}:
+                raise UploadError('Pending approved video failed processing; no placements were changed')
+            if time.monotonic() >= deadline:
+                raise UploadError('Approved video is still processing; no placements were changed; inspect before retrying')
+            time.sleep(5)
+
+    def prepare_videos(self):
+        operations = [(index, op) for index, op in enumerate(self.ops, 1) if op['method'] == 'WAIT_VIDEO' or (op['method'] == 'LIBRARY' and op['media_type'] == 'video')]
+        resolved, failures = {}, []
+        if not operations:
+            return resolved
+        if any('@pending-' in op.get('library', '') for _, op in operations):
+            raise UploadError('Video preparation requires an existing library identity')
+        with ThreadPoolExecutor(max_workers=min(8, len(operations))) as executor:
+            pending = {executor.submit(self.prepare_video, op): (index, op) for index, op in operations}
+            for future in as_completed(pending):
+                index, op = pending[future]
+                try:
+                    identifier = future.result()
+                except UploadError as error:
+                    failures.append(error)
+                    continue
+                resolved[op['ref']] = identifier
+                if hasattr(self.cli, 'receipt'):
+                    self.cli.receipt('operation-%d-video-ready' % index, {'videoId': identifier})
+                print('Prepared approved header video %d/%d' % (len(resolved), len(operations)), flush=True)
+        if failures:
+            raise failures[0]
+        return resolved
 
     def duo_screenshots(self, target, family, locale):
         if set(self.duo_groups) != {'duo-outer', 'duo-inner'}:
@@ -889,8 +968,32 @@ class Planner:
                 if headers[0].get('attributes', {}).get('state') == 'FAILED':
                     raise UploadError('Existing header placement failed; inspect before retry')
                 return
-            raise UploadError('Existing product-page header differs; inspect and remove/swap explicitly in App Store Connect first')
+            references = {'currency-approved-' + value for value in self.replace_header_sha256.split(',')} if self.replace_header_sha256 else set()
+            old = headers[0] if len(headers) == 1 else None
+            old_video = old.get('relationships', {}).get('video', {}).get('data', {}).get('id') if old else None
+            matching = [row for row in self.library_rows.get('video', []) if row.get('id') == old_video and row.get('attributes', {}).get('referenceName') in references] if references else []
+            if not old or old.get('attributes', {}).get('placementGroup') != self.header_group or len(matching) != 1 or not re.fullmatch('[A-Za-z0-9-]+', old.get('id', '')):
+                raise UploadError('Existing product-page header differs; inspect and remove/swap explicitly in App Store Connect first')
+            reference = matching[0]['attributes']['referenceName']
+            new_references = [key for key, identifier in self.media.items() if identifier == video]
+            if len(new_references) != 1:
+                raise UploadError('Replacement header must resolve to one approved media checksum')
+            self.queue('REPLACE_APPROVED_HEADER', '/v1/' + kind + '/' + target + '/placements?include=video', old_id=old['id'], old_video=old_video, old_reference=reference, new_video=video, new_reference=new_references[0], group=self.header_group)
         self.queue('POST', '/v1/appAssetLibraryPlacements', resource('appAssetLibraryPlacements', {'placementType': 'PRODUCT_PAGE_HEADER_ASSET', 'placementGroup': self.header_group}, {'video': relationship('appAssetLibraryVideos', video), 'appStoreVersionLocalization' if family == 'default' else 'appCustomProductPageLocalization': relationship(kind, target)}))
+
+    def remove_replaced_header(self, op):
+        current = [row for row in self.get(op['path']) if row.get('attributes', {}).get('placementType') == 'PRODUCT_PAGE_HEADER_ASSET']
+        if len(current) != 1 or current[0].get('id') != op['old_id'] or current[0].get('attributes', {}).get('placementGroup') != op['group'] or current[0].get('relationships', {}).get('video', {}).get('data', {}).get('id') != op['old_video']:
+            raise UploadError('Approved header placement changed since planning; nothing was deleted')
+        videos = self.get('/v1/appAssetLibraries/' + self.library + '/videos')
+        old = [row for row in videos if row.get('id') == op['old_video'] and row.get('attributes', {}).get('referenceName') == op['old_reference']]
+        new = [row for row in videos if row.get('id') == op['new_video'] and row.get('attributes', {}).get('referenceName') == op['new_reference']]
+        ready = lambda row: row.get('attributes', {}).get('state') in {'APPROVED', 'PREPARE_FOR_SUBMISSION'} and row.get('attributes', {}).get('category') == 'CREATIVE_ASSETS' and bool(row.get('attributes', {}).get('videoAsset'))
+        if len(old) != 1 or len(new) != 1 or not ready(old[0]) or not ready(new[0]):
+            raise UploadError('Old and replacement header videos must be ready before swapping; nothing was deleted')
+        self.cli.api('DELETE', '/v1/appAssetLibraryPlacements/' + op['old_id'])
+        if any(row.get('attributes', {}).get('placementType') == 'PRODUCT_PAGE_HEADER_ASSET' for row in self.get(op['path'])):
+            raise UploadError('Header removal readback did not clear the slot; stopped before creating a replacement')
 
     def apply_resource(self, method, path, body):
         parents = {
@@ -926,7 +1029,7 @@ class Planner:
             raise UploadError('Apply mode is required to execute a plan')
         if self.remove_approved_duplicate and (self.duplicate_repair is None or not self.ops or self.ops[0]['method'] != 'DELETE_APPROVED_DUPLICATE' or self.ops[0]['proof'] != self.duplicate_repair):
             raise UploadError('Explicit duplicate repair was not uniquely verified before execution')
-        resolved = {}
+        resolved = self.prepare_videos()
         def substitute(value):
             if isinstance(value, str):
                 for ref, identifier in sorted(resolved.items(), key=lambda p: -len(p[0])):
@@ -940,11 +1043,16 @@ class Planner:
                 return {k: substitute(v) for k, v in value.items()}
             return value
         for index, operation in enumerate(self.ops, 1):
+            if operation['ref'] in resolved:
+                continue
             op = substitute({k: v for k, v in operation.items() if k != 'ref'})
             if hasattr(self.cli, 'receipt'):
                 self.cli.receipt('operation-%d-started' % index)
             if op['method'] == 'DELETE_APPROVED_DUPLICATE':
                 self.delete_approved_duplicate(op['proof'])
+                identifier = ''
+            elif op['method'] == 'REPLACE_APPROVED_HEADER':
+                self.remove_replaced_header(op)
                 identifier = ''
             elif op['method'] == 'METADATA':
                 self.sync_metadata(dry_run=False)
@@ -974,12 +1082,7 @@ class Planner:
                     raise UploadError('Metadata synchronization did not resolve one expected version localization; inspect draft state before retrying')
                 identifier = matches[0]['id']
             elif op['method'] == 'LIBRARY':
-                plural = 'videos' if op['media_type'] == 'video' else 'images'
-                category = 'APP_SCREENSHOTS_AND_PREVIEWS' if op['media_type'] == 'image' else 'CREATIVE_ASSETS'
-                response = self.cli.run(['asset-library', plural, 'upload', '--library-id', op['library'], '--file', op['file'], '--reference-name', op['reference'], '--category', category, '--output', 'json'], mutate=True)
-                identifier = response.get(op['media_type'] + 'Id') if isinstance(response, dict) else None
-                if not isinstance(identifier, str) or not re.fullmatch('[A-Za-z0-9-]+', identifier):
-                    raise UploadError('Library upload returned no valid asset ID; inspect remote library before retry')
+                identifier = self.upload_library_asset(op)
             elif op['method'] == 'SCREENSHOTS':
                 self.upload_screenshots(op)
                 identifier = ''
@@ -1011,8 +1114,12 @@ class Planner:
                 entry.update(family=operation['family'], profile=operation['profile'], screenshotCount=len(operation['files']), resumeExisting=operation.get('skip_existing', False))
             if operation['method'] == 'DELETE_APPROVED_DUPLICATE':
                 entry.update({key: operation['proof'][key] for key in ('setId', 'removeId', 'keepId', 'checksum', 'bytes', 'family', 'locale', 'profile')})
+            if operation['method'] == 'REPLACE_APPROVED_HEADER':
+                entry.update(previousApprovedSha256=operation['old_reference'].removeprefix('currency-approved-'), placementGroup=operation['group'])
             if operation['method'] == 'LIBRARY':
                 entry.update(mediaType=operation['media_type'], approvedReference=operation['reference'])
+            if operation['method'] == 'WAIT_VIDEO':
+                entry.update(mediaType='video', approvedReference=operation['reference'], waitForProcessing=True)
             if operation['method'] == 'METADATA':
                 entry.update(localeCount=len(self.meta['locales']), appInfoFields=sorted({key for fields in self.meta['locales'].values() for key in fields if key in INFO_FIELDS}), versionFields=sorted({key for fields in self.meta['locales'].values() for key in fields if key in VERSION_FIELDS}))
             if operation['method'] == 'CPP_CREATE':
@@ -1036,6 +1143,7 @@ def main():
     parser.add_argument('--scope', default='metadata,default,cpp,header,duo')
     parser.add_argument('--apply', action='store_true')
     parser.add_argument('--remove-approved-duplicate', help='Explicit exact screenshot ID to remove only after proving one redundant approved copy')
+    parser.add_argument('--replace-header-sha256', help='Comma-separated exact previous approved header SHA-256 values; replace only matching draft placements after the new video is ready')
     parser.add_argument('--receipts', type=Path, help='Private durable JSONL receipt path; required for remote plans and apply')
     args = parser.parse_args()
     scopes = set(args.scope.split(','))
@@ -1043,6 +1151,8 @@ def main():
         parser.error('--scope must select metadata,default,cpp,header,duo')
     if args.validate_only and args.apply:
         parser.error('--validate-only cannot be combined with --apply')
+    if args.replace_header_sha256 is not None and (args.validate_only or 'header' not in scopes or not all(re.fullmatch('[a-f0-9]{64}', value) for value in args.replace_header_sha256.split(','))):
+        parser.error('--replace-header-sha256 requires header scope, remote planning and comma-separated lowercase SHA-256 values')
     if args.validate_only and args.remove_approved_duplicate:
         parser.error('--validate-only cannot repair a remote duplicate')
     args.version_id = args.version_id.strip() if args.version_id else None
@@ -1059,12 +1169,14 @@ def main():
     manifest = json.loads((root / 'manifest.json').read_text())
     slots, header = validate_media(root, manifest, metadata, probe_header='header' in scopes)
     if args.validate_only:
-        print(json.dumps({'mode': 'validate-only', 'verifiedPlacements': len(slots), 'verifiedHeader': bool(header.get('video')), 'verifiedHeaderHash': True, 'appStoreRequests': 0}))
+        variants = header['locales'].values() if 'locales' in header else [header]
+        verified_header = all(bool(item.get('video')) for item in variants)
+        print(json.dumps({'mode': 'validate-only', 'verifiedPlacements': len(slots), 'verifiedHeader': verified_header, 'verifiedHeaderHash': True, 'appStoreRequests': 0}))
         return 0
     cli = CLI(apply=args.apply, receipts=args.receipts)
     target = resolve_targets(cli, metadata['appId'], args.version_id, args.version_string, args.app_info_id)
     print(json.dumps({'resolvedTarget': target}))
-    plan = Planner(cli, metadata, slots, header, target['versionId'], target['versionString'], target['appInfoId'], scopes, remove_approved_duplicate=args.remove_approved_duplicate).preflight()
+    plan = Planner(cli, metadata, slots, header, target['versionId'], target['versionString'], target['appInfoId'], scopes, remove_approved_duplicate=args.remove_approved_duplicate, replace_header_sha256=args.replace_header_sha256).preflight()
     print(json.dumps({'mode': 'apply' if args.apply else 'dry-run', 'plannedDraftOperations': len(plan.ops), 'scopes': sorted(scopes), 'blockers': plan.blockers, 'notes': plan.notes, 'cppStatus': plan.cpp_status, 'plan': plan.summary()}, ensure_ascii=False, indent=2))
     if args.apply:
         plan.execute()

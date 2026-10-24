@@ -2,7 +2,7 @@
 
 `metadata.json` contains the approved name, subtitle, description, keywords and promotional text for eighteen App Store localizations. The widget-focused default page has five contextual alternatives: Offline, Travel, History, Crypto and Metals. The app name and subtitle are shared across custom product pages; their screenshots and promotional text vary.
 
-`asset-bundle.json` pins the approved media to an independent GitHub asset release, currently `app-store-assets-v1`. The ZIP contains 1,512 unique screenshots referenced by 3,240 placements, the fifteen-second H09 header and `manifest.json`. Media binaries stay out of Git history; no Git LFS, external hosting account or download-URL secret is needed.
+`asset-bundle.json` pins the approved media to an independent GitHub asset release, currently `app-store-assets-v2`. The ZIP contains 1,512 unique screenshots referenced by 3,240 placements, the fifteen-second H09 header and `manifest.json`. Media binaries stay out of Git history; no Git LFS, external hosting account or download-URL secret is needed.
 
 `design/` and `generator/` hold editable screenshot and header recipes. Icon Composer documents and icon generation sources are documented in [../Icons/README.md](../Icons/README.md). Generated media, native captures, system fonts, private source packs, evidence, credentials and delivery archives remain excluded from Git. Never commit an App Store Connect API key.
 
@@ -10,7 +10,7 @@
 
 Install the pinned Python dependencies in `generator/requirements.txt`, plus `rsvg-convert` for screenshot bodies and FFmpeg for header video. See [generator/README.md](generator/README.md) for rendering commands and input-pack layout. Rendering requires the private frozen source pack, including native app captures and licensed resources. Downloading and uploading the approved final assets does not require that pack.
 
-Editable rendering produces review candidates. Approve media changes before packaging a new asset version. The unpacked manifest uses `schemaVersion: 1`: placements record `locale`, `profile`, `family`, `order`, `path` and `sha256`; the header records `path` and `sha256`. Paths are relative to the unpacked directory, and placements may share a PNG.
+Editable rendering produces review candidates. Approve media changes before packaging a new asset version. The unpacked manifest uses `schemaVersion: 1`: placements record `locale`, `profile`, `family`, `order`, `path` and `sha256`; the legacy `header` records `path` and `sha256`. A localized bundle instead records `headers`, mapping all eighteen locales to `{path, sha256}`. A supplied locale map must be complete; a global fallback is refused. Identical video hashes share one bundled file and one Asset Library upload. The uploader selects the locale’s header for both default and custom product pages, preserving existing placement conflict and readback checks. Paths are relative to the unpacked directory, and placements may share a PNG.
 
 Download the exact release asset, verify its pinned byte count and SHA-256, then unpack into an empty ignored directory:
 
@@ -27,13 +27,13 @@ Validation makes no App Store requests and always checks every file's SHA-256, P
 
 ## Independent asset versions
 
-App versions and asset versions are separate. App 1.0 and 1.1 can both use `app-store-assets-v1`; a text-only metadata change stays in Git and does not require a new media release. The `duoPresentation` delivery selection stays in metadata Git history and reuses approved files. Bump to `app-store-assets-v2` when approved media or the bundle manifest changes, and update `asset-bundle.json` plus the matching approved recipe hashes together. Never replace the bytes under an existing asset version.
+App versions and asset versions are separate. App 1.0 and 1.1 can both use `app-store-assets-v1`; a text-only metadata change stays in Git and does not require a new media release. The `duoPresentation` delivery selection stays in metadata Git history and reuses approved files. Bump to the next asset version when approved media or the bundle manifest changes, and update `asset-bundle.json` plus the matching approved recipe hashes together. Never replace the bytes under an existing asset version.
 
 To publish a newly approved media version, create a new tag rather than updating the old release:
 
 ```sh
-gh release create app-store-assets-v2 APPROVED-BUNDLE.zip \
-  --target REVIEWED_COMMIT --title "App Store assets v2" \
+gh release create app-store-assets-v3 APPROVED-BUNDLE.zip \
+  --target REVIEWED_COMMIT --title "App Store assets v3" \
   --notes-file ASSET-NOTES.md --prerelease --latest=false
 ```
 
@@ -113,3 +113,7 @@ Unit tests use a fake CLI and require no credentials or media downloads. Local c
 - [Apple creative asset specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/creative-assets-specifications/)
 - [Apple custom product pages](https://developer.apple.com/help/app-store-connect/create-custom-product-pages/configure-multiple-product-page-versions/)
 - [Pinned asc asset-library guide](https://github.com/rorkai/App-Store-Connect-CLI/blob/5.16.0/guides/asset-library.mdx)
+
+For an approved header update, supply `replace_header_sha256` with the previous approved header hash, or comma-separated previous hashes when replacing an already localized pack. Read the unique values from the previous asset revision’s `approved_header_sha256_by_locale` in `design/recipe.json` (or its legacy `approved_header_sha256`). Select `header` for the default page or `header,cpp` to include custom product pages. For a header-only update, confirm dry-run plans no screenshot or text changes before applying. Dry-run shows each guarded replacement. Apply prepares up to eight independent header videos concurrently and reuses matching approved uploads that are still processing, without creating duplicate reservations. It waits for all of those videos before changing any placement. Apply checks that the old draft placement still references that exact approved video and that both videos are ready before deleting only the placement. The old library video remains available. If a create step is interrupted, rerun the same reviewed input to fill the empty slot; unrelated or ambiguous headers remain blocked.
+
+For a pending header upload, run `inspect-native-policy` with `inspect_header_processing` enabled. This reads only approved header states and readiness flags; signed media URLs and unrelated assets are omitted.

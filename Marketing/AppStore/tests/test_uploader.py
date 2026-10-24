@@ -7,6 +7,7 @@ import subprocess
 import struct
 import sys
 import tempfile
+import threading
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
@@ -73,6 +74,11 @@ class FakeCLI:
                 for collection, assets in self.state.items():
                     if collection.endswith('/appScreenshots') and isinstance(assets, list):
                         assets[:] = [asset for asset in assets if asset['id'] != path.rsplit('/', 1)[1]]
+                return {}
+            if method == 'DELETE' and path.startswith('/v1/appAssetLibraryPlacements/'):
+                for collection, assets in self.state.items():
+                    if '/placements' in collection and isinstance(assets, list):
+                        assets[:] = [asset for asset in assets if asset.get('id') != path.rsplit('/', 1)[1]]
                 return {}
             if method == 'PATCH' and path.endswith('/relationships/appScreenshots'):
                 self.state[path] = body['data']
@@ -1190,6 +1196,80 @@ class UploaderTests(unittest.TestCase):
                         plan.place_header('locale', family, 'approved-video')
                     self.assertEqual(plan.ops, [])
 
+    def approved_header_replacement(self, state='PREPARE_FOR_SUBMISSION'):
+        checksum = 'a' * 64
+        videos = [row('old-video', referenceName='currency-approved-' + checksum, state='APPROVED', category='CREATIVE_ASSETS', videoAsset={'templateUrl':'old'}), row('new-video', referenceName='currency-approved-' + 'b' * 64, state=state, category='CREATIVE_ASSETS', videoAsset={'templateUrl':'new'})]
+        path = '/v1/appStoreVersionLocalizations/locale/placements?include=video'
+        placement = dict(row('old-header', placementType='PRODUCT_PAGE_HEADER_ASSET', placementGroup='DEFAULT_PROFILE'), relationships={'video':u.relationship('appAssetLibraryVideos','old-video')})
+        self.state[path] = [placement]
+        self.state['/v1/appAssetLibraries/library/videos'] = videos
+        cli = FakeCLI(self.state, apply=True)
+        plan = u.Planner(cli,self.meta,self.slots,{},'version','1.2','info',{'header'},replace_header_sha256=checksum)
+        plan.library,plan.header_group = 'library','DEFAULT_PROFILE'
+        plan.library_rows['video'] = videos
+        plan.media['currency-approved-' + 'b' * 64] = 'new-video'
+        return plan,cli,path
+
+    def test_explicit_header_replacement_keeps_old_library_asset_and_queues_new_video(self):
+        plan,cli,path = self.approved_header_replacement()
+        plan.place_header('locale','default','new-video')
+        self.assertEqual([op['method'] for op in plan.ops],['REPLACE_APPROVED_HEADER','POST'])
+        self.assertTrue(all(call[0]=='GET' for call in cli.calls))
+        plan.execute()
+        deletes = [call for call in cli.calls if call[0]=='DELETE']
+        self.assertEqual(deletes,[('DELETE','/v1/appAssetLibraryPlacements/old-header',None)])
+        self.assertEqual([item['id'] for item in self.state['/v1/appAssetLibraries/library/videos']],['old-video','new-video'])
+        post = next(call for call in cli.calls if call[:2]==('POST','/v1/appAssetLibraryPlacements'))
+        self.assertEqual(post[2]['data']['relationships']['video']['data']['id'],'new-video')
+
+    def test_header_replacement_refuses_wrong_hash_ambiguity_and_changed_slot(self):
+        for conflict in ['hash','duplicates','group','changed-after-plan','new-checksum']:
+            with self.subTest(conflict=conflict):
+                plan,cli,path = self.approved_header_replacement()
+                if conflict=='hash': plan.replace_header_sha256='b'*64
+                if conflict=='duplicates': self.state[path].append(dict(self.state[path][0],id='extra-header'))
+                if conflict=='group': self.state[path][0]['attributes']['placementGroup']='OTHER_PROFILE'
+                if conflict in {'changed-after-plan','new-checksum'}:
+                    plan.place_header('locale','default','new-video')
+                    if conflict=='changed-after-plan': self.state[path][0]['id']='different-header'
+                    else: self.state['/v1/appAssetLibraries/library/videos'][1]['attributes']['referenceName']='unreviewed-video'
+                    with self.assertRaises(u.UploadError): plan.execute()
+                else:
+                    with self.assertRaisesRegex(u.UploadError,'header differs'): plan.place_header('locale','default','new-video')
+                self.assertFalse(any(call[0] in {'DELETE','POST'} for call in cli.calls))
+
+    def test_localized_header_update_accepts_only_explicit_previous_checksum_set(self):
+        plan, cli, path = self.approved_header_replacement()
+        plan.replace_header_sha256 = 'c' * 64 + ',' + 'a' * 64
+        plan.place_header('locale', 'default', 'new-video')
+        self.assertEqual(plan.ops[0]['old_reference'], 'currency-approved-' + 'a' * 64)
+        self.assertEqual(plan.summary()[0]['previousApprovedSha256'], 'a' * 64)
+        plan.execute()
+        self.assertEqual([call[1] for call in cli.calls if call[0] == 'DELETE'], ['/v1/appAssetLibraryPlacements/old-header'])
+        plan, cli, path = self.approved_header_replacement()
+        plan.replace_header_sha256 = 'c' * 64 + ',' + 'd' * 64
+        with self.assertRaisesRegex(u.UploadError, 'header differs'):
+            plan.place_header('locale', 'default', 'new-video')
+        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_previous_header_checksum_lists_reject_empty_or_invalid_entries(self):
+        for checksum in ('', ',' + 'a' * 64, 'a' * 64 + ',', 'a' * 64 + ',*', 'a' * 64 + ', ' + 'b' * 64, 'A' * 64):
+            with self.subTest(checksum=checksum):
+                with self.assertRaisesRegex(u.UploadError, 'exact previous approved SHA'):
+                    u.Planner(FakeCLI(self.state), self.meta, self.slots, {}, 'version', '1.2', 'info', {'header'}, replace_header_sha256=checksum)
+
+    def test_header_replacement_refuses_unprocessed_video_before_deleting(self):
+        plan,cli,path = self.approved_header_replacement(state='UPLOAD_COMPLETE')
+        plan.place_header('locale','default','new-video')
+        with self.assertRaisesRegex(u.UploadError,'ready before swapping'): plan.execute()
+        self.assertEqual(self.state[path][0]['id'],'old-header')
+        self.assertFalse(any(call[0] in {'DELETE','POST'} for call in cli.calls))
+
+    def test_header_replacement_requires_exact_hash_and_header_scope(self):
+        for checksum,scopes in [('not-a-checksum',{'header'}),('a'*64,{'metadata'})]:
+            with self.assertRaisesRegex(u.UploadError,'exact previous approved SHA'):
+                u.Planner(FakeCLI(self.state),self.meta,self.slots,{},'version','1.2','info',scopes,replace_header_sha256=checksum)
+
     def test_duo_reconciliation_requests_image_linkage_and_retains_approved_placements(self):
         for family in ('default', 'travel'):
             with self.subTest(family=family):
@@ -1257,6 +1337,64 @@ class UploaderTests(unittest.TestCase):
                     self.assertEqual(operation['body']['data']['relationships'][relation], u.relationship(kind, 'locale'))
                     self.assertEqual(operation['body']['data']['relationships']['orderedPlacements']['data'], [{'type': 'appAssetLibraryPlacements', 'id': placement['id']} for placement in linked if placement['attributes']['placementGroup'] == changed_group])
                     self.assertEqual(cli.calls, [('GET', path, None)])
+
+    def test_localized_header_routing_selects_language_for_default_and_cpp_and_deduplicates(self):
+        self.meta['locales']['de-DE'] = dict(self.meta['locales']['en-US'])
+        files = {}
+        for locale in ['en-US','de-DE']:
+            path = self.root / (locale + '.mp4')
+            path.write_bytes(locale.encode())
+            files[locale] = {'file':path,'sha256':u.sha256(path),'video':{'fps':60,'duration':15,'audio':False}}
+        cli = FakeCLI(self.state)
+        plan = u.Planner(cli,self.meta,self.slots,{'locales':files},'version','1.2','info',{'header'})
+        plan.library,plan.header_group = 'library','DEFAULT_PROFILE'
+        targets = {('default','en-US'):'en',('default','de-DE'):'de',('travel','en-US'):'cpp-en',('travel','de-DE'):'cpp-de'}
+        plan.place_headers(targets)
+        uploads = [op for op in plan.ops if op['method']=='LIBRARY']
+        self.assertEqual(len(uploads),2)
+        references = {op['file']:op['ref'] for op in uploads}
+        placements = [op['body']['data']['relationships'] for op in plan.ops if op['path']=='/v1/appAssetLibraryPlacements']
+        self.assertEqual([item['video']['data']['id'] for item in placements],[references[str(files[locale]['file'])] for family,locale in targets])
+        self.assertEqual([next(item[key]['data']['id'] for key in ['appStoreVersionLocalization','appCustomProductPageLocalization'] if key in item) for item in placements],list(targets.values()))
+        files['de-DE'] = files['en-US']
+        shared = u.Planner(FakeCLI(self.state),self.meta,self.slots,{'locales':files},'version','1.2','info',{'header'})
+        shared.library,shared.header_group = 'library','DEFAULT_PROFILE'
+        shared.place_headers(targets)
+        self.assertEqual(len([op for op in shared.ops if op['method']=='LIBRARY']),1)
+        self.assertTrue(all(call[0]=='GET' for call in cli.calls))
+
+    def test_localized_header_missing_locale_fails_before_remote_calls(self):
+        self.meta['locales']['de-DE'] = dict(self.meta['locales']['en-US'])
+        cli = FakeCLI(self.state)
+        with self.assertRaisesRegex(u.UploadError,'cover every metadata locale'):
+            u.Planner(cli,self.meta,self.slots,{'locales':{'en-US':{}}},'version','1.2','info',{'header'})
+        self.assertEqual(cli.calls,[])
+
+    def test_localized_media_validation_requires_complete_map_and_checks_each_header(self):
+        metadata, manifest, _ = self.approved_media_fixture()
+        generic = manifest.pop('header')
+        other = self.root / 'german.mp4'
+        other.write_bytes(b'german-video')
+        manifest['headers'] = {locale:dict(generic) for locale in metadata['locales']}
+        manifest['headers']['de-DE'] = {'path':other.name,'sha256':u.sha256(other)}
+        with patch.object(u,'validate_video',return_value={'fps':60,'duration':15,'audio':False}) as probe:
+            slots, headers = u.validate_media(self.root,manifest,metadata)
+            self.assertEqual(probe.call_count,2)
+            self.assertEqual(headers['locales']['de-DE']['file'],other.resolve())
+            self.assertEqual(headers['locales']['en-US']['file'],(self.root/'header.mp4').resolve())
+        (self.root/'manifest.json').write_text(json.dumps(manifest))
+        arguments = ['upload.py','--validate-only','--metadata',str(self.root/'metadata.json'),'--media-dir',str(self.root)]
+        with patch.object(sys,'argv',arguments), patch.object(u,'validate_video',return_value={'fps':60,'duration':15,'audio':False}), patch.object(u,'CLI') as client, patch.object(sys,'stdout',new_callable=io.StringIO) as output:
+            self.assertEqual(u.main(),0)
+            self.assertTrue(json.loads(output.getvalue())['verifiedHeader'])
+            client.assert_not_called()
+        del manifest['headers']['de-DE']
+        manifest['header'] = generic
+        with self.assertRaisesRegex(u.UploadError,'without a global fallback'):
+            u.validate_media(self.root,manifest,metadata,probe_header=False)
+        del manifest['header']
+        with self.assertRaisesRegex(u.UploadError,'every metadata locale'):
+            u.validate_media(self.root,manifest,metadata,probe_header=False)
 
     def test_header_uses_runtime_group_and_optional_video_constraints(self):
         reference = native_reference()
@@ -1425,6 +1563,71 @@ class UploaderTests(unittest.TestCase):
         self.assertNotIn('https', text)
         self.assertNotIn('signed-token', text)
         self.assertEqual(receipt.stat().st_mode & 0o777, 0o600)
+
+    def test_header_videos_prepare_concurrently_before_any_placement(self):
+        cli = FakeCLI(apply=True)
+        plan = self.planner(cli, set())
+        refs = [plan.queue('LIBRARY', '', media_type='video', library='library', file='approved-file', reference='approved-' + str(i)) for i in range(3)]
+        plan.queue('POST', '/v1/appAssetLibraryPlacements', u.resource('appAssetLibraryPlacements', {}, {'video': u.relationship('appAssetLibraryVideos', refs[0])}))
+        barrier = threading.Barrier(3)
+        def prepare(op):
+            barrier.wait(timeout=3)
+            self.assertFalse(cli.calls)
+            return 'video-' + op['reference']
+        with patch.object(plan, 'prepare_video', side_effect=prepare), patch.object(sys, 'stdout', new=io.StringIO()):
+            plan.execute()
+        self.assertEqual(len(cli.calls), 1)
+        self.assertEqual(cli.calls[0][2]['data']['relationships']['video']['data']['id'], 'video-approved-0')
+
+    def test_header_preparation_failure_preserves_every_existing_placement(self):
+        plan, cli, path = self.approved_header_replacement()
+        plan.queue('LIBRARY', '', media_type='video', library='library', file='approved-file', reference='approved-video')
+        plan.place_header('locale', 'default', 'new-video')
+        with patch.object(plan, 'prepare_video', side_effect=u.UploadError('processing incomplete')):
+            with self.assertRaisesRegex(u.UploadError, 'processing incomplete'):
+                plan.execute()
+        self.assertEqual(self.state[path][0]['id'], 'old-header')
+        self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_pending_approved_video_reuses_identity_without_duplicate_upload(self):
+        file = self.root / 'approved-header.mp4'
+        file.write_bytes(b'approved')
+        checksum = hashlib.sha256(file.read_bytes()).hexdigest()
+        video = dict(row('pending-video', referenceName='currency-approved-' + checksum, category='CREATIVE_ASSETS', fileSize=file.stat().st_size, state='PREPARE_FOR_SUBMISSION', specId='header', videoAsset=None), type='appAssetLibraryVideos')
+        cli = FakeCLI({'/v1/appAssetLibraries/library/videos': [video]}, apply=True)
+        plan = self.planner(cli, {'header'})
+        plan.library = 'library'
+        ref = plan.library_media({'sha256': checksum, 'file': file}, 'video')
+        self.assertEqual([op['method'] for op in plan.ops], ['WAIT_VIDEO'])
+        self.assertEqual(plan.summary()[0]['approvedReference'], 'currency-approved-' + checksum)
+        plan.queue('POST', '/v1/appAssetLibraryPlacements', u.resource('appAssetLibraryPlacements', {}, {'video': u.relationship('appAssetLibraryVideos', ref)}))
+        ready = json.loads(json.dumps(video))
+        ready['attributes']['videoAsset'] = 'https://example.invalid/processed'
+        with patch.object(cli, 'run', side_effect=[{'data': video}, {'data': ready}]) as command, patch.object(u.time, 'sleep'), patch.object(sys, 'stdout', new=io.StringIO()):
+            plan.execute()
+        self.assertEqual(command.call_count, 2)
+        self.assertTrue(all(call.args[0][:2] == ['api', 'GET'] for call in command.call_args_list))
+        post = next(call for call in cli.calls if call[0] == 'POST')
+        self.assertEqual(post[2]['data']['relationships']['video']['data']['id'], 'pending-video')
+
+    def test_pending_video_wait_rejects_changed_identity_failure_and_timeout(self):
+        original = dict(row('pending-video', referenceName='approved-reference', category='CREATIVE_ASSETS', fileSize=8, state='PREPARE_FOR_SUBMISSION', specId='header', videoAsset=None), type='appAssetLibraryVideos')
+        for change in ('referenceName', 'fileSize', 'category', 'id', 'type', 'attributes', 'failed', 'timeout'):
+            with self.subTest(change=change):
+                video = json.loads(json.dumps(original))
+                if change in ('referenceName', 'category'): video['attributes'][change] = 'different'
+                if change == 'fileSize': video['attributes'][change] = 9
+                if change in ('id', 'type'): video[change] = 'different'
+                if change == 'attributes': video['attributes'] = None
+                if change == 'failed': video['attributes']['state'] = 'FAILED'
+                cli = FakeCLI(apply=True)
+                plan = self.planner(cli, set())
+                op = {'method': 'WAIT_VIDEO', 'video_id': 'pending-video', 'reference': 'approved-reference', 'bytes': 8}
+                with patch.object(cli, 'run', return_value={'data': video}) as command, patch.object(u.time, 'monotonic', side_effect=[0, 1801]), patch.object(u.time, 'sleep') as sleep:
+                    with self.assertRaises(u.UploadError): plan.prepare_video(op)
+                sleep.assert_not_called()
+                self.assertEqual(command.call_args.args[0][:2], ['api', 'GET'])
+                self.assertFalse(command.call_args.kwargs.get('mutate', False))
 
     def test_pending_ids_resolve_in_order(self):
         cli = FakeCLI(apply=True)
@@ -1778,6 +1981,31 @@ class UploaderTests(unittest.TestCase):
         with patch.object(sys, 'argv', arguments), patch.object(subprocess, 'run', return_value=result), patch.object(sys, 'stdout', new_callable=io.StringIO) as output:
             self.assertEqual(u.main(), 0)
         self.assertEqual(json.loads(output.getvalue()), {'mode': 'validate-only', 'verifiedPlacements': 3240, 'verifiedHeader': True, 'verifiedHeaderHash': True, 'appStoreRequests': 0})
+
+    def test_main_accepts_previous_header_hash_sets(self):
+        metadata = self.root / 'metadata.json'
+        metadata.write_text(json.dumps(self.meta))
+        (self.root / 'manifest.json').write_text('{}')
+        for hashes in ('a' * 64, ','.join(character * 64 for character in '01234567')):
+            with self.subTest(hashes=hashes):
+                cli = FakeCLI(self.state)
+                args = ['upload.py', '--metadata', str(metadata), '--media-dir', str(self.root), '--receipts', str(self.root / 'receipt.jsonl'), '--scope', 'header', '--replace-header-sha256', hashes]
+                with patch.object(sys, 'argv', args), patch.object(u, 'validate_media', return_value=({}, {})), patch.object(u, 'CLI', return_value=cli), patch.object(u, 'Planner') as planner, patch.object(sys, 'stdout', new_callable=io.StringIO):
+                    planner.return_value.preflight.return_value = SimpleNamespace(ops=[], blockers=[], notes=[], cpp_status=None, summary=lambda: [])
+                    self.assertEqual(u.main(), 0)
+                    self.assertEqual(planner.call_args.kwargs['replace_header_sha256'], hashes)
+                self.assertTrue(all(call[0] == 'GET' for call in cli.calls))
+
+    def test_main_rejects_invalid_previous_header_hash_sets_before_remote_access(self):
+        valid = 'a' * 64
+        for hashes in ('', '*', valid + ',', ',' + valid, valid + ', ' + valid, valid + ',' + 'A' * 64, valid + ',short'):
+            with self.subTest(hashes=hashes):
+                args = ['upload.py', '--scope', 'header', '--replace-header-sha256', hashes]
+                with patch.object(sys, 'argv', args), patch.object(u, 'CLI') as client, patch.object(sys, 'stderr', new_callable=io.StringIO):
+                    with self.assertRaises(SystemExit) as error:
+                        u.main()
+                    self.assertEqual(error.exception.code, 2)
+                    client.assert_not_called()
 
     def test_remote_plan_requires_receipts(self):
         with patch.object(sys, 'argv', ['upload.py']), patch.object(u, 'validate_media') as validate:
