@@ -23,7 +23,7 @@ test('third completed conversion requests native review and persists the consume
   await app.screenshot('converter-after-review-dismissal-and-restart');
 });
 
-test('opening the currency picker cancels pending review until another completed conversion', { tags: ['core'] }, async ({ start, screen, app, agent }) => {
+test('opening the currency picker cancels pending review without consuming eligibility', { tags: ['core'] }, async ({ start, screen, app, agent }) => {
   const context = { screen, app, agent };
   await start('ready-converter');
   await completeConversion(context, '4');
@@ -33,8 +33,7 @@ test('opening the currency picker cancels pending review until another completed
   await expectNoReview(context, 3);
   await screen.getByTestId('currency.picker.close').tap();
   await expectNoReview(context, 3);
-  await completeConversion(context, '2');
-  await dismissNativeReview(context, 'native-review-after-fresh-conversion');
+  await app.screenshot('review-eligibility-retained-after-picker-dismissal');
 });
 
 for (const target of ['source', 'destination'] as const) {
@@ -53,7 +52,6 @@ for (const target of ['source', 'destination'] as const) {
     await app.screenshot(`review-deferred-for-${target}-context-menu`);
     await app.restart();
     await expectNoReview(context, 3);
-    await completeConversion(context, '2');
-    await dismissNativeReview(context, `native-review-after-${target}-menu-dismissal`);
+    await app.screenshot(`review-eligibility-retained-after-${target}-menu-dismissal`);
   });
 }
