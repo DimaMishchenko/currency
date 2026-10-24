@@ -6,7 +6,7 @@ const displayTags = ['extended', 'widgets', 'widget-display'];
 const sizeTags = ['extended', 'widget-sizes'];
 const contentWarnings = 'It has no redacted placeholders, missing-value dashes, "Open app to load rates", "History unavailable", "Add a currency in the app", or Local currency setup or permission prompt.';
 const loadedContent = `The installed Currency widget is on the normal Home Screen and has fully loaded content. ${contentWarnings}`;
-const boardLayout = `The installed Currency widget is on the normal Home Screen. ${contentWarnings} Empty space below the displayed currency entries is expected. Medium and large families arrange entries side by side.`;
+const boardLayout = `The installed Currency widget is on the normal Home Screen. ${contentWarnings} Currency rows begin near the top content margin, with empty space below instead of being vertically centered or spread down the widget. Medium and large families arrange entries side by side.`;
 
 test('medium Currency board displays default amounts and follows app amount changes', { tags: displayTags }, async ({ installedWidget, app, agent, device, screen }) => {
   const board = await installedWidget('Currency board', 'Medium');

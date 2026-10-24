@@ -4,6 +4,8 @@ Widget configuration, input state, commands, and persistence. `WidgetsUI` contai
 
 Keep canonical selections independent of widget size. Default widgets share app input; custom widgets retain independent input. Hosts supply button actions, while the executable's native intents and timelines live under [AppExtensions/CurrencyWidgets](../../AppExtensions/CurrencyWidgets).
 
+Calculator keypad input starts a new amount after one minute without interaction. The previous amount remains visible until the next key press; continued typing within the minute appends normally.
+
 ## History widget
 
 `HistoryWidgetPair` follows the app base and first displayed destination unless overridden. History supports distinct fiat, metal and crypto pairs. Supported crypto 1D charts use sampled intraday references; crypto 1W charts use hourly references when a complete week is available, retaining saved observations or daily fallback otherwise. Converted weekly samples use each UTC day’s approximate FX reference. Fiat-only weeks and longer ranges retain daily/monthly sampling. Crypto timelines request UTC hourly refreshes; WidgetKit controls delivery. The shared latest quote keeps supported crypto widgets and the converter aligned while each chart and percentage retain their selected period. Changes below half a basis point display as neutral. Unsupported or missing history has no synthetic graph. Saved history retains its observation date and is marked in the layout.
@@ -19,6 +21,7 @@ Select the `WidgetsHarness` scheme and add launch arguments under **Run → Argu
 | `calculator` | Medium and large calculator layouts. |
 | `calculator-2`, `calculator-4`, `calculator-6`, `calculator-8` | A large Calculator with repeatable mixed fiat, crypto and metal values. Append `-medium`, `-metals`, `-grams` or `-long` for compact, measurement and long-input checks. |
 | `board` | Small (170 × 170), medium (364 × 170), and large (364 × 382) boards with four deterministic fiat quotes. |
+| `board-single` | All three board sizes with one currency. |
 | `board-many` | All three board sizes with 26 fiat, cryptocurrency, and metal selections; verifies the 6/12/24 small/medium/large visible limits. |
 | `board-local` | All three board sizes with 26 selections and an unresolved Local slot last, beyond the small and medium cutoffs. |
 | `board-stale` | All three board sizes with 26 selections, resolved CZK Local currency last, and a stale-observation warning. |

@@ -60,12 +60,12 @@ public struct AmountEditor: Codable, Equatable, Sendable {
   }
 
   /// Applies only digits, decimal, clear, and deletion; no arithmetic commands.
-  public mutating func press(_ key: String) {
+  public mutating func press(_ key: String, now: Date = .now) {
     guard
       ["AC", "⌫", ".", ",", "00", "000"].contains(key)
         || (key.count == 1 && "0123456789".contains(key))
     else { return }
-    defer { editedAt = .now }
+    defer { editedAt = now }
     if key == "AC" { amount = "0"; replacesOnDigit = false; return }
     if key == "⌫" {
       if replacesOnDigit {
