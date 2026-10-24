@@ -599,6 +599,7 @@ let project = Project(
   additionalFiles: [
     "AGENTS.md", .folderReference(path: "Apps/Currency/Tests/E2E"),
     .folderReference(path: "LICENSES"), .folderReference(path: "Marketing"),
+    .folderReference(path: "Website"),
     "README.md", "LICENSE", "Project.swift", "Tuist.swift", ".gitignore", ".mise.toml",
     ".swift-format", ".github/**/*.yml", ".github/**/*.md", "Documentation/**/*.md",
     "Documentation/**/*.png", "Scripts/**/*.sh", "Scripts/**/*.py", "Scripts/**/*.md",
