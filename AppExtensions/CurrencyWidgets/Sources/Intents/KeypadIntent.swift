@@ -8,6 +8,10 @@ import WidgetKit
 import Widgets
 import WidgetsUI
 
+#if DEBUG && WIDGET_HAPTICS_EXPERIMENT
+  import AudioToolbox
+#endif
+
 /// Default uses app input; Custom mutations stay in configured widget storage.
 struct WidgetAction: AppIntent {
   static let isDiscoverable = false
@@ -58,6 +62,11 @@ struct WidgetAction: AppIntent {
         "Widget mutation completed in \(start.duration(to: .now).description, privacy: .public)")
     }
     try execute(using: WidgetComposition.action())
+    #if DEBUG && WIDGET_HAPTICS_EXPERIMENT
+      if WidgetCommand.Action(legacyValue: command) != nil {
+        AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
+      }
+    #endif
     // WidgetKit reloads the interacted widget after perform returns.
     return .result()
   }

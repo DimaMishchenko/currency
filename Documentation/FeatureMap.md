@@ -80,6 +80,8 @@ Owners: [widget guide](../Features/WidgetOnboarding/Sources/WidgetOnboardingUI/O
 | WID-09 | Currency Icon: accessory circular Lock Screen widget | The configured currency symbol appears in the system accessory presentation. |
 | WID-10 | System gallery, Edit Widget, taps, removal and reload | Installation/configuration produce the selected widget; intents execute in the real extension; removal works and shared data remains consistent. Tapping a widget with a valid saved quote context initially opens its immutable rendered quote; after about 1.5 seconds the scene adopts any newer shared quote. The widget context does not replace the authoritative rate cache or trigger a redundant fresh-cache fetch. Timeline persistence reads a bounded metadata index and writes one snapshot, so accumulated quote contexts do not multiply rendering memory; existing context links remain readable. |
 
+An opt-in Debug [widget vibration experiment](WidgetHapticsExperiment.md) requests system vibration after a recognized widget action completes successfully. Ordinary builds and Release builds omit the request. The simulator cannot verify tactile feedback or system preference behavior; physical iPhone acceptance remains required.
+
 The application accepts legacy `currency://convert` entry links and versioned converter routes. Valid saved quote contexts use `currency://widget?v=1&context=<UUID>`; expired or unavailable contexts fall back to current app quotes. See [widget links](../Domain/Widgets/Sources/WidgetsUI/WidgetComponents.swift), [Currency Icon](../AppExtensions/CurrencyWidgets/Sources/CurrencyWidget.swift), and [route handling](../Apps/Currency/Modules/CurrencyApplication/Sources/CurrencyScene.swift).
 
 ## System actions and external navigation

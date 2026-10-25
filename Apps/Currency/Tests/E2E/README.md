@@ -129,6 +129,10 @@ CURRENCY_E2E_TARGET=ipad AGENT_DEVICE_STATE_DIR="$PWD/.local/agent-device-ipad" 
 
 The separate `accessibility`-tagged app-icon test changes text size and appearance after the picker is already open, checks adaptive tile width plus all twelve native names, and visually checks readable glyphs and the small contrasting selected badge. It targets only `CURRENCY_E2E_UDID` through `simctl ui`, validates the original settings before changing them, and restores both in `finally`. Run it on either owned phone or tablet profile with `npx e2e run tests/app-icon.e2e.ts --tag accessibility`. It does not change the selected icon.
 
+## Widget vibration experiment
+
+Run `home-screen-widget.e2e.ts` and `app-to-widget.e2e.ts` against the opt-in Debug build described in [WidgetHapticsExperiment.md](../../../../Documentation/WidgetHapticsExperiment.md). The Home Screen journey verifies keypad output, shared input, and that keypresses keep the widget visible without foregrounding the converter. Simulator results do not establish tactile feedback or system preference behavior; the experiment requires the documented physical iPhone checks.
+
 ## Limitations
 
 - StoreKit controls review presentation and may suppress the prompt outside a suitable development simulator. The canonical app and widget request journeys require the native rating prompt and fail when it is absent; a consumed shared count alone is not proof of presentation. They never submit a rating. Native tests cover repeated three-session eligibility and idle/presentation gates; E2E covers the first native request and persistence.
