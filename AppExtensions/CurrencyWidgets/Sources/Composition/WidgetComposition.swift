@@ -8,6 +8,8 @@ import WidgetKit
 import Widgets
 
 enum WidgetComposition {
+  private static let shortTapticSoundID: SystemSoundID = 1519
+
   private static func directory() -> URL {
     guard
       let directory = FileManager.default.containerURL(
@@ -116,6 +118,6 @@ enum WidgetComposition {
         }
       },
       hapticsEnabled: { widgets.widgetHapticsEnabled() },
-      playHaptic: { AudioServicesPlaySystemSound(kSystemSoundID_Vibrate) })
+      playHaptic: { AudioServicesPlaySystemSound(shortTapticSoundID) })
   }
 }

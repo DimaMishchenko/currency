@@ -81,7 +81,8 @@ public struct SettingsPreferences: Sendable, Equatable {
   public var accent: SettingsAccent
   /// Preferred measurement shared by metal conversion surfaces.
   public var metalUnit: MetalUnit
-  /// Whether interactive widgets request system vibration after successful actions.
+  /// Whether interactive widgets request a short Taptic effect after successful actions.
+  /// Physical output depends on device and platform behavior.
   public var widgetHapticsEnabled: Bool
   /// Creates the owned value or model with explicit host inputs and operations.
   public init(
