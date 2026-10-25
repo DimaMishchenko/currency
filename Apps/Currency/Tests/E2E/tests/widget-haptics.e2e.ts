@@ -5,6 +5,12 @@ import { test, tapCalculatorControl } from '../widget-fixtures.js';
 for (const enabled of [true, false]) {
   test(`widget feedback stays ${enabled ? 'on' : 'off'} after restart and Calculator shares input`, { tags: ['extended', 'widgets'] }, async ({ calculator, app, agent, device, screen }) => {
     const feedback = screen.getByTestId('settings.widgetHaptics');
+    async function tapFeedbackSwitch() {
+      const control = feedback.getByRole('switch').last();
+      const box = await control.boundingBox();
+      if (!box) throw new Error('Widget feedback switch must expose native bounds.');
+      await control.tap({ position: { x: box.width / 2, y: box.height / 2 } });
+    }
     async function openSettings() {
       await screen.getByTestId('converter.options').tap();
       await screen.getByTestId('converter.settings').tap();
@@ -24,11 +30,11 @@ for (const enabled of [true, false]) {
     await expect(screen.getByTestId('settings.accent')).toHaveValue('Default');
     await screen.scrollUntilVisible(feedback);
     await expect(feedback).toBeChecked({ checked: false });
-    await feedback.tap();
+    await tapFeedbackSwitch();
     await expect(feedback).toBeChecked();
     await app.screenshot(`widget-haptics-primary-${appearance.toLowerCase()}-enabled`);
     if (!enabled) {
-      await feedback.tap();
+      await tapFeedbackSwitch();
       await expect(feedback).toBeChecked({ checked: false });
     }
     await expect(screen.getByTestId('settings.widgetHaptics.error')).toBeHidden();
