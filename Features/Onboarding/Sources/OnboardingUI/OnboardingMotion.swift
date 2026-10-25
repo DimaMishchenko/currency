@@ -4,7 +4,6 @@ import ExchangeRatesUI
 import Onboarding
 import SwiftUI
 
-/// Deterministic positions and independent slow periods keep the field quiet and asymmetric.
 struct CurrencyDepthField: View {
   let moving: Bool
   let sparse: Bool
@@ -66,7 +65,6 @@ struct CurrencyDepthField: View {
   }
 }
 
-/// Small independently staged entrances keep final typography stable throughout navigation.
 struct OnboardingReveal: AnimatableModifier {
   nonisolated var progress: CGFloat
   var delay: CGFloat = 0
@@ -85,7 +83,6 @@ struct OnboardingReveal: AnimatableModifier {
   }
 }
 
-/// Outgoing scenes recede as a composition; labels never morph between unrelated layouts.
 struct OnboardingDeparture: AnimatableModifier {
   nonisolated var progress: CGFloat
   var forward: Bool

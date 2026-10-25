@@ -1,7 +1,6 @@
 import AppIntents
 import Widgets
 
-// App Intents keeps a concrete, statically discoverable catalog in the extension.
 enum CurrencySymbolChoice: String, AppEnum {
   case austral = "australsign"
   case australiandollar = "australiandollarsign"

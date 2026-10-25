@@ -153,7 +153,6 @@ struct OnboardingHarnessApp: App {
   }
 }
 
-/// Acknowledges cross-feature output without requesting real location permission in the harness.
 private struct HarnessWidgetPresentation: View {
   let content: AnyView
   @State private var locationRequested = false

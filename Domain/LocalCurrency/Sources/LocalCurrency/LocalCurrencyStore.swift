@@ -1,7 +1,6 @@
 import CoordinatedFiles
 import Foundation
 
-/// The existing refresh filename remains the cross-process lock and now holds the whole record.
 private struct LocalCurrencyRecord: Codable {
   var version: Int?
   var attemptedAt: Date?
@@ -20,7 +19,6 @@ public struct LocalCurrencyStore: Sendable {
   public init(directory: URL) {
     self.init(directory: directory, writeRecord: { try $0.write(to: $1, options: .atomic) })
   }
-  /// Commit seam used to exercise a failed atomic write without changing filesystem permissions.
   init(
     directory: URL, writeRecord: @escaping @Sendable (Data, URL) throws -> Void,
     removeLegacy: @escaping @Sendable (URL) throws -> Void = {
@@ -48,7 +46,6 @@ public struct LocalCurrencyStore: Sendable {
         throw CocoaError(.coderReadCorrupt)
       }
     }
-    // Only the original refresh format (no version) imports legacy observation/status files.
     if let data = try FileCoordination.dataIfPresent(
       at: directory.appendingPathComponent("widget-location.json"))
     {
@@ -73,8 +70,6 @@ public struct LocalCurrencyStore: Sendable {
     try FileCoordination.write(at: recordURL) {
       var record = try readRecord()
       if record.version == nil {
-        // Preserve the complete legacy state before erasing its separate files. If cleanup fails,
-        // the requested transition has not happened and a later mutation retries the cleanup.
         record.version = 1
         try save(record)
       }

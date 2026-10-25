@@ -312,7 +312,6 @@ public final class HomeModel {
     }
   }
 
-  /// Commits a selection mutation and keeps the last valid state on failure.
   @discardableResult
   private func updateInput(_ mutation: (inout ConverterState) throws -> Void) -> Bool {
     do {

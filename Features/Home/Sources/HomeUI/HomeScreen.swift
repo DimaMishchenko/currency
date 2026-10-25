@@ -102,8 +102,7 @@ struct HomeScreen: View {
     }
   }
 
-  /// The converter screen content.
-  public var body: some View {
+  var body: some View {
     Group {
       GeometryReader { geometry in
         let division = division(in: geometry)
