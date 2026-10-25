@@ -1,3 +1,4 @@
+import AudioToolbox
 import Conversion
 import CurrencyApplication
 import ExchangeRates
@@ -113,6 +114,8 @@ enum WidgetComposition {
         for kind in ["CurrencyConverter", "CurrencyBoard"] {
           WidgetCenter.shared.reloadTimelines(ofKind: kind)
         }
-      })
+      },
+      hapticsEnabled: { widgets.widgetHapticsEnabled() },
+      playHaptic: { AudioServicesPlaySystemSound(kSystemSoundID_Vibrate) })
   }
 }

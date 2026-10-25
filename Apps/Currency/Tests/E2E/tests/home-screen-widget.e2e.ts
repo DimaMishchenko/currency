@@ -12,6 +12,8 @@ test('Home Screen calculator shares input and starts fresh after one minute of i
   await expect(dollars).toHaveValue('8');
   await tapCalculatorControl(calculator, '2');
   await expect(calculator.getByRole('button', /^US Dollar, USD/i)).toHaveValue('84');
+  await expect(calculator).toBeVisible();
+  await expect(screen.getByTestId('converter.source')).toBeHidden();
   await agent.assert('The Currency widget shows EUR with amount 42 and USD with amount 84.', { vision: 'only' });
   await app.screenshot('home-screen-widget-42-eur-84-usd');
 

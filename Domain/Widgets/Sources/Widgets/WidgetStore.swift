@@ -8,6 +8,24 @@ public struct WidgetStore: Sendable {
   public let directory: URL
   /// Creates a store without discovering a global container.
   public init(directory: URL) { self.directory = directory }
+
+  /// Reads the shared opt-in on every call; missing or unreadable preferences disable feedback.
+  public func widgetHapticsEnabled() -> Bool {
+    guard
+      let data = try? FileCoordination.dataIfPresent(
+        at: directory.appendingPathComponent("widget-haptics.json"))
+    else { return false }
+    return (try? JSONDecoder().decode(Bool.self, from: data)) ?? false
+  }
+
+  /// Atomically persists the shared widget feedback preference, propagating write failures.
+  public func setWidgetHapticsEnabled(_ enabled: Bool) throws {
+    try coordinate("widget-haptics.json") {
+      try JSONEncoder().encode(enabled)
+        .write(to: directory.appendingPathComponent("widget-haptics.json"), options: .atomic)
+    }
+  }
+
   private func widgetFilename(_ key: String) -> String {
     "widget-" + SHA256.hash(data: Data(key.utf8)).map { String(format: "%02x", $0) }.joined()
       + ".json"
