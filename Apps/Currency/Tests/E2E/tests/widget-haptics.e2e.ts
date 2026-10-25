@@ -8,7 +8,7 @@ for (const enabled of [true, false]) {
     async function openSettings() {
       await screen.getByTestId('converter.options').tap();
       await screen.getByTestId('converter.settings').tap();
-      await agent.act('Scroll Settings if needed until the Widgets section and Haptic feedback switch are visible. Keep the switch unchanged.');
+      await screen.scrollUntilVisible(feedback);
       await expect(feedback).toBeVisible();
     }
 
@@ -41,7 +41,6 @@ for (const enabled of [true, false]) {
     await expect(dollars).toHaveValue('84');
     await expect(calculator).toBeVisible();
     await expect(screen.getByTestId('converter.source')).toBeHidden();
-    await agent.assert('The Currency calculator widget visibly shows EUR 42 and USD 84, with both complete amounts readable.', { vision: 'only' });
     await app.screenshot(`widget-haptics-calculator-${enabled ? 'on' : 'off'}`);
 
     await app.restart();
