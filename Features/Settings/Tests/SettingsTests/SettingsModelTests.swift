@@ -12,6 +12,10 @@ import Testing
     },
     replay: (() throws -> Void)? = nil,
     appIcon: SettingsAppIconCapability? = nil,
+    readPreferences: @escaping () -> SettingsPreferences = {
+      SettingsPreferences(theme: .system, accent: .primary)
+    },
+    setWidgetHapticsEnabled: @escaping (Bool) throws -> Void = { _ in },
     output: @escaping (SettingsOutput) -> Void = { _ in }
   ) -> SettingsDependencies {
     SettingsDependencies(
@@ -19,8 +23,9 @@ import Testing
         SettingsRateState(snapshot: RateSnapshot(), base: "EUR", codes: ["EUR", "USD"])
       },
       changes: { AsyncStream<Void>(bufferingPolicy: .unbounded) { _ in } },
-      readPreferences: { SettingsPreferences(theme: .system, accent: .primary) },
-      setTheme: { _ in }, setAccent: { _ in }, setMetalUnit: { _ in }, refresh: refresh,
+      readPreferences: readPreferences,
+      setTheme: { _ in }, setAccent: { _ in }, setMetalUnit: { _ in },
+      setWidgetHapticsEnabled: setWidgetHapticsEnabled, refresh: refresh,
       replay: replay, appIcon: appIcon, output: output)
   }
   @Test func iconCatalogOffersEachCurrencyOnceInBothFamilies() {
@@ -211,7 +216,7 @@ import Testing
         changes: { AsyncStream<Void>(bufferingPolicy: .unbounded) { _ in } },
         readPreferences: { preferences },
         setTheme: { preferences.theme = $0 }, setAccent: { preferences.accent = $0 },
-        setMetalUnit: { preferences.metalUnit = $0 },
+        setMetalUnit: { preferences.metalUnit = $0 }, setWidgetHapticsEnabled: { _ in },
         refresh: { SettingsRateState(snapshot: RateSnapshot(), base: "EUR", codes: []) },
         replay: nil,
         output: { _ in }))
@@ -228,6 +233,7 @@ import Testing
         readState: { state }, changes: { AsyncStream { $0.finish() } },
         readPreferences: { preferences }, setTheme: { preferences.theme = $0 },
         setAccent: { preferences.accent = $0 }, setMetalUnit: { preferences.metalUnit = $0 },
+        setWidgetHapticsEnabled: { _ in },
         refresh: { state }, replay: nil, output: { _ in }))
     let invalidated = Mutex(false)
     withObservationTracking {
@@ -258,6 +264,7 @@ import Testing
         },
         readPreferences: { preferences }, setTheme: { preferences.theme = $0 },
         setAccent: { preferences.accent = $0 }, setMetalUnit: { preferences.metalUnit = $0 },
+        setWidgetHapticsEnabled: { _ in },
         refresh: { state }, replay: nil, output: { _ in }))
     let lifetime = Task { await model.run() }
     for _ in 0..<1000 where !subscribed { await Task.yield() }
@@ -289,6 +296,7 @@ import Testing
         readPreferences: { SettingsPreferences(theme: .system, accent: .primary) },
         setTheme: { _ in }, setAccent: { _ in },
         setMetalUnit: { _ in throw CocoaError(.fileWriteUnknown) },
+        setWidgetHapticsEnabled: { _ in },
         refresh: { SettingsRateState(snapshot: RateSnapshot(), base: "EUR", codes: []) },
         replay: nil, output: { _ in }))
     model.setMetalUnit(.gram)
@@ -303,7 +311,8 @@ import Testing
       dependencies: SettingsDependencies(
         readState: { state }, changes: { stream.stream },
         readPreferences: { SettingsPreferences(theme: .system, accent: .primary) },
-        setTheme: { _ in }, setAccent: { _ in }, setMetalUnit: { _ in }, refresh: { state },
+        setTheme: { _ in }, setAccent: { _ in }, setMetalUnit: { _ in },
+        setWidgetHapticsEnabled: { _ in }, refresh: { state },
         replay: nil, output: { _ in }))
     let lifetime = Task { await model.run() }
     state.base = "JPY"
@@ -320,6 +329,86 @@ import Testing
     await Task.yield()
     #expect(model.rates.codes == ["EUR", "JPY"])
     #expect(model.rates.base == "JPY")
+  }
+
+  @Test func widgetHapticsDefaultOffAndEditsPersistThroughTheHost() {
+    var preferences = SettingsPreferences(theme: .system, accent: .primary)
+    var writes: [Bool] = []
+    let makeDependencies = {
+      self.dependencies(
+        readPreferences: { preferences },
+        setWidgetHapticsEnabled: {
+          writes.append($0)
+          preferences.widgetHapticsEnabled = $0
+        })
+    }
+    let model = SettingsModel(dependencies: makeDependencies())
+    #expect(!model.preferences.widgetHapticsEnabled)
+    let invalidated = Mutex(false)
+    withObservationTracking {
+      _ = model.preferences.widgetHapticsEnabled
+    } onChange: {
+      invalidated.withLock { $0 = true }
+    }
+    model.setWidgetHapticsEnabled(true)
+    #expect(writes == [true])
+    #expect(model.preferences.widgetHapticsEnabled)
+    #expect(invalidated.withLock { $0 })
+    model.stop()
+    let reopened = SettingsModel(dependencies: makeDependencies())
+    #expect(reopened.preferences.widgetHapticsEnabled)
+    reopened.setWidgetHapticsEnabled(false)
+    #expect(writes == [true, false])
+    #expect(!reopened.preferences.widgetHapticsEnabled)
+    reopened.stop()
+  }
+
+  @Test func failedWidgetHapticsSaveRetainsAuthoritativeValueAndCanRetry() {
+    var preferences = SettingsPreferences(
+      theme: .system, accent: .primary, widgetHapticsEnabled: true)
+    var failing = true
+    let model = SettingsModel(
+      dependencies: dependencies(
+        readPreferences: { preferences },
+        setWidgetHapticsEnabled: { enabled in
+          if failing { throw CocoaError(.fileWriteUnknown) }
+          preferences.widgetHapticsEnabled = enabled
+        }))
+    model.setWidgetHapticsEnabled(false)
+    #expect(model.preferences.widgetHapticsEnabled)
+    #expect(model.issue == .widgetHapticsSaveFailed)
+    failing = false
+    model.setWidgetHapticsEnabled(false)
+    #expect(!model.preferences.widgetHapticsEnabled)
+    #expect(model.issue == nil)
+    model.stop()
+  }
+
+  @Test func successfulWidgetHapticsSaveDoesNotClearMeasurementSaveFailure() {
+    var supplied = dependencies()
+    supplied.setMetalUnit = { _ in throw CocoaError(.fileWriteUnknown) }
+    let model = SettingsModel(dependencies: supplied)
+    model.setMetalUnit(.gram)
+    #expect(model.issue == .preferenceSaveFailed)
+    model.setWidgetHapticsEnabled(true)
+    #expect(model.issue == .preferenceSaveFailed)
+    model.stop()
+  }
+
+  @Test func reloadAdoptsWidgetHapticsCommittedByAnotherHost() {
+    var preferences = SettingsPreferences(theme: .system, accent: .primary)
+    let model = SettingsModel(dependencies: dependencies(readPreferences: { preferences }))
+    let invalidated = Mutex(false)
+    withObservationTracking {
+      #expect(!model.preferences.widgetHapticsEnabled)
+    } onChange: {
+      invalidated.withLock { $0 = true }
+    }
+    preferences.widgetHapticsEnabled = true
+    model.reload()
+    #expect(model.preferences.widgetHapticsEnabled)
+    #expect(invalidated.withLock { $0 })
+    model.stop()
   }
 
 }

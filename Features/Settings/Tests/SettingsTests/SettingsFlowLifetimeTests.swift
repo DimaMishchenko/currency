@@ -21,6 +21,7 @@ private final class SettingsLifetimeFixture {
       },
       readPreferences: { SettingsPreferences(theme: .system, accent: .primary) },
       setTheme: { _ in }, setAccent: { _ in }, setMetalUnit: { _ in },
+      setWidgetHapticsEnabled: { _ in },
       refresh: {
         self.refreshRequests += 1
         return await withCheckedContinuation { self.pendingRefresh = $0 }

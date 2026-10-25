@@ -234,11 +234,16 @@ final class AppComposition {
         .init(
           theme: SettingsTheme(rawValue: appearance.theme.rawValue) ?? .system,
           accent: SettingsAccent(rawValue: appearance.accent.rawValue) ?? .primary,
-          metalUnit: conversion.input().metalUnit)
+          metalUnit: conversion.input().metalUnit,
+          widgetHapticsEnabled: WidgetStore(directory: syncDirectory).widgetHapticsEnabled())
       },
       setTheme: { [appearance] in appearance.theme = .init(rawValue: $0.rawValue) ?? .system },
       setAccent: { [appearance] in appearance.accent = .init(rawValue: $0.rawValue) ?? .primary },
       setMetalUnit: { [self] unit in _ = try edit { $0.setMetalUnit(unit) } },
+      setWidgetHapticsEnabled: { [self] enabled in
+        try WidgetStore(directory: syncDirectory).setWidgetHapticsEnabled(enabled)
+        changed()
+      },
       refresh: { [self] in
         _ = try await refresh(force: true); return settingsState
       },

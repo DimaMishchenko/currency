@@ -20,4 +20,6 @@ struct WidgetActionDependencies: Sendable {
   let rates: @Sendable () -> RateSnapshot
   let apply: @Sendable (WidgetCommand, String, RateSnapshot?) throws -> Bool
   let reloadSynchronizedWidgets: @Sendable () -> Void
+  let hapticsEnabled: @Sendable () -> Bool
+  let playHaptic: @Sendable () -> Void
 }
