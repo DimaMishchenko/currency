@@ -14,9 +14,19 @@ for (const enabled of [true, false]) {
 
     await app.restart();
     await openSettings();
+    const appearance = enabled ? 'Light' : 'Dark';
+    const theme = screen.getByTestId('settings.theme');
+    await screen.scrollUntilVisible(theme);
+    await expect(theme).toHaveAccessibleName('Theme, System');
+    await theme.getByText('System', { exact: true }).tap();
+    await screen.getByText(appearance, { exact: true }).last().tap();
+    await expect(theme).toHaveAccessibleName(`Theme, ${appearance}`);
+    await expect(screen.getByTestId('settings.accent')).toHaveValue('Default');
+    await screen.scrollUntilVisible(feedback);
     await expect(feedback).toBeChecked({ checked: false });
     await feedback.tap();
     await expect(feedback).toBeChecked();
+    await app.screenshot(`widget-haptics-primary-${appearance.toLowerCase()}-enabled`);
     if (!enabled) {
       await feedback.tap();
       await expect(feedback).toBeChecked({ checked: false });

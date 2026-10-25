@@ -426,6 +426,7 @@ struct SettingsScreen: View {
       ) {
         Label(.Settings.hapticFeedback, systemImage: "hand.tap")
       }
+      .tint(Color(uiColor: .systemGreen))
       .accessibilityIdentifier("settings.widgetHaptics")
       if model.issue == .widgetHapticsSaveFailed {
         Text(.Settings.widgetHapticsSaveFailed).foregroundStyle(.secondary)
