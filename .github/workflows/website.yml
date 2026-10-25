@@ -74,10 +74,11 @@ jobs:
       - name: Configure Pages
         id: pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d
-      - name: Build for the configured Pages URL
+      - name: Build using HTTPS for the configured Pages host
         env:
           BASE_URL: ${{ steps.pages.outputs.base_url }}
         run: |
+          BASE_URL="${BASE_URL/#http:/https:}"
           python3 Website/scripts/build.py --production --base-url "$BASE_URL" --output "$RUNNER_TEMP/website"
           python3 Website/scripts/check-seo.py --directory "$RUNNER_TEMP/website" --production --base-url "$BASE_URL"
       - name: Upload Pages artifact
