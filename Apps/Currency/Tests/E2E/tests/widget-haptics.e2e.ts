@@ -8,7 +8,7 @@ for (const enabled of [true, false]) {
     async function openSettings() {
       await screen.getByTestId('converter.options').tap();
       await screen.getByTestId('converter.settings').tap();
-      await feedback.scrollIntoView();
+      await agent.act('Scroll Settings if needed until the Widgets section and Haptic feedback switch are visible. Keep the switch unchanged.');
       await expect(feedback).toBeVisible();
     }
 
