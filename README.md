@@ -16,7 +16,7 @@ A simple SwiftUI currency converter for iPhone and iPad, running iOS 26 or later
 
 ## Run locally
 
-Install Xcode 26 or later and [mise](https://mise.jdx.dev/), then run:
+Install Xcode 27.1 or later and [mise](https://mise.jdx.dev/), then run:
 
 ```sh
 mise install
@@ -31,6 +31,10 @@ Open the `Currency` scheme and choose an iOS 26+ simulator. No Tuist account is 
 `Apps/` contains app executables and their internal modules, `AppExtensions/` contains extensions, `Features/` owns user capabilities, `Domain/` owns reusable business logic, and `Foundation/` holds DesignSystem and CoordinatedFiles.
 
 [Development guide](Documentation/Development.md) · [Architecture](Documentation/Architecture.md) · [Decisions](Documentation/Decisions.md) · [Third-party assets](Documentation/ThirdPartyAssets.md)
+
+## Community
+
+[Contributing](.github/CONTRIBUTING.md) · [Code of conduct](.github/CODE_OF_CONDUCT.md) · [Security](.github/SECURITY.md) · [Support](.github/SUPPORT.md)
 
 ## Acknowledgements
 
