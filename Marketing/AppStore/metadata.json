@@ -22,7 +22,10 @@
         "history": "See how exchange rates have changed. Explore available charts in the app, a History widget or on Apple Watch.",
         "crypto": "Convert crypto. Compare Bitcoin, Ethereum and other supported cryptocurrencies with your chosen currencies.",
         "metals": "Convert gold, silver and other precious metals. Compare amounts in troy ounces, grams or kilograms."
-      }
+      },
+      "privacyPolicyUrl": "https://currency.dimasike.com/privacy/",
+      "supportUrl": "https://currency.dimasike.com/support/",
+      "marketingUrl": "https://currency.dimasike.com/"
     },
     "en-GB": {
       "name": "Currency: Converter & Widgets",
@@ -36,7 +39,10 @@
         "history": "See how exchange rates have changed. Explore available charts in the app, a History widget or on Apple Watch.",
         "crypto": "Convert crypto. Compare Bitcoin, Ethereum and other supported cryptocurrencies with your chosen currencies.",
         "metals": "Convert gold, silver and other precious metals. Compare amounts in troy ounces, grams or kilograms."
-      }
+      },
+      "privacyPolicyUrl": "https://currency.dimasike.com/privacy/",
+      "supportUrl": "https://currency.dimasike.com/support/",
+      "marketingUrl": "https://currency.dimasike.com/"
     },
     "en-AU": {
       "name": "Currency: Converter & Widgets",
@@ -50,7 +56,10 @@
         "history": "See how exchange rates have changed. Explore available charts in the app, a History widget or on Apple Watch.",
         "crypto": "Convert crypto. Compare Bitcoin, Ethereum and other supported cryptocurrencies with your chosen currencies.",
         "metals": "Convert gold, silver and other precious metals. Compare amounts in troy ounces, grams or kilograms."
-      }
+      },
+      "privacyPolicyUrl": "https://currency.dimasike.com/privacy/",
+      "supportUrl": "https://currency.dimasike.com/support/",
+      "marketingUrl": "https://currency.dimasike.com/"
     },
     "en-CA": {
       "name": "Currency: Converter & Widgets",
@@ -64,7 +73,10 @@
         "history": "See how exchange rates have changed. Explore available charts in the app, a History widget or on Apple Watch.",
         "crypto": "Convert crypto. Compare Bitcoin, Ethereum and other supported cryptocurrencies with your chosen currencies.",
         "metals": "Convert gold, silver and other precious metals. Compare amounts in troy ounces, grams or kilograms."
-      }
+      },
+      "privacyPolicyUrl": "https://currency.dimasike.com/privacy/",
+      "supportUrl": "https://currency.dimasike.com/support/",
+      "marketingUrl": "https://currency.dimasike.com/"
     },
     "de-DE": {
       "name": "Currency: Währungs-Widgets",
@@ -78,7 +90,10 @@
         "history": "Sieh, wie sich Wechselkurse verändert haben: mit verfügbaren Diagrammen in der App, im Verlauf-Widget oder auf der Apple Watch.",
         "crypto": "Rechne Kryptowährungen um. Vergleiche Bitcoin, Ethereum und weitere unterstützte Kryptowährungen mit deinen ausgewählten Währungen.",
         "metals": "Rechne Gold, Silber und weitere Edelmetalle um. Vergleiche Mengen in Feinunzen, Gramm oder Kilogramm."
-      }
+      },
+      "privacyPolicyUrl": "https://currency.dimasike.com/privacy/",
+      "supportUrl": "https://currency.dimasike.com/de/support/",
+      "marketingUrl": "https://currency.dimasike.com/de/"
     },
     "fr-FR": {
       "name": "Currency: Devises & widgets",
@@ -92,7 +107,10 @@
         "history": "Consultez l’évolution des taux avec les graphiques disponibles dans l’app, le widget Historique ou sur Apple Watch.",
         "crypto": "Convertissez des cryptos. Comparez le Bitcoin, l’Ethereum et les autres cryptomonnaies prises en charge avec les devises de votre choix.",
         "metals": "Convertissez l’or, l’argent et d’autres métaux précieux. Comparez les quantités en onces troy, grammes ou kilogrammes."
-      }
+      },
+      "privacyPolicyUrl": "https://currency.dimasike.com/privacy/",
+      "supportUrl": "https://currency.dimasike.com/fr/support/",
+      "marketingUrl": "https://currency.dimasike.com/fr/"
     },
     "fr-CA": {
       "name": "Currency: Devises & widgets",
@@ -106,7 +124,10 @@
         "history": "Consultez l’évolution des taux avec les graphiques disponibles dans l’app, le widget Historique ou sur Apple Watch.",
         "crypto": "Convertissez des cryptos. Comparez le Bitcoin, l’Ethereum et les autres cryptomonnaies prises en charge avec les devises de votre choix.",
         "metals": "Convertissez l’or, l’argent et d’autres métaux précieux. Comparez les quantités en onces troy, grammes ou kilogrammes."
-      }
+      },
+      "privacyPolicyUrl": "https://currency.dimasike.com/privacy/",
+      "supportUrl": "https://currency.dimasike.com/fr/support/",
+      "marketingUrl": "https://currency.dimasike.com/fr/"
     },
     "es-ES": {
       "name": "Currency: Conversor y widgets",
@@ -120,7 +141,10 @@
         "history": "Consulta cómo han cambiado los tipos de cambio con los gráficos disponibles en la app, el widget Historial o el Apple Watch.",
         "crypto": "Convierte criptomonedas. Compara Bitcoin, Ethereum y otras criptomonedas compatibles con las monedas que elijas.",
         "metals": "Convierte oro, plata y otros metales preciosos. Compara cantidades en onzas troy, gramos o kilogramos."
-      }
+      },
+      "privacyPolicyUrl": "https://currency.dimasike.com/privacy/",
+      "supportUrl": "https://currency.dimasike.com/es/support/",
+      "marketingUrl": "https://currency.dimasike.com/es/"
     },
     "es-MX": {
       "name": "Currency: Conversor y widgets",
@@ -134,7 +158,10 @@
         "history": "Consulta cómo han cambiado los tipos de cambio con las gráficas disponibles en la app, el widget Historial o el Apple Watch.",
         "crypto": "Convierte criptomonedas. Compara Bitcoin, Ethereum y otras criptomonedas compatibles con las monedas que elijas.",
         "metals": "Convierte oro, plata y otros metales preciosos. Compara cantidades en onzas troy, gramos o kilogramos."
-      }
+      },
+      "privacyPolicyUrl": "https://currency.dimasike.com/privacy/",
+      "supportUrl": "https://currency.dimasike.com/es/support/",
+      "marketingUrl": "https://currency.dimasike.com/es/"
     },
     "it": {
       "name": "Currency: Cambio e widget",
@@ -148,7 +175,10 @@
         "history": "Scopri come sono cambiati i tassi di cambio con i grafici disponibili nell’app, nel widget Cronologia o su Apple Watch.",
         "crypto": "Converti criptovalute. Confronta Bitcoin, Ethereum e altre criptovalute supportate con le valute che scegli.",
         "metals": "Converti oro, argento e altri metalli preziosi. Confronta quantità in once troy, grammi o chilogrammi."
-      }
+      },
+      "privacyPolicyUrl": "https://currency.dimasike.com/privacy/",
+      "supportUrl": "https://currency.dimasike.com/it/support/",
+      "marketingUrl": "https://currency.dimasike.com/it/"
     },
     "pt-BR": {
       "name": "Currency: Conversor e widgets",
@@ -162,7 +192,10 @@
         "history": "Veja como as taxas de câmbio mudaram com os gráficos disponíveis no app, no widget Histórico ou no Apple Watch.",
         "crypto": "Converta criptomoedas. Compare Bitcoin, Ethereum e outras criptomoedas compatíveis com as moedas que você escolher.",
         "metals": "Converta ouro, prata e outros metais preciosos. Compare quantidades em onças troy, gramas ou quilogramas."
-      }
+      },
+      "privacyPolicyUrl": "https://currency.dimasike.com/privacy/",
+      "supportUrl": "https://currency.dimasike.com/pt-br/support/",
+      "marketingUrl": "https://currency.dimasike.com/pt-br/"
     },
     "ja": {
       "name": "Currency：通貨換算とウィジェット",
@@ -176,7 +209,10 @@
         "history": "為替レートの変化を確認。アプリ、履歴ウィジェット、Apple Watchで、利用できるチャートを表示。",
         "crypto": "暗号資産を換算。ビットコイン、イーサリアムなど対応する暗号資産を、選んだ通貨と比較できます。",
         "metals": "金・銀などの貴金属を換算。トロイオンス、グラム、キログラムで金額を比較できます。"
-      }
+      },
+      "privacyPolicyUrl": "https://currency.dimasike.com/privacy/",
+      "supportUrl": "https://currency.dimasike.com/ja/support/",
+      "marketingUrl": "https://currency.dimasike.com/ja/"
     },
     "ko": {
       "name": "Currency: 환전 계산과 위젯",
@@ -190,7 +226,10 @@
         "history": "환율의 변화를 확인하세요. 앱, 환율 추이 위젯, Apple Watch에서 제공되는 차트를 살펴보세요.",
         "crypto": "암호화폐를 환산하세요. 비트코인, 이더리움 등 지원되는 암호화폐를 선택한 통화와 비교하세요.",
         "metals": "금, 은 등 귀금속을 환산하세요. 트로이온스, 그램, 킬로그램 단위로 금액을 비교하세요."
-      }
+      },
+      "privacyPolicyUrl": "https://currency.dimasike.com/privacy/",
+      "supportUrl": "https://currency.dimasike.com/ko/support/",
+      "marketingUrl": "https://currency.dimasike.com/ko/"
     },
     "tr": {
       "name": "Currency: Döviz ve Widget",
@@ -204,7 +243,10 @@
         "history": "Kurların değişimini görün. Uygulamada, Geçmiş widget'ında veya Apple Watch'ta mevcut grafikleri inceleyin.",
         "crypto": "Kripto para çevirin. Bitcoin, Ethereum ve desteklenen diğer kripto paraları seçtiğiniz para birimleriyle karşılaştırın.",
         "metals": "Altın, gümüş ve diğer değerli metalleri çevirin. Tutarları troy ons, gram veya kilogram cinsinden karşılaştırın."
-      }
+      },
+      "privacyPolicyUrl": "https://currency.dimasike.com/privacy/",
+      "supportUrl": "https://currency.dimasike.com/tr/support/",
+      "marketingUrl": "https://currency.dimasike.com/tr/"
     },
     "ru": {
       "name": "Currency: Конвертер и виджеты",
@@ -218,7 +260,10 @@
         "history": "Смотрите, как менялись курсы. Открывайте доступные графики в приложении, виджете «История» или на Apple Watch.",
         "crypto": "Конвертируйте криптовалюты. Сравнивайте биткоин, эфириум и другие поддерживаемые криптовалюты с выбранными валютами.",
         "metals": "Пересчитывайте стоимость золота, серебра и других драгоценных металлов в тройских унциях, граммах или килограммах."
-      }
+      },
+      "privacyPolicyUrl": "https://currency.dimasike.com/privacy/",
+      "supportUrl": "https://currency.dimasike.com/ru/support/",
+      "marketingUrl": "https://currency.dimasike.com/ru/"
     },
     "uk": {
       "name": "Currency: Конвертер і віджети",
@@ -232,7 +277,10 @@
         "history": "Дивіться, як змінювалися курси. Відкривайте доступні графіки в застосунку, віджеті «Історія» або на Apple Watch.",
         "crypto": "Конвертуйте криптовалюти. Порівнюйте біткоїн, ефіріум та інші підтримувані криптовалюти з вибраними валютами.",
         "metals": "Перераховуйте вартість золота, срібла та інших дорогоцінних металів у тройських унціях, грамах або кілограмах."
-      }
+      },
+      "privacyPolicyUrl": "https://currency.dimasike.com/privacy/",
+      "supportUrl": "https://currency.dimasike.com/uk/support/",
+      "marketingUrl": "https://currency.dimasike.com/uk/"
     },
     "zh-Hans": {
       "name": "Currency：货币换算与小组件",
@@ -246,7 +294,10 @@
         "history": "查看汇率如何变化。在 App、历史小组件或 Apple Watch 上浏览可用的图表。",
         "crypto": "换算加密货币。将比特币、以太坊及其他受支持的加密货币与所选货币进行比较。",
         "metals": "换算黄金、白银及其他贵金属。按金衡盎司、克或千克比较金额。"
-      }
+      },
+      "privacyPolicyUrl": "https://currency.dimasike.com/privacy/",
+      "supportUrl": "https://currency.dimasike.com/zh-hans/support/",
+      "marketingUrl": "https://currency.dimasike.com/zh-hans/"
     },
     "zh-Hant": {
       "name": "Currency：貨幣換算與小工具",
@@ -260,7 +311,10 @@
         "history": "查看匯率如何變化。在 App、歷史小工具或 Apple Watch 上瀏覽可用的圖表。",
         "crypto": "換算加密貨幣。將比特幣、以太幣及其他支援的加密貨幣與所選貨幣比較。",
         "metals": "換算黃金、白銀及其他貴金屬。按金衡盎司、公克或公斤比較金額。"
-      }
+      },
+      "privacyPolicyUrl": "https://currency.dimasike.com/privacy/",
+      "supportUrl": "https://currency.dimasike.com/zh-hant/support/",
+      "marketingUrl": "https://currency.dimasike.com/zh-hant/"
     }
   },
   "duoPresentation": {

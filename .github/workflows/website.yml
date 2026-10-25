@@ -1,0 +1,89 @@
+name: Website
+
+on:
+  pull_request:
+    paths:
+      - 'Website/**'
+      - 'Documentation/PrivacyPolicy.md'
+      - 'Documentation/TermsOfUse.md'
+      - '.github/workflows/website.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'Website/**'
+      - 'Documentation/PrivacyPolicy.md'
+      - 'Documentation/TermsOfUse.md'
+      - '.github/workflows/website.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Check calculator behavior
+        run: node Website/tests/calculator.cjs
+      - name: Check preview and localization
+        run: |
+          python3 Website/scripts/build.py --output "$RUNNER_TEMP/website-preview"
+          python3 Website/scripts/check-seo.py --directory "$RUNNER_TEMP/website-preview"
+          node Website/tests/localization.cjs "$RUNNER_TEMP/website-preview"
+      - name: Check production at root and project paths
+        env:
+          PROJECT_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+        run: |
+          python3 Website/scripts/build.py --production --output "$RUNNER_TEMP/website-root"
+          python3 Website/scripts/check-seo.py --directory "$RUNNER_TEMP/website-root" --production
+          python3 Website/scripts/build.py --production --base-url "$PROJECT_URL" --output "$RUNNER_TEMP/website-project"
+          python3 Website/scripts/check-seo.py --directory "$RUNNER_TEMP/website-project" --production --base-url "$PROJECT_URL"
+
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Configure Pages
+        id: pages
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d
+      - name: Build for the configured Pages URL
+        env:
+          BASE_URL: ${{ steps.pages.outputs.base_url }}
+        run: |
+          python3 Website/scripts/build.py --production --base-url "$BASE_URL" --output "$RUNNER_TEMP/website"
+          python3 Website/scripts/check-seo.py --directory "$RUNNER_TEMP/website" --production --base-url "$BASE_URL"
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
+        with:
+          path: ${{ runner.temp }}/website
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346

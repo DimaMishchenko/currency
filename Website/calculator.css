@@ -1,0 +1,142 @@
+.calculator-demo {
+  width: 100%;
+  max-width: 360px;
+  container-type: inline-size;
+  color: #080808;
+  font-family: ui-rounded, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-weight: 500;
+  -webkit-font-smoothing: antialiased;
+}
+
+.calculator-demo *, .calculator-demo *::before, .calculator-demo *::after {
+  box-sizing: border-box;
+}
+
+.calculator-demo__widget {
+  width: 100%;
+  aspect-ratio: 95 / 99;
+  padding: 5.26316%;
+  display: grid;
+  grid-template-rows: 43% 1fr;
+  gap: 2.22222cqw;
+  background: #fff;
+  border-radius: 7.9cqw;
+  outline-offset: 5px;
+}
+
+.calculator-demo__tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: 1.11111cqw;
+}
+
+.calculator-demo button {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  box-shadow: none;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.calculator-demo .calculator-demo__tile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.11111cqw;
+  padding: 0 2.22222cqw;
+  border-radius: 3.88889cqw;
+  background: rgb(0 0 0 / 3%);
+  position: relative;
+}
+
+.calculator-demo .calculator-demo__tile[aria-pressed="true"] {
+  background: rgb(0 0 0 / 13%);
+  box-shadow: inset 0 0 0 .33333cqw rgb(0 0 0 / 45%);
+}
+
+.calculator-demo__flag {
+  display: block;
+  flex: 0 0 auto;
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+  font-size: 5.19444cqw;
+  line-height: 1;
+}
+
+.calculator-demo__figures {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 0;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.calculator-demo__code {
+  font-size: 3.05556cqw;
+  line-height: 1.2;
+  font-weight: 500;
+}
+
+.calculator-demo__amount {
+  font-size: 6.11111cqw;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.16;
+  letter-spacing: -.025em;
+}
+
+.calculator-demo__keypad {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+  gap: 1.11111cqw;
+}
+
+.calculator-demo .calculator-demo__key {
+  display: grid;
+  place-items: center;
+  background: rgb(0 0 0 / 7.5%);
+  border-radius: 2.77778cqw;
+  font-size: 5.55556cqw;
+  line-height: 1;
+  font-weight: 500;
+}
+
+.calculator-demo .calculator-demo__key--zero { grid-column: span 2; }
+.calculator-demo .calculator-demo__key--multiple { font-size: 4.72222cqw; }
+.calculator-demo__key svg { width: 6.11111cqw; height: 5.55556cqw; }
+.calculator-demo button:active { filter: brightness(.91); }
+.calculator-demo button:focus-visible, .calculator-demo__widget:focus-visible {
+  outline: 3px solid #1670db;
+  outline-offset: 2px;
+  z-index: 1;
+}
+
+.calculator-demo__announcement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (forced-colors: active) {
+  .calculator-demo button { border: 1px solid ButtonText; }
+  .calculator-demo .calculator-demo__tile[aria-pressed="true"] { border: 2px solid Highlight; }
+}
