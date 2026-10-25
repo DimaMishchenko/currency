@@ -7,6 +7,7 @@ import Home
 import LocalCurrency
 import Settings
 import Testing
+import Widgets
 
 @MainActor
 struct AppCompositionTests {
@@ -151,4 +152,68 @@ struct AppCompositionTests {
     #expect(other.input() == beforeOpening)
     controller.cancel()
   }
+  @Test func settingsWidgetHapticsCommitIsSharedAndBroadcastWithoutChangingConverterInput()
+    async throws
+  {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    let suite = UUID().uuidString
+    let defaults = try #require(UserDefaults(suiteName: suite))
+    defer {
+      try? FileManager.default.removeItem(at: directory)
+      defaults.removePersistentDomain(forName: suite)
+    }
+    let composition = AppComposition(
+      directory: directory,
+      appearance: AppearancePreferences(defaults: defaults), discoveryDefaults: defaults)
+    let settings = composition.settings(scene: composition.makeScene())
+    let input = composition.conversion.input()
+    #expect(!settings.readPreferences().widgetHapticsEnabled)
+    let changes = composition.changes()
+    var receivedChange = false
+    let observation = Task {
+      var updates = changes.makeAsyncIterator()
+      receivedChange = await updates.next() != nil
+    }
+    try settings.setWidgetHapticsEnabled(true)
+    for _ in 0..<1000 where !receivedChange { await Task.yield() }
+    #expect(receivedChange)
+    observation.cancel()
+    await observation.value
+    #expect(settings.readPreferences().widgetHapticsEnabled)
+    #expect(WidgetStore(directory: directory).widgetHapticsEnabled())
+    #expect(composition.conversion.input() == input)
+    let reopened = AppComposition(
+      directory: directory,
+      appearance: AppearancePreferences(defaults: defaults), discoveryDefaults: defaults)
+    let reopenedSettings = reopened.settings(scene: reopened.makeScene())
+    #expect(reopenedSettings.readPreferences().widgetHapticsEnabled)
+    try reopenedSettings.setWidgetHapticsEnabled(false)
+    #expect(!settings.readPreferences().widgetHapticsEnabled)
+    #expect(!WidgetStore(directory: directory).widgetHapticsEnabled())
+  }
+
+  @Test func failedWidgetHapticsCompositionWriteRetainsOffAndShowsTheCorrectFailure() throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    let suite = UUID().uuidString
+    let defaults = try #require(UserDefaults(suiteName: suite))
+    defer {
+      try? FileManager.default.removeItem(at: directory)
+      defaults.removePersistentDomain(forName: suite)
+    }
+    try FileManager.default.createDirectory(
+      at: directory.appendingPathComponent("widget-haptics.json"),
+      withIntermediateDirectories: true)
+    let composition = AppComposition(
+      directory: directory,
+      appearance: AppearancePreferences(defaults: defaults), discoveryDefaults: defaults)
+    let dependencies = composition.settings(scene: composition.makeScene())
+    let model = SettingsModel(dependencies: dependencies)
+    #expect(!model.preferences.widgetHapticsEnabled)
+    model.setWidgetHapticsEnabled(true)
+    #expect(!model.preferences.widgetHapticsEnabled)
+    #expect(model.issue == .widgetHapticsSaveFailed)
+    #expect(!WidgetStore(directory: directory).widgetHapticsEnabled())
+    model.stop()
+  }
+
 }
