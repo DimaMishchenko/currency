@@ -1,7 +1,6 @@
 import SwiftUI
 import UIKit
 
-/// Native toolbar gaps do not forward taps to the converter's SwiftUI background.
 struct ToolbarTapDismissal: UIViewRepresentable {
   let enabled: Bool
   let onTap: () -> Void
@@ -56,7 +55,6 @@ final class ToolbarTapObserverView: UIView, UIGestureRecognizerDelegate {
   )
     -> Bool
   {
-    // Observe only the toolbar above this content view, leaving scrolling and keys alone.
     touch.location(in: self).y < bounds.minY
   }
 

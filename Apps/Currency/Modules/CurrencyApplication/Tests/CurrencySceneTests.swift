@@ -136,7 +136,6 @@ import Testing
     let location = try #require(scene.locationPresented(by: tutorial))
     #expect(scene.locationPresented(by: collection) == nil)
     #expect(scene.locationPresented(by: nil) == nil)
-    // An underlying surface cannot take over the active location request.
     scene.requestLocation(addsToApp: false, presenterID: collection)
     #expect(scene.locationPresented(by: tutorial)?.id == location.id)
     scene.finishLocation(id: location.id)

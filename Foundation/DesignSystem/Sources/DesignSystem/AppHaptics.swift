@@ -78,7 +78,6 @@ public enum AppHaptics {
         if let lastRotaryTick, lastRotaryTick.duration(to: .now) < .milliseconds(22) { return }
         lastRotaryTick = .now
       }
-      // A new interaction replaces a pending flourish instead of stacking vibrations.
       try? player?.stop(atTime: CHHapticTimeImmediate)
       player = nil
       currentCue = cue
@@ -124,7 +123,6 @@ public enum AppHaptics {
         case .celebration:
           beats = [(0, 0.4, 0.35), (0.16, 0.65, 0.5), (0.35, 0.9, 0.65)]
         case .chartReveal:
-          // Follow the chart's 550 ms ease-out: close strokes opening into a final accent.
           beats = [
             (0, 0.4, 0.25), (0.045, 0.42, 0.3), (0.10, 0.45, 0.35),
             (0.17, 0.48, 0.4), (0.27, 0.5, 0.45), (0.40, 0.55, 0.5),

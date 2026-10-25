@@ -4,7 +4,6 @@ import ExchangeRatesUI
 import Onboarding
 import SwiftUI
 
-/// Currency artwork forms an orbit that can be grabbed and spun with momentum.
 struct OnboardingFinale: View {
   let moving: Bool
   @Environment(\.accessibilityReduceMotion) private var reduceMotion

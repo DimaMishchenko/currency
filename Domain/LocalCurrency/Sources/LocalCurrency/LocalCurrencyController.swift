@@ -128,7 +128,6 @@
       await refreshIfNeeded()
     }
 
-    /// Service availability may involve IPC; keep that query off the UI thread.
     private func checkServices(_ completion: @escaping @MainActor (Bool) -> Void) {
       availability?.cancel()
       if let servicesEnabled { completion(servicesEnabled()); return }
@@ -254,7 +253,6 @@
             return
           }
           resolved = store.widgetLocation()
-          // Deliberately omit a location dot and exact coordinates from the presentation.
           region = MKCoordinateRegion(
             center: CLLocationCoordinate2D(
               latitude: location.coordinate.latitude.rounded(),

@@ -279,8 +279,6 @@ enum CalculatorCurrencyList: String, AppEnum {
   ]
 }
 
-/// A persisted configuration identity. Native default provisioning must be validated independently.
-/// Never generate this ID in a timeline or view: that would reset the saved input on refresh.
 struct CalculatorInstance: AppEntity {
   static let typeDisplayRepresentation: TypeDisplayRepresentation = "Calculator"
   static let defaultQuery = CalculatorInstanceQuery()

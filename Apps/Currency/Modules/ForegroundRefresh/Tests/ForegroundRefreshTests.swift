@@ -131,7 +131,6 @@ import Testing
   }
 }
 
-/// Manually controlled work; cancellation can deliberately be ignored to exercise stale results.
 @MainActor private final class ControlledSuspension {
   let entries = Counter()
   let cancellations = Counter()

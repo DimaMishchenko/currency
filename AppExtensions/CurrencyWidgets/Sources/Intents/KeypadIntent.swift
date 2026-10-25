@@ -8,7 +8,6 @@ import WidgetKit
 import Widgets
 import WidgetsUI
 
-/// Default uses app input; Custom mutations stay in configured widget storage.
 struct WidgetAction: AppIntent {
   static let isDiscoverable = false
   private static let logger = Logger(
@@ -58,16 +57,13 @@ struct WidgetAction: AppIntent {
         "Widget mutation completed in \(start.duration(to: .now).description, privacy: .public)")
     }
     try execute(using: WidgetComposition.action())
-    // WidgetKit reloads the interacted widget after perform returns.
     return .result()
   }
 
-  /// Runs the production adapter with controlled capabilities in integration tests.
   func execute(using dependencies: WidgetActionDependencies) throws {
     var spec = WidgetSpec(
       kind: String(stateKey.prefix { $0 != "|" }), codes: codes, amount: initialAmount,
       status: .notDetermined)
-    // AppIntent parameters already carry the resolved selection shown by the tapped control.
     spec.codes = codes
     spec.synchronized = synchronized
     let action = WidgetCommand(
