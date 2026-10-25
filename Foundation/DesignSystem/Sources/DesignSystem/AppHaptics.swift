@@ -118,7 +118,6 @@ public enum AppHaptics {
           engine = newEngine
         }
         guard let engine else { return false }
-        // start() also handles auto-shutdown and interruptions; players are never reused.
         try engine.start()
         let beats: [(Double, Float, Float)]
         switch cue {
