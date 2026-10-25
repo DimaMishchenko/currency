@@ -56,6 +56,10 @@ import SwiftUI
             setTheme: { state.preferences.theme = $0 },
             setAccent: { state.preferences.accent = $0 },
             setMetalUnit: { state.preferences.metalUnit = $0 },
+            setWidgetHapticsEnabled: { enabled in
+              if state.failing { throw CocoaError(.fileWriteUnknown) }
+              state.preferences.widgetHapticsEnabled = enabled
+            },
             refresh: {
               if state.failing { throw CocoaError(.fileReadUnknown) }
               return state.rates

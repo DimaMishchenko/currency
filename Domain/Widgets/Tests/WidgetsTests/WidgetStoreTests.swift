@@ -3,6 +3,47 @@ import Testing
 import Widgets
 
 struct WidgetStoreTests {
+  @Test func hapticsDefaultOffAndObserveOtherStoreWrites() throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let app = WidgetStore(directory: directory)
+    let widget = WidgetStore(directory: directory)
+    #expect(!app.widgetHapticsEnabled())
+    #expect(!widget.widgetHapticsEnabled())
+    try app.setWidgetHapticsEnabled(true)
+    #expect(widget.widgetHapticsEnabled())
+    #expect(app.widgetHapticsEnabled())
+    try widget.setWidgetHapticsEnabled(false)
+    #expect(!app.widgetHapticsEnabled())
+    #expect(!WidgetStore(directory: directory).widgetHapticsEnabled())
+  }
+
+  @Test(arguments: ["invalid", "\"true\"", "1", "{}", "null"])
+  func invalidHapticsPreferenceDisablesFeedback(_ value: String) throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = WidgetStore(directory: directory)
+    try store.setWidgetHapticsEnabled(true)
+    let url = directory.appendingPathComponent("widget-haptics.json")
+    try Data(value.utf8).write(to: url)
+    #expect(!store.widgetHapticsEnabled())
+    #expect(try String(contentsOf: url, encoding: .utf8) == value)
+    try store.setWidgetHapticsEnabled(false)
+    #expect(!store.widgetHapticsEnabled())
+  }
+
+  @Test func unreadableHapticsPreferenceDisablesFeedbackAndWriteFailureThrows() throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let url = directory.appendingPathComponent("widget-haptics.json")
+    try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+    let store = WidgetStore(directory: directory)
+    #expect(!store.widgetHapticsEnabled())
+    #expect(throws: (any Error).self) { try store.setWidgetHapticsEnabled(true) }
+    #expect(!store.widgetHapticsEnabled())
+    #expect(try url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory == true)
+  }
+
   @Test func absentRecordStartsConfiguredInput() throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }
