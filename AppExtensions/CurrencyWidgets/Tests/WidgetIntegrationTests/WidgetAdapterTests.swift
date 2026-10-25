@@ -10,6 +10,91 @@ import Widgets
 import WidgetsUI
 
 @Suite struct WidgetAdapterTests {
+  @Test(arguments: WidgetCommand.Key.allCases)
+  func enabledKeypadFeedbackFollowsSuccessfulActionExactlyOnce(_ key: WidgetCommand.Key) throws {
+    try expectEnabledFeedback(command: key.rawValue)
+  }
+
+  @Test(arguments: ["select:USD", "preset:10"])
+  func enabledSelectionAndPresetFeedbackFollowsSuccessfulActionExactlyOnce(_ command: String) throws
+  {
+    try expectEnabledFeedback(command: command)
+  }
+
+  @Test func synchronizedActionRequestsOneHapticAfterReload() throws {
+    try expectEnabledFeedback(command: "7", reload: true)
+  }
+
+  private func expectEnabledFeedback(command: String, reload: Bool = false) throws {
+    let events = Mutex<[String]>([])
+    let dependencies = WidgetActionDependencies(
+      rates: { RateSnapshot() },
+      apply: { _, _, _ in
+        events.withLock { $0.append("commit") }
+        return reload
+      },
+      reloadSynchronizedWidgets: { events.withLock { $0.append("reload") } },
+      hapticsEnabled: {
+        events.withLock { $0.append("preference") }
+        return true
+      },
+      playHaptic: { events.withLock { $0.append("feedback") } })
+    let spec = WidgetSpec(kind: "CurrencyCash", codes: ["EUR", "USD"], status: .notDetermined)
+    try WidgetAction(WidgetCommand(command, spec: spec)).execute(using: dependencies)
+    #expect(
+      events.withLock { $0 }
+        == (reload
+          ? ["commit", "reload", "preference", "feedback"] : ["commit", "preference", "feedback"]))
+  }
+
+  @Test func widgetActionReadsLatestHapticsPreferenceWithoutRecreatingDependencies() throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let app = WidgetStore(directory: directory)
+    let widget = WidgetStore(directory: directory)
+    let requests = Mutex(0)
+    let dependencies = WidgetActionDependencies(
+      rates: { RateSnapshot() }, apply: { _, _, _ in false },
+      reloadSynchronizedWidgets: {},
+      hapticsEnabled: { widget.widgetHapticsEnabled() },
+      playHaptic: { requests.withLock { $0 += 1 } })
+    let spec = WidgetSpec(kind: "CurrencyCash", codes: ["EUR", "USD"], status: .notDetermined)
+    let action = WidgetAction(WidgetCommand("AC", spec: spec))
+    try action.execute(using: dependencies)
+    #expect(requests.withLock { $0 } == 0)
+    try app.setWidgetHapticsEnabled(true)
+    try action.execute(using: dependencies)
+    #expect(requests.withLock { $0 } == 1)
+    try app.setWidgetHapticsEnabled(false)
+    try action.execute(using: dependencies)
+    #expect(requests.withLock { $0 } == 1)
+  }
+
+  @Test func failedOrUnknownWidgetActionNeverRequestsHaptics() throws {
+    let failure = WidgetActionDependencies(
+      rates: { RateSnapshot() },
+      apply: { _, _, _ in throw CocoaError(.fileWriteNoPermission) },
+      reloadSynchronizedWidgets: { Issue.record("Failed commit must not reload") },
+      hapticsEnabled: {
+        Issue.record("Failed commit must not read the feedback preference")
+        return true
+      },
+      playHaptic: { Issue.record("Failed commit must not request feedback") })
+    let spec = WidgetSpec(kind: "CurrencyCash", codes: ["EUR", "USD"], status: .notDetermined)
+    #expect(throws: CocoaError.self) {
+      try WidgetAction(WidgetCommand("7", spec: spec)).execute(using: failure)
+    }
+    let unknown = WidgetActionDependencies(
+      rates: { RateSnapshot() }, apply: { _, _, _ in false },
+      reloadSynchronizedWidgets: { Issue.record("Unknown action must not reload") },
+      hapticsEnabled: {
+        Issue.record("Unknown action must not read the feedback preference")
+        return true
+      },
+      playHaptic: { Issue.record("Unknown action must not request feedback") })
+    try WidgetAction(WidgetCommand("unknown", spec: spec)).execute(using: unknown)
+  }
+
   private var rates: RateSnapshot {
     RateSnapshot(quotes: [
       "EUR": ExchangeRate(1, published: "2026-09-19", source: .init(provider: .ecb)),
@@ -163,7 +248,8 @@ import WidgetsUI
       apply: { action, key, snapshot in
         try store.apply(action, key: key, snapshot: snapshot)
       },
-      reloadSynchronizedWidgets: { reloads.withLock { $0 += 1 } })
+      reloadSynchronizedWidgets: { reloads.withLock { $0 += 1 } },
+      hapticsEnabled: { false }, playHaptic: { Issue.record("Feedback is disabled") })
     var spec = WidgetSpec(
       kind: "CurrencyConverter", codes: ["EUR", "USD"], instanceID: "stable", status: .notDetermined
     )
@@ -176,7 +262,8 @@ import WidgetsUI
     #expect(reloads.withLock { $0 } == 1)
     let failure = WidgetActionDependencies(
       rates: { rates }, apply: { _, _, _ in throw CocoaError(.fileWriteNoPermission) },
-      reloadSynchronizedWidgets: { reloads.withLock { $0 += 1 } })
+      reloadSynchronizedWidgets: { reloads.withLock { $0 += 1 } },
+      hapticsEnabled: { false }, playHaptic: { Issue.record("Feedback is disabled") })
     #expect(throws: CocoaError.self) { try action.execute(using: failure) }
     #expect(reloads.withLock { $0 } == 1)
   }
@@ -194,7 +281,8 @@ import WidgetsUI
         seen.withLock { $0 = key }
         return false
       },
-      reloadSynchronizedWidgets: { Issue.record("Custom input must not reload unrelated widgets") })
+      reloadSynchronizedWidgets: { Issue.record("Custom input must not reload unrelated widgets") },
+      hapticsEnabled: { false }, playHaptic: { Issue.record("Feedback is disabled") })
     let spec = WidgetSpec(kind: "CurrencyCash", codes: ["EUR", "USD"], status: .notDetermined)
     try WidgetAction(WidgetCommand("7", spec: spec)).execute(using: dependencies)
     #expect(reads.withLock { $0 } == 0)
@@ -286,4 +374,56 @@ import WidgetsUI
       #expect(CurrencySymbolChoice.caseDisplayRepresentations[choice] != nil)
     }
   }
+  @Test(arguments: [false, true], [nil, "12345678-1234-1234-1234-123456789012"] as [String?])
+  func liveCompositionCountsCommittedDefaultAndCustomConversions(
+    synchronized: Bool, instanceID: String?
+  ) throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    _ = try RateStore(directory: directory).saveBootstrapRates(rates)
+    let usage = ConversionUsageStore(directory: directory)
+    for _ in 0..<2 { try usage.recordConversion() }
+    var spec = WidgetSpec(
+      kind: "CurrencyConverter", codes: ["EUR", "USD"], instanceID: instanceID,
+      status: .notDetermined)
+    spec.synchronized = synchronized
+    try WidgetAction(WidgetCommand("7", spec: spec))
+      .execute(using: WidgetComposition.action(directory: directory))
+    #expect(try usage.claimReviewRequest())
+    try WidgetAction(WidgetCommand("8", spec: spec))
+      .execute(using: WidgetComposition.action(directory: directory))
+    #expect(try !usage.claimReviewRequest())
+  }
+
+  @Test func reviewPersistenceFailureDoesNotFailCommittedWidgetInteraction() throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    _ = try RateStore(directory: directory).saveBootstrapRates(rates)
+    let url = directory.appendingPathComponent("conversion-usage.json")
+    let corrupt = Data("invalid".utf8)
+    try corrupt.write(to: url)
+    let spec = WidgetSpec(kind: "CurrencyConverter", codes: ["EUR", "USD"], status: .notDetermined)
+    try WidgetAction(WidgetCommand("7", spec: spec))
+      .execute(using: WidgetComposition.action(directory: directory))
+    #expect(
+      WidgetStore(directory: directory).widgetInput(key: spec.key, codes: spec.codes).amount == "7")
+    #expect(try Data(contentsOf: url) == corrupt)
+  }
+
+  @Test(arguments: ["CurrencyCash", "CurrencyBoard"])
+  func liveCompositionDoesNotCountNonCalculatorPresets(kind: String) throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    _ = try RateStore(directory: directory).saveBootstrapRates(rates)
+    let usage = ConversionUsageStore(directory: directory)
+    for _ in 0..<2 { try usage.recordConversion() }
+    let spec = WidgetSpec(kind: kind, codes: ["EUR", "USD"], status: .notDetermined)
+    try WidgetAction(WidgetCommand("preset:10", spec: spec))
+      .execute(using: WidgetComposition.action(directory: directory))
+    #expect(
+      WidgetStore(directory: directory).widgetInput(key: spec.key, codes: spec.codes).amount == "10"
+    )
+    #expect(try !usage.claimReviewRequest())
+  }
+
 }

@@ -3,7 +3,6 @@ import ExchangeRatesUI
 import SwiftUI
 import UIKit
 
-/// Attach inside the scroll content so UIKit owns the refresh inset and its spring-back.
 struct CurrencyRefreshAttachment: UIViewRepresentable {
   let refreshing: Bool
   let enabled: Bool
@@ -117,7 +116,6 @@ struct CurrencyRefreshAttachment: UIViewRepresentable {
 
     func updatePull() {
       guard let scroll, state.started == nil else { return }
-      // UIKit adds the refresh inset before valueChanged; keep the reveal distance stable.
       let distance = max(0, -(scroll.contentOffset.y + restingTopInset))
       if distance < 1, !scroll.isDragging, !control.isRefreshing {
         restingTopInset = scroll.adjustedContentInset.top
@@ -180,7 +178,6 @@ struct CurrencyRefreshAttachment: UIViewRepresentable {
         let remaining = max(0, 1.1 - Date.now.timeIntervalSince(started))
         do { try await Task.sleep(for: .seconds(remaining)) } catch { return }
         guard let self, !Task.isCancelled else { return }
-        // A fast cached response must not collapse the control underneath an active pull.
         while self.scroll?.isDragging == true {
           do { try await Task.sleep(for: .milliseconds(16)) } catch { return }
         }

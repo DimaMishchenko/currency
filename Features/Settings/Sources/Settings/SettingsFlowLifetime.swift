@@ -18,7 +18,6 @@ public final class SettingsFlowLifetime {
   public func start() {
     guard !stopped, task == nil else { return }
     let model = model
-    // Capture only the model: retaining this token here would prevent its teardown.
     task = Task { await model.run() }
   }
 

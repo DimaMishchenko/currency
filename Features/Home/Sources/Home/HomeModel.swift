@@ -28,6 +28,28 @@ public final class HomeModel {
   @ObservationIgnored private var skipWidgetsThisVisit = false
   @ObservationIgnored private var editStartingAmount: Decimal?
   @ObservationIgnored private var closedWithResults = false
+  @ObservationIgnored private var discoveryShownThisVisit = false
+  /// Identifies a completed conversion whose idle presentation can be cancelled.
+  public private(set) var reviewOpportunity: UUID?
+
+  /// Whether this completed conversion can offer a rating request without interrupting discovery.
+  public var canRequestReview: Bool {
+    reviewOpportunity != nil && editor == nil && !refreshing && warning == nil
+      && activeDiscoveryTip == nil && !discoveryShownThisVisit
+      && dependencies.onboardingCompleted()
+  }
+
+  /// Cancels this conversion's presentation opportunity when another interaction starts.
+  public func cancelReviewOpportunity() {
+    reviewOpportunity = nil
+  }
+
+  /// Consumes shared eligibility once, immediately before requesting native presentation.
+  public func claimReviewRequest() -> Bool {
+    guard canRequestReview else { return false }
+    reviewOpportunity = nil
+    return dependencies.claimReviewRequest()
+  }
 
   /// Restores current input and rates without starting background work.
   public init(dependencies: HomeDependencies) {
@@ -99,6 +121,7 @@ public final class HomeModel {
     NSDecimalRound(
       &rounded, &value, CurrencyPrecision.fractionDigits(code, metalUnit: input.metalUnit), .plain)
     next.preset(rounded)
+    reviewOpportunity = nil
     editor = next
     editingSelectionID = id
     editStartingAmount = input.decimal
@@ -114,6 +137,8 @@ public final class HomeModel {
     skipWidgetsThisVisit = firstVisitAfterOnboarding
     firstVisitAfterOnboarding = false
     historyTipShownThisVisit = false
+    discoveryShownThisVisit = false
+    reviewOpportunity = nil
     activeDiscoveryTip = nil
     closedWithResults = false
     var progress = dependencies.readDiscovery()
@@ -151,6 +176,8 @@ public final class HomeModel {
   /// Records a tip only after native presentation reports it visible.
   public func discoveryTipPresented(_ tip: HomeDiscoveryTip) {
     guard activeDiscoveryTip == tip else { return }
+    discoveryShownThisVisit = true
+    reviewOpportunity = nil
     var progress = dependencies.readDiscovery()
     switch tip {
     case .history:
@@ -168,6 +195,7 @@ public final class HomeModel {
 
   /// Removes transient opportunities while another converter interaction owns focus.
   public func suspendDiscoveryTips() {
+    reviewOpportunity = nil
     activeDiscoveryTip = nil
     closedWithResults = false
   }
@@ -215,6 +243,12 @@ public final class HomeModel {
       }
     editor = nil
     editStartingAmount = nil
+    if closedWithResults && input.decimal > 0 && warning == nil
+      && dependencies.onboardingCompleted()
+    {
+      dependencies.recordConversion()
+      reviewOpportunity = UUID()
+    }
     if activeDiscoveryTip == .history { activeDiscoveryTip = nil }
   }
 
@@ -278,7 +312,6 @@ public final class HomeModel {
     }
   }
 
-  /// Commits a selection mutation and keeps the last valid state on failure.
   @discardableResult
   private func updateInput(_ mutation: (inout ConverterState) throws -> Void) -> Bool {
     do {
@@ -333,6 +366,7 @@ public final class HomeModel {
   public func refresh(force: Bool = false) async -> HomeRefreshOutcome {
     guard !Task.isCancelled else { return .cancelled }
     guard !refreshing else { return .ignored }
+    cancelReviewOpportunity()
     let identity = UUID()
     refreshIdentity = identity
     refreshing = true

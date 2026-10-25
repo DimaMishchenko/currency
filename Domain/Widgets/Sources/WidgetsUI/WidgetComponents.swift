@@ -105,7 +105,6 @@ struct LocalCurrencySetup: View {
   }
 }
 
-/// A full-color raster fill remains opaque when the Home Screen applies accented/clear rendering.
 private struct OpaquePermissionBackground: View {
   @Environment(\.widgetRenderingMode) private var renderingMode
   @Environment(\.colorScheme) private var colorScheme

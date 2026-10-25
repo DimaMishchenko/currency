@@ -4,7 +4,6 @@ import LocationOnboarding
 import MapKit
 import SwiftUI
 
-/// On-demand country lookup and permission recovery.
 struct LocalCurrencyOnboardingScreen: View {
   @Bindable var model: LocationOnboardingModel
   private var location: LocationSnapshot { model.snapshot }
@@ -14,7 +13,6 @@ struct LocalCurrencyOnboardingScreen: View {
   @Environment(\.scenePhase) private var scenePhase
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(\.dynamicTypeSize) private var textSize
-  /// The permission explanation and location result.
   var body: some View {
     NavigationStack {
       GeometryReader { geometry in

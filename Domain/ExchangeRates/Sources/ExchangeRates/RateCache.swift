@@ -2,7 +2,6 @@ import Foundation
 
 /// An atomic disk-backed store for rate snapshots.
 public struct RateCache: Sendable {
-  /// The directory that contains the rate snapshot.
   private let directory: URL
   /// Creates a store rooted at a directory.
   public init(directory: URL) { self.directory = directory }

@@ -25,6 +25,7 @@ final class AppComposition {
   private(set) var companionIssue: CompanionSyncIssue?
   let rates: RateStore
   let conversion: ConversionStore
+  let conversionUsage: ConversionUsageStore
   let local: LocalCurrencyStore
   let progress: OnboardingProgressStore
   let discovery: HomeDiscoveryStore
@@ -74,6 +75,7 @@ final class AppComposition {
     self.appearance = appearance ?? AppearancePreferences(defaults: .standard)
     rates = RateStore(directory: directory)
     conversion = ConversionStore(directory: directory)
+    conversionUsage = ConversionUsageStore(directory: directory)
     local = LocalCurrencyStore(directory: directory)
     progress = OnboardingProgressStore(directory: directory)
     discovery = HomeDiscoveryStore(defaults: discoveryDefaults)
@@ -188,6 +190,10 @@ final class AppComposition {
       readDiscovery: { [discovery] in discovery.load() },
       saveDiscovery: { [discovery] in discovery.save($0) },
       onboardingCompleted: { [progress] in progress.load()?.completed == true },
+      recordConversion: { [conversionUsage] in try? conversionUsage.recordConversion() },
+      claimReviewRequest: { [conversionUsage] in
+        (try? conversionUsage.claimReviewRequest()) ?? false
+      },
       now: { .now })
   }
   func markDetailsVisited() {
@@ -228,11 +234,16 @@ final class AppComposition {
         .init(
           theme: SettingsTheme(rawValue: appearance.theme.rawValue) ?? .system,
           accent: SettingsAccent(rawValue: appearance.accent.rawValue) ?? .primary,
-          metalUnit: conversion.input().metalUnit)
+          metalUnit: conversion.input().metalUnit,
+          widgetHapticsEnabled: WidgetStore(directory: syncDirectory).widgetHapticsEnabled())
       },
       setTheme: { [appearance] in appearance.theme = .init(rawValue: $0.rawValue) ?? .system },
       setAccent: { [appearance] in appearance.accent = .init(rawValue: $0.rawValue) ?? .primary },
       setMetalUnit: { [self] unit in _ = try edit { $0.setMetalUnit(unit) } },
+      setWidgetHapticsEnabled: { [self] enabled in
+        try WidgetStore(directory: syncDirectory).setWidgetHapticsEnabled(enabled)
+        changed()
+      },
       refresh: { [self] in
         _ = try await refresh(force: true); return settingsState
       },

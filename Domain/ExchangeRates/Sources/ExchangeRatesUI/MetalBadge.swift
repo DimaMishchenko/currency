@@ -1,6 +1,5 @@
 import SwiftUI
 
-/// Original app artwork. A static satin finish keeps small badges legible in widgets.
 struct MetalBadge: View {
   let metal: Metal
   let size: CGFloat

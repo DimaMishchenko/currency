@@ -4,6 +4,7 @@ import DesignSystem
 import ExchangeRates
 import ExchangeRatesUI
 import Home
+import StoreKit
 import SwiftUI
 import TipKit
 
@@ -18,6 +19,14 @@ struct HomeScreen: View {
     let manageOpen: Bool
     let menuEngaged: Bool
   }
+
+  private struct ReviewTaskID: Equatable {
+    let opportunity: UUID?
+    let interaction: DiscoveryTaskID
+    let eligible: Bool
+  }
+
+  @Environment(\.requestReview) private var requestReview
 
   private static var destinationIconColumnWidth: CGFloat { 44 }
   private static var destinationTextInset: CGFloat {
@@ -77,6 +86,12 @@ struct HomeScreen: View {
       pickerOpen: picker != nil, manageOpen: showManage, menuEngaged: menuEngaged)
   }
 
+  private var reviewTaskID: ReviewTaskID {
+    ReviewTaskID(
+      opportunity: model.reviewOpportunity, interaction: widgetsTaskID,
+      eligible: model.canRequestReview)
+  }
+
   private var amountLabel: String {
     if editingAmount && model.editingSelectionID == model.input.source {
       CurrencyDisplay.inputAmount(model.editingText, locale: locale)
@@ -87,8 +102,7 @@ struct HomeScreen: View {
     }
   }
 
-  /// The converter screen content.
-  public var body: some View {
+  var body: some View {
     Group {
       GeometryReader { geometry in
         let division = division(in: geometry)
@@ -198,6 +212,23 @@ struct HomeScreen: View {
         else { return }
         if available { historyTipRequested = true; return }
       }
+    }
+    .onChange(of: widgetsTaskID) { _, interaction in
+      if interaction.editing || !interaction.active || !interaction.idle
+        || interaction.pickerOpen || interaction.manageOpen || interaction.menuEngaged
+      {
+        model.cancelReviewOpportunity()
+      }
+    }
+    .task(id: reviewTaskID) {
+      guard model.canRequestReview, active, discoveryIdle, !editingAmount,
+        picker == nil, !showManage, !menuEngaged
+      else { return }
+      do { try await Task.sleep(for: .seconds(2)) } catch { return }
+      guard !Task.isCancelled, active, discoveryIdle, !editingAmount,
+        picker == nil, !showManage, !menuEngaged, model.claimReviewRequest()
+      else { return }
+      requestReview()
     }
     .accessibilityAction(.escape) { dismissAmount() }
     .onChange(of: discoveryIdle) { _, idle in
@@ -314,6 +345,9 @@ struct HomeScreen: View {
         if !model.refreshing { refreshRequest = UUID() }
       }
       .scrollBounceBehavior(.always)
+      .onScrollPhaseChange { _, phase in
+        if phase == .tracking || phase == .interacting { model.cancelReviewOpportunity() }
+      }
       .scrollPosition($listPosition)
       .contentShape(Rectangle())
       .gesture(
@@ -507,6 +541,7 @@ struct HomeScreen: View {
       Button(.Converter.detailsAndHistory, systemImage: "chart.xyaxis.line") {
         showDetails(code: model.input.source, selectionID: model.input.source)
       }
+      .onAppear { model.cancelReviewOpportunity() }
     }
     .matchedTransitionSource(id: model.input.source, in: detailsMotion)
   }
@@ -634,6 +669,7 @@ struct HomeScreen: View {
     )
     .contextMenu {
       destinationActions(row, value: value)
+        .onAppear { model.cancelReviewOpportunity() }
     }
   }
 

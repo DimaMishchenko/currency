@@ -19,7 +19,6 @@ public struct FawazProvider: RateProvider {
     throw RateError.unavailable
   }
 
-  /// Decodes a Fawaz payload into normalized quotes.
   static func decode(_ data: Data) throws -> [String: ExchangeRate] {
     struct Payload: Decodable {
       let date: String

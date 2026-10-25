@@ -1,3 +1,4 @@
+import AudioToolbox
 import Conversion
 import CurrencyApplication
 import ExchangeRates
@@ -7,6 +8,8 @@ import WidgetKit
 import Widgets
 
 enum WidgetComposition {
+  private static let shortTapticSoundID: SystemSoundID = 1519
+
   private static func directory() -> URL {
     guard
       let directory = FileManager.default.containerURL(
@@ -94,16 +97,27 @@ enum WidgetComposition {
   }
 
   static func action() -> WidgetActionDependencies {
-    let directory = directory()
+    action(directory: directory())
+  }
+
+  static func action(directory: URL) -> WidgetActionDependencies {
     let rates = RateStore(directory: directory)
     let widgets = WidgetStore(directory: directory)
     return WidgetActionDependencies(
       rates: { rates.loadRates() },
-      apply: { command, key, snapshot in try widgets.apply(command, key: key, snapshot: snapshot) },
+      apply: { command, key, snapshot in
+        try widgets.apply(command, key: key, snapshot: snapshot ?? rates.loadRates()) {
+          guard command.spec.kind == "CurrencyConverter" else { return }
+          try? ConversionUsageStore(directory: directory)
+            .recordWidgetConversion(key: key, now: .now)
+        }
+      },
       reloadSynchronizedWidgets: {
         for kind in ["CurrencyConverter", "CurrencyBoard"] {
           WidgetCenter.shared.reloadTimelines(ofKind: kind)
         }
-      })
+      },
+      hapticsEnabled: { widgets.widgetHapticsEnabled() },
+      playHaptic: { AudioServicesPlaySystemSound(shortTapticSoundID) })
   }
 }

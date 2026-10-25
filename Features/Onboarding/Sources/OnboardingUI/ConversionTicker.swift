@@ -10,7 +10,6 @@ struct TickerQuote: Equatable {
   let amount: String
 }
 
-/// A display-link advances only the scroll offset; rate formatting and SwiftUI layout do not run per frame.
 struct ConversionTicker: UIViewRepresentable {
   let quotes: [TickerQuote]
   let moving: Bool
@@ -44,8 +43,6 @@ struct ConversionTicker: UIViewRepresentable {
     let key = "\(quotes)|\(sizeCategory)|\(colorScheme)"
     guard context.coordinator.key != key else { return }
     context.coordinator.key = key
-    // Content updates keep the current cycle position and velocity. Only direct interaction
-    // with the ticker earns a pause; toggling a currency elsewhere must not look stalled.
     let previousWidth = context.coordinator.cycleWidth
     let position =
       previousWidth > 0
