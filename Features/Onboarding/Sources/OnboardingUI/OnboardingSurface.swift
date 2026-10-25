@@ -2,7 +2,6 @@ import DesignSystem
 import Onboarding
 import SwiftUI
 
-/// Choices blend into the page; standalone cards can opt into elevation.
 struct OnboardingSurface: View {
   var radius: CGFloat = 24
   var selected = false

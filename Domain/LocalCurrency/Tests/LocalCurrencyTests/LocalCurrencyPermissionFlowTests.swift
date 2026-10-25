@@ -47,7 +47,6 @@
         #expect(manager.prompts == 1)
         #expect(manager.lookups == 0)
         #expect(controller.phase == .requestingPermission)
-        // Even an unexpected callback cannot start geocoding before permission.
         controller.locationManager(manager, didUpdateLocations: [coarseLocation])
         #expect(controller.region == nil)
         #expect(store.widgetLocation() == nil)
@@ -61,7 +60,6 @@
         manager.permission = .authorizedWhenInUse
         let controller = LocalCurrencyController(manager: manager, store: store, reloadWidgets: {})
         controller.update()
-        // Production service availability has not returned to the main actor yet.
         controller.locationManagerDidChangeAuthorization(manager)
         controller.locationManager(manager, didUpdateLocations: [coarseLocation])
         #expect(manager.lookups == 0)
@@ -158,7 +156,6 @@
         #expect(controller.region?.center.longitude == 14)
         #expect(controller.region?.span.latitudeDelta == 8)
         #expect(reloads == 1)
-        // Subsequent callbacks cannot save or reload a second time.
         controller.locationManager(manager, didUpdateLocations: [coarseLocation])
         #expect(reloads == 1)
       }

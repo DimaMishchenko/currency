@@ -34,7 +34,6 @@ extension EnvironmentValues {
   }
 }
 
-/// Resolves the decorator outside content so its environment reaches the requesting view.
 struct WidgetPresentation<Content: View>: View {
   @Environment(\.widgetOnboardingPresentation) private var presentation
   private let content: Content

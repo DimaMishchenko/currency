@@ -6,7 +6,6 @@ import ExchangeRatesUI
 import Onboarding
 import SwiftUI
 
-/// The same segmented, searchable picker used by the converter, with draft multi-selection.
 struct OnboardingCurrencySearch: View {
   let model: OnboardingModel
   let choosingBase: Bool

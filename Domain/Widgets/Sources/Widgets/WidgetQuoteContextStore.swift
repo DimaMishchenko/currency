@@ -87,7 +87,8 @@ public struct WidgetQuoteContextStore: Sendable {
     }
   }
 
-  /// Missing, expired or incompatible contexts fall back to the app's current quotes.
+  /// Returns the saved snapshot after per-record lookup and any applicable legacy fallback.
+  /// Returns nil if the selected record is missing, expired, future-dated or has no quotes.
   public func load(_ id: UUID, now: Date = .now) -> RateSnapshot? {
     context(id, now: now)?.snapshot
   }

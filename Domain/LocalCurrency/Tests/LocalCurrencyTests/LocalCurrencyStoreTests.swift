@@ -140,7 +140,6 @@ struct LocalCurrencyStoreTests {
       try store.clearLocalCurrency(outcome: .removed)
       #expect(store.widgetLocation() == nil)
       #expect(try !store.completeLocalCurrencyLookup(generation, location: location))
-      // Even deletion of the migrated record cannot find an old observation to resurrect.
       try FileManager.default.removeItem(at: url)
       #expect(store.widgetLocation() == nil)
     }
@@ -185,7 +184,6 @@ struct LocalCurrencyStoreTests {
       #expect(store.widgetLocation() == location)
       #expect(store.widgetLocationStatus() == .available)
       #expect(FileManager.default.fileExists(atPath: observationURL.path))
-      // Retry completes erasure and invalidates the old generation in one final commit.
       try store.clearLocalCurrency(outcome: .denied)
       #expect(!FileManager.default.fileExists(atPath: observationURL.path))
       #expect(store.widgetLocation() == nil)

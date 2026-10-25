@@ -359,7 +359,7 @@ public actor HistoryService {
       }
   }
 
-  /// The next UTC hourly boundary, retained for widget scheduling compatibility.
+  /// The next UTC hourly boundary for history cache expiry and widget scheduling.
   public static func nextHour(after date: Date) -> Date {
     Date(timeIntervalSince1970: (floor(date.timeIntervalSince1970 / 3600) + 1) * 3600)
   }

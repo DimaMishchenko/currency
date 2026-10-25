@@ -3,7 +3,6 @@ import ExchangeRates
 import Foundation
 import Onboarding
 
-/// Composes real independent stores only within regression fixtures.
 struct OnboardingTestStore {
   let directory: URL
   var progress: OnboardingProgressStore { OnboardingProgressStore(directory: directory) }
@@ -27,7 +26,6 @@ struct FixtureConfiguration {
   var beforeSave: ((OnboardingModel.SaveError) throws -> Void)?
 }
 
-/// Faults are supplied through the production operation closures, never through model hooks.
 @MainActor
 func makeModel(
   store: OnboardingTestStore, service: RateService = RateService(),

@@ -17,7 +17,6 @@ public struct ECBProvider: RateProvider {
     return try Self.decode(await client.get(url))
   }
 
-  /// Decodes ECB XML into normalized quotes.
   static func decode(_ data: Data) throws -> [String: ExchangeRate] {
     let delegate = ECBParser()
     let parser = XMLParser(data: data)

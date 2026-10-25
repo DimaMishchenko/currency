@@ -25,7 +25,6 @@ public struct FrankfurterProvider: RateProvider {
     return try Self.decode(await client.get(url))
   }
 
-  /// Decodes Frankfurter rows into normalized quotes.
   static func decode(_ data: Data) throws -> [String: ExchangeRate] {
     let rows = try JSONDecoder().decode([FrankfurterRow].self, from: data)
     guard !rows.isEmpty else { throw RateError.invalidData }

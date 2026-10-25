@@ -4,7 +4,6 @@ import Foundation
 import Home
 import LocalCurrency
 
-/// Real isolated stores keep concurrent-read editing regressions at the production boundary.
 struct HomeTestStore {
   let directory: URL
   var conversion: ConversionStore { ConversionStore(directory: directory) }
