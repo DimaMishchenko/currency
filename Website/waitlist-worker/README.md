@@ -1,12 +1,14 @@
 # Launch email waitlist
 
-A dependency-free Cloudflare Worker serves `POST https://currency-signup.dimasike.com/api/waitlist` from `https://currency.dimasike.com` only. It stores normalized email, UTC creation time, website locale and consent version (`launch-email-v1`) in private D1. It sends no email and has no public read/export/delete endpoint. Origin validation and CORS restrict browsers; Turnstile and rate limiting also protect requests made outside browsers.
+A dependency-free Cloudflare Worker serves `POST https://currency-signup.dimasike.com/api/waitlist` from `https://currency.dimasike.com` only. It stores normalized email, UTC creation time, website locale and consent version (`launch-email-submit-v2`) in private D1. It sends no email and has no public read/export/delete endpoint. Origin validation and CORS restrict browsers; Turnstile and rate limiting also protect requests made outside browsers.
 
 Request (`Content-Type: application/json`, maximum 4,096 UTF-8 bytes):
 
 ```json
-{"email":"person@example.com","consent":true,"locale":"en-US","token":"TURNSTILE_RESPONSE"}
+{"email":"person@example.com","consent":true,"consentVersion":"launch-email-submit-v2","locale":"en-US","token":"TURNSTILE_RESPONSE"}
 ```
+
+New forms send `consentVersion: "launch-email-submit-v2"`. Already-open checkbox forms omit this field and are recorded as `launch-email-v1`; both known versions are accepted during rollout, and unknown or malformed versions are rejected.
 
 Both a new subscription and an existing email return HTTP 200 with `{"ok":true}`. Duplicates preserve the original time, locale and consent. Only the 14 locales in the website manifest are accepted. Email addresses use ASCII mailbox syntax, are trimmed/lowercased, and must fit 254 characters. Errors return `{ "ok": false, "error": "…" }`: 400 invalid request/challenge, 403 origin/preflight, 405 method, 415 content type, 429 rate limit, or 503 unavailable. Unknown paths return 404. Responses use `no-store` and `nosniff`. There is no localhost bypass.
 

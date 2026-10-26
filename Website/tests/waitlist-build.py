@@ -48,9 +48,9 @@ with tempfile.TemporaryDirectory(prefix='currency-waitlist-') as directory:
         assert 'src="/project/waitlist.js?v=' in page
         assert 'href="/project/waitlist.css?v=' in page
         assert 'challenges.cloudflare.com' not in page
-        assert 'type="checkbox" required' in page
-        assert 'name="consent" type="checkbox" required checked' not in page
-        for key in ['title', 'intro', 'email', 'submit', 'consent', 'privacy', 'close']:
+        assert 'type="checkbox"' not in page
+        assert 'waitlist-consent' not in page
+        for key in ['title', 'intro', 'email', 'submit', 'privacy', 'close']:
             assert strings[locale['locale']][key] in unescape(page)
         assert 'https://apps.apple.com/app/id6816213577' in page
     config = json.loads((source / 'launch.json').read_text())
@@ -63,4 +63,4 @@ with tempfile.TemporaryDirectory(prefix='currency-waitlist-') as directory:
         assert 'challenges.cloudflare.com' not in page.read_text()
     assert not (output / 'waitlist.js').exists()
     assert not (output / 'waitlist.css').exists()
-print('PASS: waitlist copy in 14 locales, subpath assets/privacy, opt-in consent, private source exclusion and release flag')
+print('PASS: waitlist copy in 14 locales, subpath assets/privacy, consent on submission, private source exclusion and release flag')

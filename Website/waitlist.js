@@ -5,7 +5,6 @@
   const config = JSON.parse(document.querySelector('#waitlist-config').textContent);
   const form = dialog.querySelector('form');
   const email = form.elements.email;
-  const consent = form.elements.consent;
   const submit = form.querySelector('button[type="submit"]');
   const status = dialog.querySelector('[role="status"]');
   const challenge = dialog.querySelector('.waitlist-challenge');
@@ -13,7 +12,7 @@
   let token = '', widget, loader, session = 0, controller, opener;
   let pending = false;
   const update = () => {
-    submit.disabled = pending || !token || !consent.checked || !email.validity.valid;
+    submit.disabled = pending || !token || !email.validity.valid;
   };
   const message = (value, error = false) => {
     status.textContent = value;
@@ -59,7 +58,6 @@
   };
   document.querySelectorAll('.app-store-link').forEach(link => link.addEventListener('click', open));
   email.addEventListener('input', update);
-  consent.addEventListener('change', update);
   dialog.querySelector('.waitlist-close').addEventListener('click', () => dialog.close());
   dialog.addEventListener('click', event => { if (event.target === dialog) {
     const bounds = dialog.getBoundingClientRect();
@@ -76,7 +74,6 @@
     form.reset();
     form.hidden = false;
     email.disabled = false;
-    consent.disabled = false;
     submit.textContent = strings.submit;
     message('');
     update();
@@ -85,11 +82,10 @@
   });
   form.addEventListener('submit', async event => {
     event.preventDefault();
-    if (pending || !token || !consent.checked || !form.reportValidity()) return;
+    if (pending || !token || !form.reportValidity()) return;
     const current = session;
     pending = true;
     email.disabled = true;
-    consent.disabled = true;
     submit.textContent = strings.pending;
     message('');
     update();
@@ -103,7 +99,7 @@
         credentials: 'omit',
         referrerPolicy: 'no-referrer',
         signal: request.signal,
-        body: JSON.stringify({ email: email.value.trim(), consent: true, locale: config.locale, token })
+        body: JSON.stringify({ email: email.value.trim(), consent: true, consentVersion: 'launch-email-submit-v2', locale: config.locale, token })
       });
       if (!response.ok) throw new Error();
       if (current !== session) return;
@@ -125,7 +121,6 @@
         controller = undefined;
         pending = false;
         email.disabled = false;
-        consent.disabled = false;
         submit.textContent = strings.submit;
         update();
       }

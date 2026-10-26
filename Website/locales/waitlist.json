@@ -8,7 +8,6 @@
     "success": "You’re on the list. We’ll email you at launch.",
     "error": "Couldn’t save your email. Please try again.",
     "unavailable": "The signup form is temporarily unavailable. Please try again later.",
-    "consent": "Email me once when Currency launches.",
     "privacy": "Privacy policy",
     "close": "Close"
   },
@@ -21,7 +20,6 @@
     "success": "Du stehst auf der Liste. Wir mailen dir zum Start.",
     "error": "Deine E-Mail-Adresse konnte nicht gespeichert werden. Bitte versuche es erneut.",
     "unavailable": "Das Anmeldeformular ist vorübergehend nicht verfügbar. Bitte versuche es später erneut.",
-    "consent": "Sendet mir einmalig eine E-Mail, wenn Currency erscheint.",
     "privacy": "Datenschutzerklärung",
     "close": "Schließen"
   },
@@ -34,7 +32,6 @@
     "success": "Vous êtes sur la liste. Nous vous écrirons à la sortie.",
     "error": "Impossible d’enregistrer votre adresse. Veuillez réessayer.",
     "unavailable": "Le formulaire est temporairement indisponible. Veuillez réessayer plus tard.",
-    "consent": "Envoyez-moi un seul e-mail à la sortie de Currency.",
     "privacy": "Politique de confidentialité",
     "close": "Fermer"
   },
@@ -47,7 +44,6 @@
     "success": "Ya estás en la lista. Te escribiremos cuando se lance.",
     "error": "No se ha podido guardar tu correo. Inténtalo de nuevo.",
     "unavailable": "El formulario no está disponible temporalmente. Inténtalo más tarde.",
-    "consent": "Enviadme un único correo cuando se lance Currency.",
     "privacy": "Política de privacidad",
     "close": "Cerrar"
   },
@@ -60,7 +56,6 @@
     "success": "Sei nella lista. Ti scriveremo al lancio.",
     "error": "Impossibile salvare la tua email. Riprova.",
     "unavailable": "Il modulo non è al momento disponibile. Riprova più tardi.",
-    "consent": "Inviatemi una sola email quando esce Currency.",
     "privacy": "Informativa sulla privacy",
     "close": "Chiudi"
   },
@@ -73,7 +68,6 @@
     "success": "Você está na lista. Enviaremos um e-mail no lançamento.",
     "error": "Não foi possível salvar seu e-mail. Tente novamente.",
     "unavailable": "O formulário está temporariamente indisponível. Tente mais tarde.",
-    "consent": "Quero receber um único e-mail quando o Currency for lançado.",
     "privacy": "Política de privacidade",
     "close": "Fechar"
   },
@@ -86,7 +80,6 @@
     "success": "登録しました。リリース時にメールでお知らせします。",
     "error": "メールアドレスを保存できませんでした。もう一度お試しください。",
     "unavailable": "現在、登録フォームを利用できません。しばらくしてからお試しください。",
-    "consent": "Currencyのリリース時に1回だけメールを受け取ります。",
     "privacy": "プライバシーポリシー",
     "close": "閉じる"
   },
@@ -99,7 +92,6 @@
     "success": "등록되었습니다. 출시하면 이메일로 알려드릴게요.",
     "error": "이메일을 저장하지 못했습니다. 다시 시도해 주세요.",
     "unavailable": "지금은 등록 양식을 사용할 수 없습니다. 나중에 다시 시도해 주세요.",
-    "consent": "Currency 출시 시 이메일을 한 번 받는 데 동의합니다.",
     "privacy": "개인정보 처리방침",
     "close": "닫기"
   },
@@ -112,7 +104,6 @@
     "success": "Listeye eklendiniz. Yayınlandığında e-posta göndereceğiz.",
     "error": "E-posta adresiniz kaydedilemedi. Lütfen tekrar deneyin.",
     "unavailable": "Kayıt formu geçici olarak kullanılamıyor. Lütfen daha sonra tekrar deneyin.",
-    "consent": "Currency yayınlandığında bir kez e-posta almak istiyorum.",
     "privacy": "Gizlilik politikası",
     "close": "Kapat"
   },
@@ -125,7 +116,6 @@
     "success": "Вы в списке. Напишем вам, когда приложение выйдет.",
     "error": "Не удалось сохранить адрес. Попробуйте ещё раз.",
     "unavailable": "Форма регистрации временно недоступна. Попробуйте позже.",
-    "consent": "Хочу получить одно письмо о выходе Currency.",
     "privacy": "Политика конфиденциальности",
     "close": "Закрыть"
   },
@@ -138,7 +128,6 @@
     "success": "Ви у списку. Напишемо вам, коли застосунок вийде.",
     "error": "Не вдалося зберегти адресу. Спробуйте ще раз.",
     "unavailable": "Форма реєстрації тимчасово недоступна. Спробуйте пізніше.",
-    "consent": "Хочу отримати один лист про вихід Currency.",
     "privacy": "Політика конфіденційності",
     "close": "Закрити"
   },
@@ -151,7 +140,6 @@
     "success": "已登记。上线时我们会发邮件通知你。",
     "error": "无法保存邮箱，请重试。",
     "unavailable": "登记表单暂时无法使用，请稍后重试。",
-    "consent": "我同意在 Currency 上线时接收一次邮件通知。",
     "privacy": "隐私政策",
     "close": "关闭"
   },
@@ -164,7 +152,6 @@
     "success": "已登記。上架時我們會寄信通知你。",
     "error": "無法儲存電子郵件地址，請再試一次。",
     "unavailable": "登記表單暫時無法使用，請稍後再試。",
-    "consent": "我同意在 Currency 上架時接收一次電子郵件通知。",
     "privacy": "隱私權政策",
     "close": "關閉"
   },
@@ -177,7 +164,6 @@
     "success": "Oled nimekirjas. Saadame sulle ilmumisel e-kirja.",
     "error": "E-posti aadressi ei saanud salvestada. Proovi uuesti.",
     "unavailable": "Liitumisvorm pole ajutiselt saadaval. Proovi hiljem uuesti.",
-    "consent": "Soovin ühte e-kirja, kui Currency ilmub.",
     "privacy": "Privaatsuspoliitika",
     "close": "Sulge"
   }

@@ -9,12 +9,12 @@ class Element {
   focus() { this.focused = true; }
 }
 function fixture(sitekey = 'public-test-key') {
-  const dialog = new Element(), form = new Element(), email = new Element(), consent = new Element(), button = new Element(), close = new Element(), status = new Element(), challenge = new Element(), link = new Element();
+  const dialog = new Element(), form = new Element(), email = new Element(), button = new Element(), close = new Element(), status = new Element(), challenge = new Element(), link = new Element();
   button.disabled = true;
-  form.elements = { email, consent };
+  form.elements = { email };
   form.querySelector = () => button;
-  form.reportValidity = () => email.validity.valid && consent.checked;
-  form.reset = () => { email.value = ''; consent.checked = false; email.validity.valid = false; };
+  form.reportValidity = () => email.validity.valid;
+  form.reset = () => { email.value = ''; email.validity.valid = false; };
   dialog.querySelector = selector => ({ form, '[role="status"]': status, '.waitlist-challenge': challenge, '.waitlist-close': close })[selector];
   dialog.showModal = () => { dialog.open = true; };
   dialog.close = () => { dialog.open = false; dialog.dispatch('close'); };
@@ -24,14 +24,12 @@ function fixture(sitekey = 'public-test-key') {
   const window = { turnstile: { render(element, value) { options = value; return 'widget'; }, reset() { resets++; }, remove() { removes++; } } };
   const document = { querySelector: selector => selector === '#launch-waitlist' ? dialog : { textContent: JSON.stringify(config) }, querySelectorAll: () => [link], documentElement: new Element(), head: { append: script => scripts.push(script) }, createElement: () => new Element() };
   vm.runInNewContext(source, { document, window, AbortController, setTimeout, clearTimeout, fetch: (url, init) => { requests.push({ url, ...init }); return response(url, init); } });
-  return { dialog, form, email, consent, button, close, status, link, scripts, requests, window, strings, get options() { return options; }, get resets() { return resets; }, get removes() { return removes; }, set response(callback) { response = callback; } };
+  return { dialog, form, email, button, close, status, link, scripts, requests, window, strings, get options() { return options; }, get resets() { return resets; }, get removes() { return removes; }, set response(callback) { response = callback; } };
 }
 function fill(view) {
   view.email.value = 'person@example.org';
   view.email.validity.valid = true;
   view.email.dispatch('input');
-  view.consent.checked = true;
-  view.consent.dispatch('change');
 }
 (async () => {
   const view = fixture();
@@ -45,16 +43,18 @@ function fill(view) {
   assert.equal(view.button.disabled, true);
   view.options.callback('token-one');
   assert.equal(view.button.disabled, false);
-  view.consent.checked = false;
-  view.consent.dispatch('change');
+  view.email.validity.valid = false;
+  view.email.dispatch('input');
   assert.equal(view.button.disabled, true);
-  view.consent.checked = true;
+  await view.form.dispatch('submit');
+  assert.equal(view.requests.length, 0);
+  fill(view);
   view.response = async () => ({ ok: false });
   await view.form.dispatch('submit');
   assert.equal(view.status.textContent, view.strings.error);
   assert.equal(view.resets, 1);
   assert.equal(view.button.disabled, true);
-  assert.deepEqual(JSON.parse(view.requests[0].body), { email: 'person@example.org', consent: true, locale: 'en-US', token: 'token-one' });
+  assert.deepEqual(JSON.parse(view.requests[0].body), { email: 'person@example.org', consent: true, consentVersion: 'launch-email-submit-v2', locale: 'en-US', token: 'token-one' });
   assert.equal(view.requests[0].credentials, 'omit');
   view.options.callback('token-two');
   view.response = async () => ({ ok: true });
@@ -63,7 +63,6 @@ function fill(view) {
   assert.equal(view.form.hidden, true);
   assert.equal(view.email.value, '');
   view.close.dispatch('click');
-  assert.equal(view.consent.checked, false);
   assert.equal(view.form.hidden, false);
   assert.equal(view.status.textContent, '');
   assert.equal(view.link.focused, true);
@@ -107,5 +106,5 @@ function fill(view) {
   lazy.scripts[0].onload();
   await opening;
   assert.equal(lazy.options, undefined);
-  console.log('PASS: consent/email/token gating, lazy loading, generic outcomes, token reset and close/reopen request isolation');
+  console.log('PASS: email/token gating and consent on submission, lazy loading, generic outcomes, token reset and close/reopen request isolation');
 })().catch(error => { console.error(error); process.exitCode = 1; });
