@@ -49,7 +49,7 @@ class LocalizedHTML(HTMLParser):
         if value.startswith(('https:','http:','mailto:','data:')):return value
         clean=value.removeprefix('../')
         if clean.startswith('assets/'):return asset(self.item,clean[7:],self.prefix)
-        if clean.startswith(('style.css','legal.css','calculator.css','landing.js','calculator.js')):return self.prefix+clean
+        if clean.startswith(('style.css','legal.css','calculator.css','landing.js','calculator.js','navigation.js')):return self.prefix+clean
         if clean in ['support/','support/index.html']:return route(self.item,'support',self.prefix)
         if clean in ['privacy/','terms/']:return self.prefix+clean
         if value in ['../','./']:return route(self.item,'',self.prefix)
