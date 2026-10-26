@@ -6,7 +6,7 @@
   "workers_dev": false,
   "preview_urls": false,
   "routes": [{ "pattern": "waitlist.currency.dimasike.com", "custom_domain": true }],
-  "observability": { "enabled": false },
+  "observability": { "enabled": true },
   "d1_databases": [{
     "binding": "DB",
     "database_name": "currency-waitlist",
