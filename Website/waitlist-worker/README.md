@@ -1,6 +1,6 @@
 # Launch email waitlist
 
-A dependency-free Cloudflare Worker serves `POST https://waitlist.currency.dimasike.com/api/waitlist` from `https://currency.dimasike.com` only. It stores normalized email, UTC creation time, website locale and consent version (`launch-email-v1`) in private D1. It sends no email and has no public read/export/delete endpoint. Origin validation and CORS restrict browsers; Turnstile and rate limiting also protect requests made outside browsers.
+A dependency-free Cloudflare Worker serves `POST https://currency-waitlist.dimasike.com/api/waitlist` from `https://currency.dimasike.com` only. It stores normalized email, UTC creation time, website locale and consent version (`launch-email-v1`) in private D1. It sends no email and has no public read/export/delete endpoint. Origin validation and CORS restrict browsers; Turnstile and rate limiting also protect requests made outside browsers.
 
 Request (`Content-Type: application/json`, maximum 4,096 UTF-8 bytes):
 
@@ -24,7 +24,7 @@ Tests execute the production handler and migration with real in-memory SQLite, w
 
 Use an existing Cloudflare account on Workers Free. From this directory, use an approved Wrangler 4.36+ installation. Keep credentials in Cloudflare's authenticated session and secret storage; never place them in source, command arguments, shell history, logs or a PR.
 
-1. Confirm `dimasike.com` is active in Cloudflare. Use Worker `currency-launch-waitlist` with custom domain `waitlist.currency.dimasike.com`. This dedicated host serves `/api/waitlist`; the website stays on its existing GitHub Pages DNS configuration. Set the frontend endpoint to the full HTTPS URL above.
+1. Confirm `dimasike.com` is active in Cloudflare. Use Worker `currency-launch-waitlist` with custom domain `currency-waitlist.dimasike.com`. This dedicated host serves `/api/waitlist`; the website stays on its existing GitHub Pages DNS configuration. Set the frontend endpoint to the full HTTPS URL above.
 2. Use the existing D1 database named `currency-waitlist`; its public database identifier is configured in `wrangler.jsonc`. Keep the `DB` binding private. Apply `migrations/0001_waitlist.sql` to this database before enabling the form: `wrangler d1 migrations apply currency-waitlist --remote`.
 3. Create a Turnstile widget restricted to `currency.dimasike.com`. The public sitekey belongs in the frontend. Configure its client action as `waitlist`. Store the private secret in the Worker's encrypted `TURNSTILE_SECRET` binding using the dashboard secret field or `wrangler secret put TURNSTILE_SECRET`'s interactive prompt. Never paste a secret into a command argument or transcript. Do not use Turnstile's test keys in production.
 4. Use the account’s distinct rate namespace ID (config starts at `1001`). The native `WAITLIST_RATE_LIMITER` binding was successfully provisioned at 5 requests / 60 seconds on the existing Workers Free account without an upgrade. The [binding documentation](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/) defines its behavior. Missing/broken bindings fail closed with 503. Do not upgrade plans or remove the check to bypass a deployment rejection.
