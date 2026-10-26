@@ -99,7 +99,7 @@
         credentials: 'omit',
         referrerPolicy: 'no-referrer',
         signal: request.signal,
-        body: JSON.stringify({ email: email.value.trim(), consent: true, locale: config.locale, token })
+        body: JSON.stringify({ email: email.value.trim(), consent: true, consentVersion: 'launch-email-submit-v2', locale: config.locale, token })
       });
       if (!response.ok) throw new Error();
       if (current !== session) return;

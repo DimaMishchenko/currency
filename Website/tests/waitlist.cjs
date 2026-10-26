@@ -54,7 +54,7 @@ function fill(view) {
   assert.equal(view.status.textContent, view.strings.error);
   assert.equal(view.resets, 1);
   assert.equal(view.button.disabled, true);
-  assert.deepEqual(JSON.parse(view.requests[0].body), { email: 'person@example.org', consent: true, locale: 'en-US', token: 'token-one' });
+  assert.deepEqual(JSON.parse(view.requests[0].body), { email: 'person@example.org', consent: true, consentVersion: 'launch-email-submit-v2', locale: 'en-US', token: 'token-one' });
   assert.equal(view.requests[0].credentials, 'omit');
   view.options.callback('token-two');
   view.response = async () => ({ ok: true });

@@ -5,7 +5,7 @@ import test from 'node:test';
 import { createWorker } from '../src/index.js';
 
 const ORIGIN = 'https://currency.dimasike.com';
-const valid = { email: 'person@example.com', consent: true, locale: 'en-US', token: 'challenge-token' };
+const valid = { email: 'person@example.com', consent: true, consentVersion: 'launch-email-submit-v2', locale: 'en-US', token: 'challenge-token' };
 
 function setup(options = {}) {
   const database = new DatabaseSync(':memory:');
@@ -91,6 +91,7 @@ test('accepts a maximum-length email with a maximum-length Turnstile token', asy
 });
 
 for (const patch of [
+  { consentVersion: 'unknown' }, { consentVersion: null }, { consentVersion: 2 },
   { consent: false }, { consent: 'true' }, { consent: undefined },
   { token: 't'.repeat(2049) }, { locale: 'en' }, { locale: 'xx' }, { token: '' }, { token: ' ' }, { token: undefined },
   { email: 'invalid' }, { email: 'a@b' }, { email: 'a..b@example.com' },
@@ -138,6 +139,15 @@ test('stores only normalized email, creation time, locale and consent version; d
   assert.ok(init.signal instanceof AbortSignal);
   assert.equal(first.headers.get('Cache-Control'), 'no-store');
   assert.equal(first.headers.get('X-Content-Type-Options'), 'nosniff');
+});
+
+test('preserves checkbox-era consent for already-open legacy forms during rollout', async () => {
+  const { request, database } = setup();
+  assert.equal((await request({ ...valid, consentVersion: undefined })).status, 200);
+  const before = database.prepare('SELECT * FROM waitlist').get();
+  assert.equal(before.consent_version, 'launch-email-v1');
+  assert.equal((await request(valid)).status, 200);
+  assert.deepEqual(database.prepare('SELECT * FROM waitlist').get(), before);
 });
 
 test('all website locales are accepted and stay in sync with the manifest', async () => {

@@ -2,6 +2,7 @@ const ORIGIN = 'https://currency.dimasike.com';
 const HOSTNAME = 'currency.dimasike.com';
 const MAX_BODY_BYTES = 4096;
 const CONSENT_VERSION = 'launch-email-submit-v2';
+const LEGACY_CONSENT_VERSION = 'launch-email-v1';
 const LOCALES = new Set(['en-US', 'de-DE', 'fr-FR', 'es-ES', 'it', 'pt-BR', 'ja', 'ko', 'tr', 'ru', 'uk', 'zh-Hans', 'zh-Hant', 'et']);
 const INSERT = 'INSERT INTO waitlist (email, created_at, locale, consent_version) VALUES (?, ?, ?, ?) ON CONFLICT(email) DO NOTHING';
 
@@ -85,6 +86,8 @@ export function createWorker({ verifyFetch = globalThis.fetch } = {}) {
           return reply(400, 'invalid_request', true);
         }
         if (!data || typeof data !== 'object' || Array.isArray(data)) return reply(400, 'invalid_request', true);
+        const consentVersion = data.consentVersion === undefined ? LEGACY_CONSENT_VERSION : data.consentVersion;
+        if (consentVersion !== CONSENT_VERSION && consentVersion !== LEGACY_CONSENT_VERSION) return reply(400, 'invalid_request', true);
         const email = validatedEmail(data.email);
         if (!email || data.consent !== true || !LOCALES.has(data.locale) || typeof data.token !== 'string' || !data.token.trim() || data.token.length > 2048) return reply(400, 'invalid_request', true);
         const verification = await verifyFetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
@@ -95,7 +98,7 @@ export function createWorker({ verifyFetch = globalThis.fetch } = {}) {
         if (!verification.ok) return reply(503, 'unavailable', true);
         const challenge = await verification.json();
         if (challenge.success !== true || challenge.hostname !== HOSTNAME || challenge.action !== 'waitlist') return reply(400, 'verification_failed', true);
-        const result = await env.DB.prepare(INSERT).bind(email, new Date().toISOString(), data.locale, CONSENT_VERSION).run();
+        const result = await env.DB.prepare(INSERT).bind(email, new Date().toISOString(), data.locale, consentVersion).run();
         if (result.success !== true) return reply(503, 'unavailable', true);
         return reply(200, null, true);
       } catch {
