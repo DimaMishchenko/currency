@@ -1,0 +1,100 @@
+[
+  {
+    "locale": "en-US",
+    "path": "",
+    "name": "English",
+    "assets": "en-US",
+    "ogLocale": "en_US"
+  },
+  {
+    "locale": "de-DE",
+    "path": "de",
+    "name": "Deutsch",
+    "assets": "de-DE",
+    "ogLocale": "de_DE"
+  },
+  {
+    "locale": "fr-FR",
+    "path": "fr",
+    "name": "Français",
+    "assets": "fr-FR",
+    "ogLocale": "fr_FR"
+  },
+  {
+    "locale": "es-ES",
+    "path": "es",
+    "name": "Español",
+    "assets": "es-ES",
+    "ogLocale": "es_ES"
+  },
+  {
+    "locale": "it",
+    "path": "it",
+    "name": "Italiano",
+    "assets": "it",
+    "ogLocale": "it_IT"
+  },
+  {
+    "locale": "pt-BR",
+    "path": "pt-br",
+    "name": "Português",
+    "assets": "pt-BR",
+    "ogLocale": "pt_BR"
+  },
+  {
+    "locale": "ja",
+    "path": "ja",
+    "name": "日本語",
+    "assets": "ja",
+    "ogLocale": "ja_JP"
+  },
+  {
+    "locale": "ko",
+    "path": "ko",
+    "name": "한국어",
+    "assets": "ko",
+    "ogLocale": "ko_KR"
+  },
+  {
+    "locale": "tr",
+    "path": "tr",
+    "name": "Türkçe",
+    "assets": "tr",
+    "ogLocale": "tr_TR"
+  },
+  {
+    "locale": "ru",
+    "path": "ru",
+    "name": "Русский",
+    "assets": "ru",
+    "ogLocale": "ru_RU"
+  },
+  {
+    "locale": "uk",
+    "path": "uk",
+    "name": "Українська",
+    "assets": "uk",
+    "ogLocale": "uk_UA"
+  },
+  {
+    "locale": "zh-Hans",
+    "path": "zh-hans",
+    "name": "简体中文",
+    "assets": "zh-Hans",
+    "ogLocale": "zh_CN"
+  },
+  {
+    "locale": "zh-Hant",
+    "path": "zh-hant",
+    "name": "繁體中文",
+    "assets": "zh-Hant",
+    "ogLocale": "zh_TW"
+  },
+  {
+    "locale": "et",
+    "path": "et",
+    "name": "Eesti",
+    "assets": "en-US",
+    "ogLocale": "et_EE"
+  }
+]

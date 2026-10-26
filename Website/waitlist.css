@@ -1,0 +1,50 @@
+html.waitlist-open { overflow: hidden; }
+.waitlist-dialog {
+  box-sizing: border-box;
+  width: min(450px, calc(100% - 24px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 36px 32px 28px;
+  border: 1px solid rgba(0, 122, 255, .12);
+  border-radius: 28px;
+  background: #fff;
+  color: #172238;
+  box-shadow: 0 24px 100px #0b234042;
+  font-family: Nunito, sans-serif;
+  overflow-y: auto;
+}
+.waitlist-dialog::backdrop { background: #12223885; backdrop-filter: blur(6px); }
+.waitlist-close {
+  position: absolute; top: 12px; right: 12px; width: 34px; height: 34px;
+  border: 0; border-radius: 50%; background: #f0f4fa; color: #53647c;
+  font-size: 25px; line-height: 1; cursor: pointer;
+}
+.waitlist-symbol {
+  display: grid; place-items: center; width: 52px; height: 52px; margin-bottom: 20px;
+  color: #007aff; background: #eaf4ff; border-radius: 16px; font-size: 28px;
+}
+.waitlist-dialog h2 { margin: 0 0 10px; font-size: 28px; line-height: 1.16; letter-spacing: -.7px; }
+.waitlist-intro { margin: 0 0 24px; color: #5b6b80; font-size: 16px; line-height: 1.5; }
+.waitlist-email-label { display: block; margin-bottom: 7px; font-size: 14px; font-weight: 800; }
+.waitlist-dialog input[type="email"] {
+  box-sizing: border-box; width: 100%; min-height: 48px; padding: 11px 14px;
+  border: 1px solid #cdd8e6; border-radius: 12px; background: #fbfdff;
+  color: inherit; font: inherit; font-size: 16px;
+}
+.waitlist-challenge { margin: 16px 0; min-width: 0; }
+.waitlist-submit { width: 100%; min-height: 48px; padding: 12px; border: 0; border-radius: 12px; background: #007aff; color: #fff; font: inherit; font-weight: 800; cursor: pointer; }
+.waitlist-submit:disabled { background: #e3ebf5; color: #66778e; cursor: default; }
+.waitlist-dialog :focus-visible { outline: 3px solid #007aff; outline-offset: 3px; }
+.waitlist-status { margin: 16px 0 0; color: #246544; line-height: 1.5; }
+.waitlist-status:empty { display: none; }
+.waitlist-status.waitlist-error { color: #a02d38; }
+.waitlist-privacy { margin: 18px 0 0; text-align: center; font-size: 13px; }
+.waitlist-privacy a { color: #53647c; text-underline-offset: 3px; }
+@media (max-width: 360px) {
+  .waitlist-dialog { width: calc(100% - 24px); padding: 36px 22px 24px; border-radius: 22px; }
+  .waitlist-dialog h2 { font-size: 25px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .waitlist-dialog[open] { animation: waitlist-appear .18s ease-out; }
+  @keyframes waitlist-appear { from { opacity: 0; transform: translateY(8px); } }
+}

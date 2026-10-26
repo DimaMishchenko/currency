@@ -118,6 +118,18 @@ class PlannerTests(unittest.TestCase):
         workflow = (SCRIPT.resolve().parents[2] / '.github/workflows/app-store-validation.yml').read_text()
         self.assertIn("'Marketing/AppStore/**'", workflow)
 
+    def test_website_only_updates_do_not_build_or_publish_app_binaries(self):
+        paths = ['Website/index.html', 'Website/calculator.js', 'Website/locales/ja.json',
+                 'Website/assets/phone.webp', '.github/workflows/website.yml']
+        for force_full in (False, True):
+            plan = self.plan(paths, full=force_full)
+            self.assertFalse(any(plan[key] for key in planner.FLAGS))
+        workflow = (SCRIPT.resolve().parents[2] / '.github/workflows/website.yml').read_text()
+        self.assertIn("'Website/**'", workflow)
+        plan = self.plan(paths + ['Features/UI/Sources/UI/Existing.swift'])
+        self.assertTrue(plan['xcode'])
+        self.assertTrue(plan['publish'])
+
     def test_app_store_edits_do_not_suppress_accompanying_native_changes(self):
         plan = self.plan(['Marketing/AppStore/metadata.json', 'Features/UI/Sources/UI/Existing.swift'])
         for key in ('unit_tests', 'app', 'intents', 'harnesses', 'publish'):

@@ -195,7 +195,9 @@ class UploaderTests(unittest.TestCase):
             self.assertEqual(version, {key: value for key, value in fields.items() if key in u.VERSION_FIELDS})
             self.assertNotIn('locale', info)
             self.assertNotIn('contextualPromotionalText', version)
-            self.assertNotIn('supportUrl', version)
+            self.assertEqual(info['privacyPolicyUrl'], fields['privacyPolicyUrl'])
+            self.assertEqual(version['supportUrl'], fields['supportUrl'])
+            self.assertEqual(version['marketingUrl'], fields['marketingUrl'])
         self.assertNotIn('PRIVATE_KEY', ''.join(path.read_text() for path in paths))
 
     def test_canonical_metadata_rejects_null_empty_and_default_fallback(self):
