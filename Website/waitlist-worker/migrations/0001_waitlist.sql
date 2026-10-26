@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS waitlist (
+  email TEXT PRIMARY KEY NOT NULL COLLATE NOCASE,
+  created_at TEXT NOT NULL,
+  locale TEXT NOT NULL,
+  consent_version TEXT NOT NULL
+);

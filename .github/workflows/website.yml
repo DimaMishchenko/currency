@@ -35,6 +35,11 @@ jobs:
           node-version: '24'
       - name: Check calculator behavior
         run: node Website/tests/calculator.cjs
+      - name: Check launch waitlist
+        run: |
+          node --test Website/waitlist-worker/test/worker.test.js
+          node Website/tests/waitlist.cjs
+          python3 Website/tests/waitlist-build.py
       - name: Check preview and localization
         run: |
           python3 Website/scripts/build.py --output "$RUNNER_TEMP/website-preview"

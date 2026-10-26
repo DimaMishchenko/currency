@@ -1,6 +1,6 @@
 # Currency website
 
-One landing and an illustrated widget setup guide per locale, plus canonical English privacy and terms pages. `Documentation/PrivacyPolicy.md` and `Documentation/TermsOfUse.md` own policy copy. No tracking, accounts, runtime CDN or automatic language redirects.
+One landing and an illustrated widget setup guide per locale, plus canonical English privacy and terms pages. `Documentation/PrivacyPolicy.md` and `Documentation/TermsOfUse.md` own policy copy. No tracking, accounts or automatic language redirects. The prelaunch email form loads Cloudflare Turnstile only when opened.
 
 ## Build and review
 
@@ -11,6 +11,8 @@ python3 Website/scripts/build.py
 python3 Website/scripts/serve.py
 python3 Website/scripts/check-seo.py --directory Website/.local/dist
 node Website/tests/calculator.cjs
+node Website/tests/waitlist.cjs
+python3 Website/tests/waitlist-build.py
 node Website/tests/localization.cjs Website/.local/dist
 ```
 
@@ -26,9 +28,15 @@ python3 Website/scripts/prepare-review.py --site-dir Website/.local/dist --all-l
 
 This creates review frames for landing/Support in all locales at 320, 390, 768, 1024 and 1280 pixels. Check actual language switching, tab images and keyboard navigation, calculator input, support anchors, FAQs, translated wrapping and system Reduce Motion in the browser. No app code changes or simulator tests are needed.
 
+## Launch waitlist
+
+`launch.json` controls the launch state and contains only the public signup endpoint and Turnstile site key. With `prelaunch: true`, every App Store link opens the localized signup dialog; official Apple badges remain unchanged. Set the public site key before publishing and configure its allowed hostname as `currency.dimasike.com`. The managed challenge is loaded only after opening the dialog. Submissions require a valid email, an unchecked-by-default consent checkbox and a fresh challenge token.
+
+The Worker stores signups in a private Cloudflare D1 database for one manual launch notification. No mailing service is connected. The browser keeps no email in storage or URLs and clears the field on success or close. See `waitlist-worker/README.md` for deployment and retention operations. Set `prelaunch: false` and rebuild to restore direct App Store links and remove the form and challenge integration.
+
 ## Deployment
 
-The `Website` workflow validates pull requests and deploys changes on `main` to GitHub Pages. A manual run on `main` also redeploys. It uses the built-in GitHub token and Pages OIDC, with no additional secrets or external hosting. Only the production output is uploaded; source scripts, tests and local evidence are excluded.
+The `Website` workflow validates pull requests and deploys changes on `main` to GitHub Pages. A manual run on `main` also redeploys. It uses the built-in GitHub token and Pages OIDC, without additional deployment secrets. The optional waitlist Worker and D1 database are deployed separately. Only the production output is uploaded; source scripts, tests and local evidence are excluded.
 
 In repository Settings → Pages, select **GitHub Actions** as the publishing source before the first deployment. The initial address is `https://dimamishchenko.github.io/currency/`. The workflow reads Pages' configured URL, so routes, canonical links, language alternates and the sitemap match the active host and path. No `CNAME` is committed. Configure `currency.dimasike.com` and DNS later in Pages settings, then rerun the workflow to rebuild for that domain.
 

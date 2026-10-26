@@ -6,7 +6,7 @@ from html import unescape, escape as html_escape
 from localization import LOCALES, SOURCE, catalog, localize, route, asset, language_menu
 
 root=Path(__file__).resolve().parents[1]
-parser=argparse.ArgumentParser(description='Build the static Currency website without hosted services or tracking.')
+parser=argparse.ArgumentParser(description='Build the static Currency website.')
 parser.add_argument('--output',type=Path,default=root/'.local/dist')
 parser.add_argument('--base-url',default='https://currency.dimasike.com/')
 parser.add_argument('--production',action='store_true')
@@ -21,6 +21,40 @@ if out==root or root.is_relative_to(out):parser.error('Output cannot replace the
 if out.is_relative_to(root) and not out.is_relative_to(root/'.local'):parser.error('Outputs inside Website must stay in .local/.')
 if args.production and (out/'review').exists():parser.error('Choose a fresh production output directory; this output contains browser review frames.')
 out.mkdir(parents=True,exist_ok=True)
+launch=json.loads((root/'launch.json').read_text())
+if not isinstance(launch.get('prelaunch'),bool):parser.error('launch.json requires a boolean prelaunch flag.')
+if set(launch)!={'prelaunch','endpoint','sitekey'}:parser.error('launch.json must contain only prelaunch, endpoint and sitekey.')
+if not isinstance(launch['sitekey'],str):parser.error('launch.json sitekey must be a string.')
+endpoint=urlsplit(launch['endpoint'])
+if endpoint.scheme!='https' or not endpoint.hostname or endpoint.username or endpoint.password or endpoint.query or endpoint.fragment:
+    parser.error('The waitlist endpoint must be HTTPS without credentials, query or fragment.')
+waitlist_copy=json.loads((root/'locales/waitlist.json').read_text())
+if not launch['prelaunch']:
+    for name in ['waitlist.css','waitlist.js']:(out/name).unlink(missing_ok=True)
+
+def inject_waitlist(s,item,prefix):
+    if not launch['prelaunch'] or not re.search(r'class="[^"]*\bapp-store-link\b',s):return s
+    copy=waitlist_copy[item['locale']]
+    def t(key):return html_escape(copy[key],quote=True)
+    language={'zh-Hans':'zh-cn','zh-Hant':'zh-tw','et':'en'}.get(item['locale'],item['locale'].split('-')[0])
+    config={key:launch[key] for key in ['endpoint','sitekey']}
+    config.update(locale=item['locale'],language=language,strings=copy)
+    encoded=json.dumps(config,ensure_ascii=False,separators=(',',':')).replace('<',r'\u003c')
+    markup='<dialog id="launch-waitlist" class="waitlist-dialog" aria-labelledby="waitlist-title" aria-describedby="waitlist-intro">'
+    markup+='<button class="waitlist-close" type="button" aria-label="'+t('close')+'">×</button><div class="waitlist-symbol" aria-hidden="true">✉</div>'
+    markup+='<h2 id="waitlist-title">'+t('title')+'</h2><p id="waitlist-intro" class="waitlist-intro">'+t('intro')+'</p>'
+    markup+='<form><label class="waitlist-email-label" for="waitlist-email">'+t('email')+'</label>'
+    markup+='<input id="waitlist-email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" required>'
+    markup+='<label class="waitlist-consent"><input name="consent" type="checkbox" required><span>'+t('consent')+'</span></label>'
+    markup+='<div class="waitlist-challenge"></div><button class="waitlist-submit" type="submit" disabled>'+t('submit')+'</button></form>'
+    markup+='<p class="waitlist-status" role="status" aria-live="polite" tabindex="-1"></p><p class="waitlist-privacy"><a href="'+prefix+'privacy/">'+t('privacy')+'</a></p></dialog>'
+    markup+='<script type="application/json" id="waitlist-config">'+encoded+'</script>'
+    for name,tag in [('waitlist.css','link'),('waitlist.js','script')]:
+        digest=hashlib.sha256((root/name).read_bytes()).hexdigest()[:10]
+        url=prefix+name+'?v='+digest
+        if tag=='link':s=s.replace('</head>','<link rel="stylesheet" href="'+url+'"></head>')
+        else:markup+='<script src="'+url+'" defer></script>'
+    return s.replace('</body>',markup+'</body>')
 
 def render_policy(name):
     documentation=root.parent/'Documentation'
@@ -52,8 +86,9 @@ if not prefix.endswith('/'):prefix+='/'
 allowed={'.css','.js','.webp','.png','.ttf','.txt','.svg'}
 for p in root.rglob('*'):
     relative=p.relative_to(root)
-    if any(part.startswith('.') or part in {'scripts','tests','locales'} for part in relative.parts):continue
+    if any(part.startswith('.') or part in {'scripts','tests','locales','waitlist-worker'} for part in relative.parts):continue
     if not p.is_file() or p.suffix not in allowed:continue
+    if not launch['prelaunch'] and relative.as_posix() in {'waitlist.js','waitlist.css'}:continue
     target=out/relative;target.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(p,target)
 
 pages=[]
@@ -75,6 +110,7 @@ for item,kind,p in pages:
     s=re.sub(r'(?:href|src)="([^"?]+(?:\?v=[a-z0-9]+)?)"',lambda m:version(m) if m[1].split('?')[0].endswith(('.css','.js')) else m[0],s)
     if kind in ['','support']:s=localize(s,item,kind,prefix)
     else:s=s.replace('<!-- language-picker -->',language_menu(item,'',prefix,catalog(item['locale'])))
+    s=inject_waitlist(s,item,prefix)
     if args.production:
         canonical=urljoin(base,path)
         data=catalog(item['locale'])
