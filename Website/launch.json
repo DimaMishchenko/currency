@@ -1,5 +1,5 @@
 {
   "prelaunch": true,
-  "endpoint": "https://currency-waitlist.dimasike.com/api/waitlist",
+  "endpoint": "https://currency-signup.dimasike.com/api/waitlist",
   "sitekey": "0x4AAAAAAFmZnpZGJaae4cli"
 }
