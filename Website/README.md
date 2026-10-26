@@ -30,7 +30,7 @@ This creates review frames for landing/Support in all locales at 320, 390, 768, 
 
 ## Launch waitlist
 
-`launch.json` controls the launch state and contains only the public signup endpoint and Turnstile site key. With `prelaunch: true`, every App Store link opens the localized signup dialog; official Apple badges remain unchanged. Set the public site key before publishing and configure its allowed hostname as `currency.dimasike.com`. The managed challenge is loaded only after opening the dialog. Submissions require a valid email, an unchecked-by-default consent checkbox and a fresh challenge token.
+`launch.json` controls the launch state and contains only the public signup endpoint and Turnstile site key. With `prelaunch: true`, every App Store link opens the localized signup dialog; official Apple badges remain unchanged. Set the public site key before publishing and configure its allowed hostname as `currency.dimasike.com`. The managed challenge is loaded only after opening the dialog. Submitting the launch notification form expresses consent to the one launch email described above the field and on the button. Submissions require a valid email and a fresh challenge token.
 
 The Worker stores signups in a private Cloudflare D1 database for one manual launch notification. No mailing service is connected. The browser keeps no email in storage or URLs and clears the field on success or close. See `waitlist-worker/README.md` for deployment and retention operations. Set `prelaunch: false` and rebuild to restore direct App Store links and remove the form and challenge integration.
 

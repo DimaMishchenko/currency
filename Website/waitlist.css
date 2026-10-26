@@ -31,8 +31,6 @@ html.waitlist-open { overflow: hidden; }
   border: 1px solid #cdd8e6; border-radius: 12px; background: #fbfdff;
   color: inherit; font: inherit; font-size: 16px;
 }
-.waitlist-consent { display: flex; gap: 10px; align-items: flex-start; margin: 16px 0 8px; font-size: 14px; line-height: 1.5; color: #53647c; cursor: pointer; }
-.waitlist-consent input { flex: 0 0 18px; width: 18px; height: 18px; margin: 2px 0 0; accent-color: #007aff; }
 .waitlist-challenge { margin: 16px 0; min-width: 0; }
 .waitlist-submit { width: 100%; min-height: 48px; padding: 12px; border: 0; border-radius: 12px; background: #007aff; color: #fff; font: inherit; font-weight: 800; cursor: pointer; }
 .waitlist-submit:disabled { background: #e3ebf5; color: #66778e; cursor: default; }

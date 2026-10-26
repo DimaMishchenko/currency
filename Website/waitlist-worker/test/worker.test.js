@@ -127,7 +127,7 @@ test('stores only normalized email, creation time, locale and consent version; d
   assert.deepEqual(Object.keys(before), ['email', 'created_at', 'locale', 'consent_version']);
   assert.equal(before.email, 'person@example.com');
   assert.equal(before.locale, 'en-US');
-  assert.equal(before.consent_version, 'launch-email-v1');
+  assert.equal(before.consent_version, 'launch-email-submit-v2');
   assert.ok(Number.isFinite(Date.parse(before.created_at)));
   assert.equal(calls.verification.length, 2);
   const { url, init } = calls.verification[0];

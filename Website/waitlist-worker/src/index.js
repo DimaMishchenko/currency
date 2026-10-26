@@ -1,7 +1,7 @@
 const ORIGIN = 'https://currency.dimasike.com';
 const HOSTNAME = 'currency.dimasike.com';
 const MAX_BODY_BYTES = 4096;
-const CONSENT_VERSION = 'launch-email-v1';
+const CONSENT_VERSION = 'launch-email-submit-v2';
 const LOCALES = new Set(['en-US', 'de-DE', 'fr-FR', 'es-ES', 'it', 'pt-BR', 'ja', 'ko', 'tr', 'ru', 'uk', 'zh-Hans', 'zh-Hant', 'et']);
 const INSERT = 'INSERT INTO waitlist (email, created_at, locale, consent_version) VALUES (?, ?, ?, ?) ON CONFLICT(email) DO NOTHING';
 

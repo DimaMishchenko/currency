@@ -1,6 +1,6 @@
 # Launch email waitlist
 
-A dependency-free Cloudflare Worker serves `POST https://currency-signup.dimasike.com/api/waitlist` from `https://currency.dimasike.com` only. It stores normalized email, UTC creation time, website locale and consent version (`launch-email-v1`) in private D1. It sends no email and has no public read/export/delete endpoint. Origin validation and CORS restrict browsers; Turnstile and rate limiting also protect requests made outside browsers.
+A dependency-free Cloudflare Worker serves `POST https://currency-signup.dimasike.com/api/waitlist` from `https://currency.dimasike.com` only. It stores normalized email, UTC creation time, website locale and consent version (`launch-email-submit-v2`) in private D1. It sends no email and has no public read/export/delete endpoint. Origin validation and CORS restrict browsers; Turnstile and rate limiting also protect requests made outside browsers.
 
 Request (`Content-Type: application/json`, maximum 4,096 UTF-8 bytes):
 

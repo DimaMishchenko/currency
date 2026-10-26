@@ -45,7 +45,6 @@ def inject_waitlist(s,item,prefix):
     markup+='<h2 id="waitlist-title">'+t('title')+'</h2><p id="waitlist-intro" class="waitlist-intro">'+t('intro')+'</p>'
     markup+='<form><label class="waitlist-email-label" for="waitlist-email">'+t('email')+'</label>'
     markup+='<input id="waitlist-email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" required>'
-    markup+='<label class="waitlist-consent"><input name="consent" type="checkbox" required><span>'+t('consent')+'</span></label>'
     markup+='<div class="waitlist-challenge"></div><button class="waitlist-submit" type="submit" disabled>'+t('submit')+'</button></form>'
     markup+='<p class="waitlist-status" role="status" aria-live="polite" tabindex="-1"></p><p class="waitlist-privacy"><a href="'+prefix+'privacy/">'+t('privacy')+'</a></p></dialog>'
     markup+='<script type="application/json" id="waitlist-config">'+encoded+'</script>'
