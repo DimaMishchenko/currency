@@ -1,6 +1,6 @@
 # Currency website
 
-One landing and an illustrated widget setup guide per locale, plus canonical English privacy and terms pages. `Documentation/PrivacyPolicy.md` and `Documentation/TermsOfUse.md` own policy copy. No tracking, accounts or automatic language redirects. The prelaunch email form loads Cloudflare Turnstile only when opened.
+One landing and an illustrated widget setup guide per locale, plus canonical English privacy and terms pages. `Documentation/PrivacyPolicy.md` and `Documentation/TermsOfUse.md` own policy copy. No accounts or automatic language redirects. Production pages at `currency.dimasike.com` include cookie-free Cloudflare Web Analytics; preview and alternate-host builds omit the beacon. The shared `dimasike.com` analytics site records subdomain traffic separately by hostname. The prelaunch email form loads Cloudflare Turnstile only when opened.
 
 ## Build and review
 

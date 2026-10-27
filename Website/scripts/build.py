@@ -141,6 +141,8 @@ for item,kind,p in pages:
         structured=json.dumps({'@context':'https://schema.org','@graph':graph},separators=(',',':'),ensure_ascii=False).replace('<',r'\u003c')
         additions+='<script type="application/ld+json">'+structured+'</script>'
         s=s.replace('</head>',additions+'</head>')
+    if args.production and urlsplit(base).hostname == 'currency.dimasike.com':
+        s=s.replace('</body>', '<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon=\'{"token":"1cf62b2ecce54a9b823d2ba2fb72686b"}\'></script>'+'</body>')
     target.write_text(s)
 if args.production:
     locations=[route(item,kind,'/').lstrip('/') if kind in ['','support'] else kind+'/' for item,kind,_ in pages]
