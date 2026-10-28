@@ -119,7 +119,7 @@ for item,kind,p in pages:
         social=asset(item,'social.png',prefix)
         image=urljoin(base,social)
         image_alt=data['Currency on your Home Screen']
-        metadata={'og:type':'website','og:site_name':'Currency','og:locale':item['ogLocale'],'og:title':title,'og:description':description,'og:url':canonical,'og:image':image,'og:image:type':'image/png','og:image:width':'1200','og:image:height':'630','og:image:alt':image_alt,'twitter:card':'summary_large_image','twitter:title':title,'twitter:description':description,'twitter:image':image,'twitter:image:alt':image_alt}
+        metadata={'og:type':'website','og:site_name':'Currency','og:locale':item['ogLocale'],'og:title':title,'og:description':description,'og:url':canonical,'og:image':image,'og:image:type':'image/png','og:image:width':'1200','og:image:height':'630','og:image:alt':image_alt,'twitter:card':'summary_large_image','twitter:creator':'@dimasike_','twitter:title':title,'twitter:description':description,'twitter:image':image,'twitter:image:alt':image_alt}
         additions='<meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">'
         additions+='<link rel="canonical" href="'+html_escape(canonical,quote=True)+'">'
         if kind in ['','support']:
