@@ -79,6 +79,7 @@ for item,kind,path in entries:
         assert page.meta['og:url']==canonical
         assert page.meta['og:description']==page.meta['description']
         assert page.meta['twitter:card']=='summary_large_image'
+        assert page.meta['twitter:creator']=='@dimasike_'
         assert page.meta['twitter:description']==page.meta['description']
         assert len(page.json)==1
         assert any(n['@type']=='WebPage' and n['url']==canonical and n['inLanguage']==item['locale'] for n in page.json[0]['@graph'])
