@@ -4,7 +4,7 @@ import { readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect } from 'e2e';
 import { test } from '../fixtures.js';
-import { configureWidget, placeWidget, prepareWidgetHelper, unloadWidgetHelper, widgetSetupMethod } from '../simulator-widgets.js';
+import { configureWidget, placeWidget, prepareWidgetHelper, revealWidget, unloadWidgetHelper, widgetSetupMethod } from '../simulator-widgets.js';
 
 type Quote = { value: number; observedAt?: number; retrievedAt?: number };
 type Snapshot = { quotes: Record<string, Quote>; fetchedAt: number; checkedAt?: number };
@@ -28,6 +28,7 @@ test('tapping a captured widget quote opens its snapshot then adopts newer share
     parameters.comparison = { identifier: 'USD', title: { key: 'USD' }, subtitle: { key: 'USD' } };
     parameters.range = { identifier: 'week', value: 'week', title: { key: '1 week' } };
   });
+  await revealWidget('History', 'Medium');
   const widget = device.locator('id=Currency value=Widget');
   await expect(widget.getByLabel('One week', { exact: true })).toBeVisible({ timeout: 30_000 });
   await expect(widget.getByLabel('Rate change over the selected range', { exact: true }))
@@ -93,6 +94,8 @@ test('small History widget opens its day graph after a cold app launch', {
 }, async ({ start, app, device, screen, agent }) => {
   await prepareWidgetHelper();
   await start('ready-history-sync');
+  await expect(screen.getByRole('button', 'Edit amount in BTC')).toHaveValue('1');
+  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 52,500.00');
   await device.closeApp();
   await device.openApp('com.apple.springboard');
   await placeWidget('History', 'Small');
@@ -101,6 +104,7 @@ test('small History widget opens its day graph after a cold app launch', {
     parameters.comparison = { identifier: 'USD', title: { key: 'USD' }, subtitle: { key: 'USD' } };
     parameters.range = { identifier: 'day', value: 'day', title: { key: '1 day' } };
   });
+  await revealWidget('History', 'Small');
   const widget = device.locator('id=Currency value=Widget');
   await expect(widget.getByLabel('One day', { exact: true })).toBeVisible({ timeout: 30_000 });
   await widget.tap();
