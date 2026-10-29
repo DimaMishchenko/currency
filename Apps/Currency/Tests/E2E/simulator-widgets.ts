@@ -1,5 +1,4 @@
 import { createWidgetController, type WidgetController, type WidgetTarget } from 'widgetctl';
-import { setTimeout } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 
 const kinds: Record<string, string> = {
@@ -48,30 +47,8 @@ export async function prepareWidgetHelper() {
 export async function placeWidget(title: string, family: 'Small' | 'Medium' | 'Large', exclusive = true) {
   placementUsed = true;
   const selected = target(title, family);
-  await waitForWidgetDescriptor(selected);
+  await widgets().waitForWidgetDescriptor({ ...selected, container: 'com.dimasike.currency' }, { timeoutMs: 30_000 });
   await widgets().ensure(selected, { exclusive, replace: true, position: 'top' });
-}
-
-async function waitForWidgetDescriptor(selected: WidgetTarget) {
-  const started = performance.now();
-  const timeoutMessage = `Widget descriptor did not register within 30 seconds: ${JSON.stringify(selected)}.`;
-  for (;;) {
-    if (performance.now() - started >= 30_000) throw new Error(timeoutMessage);
-    const catalog = await widgets().catalog();
-    const matches = catalog.apps
-      .filter(app => app.bundleIdentifier === 'com.dimasike.currency')
-      .flatMap(app => app.widgets)
-      .filter(widget => widget.target.container === 'com.dimasike.currency'
-        && widget.target.extension === selected.extension && widget.target.kind === selected.kind
-        && widget.sizes.includes(selected.size));
-    const elapsed = performance.now() - started;
-    console.log(`Widget descriptor readiness: ${JSON.stringify({ target: selected, matches: matches.length, elapsedMilliseconds: Math.round(elapsed) })}`);
-    if (elapsed >= 30_000) throw new Error(timeoutMessage);
-    if (matches.length > 1) throw new Error(`Ambiguous installed widget descriptor for ${selected.kind} / ${selected.size}.`);
-    if (matches.length === 1) return;
-    const remaining = 30_000 - elapsed;
-    await setTimeout(Math.min(500, remaining));
-  }
 }
 
 export async function revealWidget(title: string, family: 'Small' | 'Medium' | 'Large') {
