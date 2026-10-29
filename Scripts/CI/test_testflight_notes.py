@@ -284,6 +284,9 @@ import sys
 args = sys.argv[1:]
 with Path(os.environ["ASC_LOG"]).open("a") as log:
     log.write(json.dumps(args) + "\n")
+if args[:2] == ["api", "GET"]:
+    print(json.dumps({"data": []}))
+    sys.exit(0)
 if args[:2] == ["publish", "testflight"]:
     print(json.dumps({"buildId": "build-42", "processingState": os.environ.get("UPLOAD_STATE", "VALID")}))
     sys.exit(int(os.environ.get("UPLOAD_EXIT", "0")))
@@ -303,7 +306,7 @@ sys.exit(2)
         asc.chmod(0o755)
         self.environment = dict(os.environ, PATH=str(binary) + os.pathsep + os.environ["PATH"],
                                 RUNNER_TEMP=str(self.root), GITHUB_OUTPUT=str(self.root / "output"),
-                                ASC_LOG=str(self.root / "asc.log"), ASC_APP_ID="app-42")
+                                ASC_LOG=str(self.root / "asc.log"), ASC_APP_ID="123", CURRENCY_MARKETING_VERSION="1.0")
         self.text = "Published change (abc1234)\n\nWhat to test\n- Check this exact change."
         (self.root / "CurrencyTestNotes.txt").write_text(self.text + "\n")
 
@@ -313,7 +316,8 @@ sys.exit(2)
                               capture_output=True, text=True)
 
     def commands(self):
-        return [json.loads(line) for line in (self.root / "asc.log").read_text().splitlines()]
+        return [args for line in (self.root / "asc.log").read_text().splitlines()
+                if (args := json.loads(line))[:2] != ["api", "GET"]]
 
     def promotion(self, legacy=False):
         (self.root / "CurrencyBuildId.txt").write_text("build-42\n")

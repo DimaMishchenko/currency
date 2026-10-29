@@ -77,6 +77,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: python3 Scripts/CI/testflight_notes.py --output-dir "$RUNNER_TEMP"
+      - name: Select unprotected marketing version
+        run: python3 Scripts/CI/release_version.py --app "$ASC_APP_ID"
       - name: Allocate build number
         run: bash Scripts/CI/release.sh allocate
       - name: Prepare certificate and profiles
@@ -105,6 +107,7 @@ jobs:
             -derivedDataPath "$RUNNER_TEMP/CurrencyReleaseDerivedData" \
             -archivePath "$RUNNER_TEMP/Currency.xcarchive" \
             "CURRENT_PROJECT_VERSION=$CURRENCY_BUILD_NUMBER" \
+            "MARKETING_VERSION=$CURRENCY_MARKETING_VERSION" \
             2>&1 | xcbeautify
       - name: Export IPA
         run: |
@@ -127,6 +130,7 @@ jobs:
           name: currency-release-build
           path: |
             ${{ runner.temp }}/CurrencyBuildId.txt
+            ${{ runner.temp }}/CurrencyMarketingVersion.txt
             ${{ runner.temp }}/CurrencyCommit.txt
             ${{ runner.temp }}/CurrencyTestNotes.txt
           if-no-files-found: error
