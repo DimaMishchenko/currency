@@ -66,7 +66,7 @@ for (const [title, family] of examples) {
         await expect.poll(async () => (await range.boundingBox())?.height ?? 0, { timeout: 30_000 })
           .toBeGreaterThan(baseline.height);
       }
-      await agent.waitFor(`The installed Currency widget on the Home Screen has readable EUR 1 and USD 2 after larger text was selected. Judge actual drawn glyphs: both complete currency codes and amounts must be visible without clipping or collisions between labels. ${title === 'Currency Calculator' ? 'Every keypad label remains readable inside its button.' : title === 'History' ? 'The percentage change and 1M range remain readable, with the graph present behind the text as designed.' : 'The original currency rows remain visible.'}`, { vision: 'only', timeout: 30_000 });
+      await agent.waitFor(`The installed Currency widget on the Home Screen has readable EUR 1 and USD 2 after larger text was selected. Judge actual drawn glyphs: both complete currency codes and amounts must be visible without clipping or collisions between labels. ${title === 'Currency Calculator' ? 'Every keypad label remains readable inside its button.' : title === 'History' ? 'The percentage change and 1M range remain readable, with the graph present behind the text as designed. Currency codes may be left aligned with their corresponding amounts right aligned; adjacency is not required.' : 'The original currency rows remain visible.'}`, { vision: 'only', timeout: 30_000 });
       await app.screenshot(`widget-text-${name}-ax5`);
 
       if (title === 'Currency Calculator' && family === 'Medium') {
