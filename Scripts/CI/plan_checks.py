@@ -21,7 +21,7 @@ POLICY = {'Scripts/CI/changes.sh', 'Scripts/CI/plan_checks.py',
           'Scripts/CI/check_swift_format.sh',
           'Scripts/CI/check_project_structure.py', 'Scripts/CI/test_project_structure.py'}
 RELEASE = {'Scripts/CI/signing.sh', 'Scripts/CI/profile_name.sh',
-           'Scripts/CI/release.sh', 'Scripts/CI/verify_ipa.sh',
+           'Scripts/CI/release.sh', 'Scripts/CI/release_version.py', 'Scripts/CI/verify_ipa.sh',
            '.github/workflows/publish.yml'}
 MODULE_README = re.compile(r'^(App|DesignSystem|Domain/[^/]+|Features/[^/]+|App/Modules/[^/]+|Apps/[^/]+|Apps/[^/]+/App|Apps/[^/]+/Modules/[^/]+|AppExtensions/[^/]+|Foundation/[^/]+)/README\.md$')
 TEST_PATH = re.compile(r'^(App/Tests/|App/Modules/[^/]+/Tests/|Apps/[^/]+/Tests/|Apps/[^/]+/Modules/[^/]+/Tests/|AppExtensions/[^/]+/Tests/|Foundation/[^/]+/Tests/|(DesignSystem|Domain/[^/]+|Features/[^/]+)/Tests/|(Domain/[^/]+|Features/[^/]+)/HarnessApp/)')
