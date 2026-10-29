@@ -41,6 +41,12 @@ test('fiat list amounts retain fractional zeros without changing saved input', {
   const amount = screen.getByRole('button', 'Edit amount in EUR');
   const dollars = screen.getByRole('button', /^US Dollar,/i);
   await expect(dollars).toHaveAccessibleName('US Dollar, 2.00');
+  const udid = process.env.CURRENCY_E2E_UDID?.trim();
+  assert.ok(udid, 'Copy amount must target the owned simulator');
+  const clipboard = () => execFileSync('xcrun', ['simctl', 'pbpaste', udid], { encoding: 'utf8' }).trim();
+  await dollars.longPress({ duration: 650 });
+  await screen.getByRole('button', 'Copy amount', { exact: true }).tap();
+  await expect.poll(clipboard, { timeout: 5_000 }).toBe('2.00');
   await amount.tap();
   for (const key of ['6', '1', 'Decimal separator', '6', '5']) {
     await screen.getByRole('button', key, { exact: true }).tap();
@@ -49,11 +55,6 @@ test('fiat list amounts retain fractional zeros without changing saved input', {
   await expect(amount).toHaveValue('61.65');
   await expect(dollars).toHaveAccessibleName('US Dollar, 123.30');
   await app.screenshot('fiat-list-123-30-usd');
-  const udid = process.env.CURRENCY_E2E_UDID?.trim();
-  assert.ok(udid, 'Copy amount must target the owned simulator');
-  execFileSync('xcrun', ['simctl', 'pbcopy', udid], { input: 'currency-e2e-before-fiat-copy' });
-  const clipboard = () => execFileSync('xcrun', ['simctl', 'pbpaste', udid], { encoding: 'utf8' }).trim();
-  await expect.poll(clipboard, { timeout: 5_000 }).toBe('currency-e2e-before-fiat-copy');
   await dollars.longPress({ duration: 650 });
   await screen.getByRole('button', 'Copy amount', { exact: true }).tap();
   await expect.poll(clipboard, { timeout: 5_000 }).toBe('123.30');
