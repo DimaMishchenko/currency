@@ -48,6 +48,29 @@ import Testing
     #expect(store.context(pairID, now: now)?.quote == "USD")
   }
 
+  @Test func historyDestinationsRetainDistinctPeriodsAndMeasurements() throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = WidgetQuoteContextStore(directory: directory)
+    let now = Date.now
+    let snapshot = fullSnapshot(now: now)
+    let ordinary = try #require(try store.save(snapshot, base: "BTC", quote: "USD", now: now))
+    let day = try #require(
+      try store.save(
+        snapshot, base: "BTC", quote: "USD", historyRange: .day, metalUnit: .gram, now: now))
+    let week = try #require(
+      try store.save(
+        snapshot, base: "BTC", quote: "USD", historyRange: .week, metalUnit: .gram, now: now))
+    #expect(ordinary != day)
+    #expect(day != week)
+    let id = try contextID(week)
+    let context = try #require(store.context(id, now: now))
+    #expect(context.historyRange == .week)
+    #expect(context.metalUnit == .gram)
+    #expect(store.context(try contextID(ordinary), now: now)?.historyRange == nil)
+    #expect(store.context(id, now: now.addingTimeInterval(WidgetQuoteContextStore.lifetime)) == nil)
+  }
+
   @Test func timelineSaveBypassesUnreadableLegacyAggregate() throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }

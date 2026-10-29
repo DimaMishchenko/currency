@@ -83,9 +83,11 @@ enum WidgetComposition {
           using: RateService(directory: directory), force: false,
           providerTimeout: .seconds(2))
       },
-      saveContext: { snapshot, pair, now in
+      saveContext: { snapshot, pair, range, now in
         try? WidgetQuoteContextStore(directory: directory)
-          .save(snapshot, base: pair.base, quote: pair.quote, now: now)
+          .save(
+            snapshot, base: pair.base, quote: pair.quote, historyRange: range,
+            metalUnit: pair.metalUnit, now: now)
       },
       synchronizeQuote: { base, quote, point in
         if (try? WidgetStore(directory: directory)

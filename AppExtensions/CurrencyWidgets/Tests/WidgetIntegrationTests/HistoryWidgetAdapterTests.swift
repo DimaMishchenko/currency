@@ -25,7 +25,8 @@ import Widgets
           rates.withLock { $0 = updated }
           return Self.historyResult(now: now)
         }, now: { now }, rates: { rates.withLock { $0 } },
-        saveContext: { snapshot, pair, _ in
+        saveContext: { snapshot, pair, range, _ in
+          #expect(range == .day)
           #expect(pair.base == "BTC")
           #expect(pair.quote == "USD")
           saved.withLock { $0 = snapshot }

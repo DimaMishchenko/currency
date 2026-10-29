@@ -16,9 +16,17 @@ public final class CurrencyScene {
     public let base: String?
     /// Configured comparison currency, or nil when the widget follows converter input.
     public let quote: String?
+    /// Period requested by a History widget, or nil for ordinary widget navigation.
+    public let historyRange: HistoryRange?
+    /// Captured widget measurement, when supplied.
+    public let metalUnit: MetalUnit?
     /// Creates a rendered quote context without changing saved converter input.
-    public init(snapshot: RateSnapshot, base: String? = nil, quote: String? = nil) {
+    public init(
+      snapshot: RateSnapshot, base: String? = nil, quote: String? = nil,
+      historyRange: HistoryRange? = nil, metalUnit: MetalUnit? = nil
+    ) {
       self.snapshot = snapshot; self.base = base; self.quote = quote
+      self.historyRange = historyRange; self.metalUnit = metalUnit
     }
   }
   /// One currency-details destination, identified independently of quote refreshes.
@@ -29,6 +37,10 @@ public final class CurrencyScene {
     public let request: HomeDetailsRequest
     /// External navigation has no mounted zoom source.
     public var usesZoom: Bool = true
+    /// Initial graph period carried by external navigation.
+    public var historyRange: HistoryRange = .month
+    /// Captured external measurement; ordinary details follow current preferences.
+    public var metalUnit: MetalUnit? = nil
     /// Compares flow identity rather than changing quote data.
     public static func == (lhs: Self, rhs: Self) -> Bool { lhs.id == rhs.id }
     /// Hashes the stable flow identity used by navigation.
@@ -173,7 +185,8 @@ public final class CurrencyScene {
         id: detail.id,
         request: HomeDetailsRequest(
           selectionID: detail.request.selectionID, code: detail.request.code,
-          reference: detail.request.reference, snapshot: snapshot), usesZoom: false)
+          reference: detail.request.reference, snapshot: snapshot), usesZoom: false,
+        historyRange: detail.historyRange, metalUnit: detail.metalUnit)
     }
   }
 
@@ -200,12 +213,15 @@ public final class CurrencyScene {
         ConversionDestination(code: quote).isValid
       {
         let input = readInput()
-        if input.source != base || !input.destinationRows.contains(where: { $0.code == quote }) {
+        if context.historyRange != nil || input.source != base
+          || !input.destinationRows.contains(where: { $0.code == quote })
+        {
           let destination = Details(
             id: UUID(),
             request: HomeDetailsRequest(
               selectionID: base, code: base, reference: quote, snapshot: context.snapshot),
-            usesZoom: false)
+            usesZoom: false, historyRange: context.historyRange ?? .month,
+            metalUnit: context.metalUnit)
           detail = destination
           widgetDetailsID = destination.id
         }

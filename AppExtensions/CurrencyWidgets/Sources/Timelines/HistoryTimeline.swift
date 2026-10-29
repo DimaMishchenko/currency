@@ -12,7 +12,9 @@ struct HistoryTimelineDependencies: Sendable {
   let now: @Sendable () -> Date
   var rates: @Sendable () -> RateSnapshot = { RateSnapshot() }
   var refreshRates: @Sendable () async -> Void = {}
-  var saveContext: @Sendable (RateSnapshot, HistoryWidgetPair, Date) -> URL? = { _, _, _ in nil }
+  var saveContext: @Sendable (RateSnapshot, HistoryWidgetPair, HistoryRange, Date) -> URL? = {
+    _, _, _, _ in nil
+  }
   var synchronizeQuote: @Sendable (String, String, HistoryPoint) -> Void = { _, _, _ in }
   var localSnapshot: @Sendable () -> (LocalCurrency.WidgetLocation?, WidgetLocationStatus) = {
     (nil, .notDetermined)
@@ -80,6 +82,6 @@ struct HistoryTimeline: AppIntentTimelineProvider {
       date: renderedAt,
       snapshot: snapshot,
       locationStatus: status,
-      openURL: persistContext ? dependencies.saveContext(rates, pair, renderedAt) : nil)
+      openURL: persistContext ? dependencies.saveContext(rates, pair, range, renderedAt) : nil)
   }
 }

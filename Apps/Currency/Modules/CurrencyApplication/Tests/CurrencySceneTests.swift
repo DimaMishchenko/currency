@@ -224,6 +224,34 @@ import Testing
     #expect(scene.widgetSnapshot == nil)
   }
 
+  @Test(arguments: [HistoryRange.day, .week])
+  func matchingHistoryWidgetOpensItsPeriodAndRetainsItAfterRefresh(range: HistoryRange) {
+    var input = ConverterState()
+    input.changeSource("BTC")
+    input.setDestinations(["USD"])
+    let saved = input
+    let id = UUID()
+    let scene = CurrencyScene(
+      completed: true, replay: {},
+      readWidgetContext: { _ in
+        CurrencyScene.WidgetContext(
+          snapshot: RateSnapshot(), base: "BTC", quote: "USD", historyRange: range,
+          metalUnit: .gram)
+      }, readInput: { saved })
+    scene.open(.widget(id))
+    #expect(scene.detail?.request.code == "BTC")
+    #expect(scene.detail?.request.reference == "USD")
+    #expect(scene.detail?.historyRange == range)
+    #expect(scene.detail?.metalUnit == .gram)
+    let flow = scene.detail?.id
+    scene.releaseWidgetSnapshot(id: id, snapshot: RateSnapshot())
+    scene.finishWidgetHandoff(id: id, snapshot: RateSnapshot())
+    #expect(scene.detail?.id == flow)
+    #expect(scene.detail?.historyRange == range)
+    #expect(scene.detail?.metalUnit == .gram)
+    #expect(saved.source == "BTC")
+  }
+
   @Test func visibleHomePairStaysInTheConverter() {
     let id = UUID()
     var saved = ConverterState()
