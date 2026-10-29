@@ -94,11 +94,23 @@ Plans and native test results are attached to the workflow run. Native phase sum
 
 Documentation, tests, harnesses and CI-only changes do not request publication. App/package code, resources, entitlements, manifests, signed-release helpers and unknown production paths do. The notes generator requests publication without native tests. Failed or cancelled Tests runs cannot publish. TestFlight Publish still reads the decision from the exact successful `main` run and archives its tested SHA. Public Beta skips release events without a build artifact; hourly/manual retries select the latest successful release with an unexpired artifact.
 
+## Release versions during App Review
+
+TestFlight Publish reads every App Store version through the authenticated ASC API before signing. `Project.swift` supplies the minimum marketing version. Editable drafts can reuse their train; every other state, including unknown states, protects that version. CI selects at least the next numeric patch above protected versions, overrides `MARKETING_VERSION` for the archive, and verifies the exported iPhone, widgets and Watch bundles against that selection. A pending 1.0 review therefore sends new fixes to TestFlight 1.0.1 while leaving the reviewed build in place. This example is a rule, not a record of current App Store state.
+
+The workflow reads App Store state again immediately before upload and stops if the selected train has since become protected or outdated. Authentication, API or version parsing failures stop publication. `CurrencyMarketingVersion.txt` accompanies the published build artifact so its release train is explicit. Repeated uploads reuse the same next train until App Store state or the configured minimum changes.
+
+This path only uploads and processes TestFlight builds. It never creates an App Store version, changes its attached build, removes a submission, submits App Review or releases the app. Public Beta promotion is a separate TestFlight review flow. The manual Draft Assets workflow continues to require an existing editable target.
+
+Apple requires the current version to be Ready for Distribution before [creating the next App Store version](https://developer.apple.com/help/app-store-connect/update-your-app/create-a-new-version/). While that is blocked, keep the next-version archive and TestFlight builds ready. After the current review finishes and the app is distributed, explicitly create/select the matching editable App Store draft, verify the intended processed build and metadata, then authorize its App Review submission separately. Never cancel the pending review to make room for these fixes.
+
+Run `python3 Scripts/CI/test_release_configuration.py`, `python3 Scripts/CI/test_testflight_notes.py`, and `python3 Scripts/CI/test_plan_checks.py` when changing release selection or upload behavior. These tests use a read-only fake ASC service; they do not upload or alter App Store Connect.
+
 ## TestFlight testing notes
 
 TestFlight Publish generates notes from the exact tested commit before uploading. Notes list app changes since the previous published build, with commit subjects, short hashes, and checks for the affected features. Commits that only change documentation, tests, CI, or dependency manifests are omitted. When the previous build has no recorded commit or usable history, notes explicitly describe a bounded selection of recent changes. A build with no app changes receives a short maintenance fallback.
 
-The `currency-release-build` artifact stores `CurrencyBuildId.txt`, `CurrencyCommit.txt`, and `CurrencyTestNotes.txt`. Publication writes the notes directly to the build's English TestFlight localization. Public Beta reuses the saved notes during promotion and retries, so later main-branch changes cannot alter an older build's description.
+The `currency-release-build` artifact stores `CurrencyBuildId.txt`, `CurrencyMarketingVersion.txt`, `CurrencyCommit.txt`, and `CurrencyTestNotes.txt`. Publication writes the notes directly to the build's English TestFlight localization. Public Beta reuses the saved notes during promotion and retries, so later main-branch changes cannot alter an older build's description.
 
 Notes follow the [ASC text restrictions](https://github.com/rorkai/App-Store-Connect-CLI/blob/5.7.0/internal/cli/shared/test_notes.go), removing rejected characters including Gitmoji and variation selectors. The same sanitization applies when reading older artifacts. A notes-generator change triggers publication after the automation checks, so notes fixes reach TestFlight without requiring an app-code change.
 

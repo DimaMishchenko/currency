@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 import plistlib
@@ -7,6 +8,7 @@ import unittest
 import zipfile
 
 from check_release_signing import check
+from release_version import select_version
 
 
 SCRIPTS = Path(__file__).resolve().parent
@@ -135,6 +137,95 @@ class ReleaseConfigurationTests(unittest.TestCase):
                 self.assertNotEqual(result.returncode, 0)
                 self.assertIn("Missing Watch app or widget extension in IPA", result.stderr)
                 self.assertEqual(list(self.root.glob("currency-ipa.*")), [])
+
+
+    def test_exported_ipa_rejects_an_unselected_marketing_version(self):
+        plutil = self.tools / 'plutil'
+        plutil.write_text('#!/bin/sh\necho 1.0\n')
+        ipa = self.root / 'WrongVersion.ipa'
+        app = 'Payload/Currency.app/'
+        with zipfile.ZipFile(ipa, 'w') as archive:
+            for entry in (app, app + 'PlugIns/CurrencyWidgets.appex/',
+                          app + 'Watch/CurrencyWatch.app/',
+                          app + 'Watch/CurrencyWatch.app/PlugIns/CurrencyWatchWidgets.appex/'):
+                archive.writestr(entry, '')
+        result = subprocess.run(['bash', str(SCRIPTS / 'verify_ipa.sh'), str(ipa)],
+                                env=dict(self.env, CURRENCY_MARKETING_VERSION='1.0.1'),
+                                capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('IPA differs from selected marketing version', result.stderr)
+        self.assertEqual(list(self.root.glob('currency-ipa.*')), [])
+
+
+class ReleaseVersionTests(unittest.TestCase):
+    def response(self, version='1.0', state='WAITING_FOR_REVIEW', platform='IOS'):
+        return {'data': [{'attributes': {'versionString': version, 'appStoreState': state, 'platform': platform}}]}
+
+    def test_review_release_and_unknown_states_use_next_patch(self):
+        for state in ('WAITING_FOR_REVIEW', 'IN_REVIEW', 'PENDING_DEVELOPER_RELEASE',
+                      'READY_FOR_SALE', 'READY_FOR_DISTRIBUTION', 'FUTURE_STATE'):
+            with self.subTest(state=state):
+                self.assertEqual(select_version('1.0', self.response(state=state)), '1.0.1')
+
+    def test_editable_draft_and_higher_configured_version_are_reused(self):
+        self.assertEqual(select_version('1.0', self.response('1.1', 'PREPARE_FOR_SUBMISSION')), '1.1.0')
+        self.assertEqual(select_version('2.0', self.response()), '2.0')
+        self.assertEqual(select_version('1.0', {'data': []}), '1.0')
+
+    def test_numeric_ordering_and_all_pages_of_versions(self):
+        response = self.response('1.9')
+        response['data'] += self.response('1.10.2')['data']
+        response['data'] += self.response('8.0', platform='MAC_OS')['data']
+        self.assertEqual(select_version('1.0', response), '1.10.3')
+
+    def test_malformed_state_or_version_fails_closed(self):
+        for response in ({}, {'data': None}, self.response('1.beta'), self.response(state=None),
+                         self.response(platform=None), {'data': [], 'links': {'next': 'next-page'}}):
+            with self.subTest(response=response), self.assertRaises(ValueError):
+                select_version('1.0', response)
+
+    def test_read_only_selection_and_preupload_race_guard(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            asc = root / 'asc'
+            asc.write_text(r'''#!/usr/bin/env python3
+import json
+import os
+from pathlib import Path
+import sys
+with open(os.environ['ASC_LOG'], 'a') as log:
+    log.write(json.dumps(sys.argv[1:]) + '\n')
+if sys.argv[1:3] != ['api', 'GET']:
+    raise SystemExit('Mutation attempted')
+print(Path(os.environ['ASC_RESPONSE']).read_text())
+''')
+            asc.chmod(0o755)
+            response = root / 'response.json'
+            response.write_text(json.dumps(self.response()))
+            env = dict(os.environ, PATH=str(root) + os.pathsep + os.environ['PATH'],
+                       ASC_LOG=str(root / 'commands.jsonl'), ASC_RESPONSE=str(response),
+                       GITHUB_ENV=str(root / 'env'), RUNNER_TEMP=str(root), ASC_APP_ID='123')
+            command = ['python3', str(SCRIPTS / 'release_version.py'), '--app', '123']
+            selected = subprocess.run(command, env=env, capture_output=True, text=True)
+            self.assertEqual(selected.returncode, 0, selected.stderr)
+            self.assertEqual((root / 'env').read_text(), 'CURRENCY_MARKETING_VERSION=1.0.1\n')
+            self.assertEqual((root / 'CurrencyMarketingVersion.txt').read_text(), '1.0.1\n')
+            safe = subprocess.run(command + ['--check', '1.0.1'], env=env, capture_output=True, text=True)
+            self.assertEqual(safe.returncode, 0, safe.stderr)
+            response.write_text(json.dumps(self.response('1.0.1', 'IN_REVIEW')))
+            upload = subprocess.run(['bash', str(SCRIPTS / 'release.sh'), 'upload', 'unused.ipa'],
+                                    cwd=SCRIPTS.parent.parent, env=dict(env, CURRENCY_MARKETING_VERSION='1.0.1'),
+                                    capture_output=True, text=True)
+            self.assertNotEqual(upload.returncode, 0)
+            self.assertIn('Rebuild before uploading', upload.stderr)
+            response.write_text('invalid private response')
+            failed = subprocess.run(command + ['--check', '1.0.1'], env=env, capture_output=True, text=True)
+            self.assertNotEqual(failed.returncode, 0)
+            self.assertNotIn('private response', failed.stderr)
+            commands = [json.loads(line) for line in (root / 'commands.jsonl').read_text().splitlines()]
+            self.assertEqual(len(commands), 4)
+            for args in commands:
+                self.assertEqual(args, ['api', 'GET', '/v1/apps/123/appStoreVersions', '--paginate', '--output', 'json'])
 
 
 if __name__ == "__main__":
