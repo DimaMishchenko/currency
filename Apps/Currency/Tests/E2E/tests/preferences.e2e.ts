@@ -70,7 +70,7 @@ test('appearance preference survives app restart', { tags: ['core'] }, async ({ 
 
   await app.restart();
   await expect(screen.getByRole('button', 'Edit amount in EUR')).toHaveValue('1');
-  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2');
+  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2.00');
   await screen.getByTestId('converter.options').tap();
   await screen.getByTestId('converter.settings').tap();
   await expect(theme).toBeVisible();

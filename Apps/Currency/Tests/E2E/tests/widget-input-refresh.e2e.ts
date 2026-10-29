@@ -41,7 +41,7 @@ test('calculator keeps its entered amount when reloaded with a new exchange rate
     renameSync(temporary, path);
     await app.restart();
     await expect(screen.getByRole('button', 'Edit amount in EUR')).toHaveValue('21');
-    await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 63');
+    await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 63.00');
     await device.home();
     await device.openApp('com.apple.springboard');
     await revealWidget('Currency Calculator', 'Medium');

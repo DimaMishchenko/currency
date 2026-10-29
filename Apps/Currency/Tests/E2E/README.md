@@ -59,7 +59,7 @@ These are representative outcomes, not exhaustive coverage of each feature ID.
 | Feature IDs | Test | Outcome |
 | --- | --- | --- |
 | ONB-01–02 | [onboarding](tests/onboarding.e2e.ts) | Currency selection, Back, completion and restart |
-| CONV-01, CONV-05 | [converter](tests/converter.e2e.ts) | EUR 42 → USD 84 persists after restart |
+| CONV-01, CONV-05–06 | [converter](tests/converter.e2e.ts) | EUR 42 → USD 84.00 and EUR 61.65 → USD 123.30 retain fiat fractional zeros and exact source input after restart; USD 123.30 copies with its displayed trailing zero to the owned simulator clipboard |
 | CONV-01, CONV-04–05, CONV-08 | [app-review](tests/app-review.e2e.ts) | First/second completed edits retain exact conversion outcomes without a prompt; two-session eligibility survives restart; the third completed edit shows the native StoreKit prompt, dismissal retains the converter, and the consumed batch survives restart. Picker and source/destination context menus cancel a pending request without consuming eligibility; fresh-conversion eligibility is also covered by Home tests. Requires a development simulator that presents StoreKit review UI. |
 | CONV-08, WID-02, WID-10 | [widget-review](tests/widget-review.e2e.ts) | Installed Default Calculator 4 → 42 contributes one shared session, reopening the app adds none, then two completed app edits show the native review prompt. Checks visible widget/app values and shared persistence; requires native development StoreKit UI. |
 | CONV-01, CONV-04 | [accessibility-converter](tests/accessibility-converter.e2e.ts) | Destination editing accessibility values match the displayed draft and retain fractional zeros. Run on phone and iPad; this does not prove spoken VoiceOver or voice-only control. |

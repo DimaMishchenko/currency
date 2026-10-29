@@ -48,7 +48,7 @@ for (const [title, family] of examples) {
           await screen.getByTestId('currency.details.close').tap();
         }
         await expect(screen.getByRole('button', 'Edit amount in EUR', { exact: true })).toHaveValue('1');
-        await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2');
+        await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2.00');
         await device.home();
         await device.openApp('com.apple.springboard');
         if (widgetSetupMethod() === 'private') await revealWidget(title, family);
@@ -74,7 +74,7 @@ for (const [title, family] of examples) {
         await agent.assert('The installed Currency widget shows complete readable EUR 42 and USD 84, with its existing keypad visible and no clipped glyphs.', { vision: 'only' });
         await app.restart();
         await expect(screen.getByRole('button', 'Edit amount in EUR', { exact: true })).toHaveValue('42');
-        await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 84');
+        await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 84.00');
       } else if (title !== 'Currency Calculator') {
         await widget.tap();
         await agent.waitFor(title === 'History'
@@ -87,7 +87,7 @@ for (const [title, family] of examples) {
           await screen.getByTestId('currency.details.close').tap();
         }
         await expect(screen.getByRole('button', 'Edit amount in EUR', { exact: true })).toHaveValue('1');
-        await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2');
+        await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2.00');
       }
     } catch (error) {
       await app.screenshot(`widget-text-${name}-failure-before-restoration`);

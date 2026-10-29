@@ -53,7 +53,7 @@ test('metal measurement changes conversion and preserves weight after restart', 
 test('metal source weight and measurement survive app restart', { tags: ['core'] }, async ({ start, app, agent, screen }) => {
   await start('ready-metal-source');
   await expect(screen.getByRole('button', 'Edit amount in XAU troy oz')).toHaveValue('1');
-  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 200');
+  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 200.00');
   await screen.getByTestId('converter.options').tap();
   await screen.getByTestId('converter.settings').tap();
   await screen.getByTestId('settings.metalUnit').getByText('Troy ounces').tap();
@@ -63,14 +63,14 @@ test('metal source weight and measurement survive app restart', { tags: ['core']
   await screen.getByRole('button', 'Edit amount in XAU g').tap();
   await expect(screen.getByRole('button', 'Edit amount in XAU g')).toHaveValue('31.1034768');
   await agent.act('Finish editing the Gold source amount without changing any digits. Tap the keypad toolbar checkmark if shown. Stay on the converter.');
-  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 200');
+  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 200.00');
 
   await app.restart();
   await expect(screen.getByRole('button', 'Edit amount in XAU g')).toHaveValue('31.1035');
   await screen.getByRole('button', 'Edit amount in XAU g').tap();
   await expect(screen.getByRole('button', 'Edit amount in XAU g')).toHaveValue('31.1034768');
   await agent.act('Finish editing the Gold source amount without changing any digits. Tap the keypad toolbar checkmark if shown. Stay on the converter.');
-  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 200');
+  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 200.00');
   await screen.getByTestId('converter.options').tap();
   await screen.getByTestId('converter.settings').tap();
   await expect(screen.getByTestId('settings.metalUnit')).toHaveAccessibleName(/Grams/i);

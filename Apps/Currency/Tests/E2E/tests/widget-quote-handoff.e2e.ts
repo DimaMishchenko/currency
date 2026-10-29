@@ -19,7 +19,7 @@ test('tapping a captured widget quote opens its snapshot then adopts newer share
   await prepareWidgetHelper();
   await start('ready-history-sync');
   await expect(screen.getByRole('button', 'Edit amount in BTC')).toHaveValue('1', { timeout: 30_000 });
-  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 52,500', { timeout: 30_000 });
+  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 52,500.00', { timeout: 30_000 });
   await device.closeApp();
   await device.openApp('com.apple.springboard');
   await placeWidget('History', 'Medium');
@@ -76,7 +76,7 @@ test('tapping a captured widget quote opens its snapshot then adopts newer share
     await app.screenshot('history-widget-opens-btc-usd-week-with-newer-shared-quote');
     await screen.getByTestId('currency.details.close').tap();
     await expect(screen.getByRole('button', 'Edit amount in BTC')).toHaveValue('1');
-    await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 55,000');
+    await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 55,000.00');
     const persisted = readJSON<Snapshot>(ratePath);
     assert.equal(persisted.checkedAt, newer.checkedAt, 'Opening the widget must reuse the fresh shared quote without another refresh attempt.');
     assert.equal(persisted.fetchedAt, newer.fetchedAt);

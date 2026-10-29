@@ -47,7 +47,7 @@ test('Custom Board retains its configured amount when the app amount changes', o
   await app.restart();
   await agent.act('Replace the Euro source amount with exactly 42 using the calculator keypad: enter 4 then 2. Finish with the keypad toolbar checkmark if it is shown. Stay on the converter.');
   await expect(screen.getByRole('button', 'Edit amount in EUR')).toHaveValue('42');
-  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 84');
+  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 84.00');
   await device.home();
   await device.openApp('com.apple.springboard');
   await revealWidget('Currency board', 'Medium');

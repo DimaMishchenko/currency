@@ -10,9 +10,10 @@ public enum CurrencyDisplay {
     return name.prefix(1).uppercased(with: locale) + name.dropFirst()
   }
 
-  /// Formats a currency value with compact metal amounts and supported fiat or crypto precision.
+  /// Formats a currency value with compact metals and optional trailing zeros for fiat precision.
   public static func format(
-    _ value: Decimal?, code: String, locale: Locale = .current, metalUnit: MetalUnit = .troyOunce
+    _ value: Decimal?, code: String, locale: Locale = .current, metalUnit: MetalUnit = .troyOunce,
+    trailingZeros: Bool = false
   ) -> String {
     guard let value, !value.isNaN else { return "—" }
     if CurrencyCatalog.metals.contains(code) { return metalAmount(value, locale: locale) }
@@ -20,6 +21,9 @@ public enum CurrencyDisplay {
     formatter.locale = locale
     formatter.numberStyle = .decimal
     formatter.maximumFractionDigits = fractionDigits(code, metalUnit: metalUnit)
+    if trailingZeros && CurrencyCode(rawValue: code)?.isCryptocurrency == false {
+      formatter.minimumFractionDigits = formatter.maximumFractionDigits
+    }
     return formatter.string(from: NSDecimalNumber(decimal: value)) ?? "—"
   }
 }

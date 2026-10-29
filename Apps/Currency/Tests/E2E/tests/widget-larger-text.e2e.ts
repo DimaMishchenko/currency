@@ -46,7 +46,7 @@ for (const example of cases) {
       await prepareWidgetHelper();
       await start('ready-converter');
       await expect(screen.getByRole('button', 'Edit amount in EUR', { exact: true })).toHaveValue('1');
-      await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2');
+      await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2.00');
       cachePath = join(sharedDirectory(), 'history-v3-EUR-USD-30.json');
       originalCache = readFileSync(cachePath, 'utf8');
       const history = readHistory(cachePath);
@@ -96,7 +96,7 @@ for (const example of cases) {
       await expect(screen.getByTestId('currency.details.historyRange').getByRole('tab', 'One month', { exact: true })).toBeSelected();
       await screen.getByTestId('currency.details.close').tap();
       await expect(screen.getByRole('button', 'Edit amount in EUR', { exact: true })).toHaveValue('1');
-      await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2');
+      await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2.00');
     } catch (error) {
       await app.screenshot(`history-percentage-${name}-failure-before-restoration`);
       throw error;

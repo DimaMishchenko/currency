@@ -20,7 +20,7 @@ test('Home Screen calculator shares input and starts fresh after one minute of i
   await app.restart();
   await expect(screen.getByTestId('converter.source')).toHaveAccessibleName(/Euro/i);
   await expect(screen.getByRole('button', 'Edit amount in EUR')).toHaveValue('42');
-  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 84');
+  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 84.00');
   await app.screenshot('converter-shared-widget-amount');
 
   await device.home();
@@ -39,7 +39,7 @@ test('Home Screen calculator shares input and starts fresh after one minute of i
 
   await app.restart();
   await expect(screen.getByRole('button', 'Edit amount in EUR')).toHaveValue('24');
-  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 48');
+  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 48.00');
 });
 
 test.afterAll(async () => {
