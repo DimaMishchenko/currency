@@ -98,7 +98,8 @@ final class AppComposition {
           return nil
         }
         return CurrencyScene.WidgetContext(
-          snapshot: context.snapshot, base: context.base, quote: context.quote)
+          snapshot: context.snapshot, base: context.base, quote: context.quote,
+          historyRange: context.historyRange, metalUnit: context.metalUnit)
       },
       readInput: conversion.input,
       openCurrency: { [self] id in

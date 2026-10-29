@@ -12,16 +12,19 @@ public struct CurrencyDetailsInput: Sendable {
   public let snapshot: RateSnapshot
   /// Measurement used to present metal rates and history for this flow.
   public let metalUnit: MetalUnit
+  /// Initially selected graph period for this flow.
+  public let initialRange: HistoryRange
 
   /// Creates the immutable context of a details flow.
   public init(
     code: String, reference: String, snapshot: RateSnapshot,
-    metalUnit: MetalUnit = .troyOunce
+    metalUnit: MetalUnit = .troyOunce, initialRange: HistoryRange = .month
   ) {
     self.code = code
     self.reference = reference
     self.snapshot = snapshot
     self.metalUnit = metalUnit
+    self.initialRange = initialRange
   }
 }
 
@@ -85,6 +88,7 @@ public final class CurrencyDetailsModel {
   public init(input: CurrencyDetailsInput, dependencies: CurrencyDetailsDependencies) {
     self.input = input
     self.dependencies = dependencies
+    range = availableRanges.contains(input.initialRange) ? input.initialRange : .month
   }
 
   /// Keeps the caller's comparison currency, with a distinct fallback for a self reference.
@@ -124,7 +128,7 @@ public final class CurrencyDetailsModel {
   public func updateSnapshot(_ snapshot: RateSnapshot) {
     input = CurrencyDetailsInput(
       code: input.code, reference: input.reference,
-      snapshot: snapshot, metalUnit: input.metalUnit)
+      snapshot: snapshot, metalUnit: input.metalUnit, initialRange: input.initialRange)
     if phase == .loaded, let loadedHistory, loadedHistory.range == range {
       apply(loadedHistory.result)
     }

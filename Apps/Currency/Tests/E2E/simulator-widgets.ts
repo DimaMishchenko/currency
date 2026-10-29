@@ -20,7 +20,7 @@ function widgets() {
   controller = createWidgetController({
     udid,
     stateDirectory: fileURLToPath(new URL('./.local/simulator-widgets', import.meta.url)),
-    onResult: ({ status, timings }) => console.log(`Widget utility: ${JSON.stringify({ status, timings })}`),
+    onResult: ({ status, timings, error }) => console.log(`Widget utility: ${JSON.stringify({ status, timings, error })}`),
   });
   return controller;
 }
