@@ -681,7 +681,7 @@ struct HomeScreen: View {
     }
     Button(.Converter.copyAmount, systemImage: "doc.on.doc") {
       UIPasteboard.general.string = CurrencyDisplay.format(
-        value, code: code, locale: locale, metalUnit: model.input.metalUnit)
+        value, code: code, locale: locale, metalUnit: model.input.metalUnit, trailingZeros: true)
       AppHaptics.play(.success)
     }
     .disabled(value == nil)
