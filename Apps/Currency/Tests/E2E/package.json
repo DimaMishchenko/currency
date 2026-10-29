@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=22.14.0"
   },
   "scripts": {
     "test:e2e": "AGENT_DEVICE_STATE_DIR=$PWD/.local/agent-device e2e run --tag core",
@@ -19,6 +19,6 @@
     "ai": "7.0.107",
     "e2e": "0.16.0",
     "typescript": "7.0.2",
-    "widgetctl": "github:DimaMishchenko/widgetctl#982613e8477fb0cb644ca72454ff1fef7242de5b"
+    "widgetctl": "0.1.2"
   }
 }

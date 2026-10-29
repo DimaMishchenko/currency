@@ -20,7 +20,6 @@ test('simultaneous Bitcoin History ranges converge after one widget refreshes wi
   tags: ['extended', 'widgets', 'widget-history-sync'],
   skip: widgetSetupMethod() === 'gallery' ? 'Requires device-targeted widget configuration.' : false,
 }, async ({ start, app, device, screen, agent }) => {
-  await prepareWidgetHelper();
   for (let attempt = 0; attempt < 2; attempt++) {
     const seededHour = Math.floor(Date.now() / 3_600_000);
     await start('ready-history-sync');
@@ -34,6 +33,7 @@ test('simultaneous Bitcoin History ranges converge after one widget refreshes wi
     await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 52,500.00');
     await app.screenshot('app-home-bitcoin-one-usd-52500-shared-quote');
     await device.closeApp();
+    await prepareWidgetHelper();
     await device.openApp('com.apple.springboard');
     for (const configuration of configurations) {
       if (attempt === 0) await placeWidget('History', configuration.family, configuration.exclusive);
