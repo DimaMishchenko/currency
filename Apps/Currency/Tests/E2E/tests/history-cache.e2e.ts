@@ -61,7 +61,7 @@ for (const scenario of ['legacy daily source', 'wrong month'] as const) {
     };
     writeFileSync(file, JSON.stringify(seeded));
     await openLive();
-    await agent.act('Open Details & history for the US Dollar destination currency.');
+    await agent.act('Long-press the US Dollar destination currency row, then choose Details & history in its context menu.');
     await expect(screen.getByTestId('currency.details.USD')).toBeVisible();
     await expect(screen.getByTestId('currency.details.rate')).toHaveAccessibleName('1 USD in AED');
     const month = screen.getByTestId('currency.details.historyRange').getByRole('tab', 'One month', { exact: true });
@@ -87,7 +87,7 @@ for (const scenario of ['legacy daily source', 'wrong month'] as const) {
     await app.screenshot(`usd-aed-${scenario.replaceAll(' ', '-')}-repaired`);
     await openLive();
     await expect(screen.getByRole('button', 'Edit amount in AED')).toHaveValue('1');
-    await agent.act('Open Details & history for the US Dollar destination currency.');
+    await agent.act('Long-press the US Dollar destination currency row, then choose Details & history in its context menu.');
     await expect(month).toBeSelected();
     await expect(screen.getByTestId('currency.details.sourceDisclosure').filter({ hasText: /Frankfurter.*daily reference rates/i })).toBeVisible();
     assert.equal(readHistory().fetchedAt, saved.fetchedAt);

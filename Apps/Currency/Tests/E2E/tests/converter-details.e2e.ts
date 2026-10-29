@@ -10,7 +10,8 @@ test('converter state survives inspecting history and rate sources', { tags: ['c
   await expect(screen.getByTestId('converter.source')).toHaveAccessibleName(/Euro/i);
   await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2');
 
-  await agent.act('Open Details & history for the US Dollar destination currency.');
+  await screen.getByRole('button', /^US Dollar,/i).longPress({ duration: 650 });
+  await screen.getByRole('button', 'Details & history', { exact: true }).tap();
   await expect(screen.getByTestId('currency.details.USD')).toBeVisible();
   await expect(screen.getByTestId('currency.details.rate')).toHaveAccessibleName('1 USD in EUR');
   await expect(screen.getByTestId('currency.details.rate')).toHaveValue('0.5 EUR');
@@ -46,4 +47,32 @@ test('converter state survives inspecting history and rate sources', { tags: ['c
   await expect(screen.getByRole('button', 'Edit amount in EUR')).toHaveValue('1');
   await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2');
   await app.screenshot('converter-preserved-amount-after-details');
+});
+
+
+test('input dock History keeps BTC primary when inspecting the USD conversion', { tags: ['core'] }, async ({ app, start, screen }) => {
+  await start('ready-history-sync');
+  await screen.getByRole('button', /^US Dollar,/i).tap();
+  await screen.getByTestId('converter.history').tap();
+  await expect(screen.getByTestId('currency.details.BTC')).toBeVisible();
+  const rate = screen.getByTestId('currency.details.rate');
+  await expect(rate).toHaveAccessibleName('1 BTC in USD');
+  await expect(rate).toHaveValue('52,500 USD');
+  const ranges = screen.getByTestId('currency.details.historyRange');
+  for (const name of ['One day', 'One week', 'One month']) {
+    const period = ranges.getByRole('tab', name, { exact: true });
+    await period.tap();
+    await expect(period).toBeSelected();
+    await expect(rate).toHaveAccessibleName('1 BTC in USD');
+    await expect(rate).toHaveValue('52,500 USD');
+  }
+  await app.screenshot('btc-primary-usd-input-history-retains-conversion-direction');
+  await screen.getByTestId('currency.details.close').tap();
+  await expect(screen.getByRole('button', 'Edit amount in BTC')).toHaveValue('1');
+  await app.restart();
+  await expect(screen.getByRole('button', 'Edit amount in BTC')).toHaveValue('1');
+  await screen.getByRole('button', /^US Dollar,/i).tap();
+  await screen.getByTestId('converter.history').tap();
+  await expect(rate).toHaveAccessibleName('1 BTC in USD');
+  await expect(rate).toHaveValue('52,500 USD');
 });

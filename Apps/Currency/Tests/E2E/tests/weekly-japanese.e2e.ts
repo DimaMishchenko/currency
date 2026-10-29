@@ -9,7 +9,7 @@ test('Japanese weekly crypto history uses natural hourly provenance', {
     relaunch: true,
     launchArguments: ['-AppleLanguages', '(ja)', '-AppleLocale', 'ja_JP', '-CurrencyE2E'],
   });
-  await agent.act('Open Details & history for the Bitcoin destination currency. The app is in Japanese. Keep the Bitcoin details open.');
+  await agent.act('Long-press the Bitcoin destination currency row, then choose 詳細と履歴 in its context menu. The app is in Japanese. Keep the Bitcoin details open.');
   await expect(screen.getByTestId('currency.details.BTC')).toBeVisible();
   const range = screen.getByTestId('currency.details.historyRange');
   await range.getByText('1か月', { exact: true }).tap();

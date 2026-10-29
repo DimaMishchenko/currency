@@ -15,6 +15,32 @@ private struct SlowFeedbackProvider: RateProvider {
 
 @MainActor
 struct HomeEditingTests {
+  @Test(arguments: ["USD", "BTC"])
+  func conversionHistoryKeepsPrimaryBitcoinWhenEditingEitherLeg(editing: String) throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = HomeTestStore(directory: directory)
+    try store.updateInput {
+      $0.changeSource("BTC")
+      $0.setDestinations(["USD", "EUR"])
+      $0.setAmount("1")
+    }
+    let rates = RateSnapshot(quotes: [
+      "BTC": ExchangeRate(1, published: "2026-10-29", source: .init(provider: .custom("test"))),
+      "USD": ExchangeRate(52_500, published: "2026-10-29", source: .init(provider: .custom("test")))
+    ])
+    let model = makeHomeModel(store: store, service: RateService(), readRates: { rates })
+    model.beginEditing(editing)
+    let request = model.conversionHistoryRequest()
+    #expect(request.code == "BTC")
+    #expect(request.reference == "USD")
+    #expect(request.selectionID == editing)
+    #expect(request.snapshot.quotes == rates.quotes)
+    model.endEditing()
+    #expect(store.input().source == "BTC")
+    #expect(store.input().amount == "1")
+  }
+
   @Test func metalRowsAndEditingUseTheSavedMeasurement() throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }

@@ -44,8 +44,8 @@ test('minute and hourly history use the local chart zone and local saved timesta
       { title: 'One day', key: 1, observation: 'minuteReference' },
       { title: 'One week', key: 7, observation: 'hourlyReference' },
     ]) {
-      await screen.getByRole('button', /^Bitcoin,/i).tap();
-      await screen.getByTestId('converter.history').tap();
+      await screen.getByRole('button', /^Bitcoin,/i).longPress({ duration: 650 });
+      await screen.getByRole('button', 'Details & history', { exact: true }).tap();
       await expect(screen.getByTestId('currency.details.BTC')).toBeVisible();
       const ranges = screen.getByTestId('currency.details.historyRange');
       const period = ranges.getByRole('tab', range.title, { exact: true });

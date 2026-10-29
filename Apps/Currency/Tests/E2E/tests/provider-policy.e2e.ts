@@ -21,7 +21,7 @@ test('crypto reference prices preserve ranges, provenance and credits after rest
   await expect(bitcoin).toHaveAccessibleName(expectedAmount);
 
   const inspectDetails = async (capture: string) => {
-    await agent.act('Open Details & history for the Bitcoin destination currency.');
+    await agent.act('Long-press the Bitcoin destination currency row, then choose Details & history in its context menu.');
     await expect(screen.getByTestId('currency.details.BTC')).toBeVisible();
     await expect(screen.getByTestId('currency.details.rate')).toHaveAccessibleName('1 BTC in USD');
     await expect(screen.getByTestId('currency.details.rate')).toHaveValue('50,000 USD');
