@@ -31,7 +31,7 @@ test('simultaneous Bitcoin History ranges converge after one widget refreshes wi
     const changes = weekly.points.slice(1).map((point, index) => Math.sign(point.value - weekly.points[index]!.value));
     assert.ok(changes.slice(1).filter((direction, index) => direction !== changes[index]).length >= 8);
     await expect(screen.getByRole('button', 'Edit amount in BTC')).toHaveValue('1');
-    await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 52,500');
+    await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 52,500.00');
     await app.screenshot('app-home-bitcoin-one-usd-52500-shared-quote');
     await device.closeApp();
     await device.openApp('com.apple.springboard');

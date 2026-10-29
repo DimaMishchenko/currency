@@ -41,7 +41,7 @@ for (const [title, family] of examples) {
         await agent.waitFor('The Currency app normal converter is visible with source EUR amount 1 and US Dollar 2.', { vision: 'only', timeout: 30_000 });
         await device.openApp('com.dimasike.currency', { relaunch: false });
         await expect(screen.getByRole('button', 'Edit amount in EUR', { exact: true })).toHaveValue('1');
-        await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2');
+        await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2.00');
         await device.home();
         await device.openApp('com.apple.springboard');
         if (widgetSetupMethod() === 'private') await revealWidget(title, family);
@@ -67,13 +67,13 @@ for (const [title, family] of examples) {
         await agent.assert('The installed Currency widget shows complete readable EUR 42 and USD 84, with its existing keypad visible and no clipped glyphs.', { vision: 'only' });
         await app.restart();
         await expect(screen.getByRole('button', 'Edit amount in EUR', { exact: true })).toHaveValue('42');
-        await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 84');
+        await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 84.00');
       } else if (title !== 'Currency Calculator') {
         await widget.tap();
         await agent.waitFor('The Currency app normal converter is visible with source EUR amount 1 and US Dollar 2. Its normal amount editing control is present.', { vision: 'only', timeout: 30_000 });
         await device.openApp('com.dimasike.currency', { relaunch: false });
         await expect(screen.getByRole('button', 'Edit amount in EUR', { exact: true })).toHaveValue('1');
-        await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2');
+        await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2.00');
       }
     } catch (error) {
       await app.screenshot(`widget-text-${name}-failure-before-restoration`);

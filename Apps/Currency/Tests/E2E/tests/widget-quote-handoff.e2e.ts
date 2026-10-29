@@ -19,7 +19,7 @@ test('tapping a captured widget quote opens its snapshot then adopts newer share
   await prepareWidgetHelper();
   await start('ready-history-sync');
   await expect(screen.getByRole('button', 'Edit amount in BTC')).toHaveValue('1', { timeout: 30_000 });
-  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 52,500', { timeout: 30_000 });
+  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 52,500.00', { timeout: 30_000 });
   await device.closeApp();
   await device.openApp('com.apple.springboard');
   await placeWidget('History', 'Medium');
@@ -73,11 +73,11 @@ test('tapping a captured widget quote opens its snapshot then adopts newer share
     await expect(dollars).toBeVisible({ timeout: 30_000 });
     const firstObserved = await dollars.textContent();
     const normalized = firstObserved?.replace(/(?<=\d)[,\s\u00a0\u202f](?=\d)/g, '');
-    assert.match(normalized ?? '', /^US Dollar, (52500|55000)$/);
+    assert.match(normalized ?? '', /^US Dollar, (52500|55000)\.00$/);
     console.log(`Widget handoff first observable row: ${firstObserved}; native scene tests verify the initial captured snapshot; this driver may miss the 1.5-second display window.`);
-    if (normalized === 'US Dollar, 52500') await app.screenshot('app-widget-handoff-captured-usd-52500');
+    if (normalized === 'US Dollar, 52500.00') await app.screenshot('app-widget-handoff-captured-usd-52500');
     await expect(screen.getByRole('button', 'Edit amount in BTC')).toHaveValue('1', { timeout: 30_000 });
-    await expect(dollars).toHaveAccessibleName(/^US Dollar, 55[, \u00a0\u202f]000$/, { timeout: 30_000 });
+    await expect(dollars).toHaveAccessibleName(/^US Dollar, 55[, \u00a0\u202f]000\.00$/, { timeout: 30_000 });
     await app.screenshot('app-widget-handoff-newer-shared-usd-55000');
     const persisted = readJSON<Snapshot>(ratePath);
     assert.equal(persisted.checkedAt, newer.checkedAt, 'Opening the widget must reuse the fresh shared quote without another refresh attempt.');

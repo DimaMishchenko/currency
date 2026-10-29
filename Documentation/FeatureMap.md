@@ -21,12 +21,12 @@ Owner: [Home](../Features/Home/Sources/Home/HomeModel.swift), [converter UI](../
 
 | ID | Capability / entry | Observable outcome |
 | --- | --- | --- |
-| CONV-01 | Source or destination amount → calculator keypad | Editing an available currency amount updates the other currency amounts consistently. |
+| CONV-01 | Source or destination amount → calculator keypad | Editing an available currency amount updates the other currency amounts consistently. Fiat destination list rows retain their supported fractional digits, including trailing zeros and locale separators, without changing stored values; crypto and metals retain compact formatting. |
 | CONV-02 | Source currency picker | Searching/selecting a supported currency changes the source while maintaining a valid converter selection. |
 | CONV-03 | Add currency and Options → manage currencies | Search localized names, codes and aliases; browse selected currencies, fiat, crypto and metals; add/remove/reorder destinations, preserving their saved order and avoiding duplicate selections. |
 | CONV-04 | Keypad digits, decimal separator, deletion and Done | Editing follows the supported amount grammar; completion commits the result; unavailable conversions cannot be edited as valid amounts. Accessible editing values match the displayed draft, including fractional zeros; an unfinished decimal separator remains hidden until a fractional digit is entered. |
 | CONV-05 | App restart, foreground return, shared widget changes | Saved input is restored. Unchanged shared input preserves valid editing; changed shared source/amount ends editing and displays the authoritative input. |
-| CONV-06 | Currency row context menu → Copy amount | The selected row’s formatted amount reaches the clipboard. |
+| CONV-06 | Currency row context menu → Copy amount | The selected row’s formatted amount reaches the clipboard, including fiat fractional trailing zeros and locale separators. |
 | CONV-07 | Context menu and converter discovery tips | Details/history, removal, and widget entry points open the appropriate surface; contextual tips respect prior discovery. |
 | CONV-08 | Complete meaningful conversions in the app or Calculator widget | A completed app amount edit requests a native App Store review once shared app and Calculator widget usage reaches three meaningful conversion sessions, after two seconds of idle converter time. Requests occur only in the active main app with the keypad and other presentations closed. Widget numeric edits contribute once per 30-second activity session; setup, selection, unchanged/zero input and presentation alone do not count. The shared count survives restart and each request consumes a batch of three. Each later batch may request again; Apple controls whether the native prompt is actually shown. |
 

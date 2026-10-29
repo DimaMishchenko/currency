@@ -34,6 +34,35 @@ import Testing
     #expect(CurrencyDisplay.format(nil, code: "EUR", locale: german) == "—")
   }
 
+  @Test(arguments: [
+    ("USD", "123.3", "123.30"),
+    ("USD", "0", "0.00"),
+    ("KWD", "123.3", "123.300"),
+    ("JPY", "123.3", "123"),
+    ("BTC", "123.3", "123.3"),
+    ("XAU", "123.3", "123.3")
+  ])
+  func listFormattingPadsOnlyFiat(code: String, input: String, expected: String) throws {
+    let value = try #require(Decimal(string: input))
+    #expect(
+      CurrencyDisplay.format(
+        value, code: code, locale: .init(identifier: "en_US"), trailingZeros: true) == expected)
+  }
+
+  @Test(arguments: [
+    ("de_DE", "1.234,50"),
+    ("en_IN", "1,234.50"),
+    ("ar_EG", "١٬٢٣٤٫٥٠")
+  ])
+  func fiatListFormattingPreservesLocale(identifier: String, expected: String) {
+    #expect(
+      CurrencyDisplay.format(
+        Decimal(string: "1234.5"), code: "USD", locale: .init(identifier: identifier),
+        trailingZeros: true) == expected)
+    #expect(CurrencyDisplay.format(nil, code: "USD", trailingZeros: true) == "—")
+    #expect(CurrencyDisplay.format(.nan, code: "USD", trailingZeros: true) == "—")
+  }
+
   @Test func flagDerivationHandlesRegionsSharedCurrenciesAndUnknownCodes() {
     #expect(CurrencyDisplay.flag("UAH") == "🇺🇦")
     #expect(CurrencyDisplay.flag("XAF") == "🌍")

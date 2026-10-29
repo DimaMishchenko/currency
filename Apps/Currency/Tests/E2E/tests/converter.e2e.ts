@@ -1,3 +1,5 @@
+import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { expect } from 'e2e';
 import { test } from '../fixtures.js';
 import { deviceProfile } from '../device-profile.js';
@@ -9,11 +11,11 @@ test('converted amount and currency choices survive restart', { tags: ['core'] }
   await expect(screen.getByTestId('onboarding.primary')).toBeHidden();
   await expect(screen.getByTestId('converter.source')).toHaveAccessibleName(/Euro/i);
   await expect(amount).toHaveValue('1');
-  await expect(dollars).toHaveAccessibleName('US Dollar, 2');
+  await expect(dollars).toHaveAccessibleName('US Dollar, 2.00');
 
   await agent.act('Replace the Euro source amount with exactly 42 using the calculator keypad: enter 4 then 2. Finish with the keypad toolbar checkmark if it is shown. Stay on the converter.');
   await expect(amount).toHaveValue('42');
-  await expect(dollars).toHaveAccessibleName('US Dollar, 84');
+  await expect(dollars).toHaveAccessibleName('US Dollar, 84.00');
 
   if (deviceProfile === 'duo-open' || deviceProfile === 'duo-closed') {
     const poses = deviceProfile === 'duo-open' ? ['closed', 'open'] as const : ['open', 'closed'] as const;
@@ -21,7 +23,7 @@ test('converted amount and currency choices survive restart', { tags: ['core'] }
       await device.fold(pose);
       await device.setOrientation(pose === 'open' ? 'landscape-left' : 'portrait');
       await expect(amount).toHaveValue('42');
-      await expect(dollars).toHaveAccessibleName('US Dollar, 84');
+      await expect(dollars).toHaveAccessibleName('US Dollar, 84.00');
       await app.screenshot(`converter-duo-${pose}-42-eur-84-usd`);
     }
   }
@@ -30,6 +32,34 @@ test('converted amount and currency choices survive restart', { tags: ['core'] }
   await expect(screen.getByTestId('onboarding.primary')).toBeHidden();
   await expect(screen.getByTestId('converter.source')).toHaveAccessibleName(/Euro/i);
   await expect(amount).toHaveValue('42');
-  await expect(dollars).toHaveAccessibleName('US Dollar, 84');
+  await expect(dollars).toHaveAccessibleName('US Dollar, 84.00');
   await app.screenshot('converter-persisted-42-eur-84-usd');
+});
+
+test('fiat list amounts retain fractional zeros without changing saved input', { tags: ['core'] }, async ({ start, app, screen }) => {
+  await start('ready-converter');
+  const amount = screen.getByRole('button', 'Edit amount in EUR');
+  const dollars = screen.getByRole('button', /^US Dollar,/i);
+  await expect(dollars).toHaveAccessibleName('US Dollar, 2.00');
+  const udid = process.env.CURRENCY_E2E_UDID?.trim();
+  assert.ok(udid, 'Copy amount must target the owned simulator');
+  const clipboard = () => execFileSync('xcrun', ['simctl', 'pbpaste', udid], { encoding: 'utf8' }).trim();
+  await dollars.longPress({ duration: 650 });
+  await screen.getByRole('button', 'Copy amount', { exact: true }).tap();
+  await expect.poll(clipboard, { timeout: 5_000 }).toBe('2.00');
+  await amount.tap();
+  for (const key of ['6', '1', 'Decimal separator', '6', '5']) {
+    await screen.getByRole('button', key, { exact: true }).tap();
+  }
+  await screen.getByTestId('checkmark').tap();
+  await expect(amount).toHaveValue('61.65');
+  await expect(dollars).toHaveAccessibleName('US Dollar, 123.30');
+  await app.screenshot('fiat-list-123-30-usd');
+  await dollars.longPress({ duration: 650 });
+  await screen.getByRole('button', 'Copy amount', { exact: true }).tap();
+  await expect.poll(clipboard, { timeout: 5_000 }).toBe('123.30');
+  await expect(dollars).toHaveAccessibleName('US Dollar, 123.30');
+  await app.restart();
+  await expect(amount).toHaveValue('61.65');
+  await expect(dollars).toHaveAccessibleName('US Dollar, 123.30');
 });
