@@ -8,7 +8,7 @@ test('converter state survives inspecting history and rate sources', { tags: ['c
   await start('ready-converter');
   await expect(screen.getByTestId('onboarding.primary')).toBeHidden();
   await expect(screen.getByTestId('converter.source')).toHaveAccessibleName(/Euro/i);
-  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2');
+  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2.00');
 
   await agent.act('Open Details & history for the US Dollar destination currency.');
   await expect(screen.getByTestId('currency.details.USD')).toBeVisible();
@@ -44,6 +44,6 @@ test('converter state survives inspecting history and rate sources', { tags: ['c
   await expect(screen.getByTestId('currency.details.close')).toBeHidden();
   await expect(screen.getByTestId('converter.source')).toHaveAccessibleName(/Euro/i);
   await expect(screen.getByRole('button', 'Edit amount in EUR')).toHaveValue('1');
-  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2');
+  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2.00');
   await app.screenshot('converter-preserved-amount-after-details');
 });

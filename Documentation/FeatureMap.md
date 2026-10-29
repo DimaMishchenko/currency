@@ -21,7 +21,7 @@ Owner: [Home](../Features/Home/Sources/Home/HomeModel.swift), [converter UI](../
 
 | ID | Capability / entry | Observable outcome |
 | --- | --- | --- |
-| CONV-01 | Source or destination amount → calculator keypad | Editing an available currency amount updates the other currency amounts consistently. |
+| CONV-01 | Source or destination amount → calculator keypad | Editing an available currency amount updates the other currency amounts consistently. Fiat destination list rows retain their supported fractional digits, including trailing zeros and locale separators, without changing stored values; crypto and metals retain compact formatting. |
 | CONV-02 | Source currency picker | Searching/selecting a supported currency changes the source while maintaining a valid converter selection. |
 | CONV-03 | Add currency and Options → manage currencies | Search localized names, codes and aliases; browse selected currencies, fiat, crypto and metals; add/remove/reorder destinations, preserving their saved order and avoiding duplicate selections. |
 | CONV-04 | Keypad digits, decimal separator, deletion and Done | Editing follows the supported amount grammar; completion commits the result; unavailable conversions cannot be edited as valid amounts. Accessible editing values match the displayed draft, including fractional zeros; an unfinished decimal separator remains hidden until a fractional digit is entered. |

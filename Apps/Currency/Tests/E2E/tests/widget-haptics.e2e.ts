@@ -61,7 +61,7 @@ for (const enabled of [true, false]) {
 
     await app.restart();
     await expect(screen.getByRole('button', 'Edit amount in EUR')).toHaveValue('42');
-    await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 84');
+    await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 84.00');
   });
 }
 

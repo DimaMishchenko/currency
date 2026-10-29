@@ -563,7 +563,7 @@ struct HomeScreen: View {
       return CurrencyDisplay.inputAmount(model.editingText, locale: locale)
     }
     return CurrencyDisplay.format(
-      value, code: row.code, locale: locale, metalUnit: model.input.metalUnit)
+      value, code: row.code, locale: locale, metalUnit: model.input.metalUnit, trailingZeros: true)
   }
 
   private func destinationLabel(_ row: ConverterState.Destination, value: Decimal?) -> some View {
