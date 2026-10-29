@@ -1,6 +1,6 @@
 import { expect, type Locator } from 'e2e';
 import { test as base } from './fixtures.js';
-import { configureWidget, placeWidget, prepareWidgetHelper, widgetSetupMethod } from './simulator-widgets.js';
+import { configureWidget, placeWidget, prepareWidgetHelper, revealWidget, widgetSetupMethod } from './simulator-widgets.js';
 
 export const test = base.extend<{
   installedWidget: (title: string, family: 'Small' | 'Medium' | 'Large') => Promise<Locator>;
@@ -22,6 +22,7 @@ export const test = base.extend<{
             parameters.comparison = { identifier: 'USD', title: { key: 'USD' }, subtitle: { key: 'USD' } };
             parameters.range = { identifier: 'month', value: 'month', title: { key: '1 month' } };
           });
+          await revealWidget(title, family);
         }
       } else {
         while (await widget.count() > 0) {
