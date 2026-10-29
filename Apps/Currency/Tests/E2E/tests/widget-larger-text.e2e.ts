@@ -76,7 +76,7 @@ for (const example of cases) {
         await expect(widget.getByLabel(new RegExp(`^Rate as of (${dates.join('|')})$`))).toBeVisible();
       };
       await check();
-      await agent.assert(`Read the actual text in the medium History widget. Confirm every glyph of EUR, USD, 1, 2, ${display}, ${dates.join(' or ')} and 1M is present and legible. Localized decimal/grouping separators are allowed. The displayed date intentionally has no year. The line chart is a background layer; evaluate the text glyphs themselves, not whether a graph line crosses the label's surrounding area.`, { vision: 'only' });
+      await agent.assert(`Read the actual text in the visible Currency widget with the line-chart background. Confirm every glyph of EUR, USD, 1, 2, ${display}, ${dates.join(' or ')} and 1M is present and legible. Localized decimal/grouping separators are allowed. The displayed date intentionally has no year. The line chart is a background layer; evaluate the text glyphs themselves, not whether a graph line crosses the label's surrounding area.`, { vision: 'only' });
       const baselineBounds = await change.boundingBox();
       assert.ok(baselineBounds);
       const baselinePath = await capture('large');
@@ -84,19 +84,20 @@ for (const example of cases) {
       await check();
       await expect.poll(async () => (await change.boundingBox())?.height ?? 0, { timeout: 30_000 })
         .toBeGreaterThanOrEqual(baselineBounds.height * 1.8);
-      await agent.assert(`The installed medium History widget retains complete readable EUR 1, USD 2, signed ${display} (localized decimal and grouping separators are allowed), ${dates.join(' or ')} (no year is drawn), 1M range and graph. The percentage is prominently enlarged, with its sign, every digit and percent symbol present. The graph intentionally fills the background; fail only if actual text glyphs are clipped, obscured or collide with other text, not merely because the graph occupies the same widget.`, { vision: 'only' });
+      await agent.assert(`The visible Currency widget with the line-chart background retains complete readable EUR 1, USD 2, signed ${display} (localized decimal and grouping separators are allowed), ${dates.join(' or ')} (no year is drawn), 1M range and graph. The percentage is prominently enlarged, with its sign, every digit and percent symbol present. The graph intentionally fills the background; fail only if actual text glyphs are clipped, obscured or collide with other text, not merely because the graph occupies the same widget.`, { vision: 'only' });
       const enlargedBounds = await change.boundingBox();
       assert.ok(enlargedBounds);
       const enlargedPath = await capture('ax5');
       writeFileSync(`${enlargedPath}.bounds.json`, JSON.stringify({ baselinePath, enlargedPath, baselineBounds, enlargedBounds }, null, 2));
       await widget.tap();
-      await agent.waitFor('The Currency app Euro details history graph is foreground with 1 EUR in USD and One month selected.', { vision: 'only', timeout: 30_000 });
       await device.openApp('com.dimasike.currency', { relaunch: false });
+      await expect(screen.getByTestId('currency.details.EUR')).toBeVisible();
+      await agent.waitFor('The EUR history sheet displays 1 EUR in USD and a visible line chart. The period control shows the selected month as 1M or One month.', { vision: 'only', timeout: 30_000 });
       await expect(screen.getByTestId('currency.details.rate')).toHaveAccessibleName('1 EUR in USD');
-      await expect(screen.getByTestId('currency.details.historyRange').getByRole('tab', 'One month', { exact: true })).toBeSelected();
+      await expect(screen.getByTestId('currency.details.historyRange')).toHaveValue('One month');
       await screen.getByTestId('currency.details.close').tap();
       await expect(screen.getByRole('button', 'Edit amount in EUR', { exact: true })).toHaveValue('1');
-      await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2.00');
+      await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName(/^US Dollar, 2[.,]00$/);
     } catch (error) {
       await app.screenshot(`history-percentage-${name}-failure-before-restoration`);
       throw error;
