@@ -110,7 +110,7 @@ test('simultaneous Bitcoin History ranges converge after one widget refreshes wi
           await revealInstalled(widget);
           await expect(widget.getByLabel('Rate change over the selected range', { exact: true }))
             .toHaveValue(isDay ? /^\+10[.,]00%$/ : /^\+37[.,]50%$/, { timeout: 30_000 });
-          await agent.waitFor(`The visible ${configuration.family.toLowerCase()} Currency History widget shows BTC 1 and USD exactly 55,000 (55 000 with a space grouping separator is equivalent), ${isDay ? '1D and +10.00%' : '1W and +37.50%'} (decimal comma is equivalent), with its line chart visible and no placeholders or missing values.`, { vision: 'only', timeout: 30_000 });
+          await agent.waitFor(`The visible ${configuration.family.toLowerCase()} Currency widget with the line-chart background shows BTC 1 and USD exactly 55,000 (55 000 with a space grouping separator is equivalent), ${isDay ? '1D and +10.00%' : '1W and +37.50%'} (decimal comma is equivalent), with its line chart visible and no placeholders or missing values.`, { vision: 'only', timeout: 30_000 });
           await app.screenshot(`widget-history-${configuration.family.toLowerCase()}-${configuration.range}-converged-55000`);
         }
         const updated = contexts().find(context => matchesRate(context, 55_000));

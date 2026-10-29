@@ -38,10 +38,14 @@ for (const [title, family] of examples) {
 
       if (title !== 'Currency Calculator') {
         await widget.tap();
+        if (title === 'History') {
+          await device.openApp('com.dimasike.currency', { relaunch: false });
+          await expect(screen.getByTestId('currency.details.EUR')).toBeVisible();
+        }
         await agent.waitFor(title === 'History'
-          ? 'The Currency app Euro details history graph is visible with 1 EUR in USD and One month selected.'
+          ? 'The EUR history sheet displays 1 EUR in USD and a visible line chart. The period control shows the selected month as 1M or One month.'
           : 'The Currency app normal converter is visible with source EUR amount 1 and US Dollar 2.', { vision: 'only', timeout: 30_000 });
-        await device.openApp('com.dimasike.currency', { relaunch: false });
+        if (title !== 'History') await device.openApp('com.dimasike.currency', { relaunch: false });
         if (title === 'History') {
           await expect(screen.getByTestId('currency.details.rate')).toHaveAccessibleName('1 EUR in USD');
           await expect(screen.getByTestId('currency.details.historyRange').getByRole('tab', 'One month', { exact: true })).toBeSelected();
@@ -77,13 +81,17 @@ for (const [title, family] of examples) {
         await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 84.00');
       } else if (title !== 'Currency Calculator') {
         await widget.tap();
+        if (title === 'History') {
+          await device.openApp('com.dimasike.currency', { relaunch: false });
+          await expect(screen.getByTestId('currency.details.EUR')).toBeVisible();
+        }
         await agent.waitFor(title === 'History'
-          ? 'The Currency app Euro details history graph is visible with 1 EUR in USD and One month selected.'
+          ? 'The EUR history sheet displays 1 EUR in USD and a visible line chart. The period control shows the selected month as 1M or One month.'
           : 'The Currency app normal converter is visible with source EUR amount 1 and US Dollar 2. Its normal amount editing control is present.', { vision: 'only', timeout: 30_000 });
-        await device.openApp('com.dimasike.currency', { relaunch: false });
+        if (title !== 'History') await device.openApp('com.dimasike.currency', { relaunch: false });
         if (title === 'History') {
           await expect(screen.getByTestId('currency.details.rate')).toHaveAccessibleName('1 EUR in USD');
-          await expect(screen.getByTestId('currency.details.historyRange').getByRole('tab', 'One month', { exact: true })).toBeSelected();
+          await expect(screen.getByTestId('currency.details.historyRange')).toHaveValue('One month');
           await screen.getByTestId('currency.details.close').tap();
         }
         await expect(screen.getByRole('button', 'Edit amount in EUR', { exact: true })).toHaveValue('1');
