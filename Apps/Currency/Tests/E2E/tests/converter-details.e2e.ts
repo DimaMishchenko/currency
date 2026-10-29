@@ -11,6 +11,7 @@ test('converter state survives inspecting history and rate sources', { tags: ['c
   await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2');
 
   await screen.getByRole('button', /^US Dollar,/i).longPress({ duration: 650 });
+  await expect(screen.getByRole('button', 'Details & history', { exact: true })).toBeVisible();
   await screen.getByRole('button', 'Details & history', { exact: true }).tap();
   await expect(screen.getByTestId('currency.details.USD')).toBeVisible();
   await expect(screen.getByTestId('currency.details.rate')).toHaveAccessibleName('1 USD in EUR');

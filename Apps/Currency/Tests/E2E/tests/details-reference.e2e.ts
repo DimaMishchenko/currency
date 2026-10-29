@@ -23,6 +23,7 @@ for (const reference of references) {
       await expect(screen.getByTestId('currency.details.rate')).toHaveValue(reference.value);
     };
     await screen.getByRole('button', /^Bitcoin,/i).longPress({ duration: 650 });
+    await expect(screen.getByRole('button', 'Details & history', { exact: true })).toBeVisible();
     await screen.getByRole('button', 'Details & history', { exact: true }).tap();
     await expect(screen.getByTestId('currency.details.BTC')).toBeVisible();
     await app.screenshot(`bitcoin-details-${reference.code.toLowerCase()}-opened`);
@@ -64,7 +65,8 @@ for (const reference of references) {
     await expect(sourceCurrency).toHaveAccessibleName(new RegExp(reference.name, 'i'));
     await expect(screen.getByRole('button', `Edit amount in ${reference.code}`)).toHaveValue('1');
     await screen.getByRole('button', /^Bitcoin,/i).longPress({ duration: 650 });
-    await screen.getByRole('button', 'Details & history', { exact: true }).tap();
+    await expect(screen.getByRole('button', 'Details & history', { exact: true })).toBeVisible();
+    await agent.act('Select Details & history in the currently open Bitcoin row context menu. Finish when Bitcoin Details is visible, keeping the reference currency unchanged.');
     await expect(screen.getByTestId('currency.details.BTC')).toBeVisible();
     await assertPair();
     await app.screenshot(`bitcoin-details-${reference.code.toLowerCase()}-after-restart`);
@@ -90,6 +92,7 @@ for (const destination of bitcoinReferences) {
       await expect(screen.getByTestId('currency.details.rate')).toHaveValue(destination.value);
     };
     await screen.getByRole('button', new RegExp(`^${destination.name},`, 'i')).longPress({ duration: 650 });
+    await expect(screen.getByRole('button', 'Details & history', { exact: true })).toBeVisible();
     await screen.getByRole('button', 'Details & history', { exact: true }).tap();
     await expect(screen.getByTestId(`currency.details.${destination.code}`)).toBeVisible();
     await app.screenshot(`${destination.code.toLowerCase()}-details-btc-opened`);
@@ -110,7 +113,8 @@ for (const destination of bitcoinReferences) {
       await expect(screen.getByTestId('converter.source')).toHaveAccessibleName(/Bitcoin/i);
       await expect(screen.getByRole('button', 'Edit amount in BTC')).toHaveValue('1');
       await screen.getByRole('button', /^Ethereum,/i).longPress({ duration: 650 });
-      await screen.getByRole('button', 'Details & history', { exact: true }).tap();
+      await expect(screen.getByRole('button', 'Details & history', { exact: true })).toBeVisible();
+      await agent.act('Select Details & history in the currently open Ethereum row context menu. Finish when Ethereum Details is visible, keeping Bitcoin as the reference currency.');
       await expect(screen.getByTestId('currency.details.ETH')).toBeVisible();
       await assertPair();
       await app.screenshot('eth-details-btc-after-restart');
