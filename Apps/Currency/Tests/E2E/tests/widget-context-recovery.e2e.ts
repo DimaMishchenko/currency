@@ -12,7 +12,6 @@ test('widgets load and calculator remains interactive with a full legacy quote-c
   tags: ['extended', 'widgets', 'widget-context-recovery'],
   skip: widgetSetupMethod() === 'gallery' ? 'Requires device-targeted widget placement.' : false,
 }, async ({ start, app, device, screen, agent }) => {
-  await prepareWidgetHelper();
   await start('ready-converter');
   await expect(screen.getByRole('button', 'Edit amount in EUR')).toHaveValue('1');
   const directory = execFileSync('xcrun', ['simctl', 'get_app_container', process.env.CURRENCY_E2E_UDID!,
@@ -32,6 +31,7 @@ test('widgets load and calculator remains interactive with a full legacy quote-c
   writeFileSync(path, original);
   console.log(`Legacy widget cache fixture: ${codes.length} currencies, ${Buffer.byteLength(original)} bytes.`);
   await device.closeApp();
+  await prepareWidgetHelper();
   await device.openApp('com.apple.springboard');
   await placeWidget('Currency Calculator', 'Medium');
   const calculator = device.locator('id=Currency value=Widget');

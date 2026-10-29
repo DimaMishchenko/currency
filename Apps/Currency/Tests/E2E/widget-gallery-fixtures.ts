@@ -5,13 +5,13 @@ import { configureWidget, placeWidget, prepareWidgetHelper, revealWidget, widget
 export const test = base.extend<{
   installedWidget: (title: string, family: 'Small' | 'Medium' | 'Large') => Promise<Locator>;
 }>({
-  installedWidget: async ({ start, device, screen }, use) => {
+  installedWidget: async ({ start, app, device, screen }, use) => {
     await use(async (title, family) => {
-      if (widgetSetupMethod() === 'private') await prepareWidgetHelper();
       await start('ready-converter');
       await expect(screen.getByRole('button', 'Edit amount in EUR')).toHaveValue('1');
       await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2.00');
       await device.home();
+      if (widgetSetupMethod() === 'private') await prepareWidgetHelper();
       await device.openApp('com.apple.springboard');
       const widget = device.locator('id=Currency value=Widget');
       if (widgetSetupMethod() === 'private') {
@@ -50,9 +50,33 @@ export const test = base.extend<{
         await screen.getByRole('button', 'Add Widget', { exact: true }).tap();
         await screen.getByRole('button', 'Done', { exact: true }).tap();
       }
-      await expect(widget).toBeVisible();
-      await expect(screen.getByRole('button', 'Done')).toBeHidden();
-      if (await widget.count() !== 1) throw new Error('Expected exactly one installed Currency widget.');
+      const capture = `${title.toLowerCase().replaceAll(' ', '-')}-${family.toLowerCase()}`;
+      try {
+        if (widgetSetupMethod() === 'private') {
+          await device.home();
+          if (!await widget.isVisible()) {
+            const bounds = await device.locator('role=Application').boundingBox();
+            if (!bounds) throw new Error('Home Screen navigation requires the simulator viewport.');
+            for (const direction of [1, 1, 1, -1, -1, -1, -1, -1, -1]) {
+              if (await widget.isVisible()) break;
+              await screen.swipe({
+                from: { x: bounds.width * (direction > 0 ? 0.8 : 0.2), y: bounds.height * 0.75 },
+                to: { x: bounds.width * (direction > 0 ? 0.2 : 0.8), y: bounds.height * 0.75 },
+              });
+            }
+          }
+        }
+        await expect(widget).toBeVisible();
+        await expect(screen.getByRole('button', 'Done')).toBeHidden();
+        if (await widget.count() !== 1) throw new Error('Expected exactly one installed Currency widget.');
+      } catch (error) {
+        try {
+          await app.screenshot(`widget-${capture}-visibility-failure-before-helper-release`);
+        } catch (captureError) {
+          console.error('Widget failure screenshot capture failed', captureError);
+        }
+        throw error;
+      }
       return widget;
     });
   },

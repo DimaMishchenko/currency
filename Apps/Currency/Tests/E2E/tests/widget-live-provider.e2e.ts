@@ -11,13 +11,13 @@ test('History widget fetches a complete live Coin Metrics day with the app termi
     test.skip('Requires device-targeted widget configuration.');
     return;
   }
-  await prepareWidgetHelper();
   await start('ready-crypto');
   await expect(screen.getByRole('button', /^Bitcoin,/i)).toHaveAccessibleName('Bitcoin, 0.00002');
   const udid = process.env.CURRENCY_E2E_UDID!;
   const directory = execFileSync('xcrun', ['simctl', 'get_app_container', udid, 'com.dimasike.currency', 'group.com.dimasike.currency.shared'], { encoding: 'utf8' }).trim();
   const cache = join(directory, 'history-v3-BTC-USD-1.json');
   await device.closeApp();
+  await prepareWidgetHelper();
   if (existsSync(cache)) unlinkSync(cache);
   assert.equal(existsSync(cache), false);
   const started = Date.now();

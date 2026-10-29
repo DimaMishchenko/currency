@@ -16,11 +16,11 @@ test('tapping a captured widget quote opens its snapshot then adopts newer share
   tags: ['extended', 'widgets', 'widget-quote-handoff'],
   skip: widgetSetupMethod() === 'gallery' ? 'Requires device-targeted widget configuration.' : false,
 }, async ({ start, app, device, screen, agent }) => {
-  await prepareWidgetHelper();
   await start('ready-history-sync');
   await expect(screen.getByRole('button', 'Edit amount in BTC')).toHaveValue('1', { timeout: 30_000 });
   await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 52,500.00', { timeout: 30_000 });
   await device.closeApp();
+  await prepareWidgetHelper();
   await device.openApp('com.apple.springboard');
   await placeWidget('History', 'Medium');
   await configureWidget('History', 'Medium', parameters => {
@@ -92,11 +92,11 @@ test('small History widget opens its day graph after a cold app launch', {
   tags: ['extended', 'widgets', 'widget-quote-handoff'],
   skip: widgetSetupMethod() === 'gallery' ? 'Requires device-targeted widget configuration.' : false,
 }, async ({ start, app, device, screen, agent }) => {
-  await prepareWidgetHelper();
   await start('ready-history-sync');
   await expect(screen.getByRole('button', 'Edit amount in BTC')).toHaveValue('1');
   await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 52,500.00');
   await device.closeApp();
+  await prepareWidgetHelper();
   await device.openApp('com.apple.springboard');
   await placeWidget('History', 'Small');
   await configureWidget('History', 'Small', parameters => {

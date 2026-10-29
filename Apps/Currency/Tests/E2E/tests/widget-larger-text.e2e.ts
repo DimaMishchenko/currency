@@ -43,7 +43,6 @@ for (const example of cases) {
       await ui('content_size', 'large');
       await ui('appearance', 'light');
       await ui('increase_contrast', 'enabled');
-      await prepareWidgetHelper();
       await start('ready-converter');
       await expect(screen.getByRole('button', 'Edit amount in EUR', { exact: true })).toHaveValue('1');
       await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2.00');
@@ -55,6 +54,7 @@ for (const example of cases) {
       const temporary = `${cachePath}.larger-text.tmp`;
       writeFileSync(temporary, JSON.stringify(payload)); renameSync(temporary, cachePath);
       await device.closeApp();
+      await prepareWidgetHelper();
       await device.openApp('com.apple.springboard');
       await placeWidget('History', 'Medium');
       await configureWidget('History', 'Medium', parameters => {
