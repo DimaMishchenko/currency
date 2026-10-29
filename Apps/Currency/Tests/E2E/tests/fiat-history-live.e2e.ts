@@ -42,7 +42,7 @@ test(`live ${quote.code}/EUR yearly history loads, All uses the archive and rela
   assert.ok(rates?.quotes.USD?.source.provider.fawaz, 'Production refresh must persist the actual daily FX feed.');
   assert.notEqual(Number(rates.quotes.USD.value), 2, 'Live rates must replace the fixture FX table.');
   assert.equal(Object.values(rates.quotes).filter(rate => rate.source.provider.coinMetrics && milliseconds(Number(rate.retrievedAt)) >= started).length, 22);
-  await agent.act(`Close Settings and return to the converter. ${quote.code === 'AED' ? 'Add AED (UAE Dirham) as a destination currency using the currency picker Search field. ' : ''}Open Details & history for the ${quote.code} destination currency.`);
+  await agent.act(`Close Settings and return to the converter. ${quote.code === 'AED' ? 'Add AED (UAE Dirham) as a destination currency using the currency picker Search field. ' : ''}Long-press the ${quote.code} destination currency row, then choose Details & history in its context menu.`);
   await expect(screen.getByTestId(`currency.details.${quote.code}`)).toBeVisible();
   const rate = screen.getByTestId('currency.details.rate');
   await expect(rate).toHaveAccessibleName(`1 ${quote.code} in EUR`);
@@ -105,7 +105,7 @@ test(`live ${quote.code}/EUR yearly history loads, All uses the archive and rela
   await openLive();
   await expect(screen.getByTestId('converter.source')).toHaveAccessibleName(/Euro/i);
   await expect(screen.getByRole('button', 'Edit amount in EUR')).toHaveValue('1');
-  await agent.act(`Open Details & history for the ${quote.code} destination currency.`);
+  await agent.act(`Long-press the ${quote.code} destination currency row, then choose Details & history in its context menu.`);
   await expect(screen.getByTestId(`currency.details.${quote.code}`)).toBeVisible();
   await expect(rate).toHaveAccessibleName(`1 ${quote.code} in EUR`);
   const warmStarted = Date.now();

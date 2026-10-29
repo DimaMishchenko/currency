@@ -27,7 +27,7 @@ for (const quote of ['USD', 'EUR'] as const) {
     });
     await openLive();
     await expect(screen.getByRole('button', `Edit amount in ${quote}`)).toHaveValue('1');
-    await agent.act('Open Details & history for the Bitcoin destination currency.');
+    await agent.act('Long-press the Bitcoin destination currency row, then choose Details & history in its context menu.');
     await expect(screen.getByTestId('currency.details.BTC')).toBeVisible();
     await expect(screen.getByTestId('currency.details.rate')).toHaveAccessibleName(`1 BTC in ${quote}`);
     const week = screen.getByTestId('currency.details.historyRange').getByRole('tab', 'One week', { exact: true });
@@ -55,7 +55,7 @@ for (const quote of ['USD', 'EUR'] as const) {
     const fetchedHour = Math.floor((savedWeek.fetchedAt + 978_307_200) / 3600);
     await openLive();
     await expect(screen.getByRole('button', `Edit amount in ${quote}`)).toHaveValue('1');
-    await agent.act('Open Details & history for the Bitcoin destination currency.');
+    await agent.act('Long-press the Bitcoin destination currency row, then choose Details & history in its context menu.');
     await week.tap();
     await expect(week).toBeSelected();
     await expect(source.filter({ hasText: /Coin Metrics.*hourly reference prices/i })).toBeVisible();

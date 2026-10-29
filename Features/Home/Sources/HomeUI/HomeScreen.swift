@@ -722,9 +722,7 @@ struct HomeScreen: View {
           Group {
             HStack(spacing: 0) {
               Button {
-                showDetails(
-                  code: model.editingCode,
-                  selectionID: model.editingSelectionID ?? model.input.source)
+                showDetails(model.conversionHistoryRequest())
               } label: {
                 Group {
                   if verticalSizeClass == .compact {
@@ -743,7 +741,7 @@ struct HomeScreen: View {
               .frame(maxWidth: .infinity, alignment: .leading)
               .accessibilityLabel(
                 .Converter.detailsAccessibility(
-                  CurrencyDisplay.name(model.editingCode, locale: locale))
+                  CurrencyDisplay.name(model.input.source, locale: locale))
               )
               .accessibilityIdentifier("converter.history")
               .popover(isPresented: $historyTipRequested, arrowEdge: .bottom) {
@@ -911,14 +909,17 @@ struct HomeScreen: View {
   }
 
   private func showDetails(code: String, selectionID: String) {
+    showDetails(
+      HomeDetailsRequest(
+        selectionID: selectionID, code: code, reference: model.input.source,
+        snapshot: model.snapshot))
+  }
+
+  private func showDetails(_ request: HomeDetailsRequest) {
     AppHaptics.play(.action)
     dismissAmount(feedback: false)
     model.visitDetails()
-    onOutput(
-      .detailsRequested(
-        HomeDetailsRequest(
-          selectionID: selectionID, code: code, reference: model.input.source,
-          snapshot: model.snapshot)))
+    onOutput(.detailsRequested(request))
   }
 
   private func key(_ key: String) {

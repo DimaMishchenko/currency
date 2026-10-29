@@ -36,6 +36,8 @@ test('minute and hourly history use the local chart zone and local saved timesta
   tags: ['core', 'history-time-zone'],
 }, async ({ start, device, screen, agent, app }) => {
   await start('ready-crypto');
+  await expect(screen.getByTestId('converter.source')).toHaveAccessibleName(/US Dollar/i);
+  await expect(screen.getByRole('button', /^Bitcoin,/i)).toHaveAccessibleName('Bitcoin, 0.00002');
   const directory = sharedDirectory();
   for (const zone of zones) {
     launchInTimeZone(zone.id);
@@ -44,8 +46,9 @@ test('minute and hourly history use the local chart zone and local saved timesta
       { title: 'One day', key: 1, observation: 'minuteReference' },
       { title: 'One week', key: 7, observation: 'hourlyReference' },
     ]) {
-      await screen.getByRole('button', /^Bitcoin,/i).tap();
-      await screen.getByTestId('converter.history').tap();
+      await screen.getByRole('button', /^Bitcoin,/i).longPress({ duration: 650 });
+      await expect(screen.getByRole('button', 'Details & history', { exact: true })).toBeVisible();
+      await screen.getByRole('button', 'Details & history', { exact: true }).tap();
       await expect(screen.getByTestId('currency.details.BTC')).toBeVisible();
       const ranges = screen.getByTestId('currency.details.historyRange');
       const period = ranges.getByRole('tab', range.title, { exact: true });
@@ -100,6 +103,8 @@ test('monthly reference dates retain their provider calendar day in west and eas
   tags: ['core', 'history-time-zone'],
 }, async ({ start, device, screen, agent, app }) => {
   await start('ready-converter');
+  await expect(screen.getByTestId('converter.source')).toHaveAccessibleName(/Euro/i);
+  await expect(screen.getByRole('button', 'Edit amount in EUR', { exact: true })).toHaveValue('1');
   const directory = sharedDirectory();
   for (const zone of zones) {
     launchInTimeZone(zone.id);

@@ -108,6 +108,20 @@ public final class HomeModel {
     }
   }
 
+  /// Describes the current conversion with its saved primary currency as the graph base.
+  public func conversionHistoryRequest() -> HomeDetailsRequest {
+    let comparison =
+      editingCode != input.source
+      ? editingCode
+      : input.destinationRows.first(where: {
+        $0.code != input.source && row($0.code, selectionID: $0.id).isEditable
+      })?
+      .code
+    return HomeDetailsRequest(
+      selectionID: editingSelectionID ?? input.source, code: input.source,
+      reference: comparison ?? input.source, snapshot: snapshot)
+  }
+
   /// Starts editing a convertible selected row without changing its position.
   public func beginEditing(_ code: String, selectionID: String? = nil) {
     let id = selectionID ?? code

@@ -55,7 +55,7 @@ test(`real provider refresh and ${quote} phone history survive a live-network re
     await expect(screen.getByText(/^Approximate conversion:/i).first()).toBeVisible();
   }
   await app.screenshot(`live-phone-${quote.toLowerCase()}-refreshed-coin-metrics-rates`);
-  await agent.act('Close Settings and return to the converter. Open Details & history for the Bitcoin destination currency.');
+  await agent.act('Close Settings and return to the converter. Long-press the Bitcoin destination currency row, then choose Details & history in its context menu.');
   await expect(screen.getByTestId('currency.details.BTC')).toBeVisible();
   await expect(screen.getByTestId('currency.details.rate')).toHaveAccessibleName(`1 BTC in ${quote}`);
   const ranges = screen.getByTestId('currency.details.historyRange');
@@ -99,7 +99,7 @@ test(`real provider refresh and ${quote} phone history survive a live-network re
   await openLive();
   await expect(screen.getByRole('button', `Edit amount in ${quote}`)).toHaveValue('1');
   await expect(screen.getByRole('button', /^Bitcoin,/i)).toBeVisible();
-  await agent.act('Open Details & history for the Bitcoin destination currency.');
+  await agent.act('Long-press the Bitcoin destination currency row, then choose Details & history in its context menu.');
   await expect(screen.getByTestId('currency.details.BTC')).toBeVisible();
   await expect(screen.getByTestId('currency.details.rate')).toHaveAccessibleName(`1 BTC in ${quote}`);
   await day.tap();

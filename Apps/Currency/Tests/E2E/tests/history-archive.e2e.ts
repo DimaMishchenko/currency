@@ -13,8 +13,9 @@ test('All history renders the actual bundled Bitcoin archive from 2010', { tags:
   const directory = execFileSync('xcrun', ['simctl', 'get_app_container', udid, 'com.dimasike.currency', 'group.com.dimasike.currency.shared'], { encoding: 'utf8' }).trim();
   const cache = join(directory, 'history-v3-BTC-USD-0.json');
   if (existsSync(cache)) unlinkSync(cache);
-  await bitcoin.tap();
-  await screen.getByTestId('converter.history').tap();
+  await bitcoin.longPress({ duration: 650 });
+  await expect(screen.getByRole('button', 'Details & history', { exact: true })).toBeVisible();
+  await screen.getByRole('button', 'Details & history', { exact: true }).tap();
   await expect(screen.getByTestId('currency.details.BTC')).toBeVisible();
   const all = screen.getByTestId('currency.details.historyRange').getByRole('tab', 'All available history', { exact: true });
   await all.tap();
