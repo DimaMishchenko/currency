@@ -32,6 +32,8 @@ watch=$app/Watch/CurrencyWatch.app
 watch_widget=$watch/PlugIns/CurrencyWatchWidgets.appex
 [[ -d "$watch" && -d "$watch_widget" ]] || { echo 'Missing Watch app or widget extension in IPA' >&2; exit 1; }
 app_version=$(plutil -extract CFBundleShortVersionString raw -o - "$app/Info.plist")
+[[ "$app_version" == "${CURRENCY_MARKETING_VERSION:?Missing selected marketing version}" ]] \
+  || { echo 'IPA differs from selected marketing version' >&2; exit 1; }
 check_bundle "$app" com.dimasike.currency "$CURRENCY_APP_PROFILE_UUID"
 check_bundle "$widget" com.dimasike.currency.widgets "$CURRENCY_WIDGET_PROFILE_UUID"
 check_bundle "$watch" com.dimasike.currency.watchkitapp "$CURRENCY_WATCH_PROFILE_UUID"

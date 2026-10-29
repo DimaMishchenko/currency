@@ -33,6 +33,8 @@ EOF
     plutil -lint "$2"
     ;;
   upload)
+    : "${CURRENCY_MARKETING_VERSION:?Missing selected marketing version}"
+    python3 Scripts/CI/release_version.py --app "$ASC_APP_ID" --check "$CURRENCY_MARKETING_VERSION"
     result="$RUNNER_TEMP/currency-upload.json"
     if ! asc publish testflight --app "$ASC_APP_ID" --ipa "$2" \
         --upload-only --wait --timeout 60m --output json > "$result"; then
