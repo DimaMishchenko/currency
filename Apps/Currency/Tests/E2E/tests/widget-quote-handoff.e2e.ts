@@ -8,7 +8,7 @@ import { configureWidget, placeWidget, prepareWidgetHelper, unloadWidgetHelper, 
 
 type Quote = { value: number; observedAt?: number; retrievedAt?: number };
 type Snapshot = { quotes: Record<string, Quote>; fetchedAt: number; checkedAt?: number };
-type Context = { id: string; snapshot: Snapshot; base?: string; quote?: string };
+type Context = { id: string; snapshot: Snapshot; base?: string; quote?: string; historyRange?: number };
 
 const readJSON = <T>(path: string): T => JSON.parse(readFileSync(path, 'utf8')) as T;
 
@@ -19,7 +19,7 @@ test('tapping a captured widget quote opens its snapshot then adopts newer share
   await prepareWidgetHelper();
   await start('ready-history-sync');
   await expect(screen.getByRole('button', 'Edit amount in BTC')).toHaveValue('1', { timeout: 30_000 });
-  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 52,500', { timeout: 30_000 });
+  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 52,500.00', { timeout: 30_000 });
   await device.closeApp();
   await device.openApp('com.apple.springboard');
   await placeWidget('History', 'Medium');
@@ -43,7 +43,7 @@ test('tapping a captured widget quote opens its snapshot then adopts newer share
     .map(({ id }) => readJSON<Context>(join(contextDirectory, `${id}.json`)));
   const captured = contexts.find(context => {
     const quotes = context.snapshot.quotes;
-    return context.base === 'BTC' && context.quote === 'USD' && quotes.BTC && quotes.USD && Math.abs(quotes.USD.value / quotes.BTC.value - 52_500) < 0.01;
+    return context.base === 'BTC' && context.quote === 'USD' && context.historyRange === 7 && quotes.BTC && quotes.USD && Math.abs(quotes.USD.value / quotes.BTC.value - 52_500) < 0.01;
   });
   assert.ok(captured, 'The installed widget must retain its immutable rendered quote context.');
   const contextPath = join(contextDirectory, `${captured.id}.json`);
@@ -66,19 +66,17 @@ test('tapping a captured widget quote opens its snapshot then adopts newer share
     await expect(widget.getByLabel('Rate change over the selected range', { exact: true })).toHaveValue(/^\+31[.,]25%$/);
     await app.screenshot('widget-retains-usd-52500-after-authoritative-cache-55000');
     await widget.tap();
-    await agent.waitFor('The Currency app converter is visible, showing Bitcoin source amount exactly 1 and the US Dollar destination exactly 55,000 (55 000 with a space grouping separator is equivalent).', { vision: 'only', timeout: 30_000 });
-    await app.screenshot('app-after-actual-widget-tap-before-driver-retarget');
+    await agent.waitFor('The Currency app Bitcoin details graph is visible, showing 1 BTC in USD and the One week (1W) period selected.', { vision: 'only', timeout: 30_000 });
     await device.openApp('com.dimasike.currency', { relaunch: false });
-    const dollars = screen.getByRole('button', /^US Dollar,/i);
-    await expect(dollars).toBeVisible({ timeout: 30_000 });
-    const firstObserved = await dollars.textContent();
-    const normalized = firstObserved?.replace(/(?<=\d)[,\s\u00a0\u202f](?=\d)/g, '');
-    assert.match(normalized ?? '', /^US Dollar, (52500|55000)$/);
-    console.log(`Widget handoff first observable row: ${firstObserved}; native scene tests verify the initial captured snapshot; this driver may miss the 1.5-second display window.`);
-    if (normalized === 'US Dollar, 52500') await app.screenshot('app-widget-handoff-captured-usd-52500');
-    await expect(screen.getByRole('button', 'Edit amount in BTC')).toHaveValue('1', { timeout: 30_000 });
-    await expect(dollars).toHaveAccessibleName(/^US Dollar, 55[, \u00a0\u202f]000$/, { timeout: 30_000 });
-    await app.screenshot('app-widget-handoff-newer-shared-usd-55000');
+    await expect(screen.getByTestId('currency.details.BTC')).toBeVisible({ timeout: 30_000 });
+    const rate = screen.getByTestId('currency.details.rate');
+    await expect(rate).toHaveAccessibleName('1 BTC in USD');
+    await expect(rate).toHaveValue('55,000 USD', { timeout: 30_000 });
+    await expect(screen.getByTestId('currency.details.historyRange').getByRole('tab', 'One week', { exact: true })).toBeSelected();
+    await app.screenshot('history-widget-opens-btc-usd-week-with-newer-shared-quote');
+    await screen.getByTestId('currency.details.close').tap();
+    await expect(screen.getByRole('button', 'Edit amount in BTC')).toHaveValue('1');
+    await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 55,000.00');
     const persisted = readJSON<Snapshot>(ratePath);
     assert.equal(persisted.checkedAt, newer.checkedAt, 'Opening the widget must reuse the fresh shared quote without another refresh attempt.');
     assert.equal(persisted.fetchedAt, newer.fetchedAt);
@@ -87,6 +85,32 @@ test('tapping a captured widget quote opens its snapshot then adopts newer share
   } finally {
     writeRates(original);
   }
+});
+
+test('small History widget opens its day graph after a cold app launch', {
+  tags: ['extended', 'widgets', 'widget-quote-handoff'],
+  skip: widgetSetupMethod() === 'gallery' ? 'Requires device-targeted widget configuration.' : false,
+}, async ({ start, app, device, screen, agent }) => {
+  await prepareWidgetHelper();
+  await start('ready-history-sync');
+  await device.closeApp();
+  await device.openApp('com.apple.springboard');
+  await placeWidget('History', 'Small');
+  await configureWidget('History', 'Small', parameters => {
+    parameters.base = { identifier: 'BTC', title: { key: 'BTC' }, subtitle: { key: 'BTC' } };
+    parameters.comparison = { identifier: 'USD', title: { key: 'USD' }, subtitle: { key: 'USD' } };
+    parameters.range = { identifier: 'day', value: 'day', title: { key: '1 day' } };
+  });
+  const widget = device.locator('id=Currency value=Widget');
+  await expect(widget.getByLabel('One day', { exact: true })).toBeVisible({ timeout: 30_000 });
+  await widget.tap();
+  await agent.waitFor('Bitcoin details is open in Currency with a history graph and One day (1D) selected.', { vision: 'only', timeout: 30_000 });
+  await device.openApp('com.dimasike.currency', { relaunch: false });
+  await expect(screen.getByTestId('currency.details.rate')).toHaveAccessibleName('1 BTC in USD');
+  await expect(screen.getByTestId('currency.details.historyRange').getByRole('tab', 'One day', { exact: true })).toBeSelected();
+  await app.screenshot('small-history-widget-opens-day-graph-cold');
+  await screen.getByTestId('currency.details.close').tap();
+  await expect(screen.getByRole('button', 'Edit amount in BTC')).toHaveValue('1');
 });
 
 test.afterAll(async () => {

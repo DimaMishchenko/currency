@@ -6,16 +6,16 @@ test('app amount and currency additions update the Home Screen calculator', { ta
   await app.restart();
   await expect(screen.getByTestId('converter.source')).toHaveAccessibleName(/Euro/i);
   await expect(screen.getByRole('button', 'Edit amount in EUR')).toHaveValue('1');
-  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2');
+  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2.00');
 
   await agent.act('Replace the Euro source amount with exactly 42 using the calculator keypad: enter 4 then 2. Finish with the keypad toolbar checkmark if it is shown. Stay on the converter.');
   await expect(screen.getByRole('button', 'Edit amount in EUR')).toHaveValue('42');
-  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 84');
+  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 84.00');
 
   await agent.act('Open Add currency, search for CHF, and select Swiss Franc (CHF). Return to the converter after the picker closes. Keep the Euro source amount 42 and the existing US Dollar destination.');
   await expect(screen.getByRole('button', 'Edit amount in EUR')).toHaveValue('42');
-  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 84');
-  await expect(screen.getByRole('button', /^Swiss Franc,/i)).toHaveAccessibleName(/^Swiss Franc, 21$/i);
+  await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 84.00');
+  await expect(screen.getByRole('button', /^Swiss Franc,/i)).toHaveAccessibleName(/^Swiss Franc, 21\.00$/i);
 
   await device.home();
   await device.openApp('com.apple.springboard');

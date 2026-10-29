@@ -68,7 +68,7 @@ test(`${scope === 'full' ? 'converter and supporting screens' : 'Settings and Hi
       await app.screenshot(`accessibility-converter-ax5-${appearance}-contrast-42-editing`);
       await amount.tap();
       await expect(amount).toHaveValue('42');
-      await expect(screen.getByRole('button', 'US Dollar, 84', { exact: true })).toBeVisible();
+      await expect(screen.getByRole('button', 'US Dollar, 84.00', { exact: true })).toBeVisible();
 
       await amount.tap();
       for (const digit of '12345678901234') await screen.getByRole('button', digit, { exact: true }).tap();

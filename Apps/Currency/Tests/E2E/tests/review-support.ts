@@ -24,7 +24,7 @@ export async function completeConversion({ screen }: Pick<ReviewContext, 'screen
   await screen.getByRole('button', 'Edit amount in EUR', { exact: true }).tap();
   await screen.getByRole('button', digit, { exact: true }).tap();
   await expect(screen.getByRole('button', 'Edit amount in EUR', { exact: true })).toHaveValue(digit);
-  await expect(screen.getByRole('button', /^US Dollar,/)).toHaveAccessibleName(`US Dollar, ${Number(digit) * 2}`);
+  await expect(screen.getByRole('button', /^US Dollar,/)).toHaveAccessibleName(`US Dollar, ${(Number(digit) * 2).toFixed(2)}`);
   await screen.getByTestId('checkmark').tap();
 }
 

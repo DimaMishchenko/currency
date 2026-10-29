@@ -11,7 +11,7 @@ export const test = base.extend<{ calculator: Locator }>({
       calculator = device.locator('id=Currency value=Widget');
       await start('ready-converter');
       await expect(screen.getByRole('button', 'Edit amount in EUR')).toHaveValue('1');
-      await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2');
+      await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2.00');
       await device.home();
       await device.openApp('com.apple.springboard');
       const box = await calculator.count() === 1 ? await calculator.boundingBox() : null;

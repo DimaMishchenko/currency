@@ -46,7 +46,7 @@ for (const example of cases) {
       await prepareWidgetHelper();
       await start('ready-converter');
       await expect(screen.getByRole('button', 'Edit amount in EUR', { exact: true })).toHaveValue('1');
-      await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2');
+      await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2.00');
       cachePath = join(sharedDirectory(), 'history-v3-EUR-USD-30.json');
       originalCache = readFileSync(cachePath, 'utf8');
       const history = readHistory(cachePath);
@@ -90,10 +90,13 @@ for (const example of cases) {
       const enlargedPath = await capture('ax5');
       writeFileSync(`${enlargedPath}.bounds.json`, JSON.stringify({ baselinePath, enlargedPath, baselineBounds, enlargedBounds }, null, 2));
       await widget.tap();
-      await agent.waitFor('The Currency app converter is visibly foreground after the actual widget tap, showing source EUR amount 1 and US Dollar 2. The Home Screen and widget are no longer foreground.', { vision: 'only', timeout: 30_000 });
+      await agent.waitFor('The Currency app Euro details history graph is foreground with 1 EUR in USD and One month selected.', { vision: 'only', timeout: 30_000 });
       await device.openApp('com.dimasike.currency', { relaunch: false });
+      await expect(screen.getByTestId('currency.details.rate')).toHaveAccessibleName('1 EUR in USD');
+      await expect(screen.getByTestId('currency.details.historyRange').getByRole('tab', 'One month', { exact: true })).toBeSelected();
+      await screen.getByTestId('currency.details.close').tap();
       await expect(screen.getByRole('button', 'Edit amount in EUR', { exact: true })).toHaveValue('1');
-      await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2');
+      await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2.00');
     } catch (error) {
       await app.screenshot(`history-percentage-${name}-failure-before-restoration`);
       throw error;

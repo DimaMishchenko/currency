@@ -17,6 +17,31 @@ private final class PendingHistory {
 
 @Suite @MainActor
 struct CurrencyDetailsTests {
+  @Test(arguments: [HistoryRange.day, .week])
+  func externalPeriodIsSelectedForTheFirstLoad(range: HistoryRange) async {
+    var loaded: HistoryRange?
+    let model = CurrencyDetailsModel(
+      input: .init(code: "BTC", reference: "USD", snapshot: RateSnapshot(), initialRange: range),
+      dependencies: .init(supportsIntraday: { _, _ in true }) { _, _, requested in
+        loaded = requested
+        return HistoryResult(series: nil, issue: .unavailable)
+      })
+    #expect(model.range == range)
+    await model.load()
+    #expect(loaded == range)
+    model.updateSnapshot(RateSnapshot())
+    #expect(model.range == range)
+  }
+
+  @Test func unsupportedExternalDayUsesMonth() {
+    let model = CurrencyDetailsModel(
+      input: .init(code: "EUR", reference: "USD", snapshot: RateSnapshot(), initialRange: .day),
+      dependencies: .init(supportsIntraday: { _, _ in false }) { _, _, _ in
+        HistoryResult(series: nil, issue: .unavailable)
+      })
+    #expect(model.range == .month)
+  }
+
   @Test(arguments: [
     ("XAU", "USD", 3110.34768, 100.0), ("USD", "XAU", 0.01, 0.311034768),
     ("BTC", "XAU", 20.0, 622.069536), ("XAU", "BTC", 20.0, 0.05 / 31.1034768)
