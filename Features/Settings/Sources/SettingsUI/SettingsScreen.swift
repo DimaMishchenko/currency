@@ -45,7 +45,6 @@ struct SettingsScreen: View {
     List {
       appearanceControls
       metalUnitControl
-      widgetControls
       Section {
         Button {
           AppHaptics.play(.action)
@@ -410,32 +409,6 @@ struct SettingsScreen: View {
       Text(.Settings.preciousMetals)
     } footer: {
       Text(.Settings.metalUnitExplanation)
-    }
-  }
-
-  private var widgetControls: some View {
-    Section {
-      Toggle(
-        isOn: Binding(
-          get: { model.preferences.widgetHapticsEnabled },
-          set: { enabled in
-            model.setWidgetHapticsEnabled(enabled)
-            AppHaptics.play(model.issue == .widgetHapticsSaveFailed ? .error : .selection)
-          }
-        )
-      ) {
-        Label(.Settings.hapticFeedback, systemImage: "hand.tap")
-      }
-      .tint(Color(uiColor: .systemGreen))
-      .accessibilityIdentifier("settings.widgetHaptics")
-      if model.issue == .widgetHapticsSaveFailed {
-        Text(.Settings.widgetHapticsSaveFailed).foregroundStyle(.secondary)
-          .accessibilityIdentifier("settings.widgetHaptics.error")
-      }
-    } header: {
-      Text(.Settings.widgets)
-    } footer: {
-      Text(.Settings.widgetHapticsExplanation)
     }
   }
 

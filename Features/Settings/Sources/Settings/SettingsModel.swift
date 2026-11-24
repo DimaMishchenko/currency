@@ -81,18 +81,13 @@ public struct SettingsPreferences: Sendable, Equatable {
   public var accent: SettingsAccent
   /// Preferred measurement shared by metal conversion surfaces.
   public var metalUnit: MetalUnit
-  /// Whether interactive widgets request a short Taptic effect after successful actions.
-  /// Physical output depends on device and platform behavior.
-  public var widgetHapticsEnabled: Bool
-  /// Creates the owned value or model with explicit host inputs and operations.
+  /// Creates preferences with troy ounces as the default metal measurement.
   public init(
-    theme: SettingsTheme, accent: SettingsAccent, metalUnit: MetalUnit = .troyOunce,
-    widgetHapticsEnabled: Bool = false
+    theme: SettingsTheme, accent: SettingsAccent, metalUnit: MetalUnit = .troyOunce
   ) {
     self.theme = theme
     self.accent = accent
     self.metalUnit = metalUnit
-    self.widgetHapticsEnabled = widgetHapticsEnabled
   }
 }
 
@@ -106,7 +101,7 @@ public struct SettingsRateState: Sendable {
   public var codes: [String]
   /// Recoverable provider condition accompanying the current rates.
   public var warning: RefreshWarning?
-  /// Creates the owned value or model with explicit host inputs and operations.
+  /// Captures supplied rates, source, ordered destinations and any refresh warning.
   public init(snapshot: RateSnapshot, base: String, codes: [String], warning: RefreshWarning? = nil)
   {
     self.snapshot = snapshot
@@ -120,8 +115,7 @@ public struct SettingsRateState: Sendable {
 public enum SettingsOutput: Sendable { case manageLocation, replayed }
 /// Recoverable operation failure localized by SettingsUI.
 public enum SettingsIssue: Sendable, Equatable {
-  case refreshFailed, replayFailed, preferenceSaveFailed, widgetHapticsSaveFailed,
-    appIconChangeFailed
+  case refreshFailed, replayFailed, preferenceSaveFailed, appIconChangeFailed
 }
 
 /// The host supplies preference persistence and operations; Settings owns their presentation flow.
@@ -139,8 +133,6 @@ public struct SettingsDependencies {
   public var setAccent: (SettingsAccent) -> Void
   /// Saves the shared measurement or throws without changing authoritative preferences.
   public var setMetalUnit: (MetalUnit) throws -> Void
-  /// Saves widget feedback without changing authoritative preferences on failure.
-  public var setWidgetHapticsEnabled: (Bool) throws -> Void
   /// Refreshes rates; callers coalesce repeated actions and reject superseded results.
   public var refresh: () async throws -> SettingsRateState
   /// Saves replay progress before emitting a successful replay outcome.
@@ -149,7 +141,7 @@ public struct SettingsDependencies {
   public var appIcon: SettingsAppIconCapability?
   /// Receives semantic outcomes and requests for application coordination.
   public var output: (SettingsOutput) -> Void
-  /// Creates the owned value or model with explicit host inputs and operations.
+  /// Binds host storage and operations; absent replay or icon capabilities hide their controls.
   public init(
     readState: @escaping () -> SettingsRateState,
     changes: @escaping () -> AsyncStream<Void>,
@@ -157,7 +149,6 @@ public struct SettingsDependencies {
     setTheme: @escaping (SettingsTheme) -> Void,
     setAccent: @escaping (SettingsAccent) -> Void,
     setMetalUnit: @escaping (MetalUnit) throws -> Void,
-    setWidgetHapticsEnabled: @escaping (Bool) throws -> Void,
     refresh: @escaping () async throws -> SettingsRateState,
     replay: (() throws -> Void)?,
     appIcon: SettingsAppIconCapability? = nil,
@@ -165,7 +156,6 @@ public struct SettingsDependencies {
   ) {
     self.readState = readState; self.changes = changes; self.readPreferences = readPreferences
     self.setTheme = setTheme; self.setAccent = setAccent; self.setMetalUnit = setMetalUnit
-    self.setWidgetHapticsEnabled = setWidgetHapticsEnabled
     self.refresh = refresh
     self.replay = replay; self.appIcon = appIcon; self.output = output
   }
@@ -200,7 +190,7 @@ public final class SettingsModel {
   public var allowsReplay: Bool { dependencies.replay != nil }
   /// Whether this host supports changing the app icon.
   public var allowsAppIconSelection: Bool { dependencies.appIcon != nil }
-  /// Creates the owned value or model with explicit host inputs and operations.
+  /// Reads the host's initial rates and icon without starting observation or refresh.
   public init(dependencies: SettingsDependencies) {
     self.dependencies = dependencies
     rates = dependencies.readState()
@@ -223,15 +213,6 @@ public final class SettingsModel {
       reload()
       if issue == .preferenceSaveFailed { issue = nil }
     } catch { issue = .preferenceSaveFailed }
-  }
-  /// Saves widget feedback and retains the host preference if saving fails.
-  public func setWidgetHapticsEnabled(_ enabled: Bool) {
-    guard !stopped else { return }
-    do {
-      try dependencies.setWidgetHapticsEnabled(enabled)
-      reload()
-      if issue == .widgetHapticsSaveFailed { issue = nil }
-    } catch { issue = .widgetHapticsSaveFailed }
   }
   /// Reconciles the platform icon after returning to the active scene.
   public func reloadAppIcon() {
