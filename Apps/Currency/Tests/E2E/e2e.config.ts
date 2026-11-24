@@ -13,7 +13,7 @@ export default {
   targets: [
     {
       name: targetName,
-      engine: mobile({ platform: 'ios', device: udid, session: `currency-e2e-${targetName}` }),
+      engine: mobile({ platform: 'ios', device: udid, session: `currency-e2e-${targetName}`, transition: 1_200 }),
       app: {
         identity: 'currency-fixtures-v18-widget-settings',
         bundleId: 'com.dimasike.currency',
