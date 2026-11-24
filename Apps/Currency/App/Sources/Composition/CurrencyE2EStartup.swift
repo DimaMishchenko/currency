@@ -156,7 +156,7 @@
           directory: directory, now: now)
       }
       let files = [
-        "input.json", "onboarding.json", "conversion-usage.json", "widget-haptics.json",
+        "input.json", "onboarding.json", "conversion-usage.json",
         "widget-location-refresh.json",
         "widget-location.json", "widget-location-status.json"
       ]

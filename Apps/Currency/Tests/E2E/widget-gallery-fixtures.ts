@@ -7,11 +7,11 @@ export const test = base.extend<{
 }>({
   installedWidget: async ({ start, app, device, screen }, use) => {
     await use(async (title, family) => {
+      if (widgetSetupMethod() === 'private') await prepareWidgetHelper();
       await start('ready-converter');
       await expect(screen.getByRole('button', 'Edit amount in EUR')).toHaveValue('1');
       await expect(screen.getByRole('button', /^US Dollar,/i)).toHaveAccessibleName('US Dollar, 2.00');
       await device.home();
-      if (widgetSetupMethod() === 'private') await prepareWidgetHelper();
       await device.openApp('com.apple.springboard');
       const widget = device.locator('id=Currency value=Widget');
       if (widgetSetupMethod() === 'private') {

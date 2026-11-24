@@ -1,4 +1,3 @@
-import AudioToolbox
 import Conversion
 import CurrencyApplication
 import ExchangeRates
@@ -8,8 +7,6 @@ import WidgetKit
 import Widgets
 
 enum WidgetComposition {
-  private static let shortTapticSoundID: SystemSoundID = 1519
-
   private static func directory() -> URL {
     guard
       let directory = FileManager.default.containerURL(
@@ -118,8 +115,6 @@ enum WidgetComposition {
         for kind in ["CurrencyConverter", "CurrencyBoard"] {
           WidgetCenter.shared.reloadTimelines(ofKind: kind)
         }
-      },
-      hapticsEnabled: { widgets.widgetHapticsEnabled() },
-      playHaptic: { AudioServicesPlaySystemSound(shortTapticSoundID) })
+      })
   }
 }

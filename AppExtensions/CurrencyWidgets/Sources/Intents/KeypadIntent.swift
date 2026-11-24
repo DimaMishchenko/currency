@@ -72,9 +72,6 @@ struct WidgetAction: AppIntent {
     if try dependencies.apply(action, stateKey, snapshot) {
       dependencies.reloadSynchronizedWidgets()
     }
-    if action.action != nil, dependencies.hapticsEnabled() {
-      dependencies.playHaptic()
-    }
   }
 
 }
